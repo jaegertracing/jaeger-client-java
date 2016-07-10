@@ -48,7 +48,15 @@ jacocoTestReport {
     afterEvaluate {
         classDirectories = files(classDirectories.files.collect {
             fileTree(dir: it,
-                    exclude: ['**/generated/**', '**/*Test*', '**/exception/**'])
+                exclude: [
+                    '**/gen-java/**',
+                    '**/*Test*',
+                    '**/exception/**',
+                    '**/com/twitter/zipkin/thriftjava/**',
+                    '**/com/uber/jaeger/agent/thrift/**',
+                    '**/com/uber/jaeger/thrift/sampling_manager/**',
+                    '**/com/uber/jaeger/crossdock/tracetest/**'
+                ])
         })
     }
 }
