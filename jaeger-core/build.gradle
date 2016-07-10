@@ -1,0 +1,79 @@
+apply plugin: 'org.jruyi.thrift'
+apply plugin: 'jacoco'
+apply plugin: 'com.github.kt3k.coveralls'
+
+description = 'Core lirbary for jaeger-client'
+
+dependencies {
+    //compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.16.8'
+    //testCompileOnly group: 'org.projectlombok', name: 'lombok', version: '1.16.8'
+
+    compile group: 'io.opentracing', name: 'opentracing-api', version: '0.2.0'
+    compile group: 'org.apache.thrift', name: 'libthrift', version: '0.9.3'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.7.4'
+    compile group: 'com.google.guava', name: 'guava', version: '18.0'
+    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.16'
+
+    // Jersey dependencies for unit tests (TODO: use variable for version)
+    testCompile group: 'org.glassfish.jersey.containers', name: 'jersey-container-grizzly2-http', version: '2.22.2'
+    testCompile group: 'org.glassfish.jersey.containers', name: 'jersey-container-servlet', version: '2.22.2'
+    testCompile group: 'org.glassfish.jersey.core', name: 'jersey-client', version: '2.22.2'
+    testCompile group: 'org.glassfish.jersey.media', name: 'jersey-media-json-jackson', version: '2.22.2'
+    testCompile group: 'org.glassfish.jersey.media', name: 'jersey-media-moxy', version: '2.12'
+
+    // Testing frameworks
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    testCompile group: 'org.mockito', name: 'mockito-all', version: '2.0.2-beta'
+    // TODO use only one mocking framework
+    testCompile group: 'org.powermock', name: 'powermock-api-mockito', version: '1.6.4'
+    testCompile group: 'org.powermock', name: 'powermock-core', version: '1.6.4'
+    testCompile group: 'org.powermock', name: 'powermock-module-junit4', version: '1.6.4'
+}
+
+compileThrift {
+    recurse true
+    sourceDir "${projectDir}/../idl/"
+    outputDir 'src/gen-java'
+    generator 'java', 'private-members'
+    createGenFolder false
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled = true // coveralls plugin depends on xml format report
+        html.enabled = true
+        html.destination "${buildDir}/jacocoHtml"
+    }
+
+    afterEvaluate {
+        classDirectories = files(classDirectories.files.collect {
+            fileTree(dir: it,
+                    exclude: ['**/generated/**', '**/*Test*', '**/exception/**'])
+        })
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main/java'
+            srcDir 'src/main/gen-java'
+        }
+    }
+
+    test {
+        java {
+            srcDir 'src/test/java'
+            srcDir 'src/test/gen-java'
+        }
+    }
+}
+
+jar {
+    from sourceSets.main.output
+    from sourceSets.test.output
+    from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    manifest {
+        attributes('Implementation-jaeger-core': 'jaeger-core', 'Implementation-Version': project.version)
+    }
+}

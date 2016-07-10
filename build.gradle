@@ -1,0 +1,113 @@
+plugins {
+    id "org.jruyi.thrift" version "0.3.1"
+    id "jacoco"
+    id "com.github.kt3k.coveralls" version "2.5.0"
+    id "com.github.hierynomus.license" version "0.12.1"
+}
+
+allprojects {
+    apply plugin: 'idea' // intellij support
+
+    group = 'com.uber.jaeger'
+    version = '0.5.0-SNAPSHOT'
+
+    task wrapper(type: Wrapper) {
+        gradleVersion = '2.12' //version required
+    }
+}
+
+def getRepositoryUsername() {
+    return hasProperty('ossrhUsername') ? ossrhUsername : ""
+}
+
+def getRepositoryPassword() {
+    return hasProperty('ossrhPassword') ? ossrhPassword : ""
+}
+
+subprojects {
+    apply plugin: 'com.github.hierynomus.license'
+    apply plugin: 'java'
+    apply plugin: 'maven'
+    apply plugin: 'signing'
+
+    sourceCompatibility = 1.7
+    targetCompatibility = 1.7
+
+    [compileJava, compileTestJava, javadoc]*.options*.encoding = 'UTF-8'
+
+    // Set up checkstyle
+    apply plugin: 'checkstyle'
+    def checkstyleConfigDir = new File(rootDir, "config/checkstyle")
+    checkstyle {
+        configFile = new File(checkstyleConfigDir, "checkstyle.xml")
+        configProperties.checkstyleConfigDir = checkstyleConfigDir
+    }
+
+    repositories {
+        mavenCentral()
+    }
+
+    task listJars(description: 'Display all compile jars.') << {
+        configurations.compile.each { File file -> println file.name }
+    }
+
+    license {
+        header rootProject.file('license-template')
+        strictCheck true
+        include '**/*.java'
+        exclude '**/gen-java/*'
+        ext.year = Calendar.getInstance().get(Calendar.YEAR)
+        ext.name = 'Uber Technologies, Inc'
+        ignoreFailures = false
+        mapping {
+            java = 'SLASHSTAR_STYLE'
+        }
+    }
+
+    classes.dependsOn tasks.licenseFormat
+
+    // central maven release
+    uploadArchives {
+        repositories {
+            mavenDeployer {
+                beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+                repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                    authentication(userName:getRepositoryUsername(), password:getRepositoryPassword())
+                }
+
+                snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+                    authentication(userName:getRepositoryUsername(), password:getRepositoryPassword())
+                }
+
+                pom.project {
+                    name 'jaeger-client'
+                    packaging 'jar'
+                    description 'Jaeger Java bindings for OpenTracing API'
+                    url 'https://github.com/uber/jaeger-client-java'
+
+                    scm {
+                        connection 'scm:git:git@github.com:uber/jaeger-client-java.git'
+                        developerConnection 'scm:git:git@github.com:uber/jaeger-client-java.git'
+                        url 'git@github.com:uber/jaeger-client-java.git'
+                    }
+
+                    licenses {
+                        license {
+                            name 'MIT License'
+                            url 'http://www.opensource.org/licenses/mit-license.php'
+                        }
+                    }
+
+                    developers {
+                        developer {
+                            id 'oibe'
+                            name 'Onwukike Ibe'
+                            email 'oibe@uber.com'
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
