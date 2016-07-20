@@ -1,0 +1,89 @@
+ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
+
+def getRepositoryUsername() {
+    return hasProperty('ossrhUsername') ? ossrhUsername : ""
+}
+
+def getRepositoryPassword() {
+    return hasProperty('ossrhPassword') ? ossrhPassword : ""
+}
+
+// central maven release
+uploadArchives {
+
+    repositories {
+        mavenDeployer {
+            if (isReleaseVersion) {
+                beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+            }
+
+            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                authentication(userName:getRepositoryUsername(), password:getRepositoryPassword())
+            }
+
+            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+                authentication(userName:getRepositoryUsername(), password:getRepositoryPassword())
+            }
+
+            pom.project {
+                name 'jaeger-client'
+                packaging 'jar'
+                description 'Jaeger Java bindings for OpenTracing API'
+                url 'https://github.com/uber/jaeger-client-java'
+
+                scm {
+                    connection 'scm:git:git@github.com:uber/jaeger-client-java.git'
+                    developerConnection 'scm:git:git@github.com:uber/jaeger-client-java.git'
+                    url 'git@github.com:uber/jaeger-client-java.git'
+                }
+
+                licenses {
+                    license {
+                        name 'MIT License'
+                        url 'http://www.opensource.org/licenses/mit-license.php'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'oibe'
+                        name 'Onwukike Ibe'
+                        email 'oibe@uber.com'
+                    }
+                    developer {
+                        id 'yurishkuro'
+                        name 'Yuri Shkuro'
+                        email 'ys@uber.com'
+                    }
+                }
+            }
+        }
+    }
+}
+
+// add javadocs to our jar
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+// add sources to our jar
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+// add the jars as artifacts
+artifacts {
+    archives jar
+    archives sourcesJar
+    archives javadocJar
+}
+
+signing {
+    if (isReleaseVersion) {
+        sign configurations.archives
+    } else {
+        println "Jar was not signed since this was a snapshot release."
+    }
+}
