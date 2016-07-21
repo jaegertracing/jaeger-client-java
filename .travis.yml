@@ -1,38 +1,35 @@
 sudo: required
-
 language: java
-
 services:
-  - docker
-
+- docker
 env:
   global:
-    - DOCKER_VERSION=1.11.1-0~trusty
-    - DOCKER_COMPOSE_VERSION=1.7.0
-    - COMMIT=${TRAVIS_COMMIT::8}
+  - DOCKER_VERSION=1.11.1-0~trusty
+  - DOCKER_COMPOSE_VERSION=1.7.0
+  - COMMIT=${TRAVIS_COMMIT::8}
+  - secure: PRiEM4oGX4yjIzQlGMg+C28LdrkikUO8fsCXul0O+mJQ6Yua3b+G9HOC586UvyqAY4mFvSGP/EIefBuRLVQhFKvHpxHtfjpGg3w2Txq9KxiY5DjaYFuihKPz8Zs+PAZXd8rWqQvjZFkpHHmXdQG5I4MRSCb5Pkk/T3uwJqDCpcQeaBxWIglwVm4etM4pBxQT7BCVKvh4CJ6vNJuLPRRqn4CqgnZV9ytcrUoOF3binbdP2S2KImBqimAyLW3ThqTaJ2xkGWTKI7oc3k2NCejIFUPcf9dzzZ4aKKu9x9t94v7QSwLOE+9tQh5F0W3C89qcG9SmPVaTS7QwQhKwFP92BfMbobu056VSxSFielQ5DvPTaAiStGBzr/2Uhn+KITjSRNj6dX6tjaL9q/8TFE+g0QZIP00PhfzzNOde5Nlh8fUu3bo+4X6Y+WPXHEe8SfLdVYIb6+1zvxkNyWHQoeN+uDGIDSOgWYT74tz0HBcpt2WIrOPaSc6m6RaZKC8dOuWODY+HRZXetwvsYa/aw+Y/7aGJgh7oJqNM5/D2Cc9tp/Q81J5pGZZEjNF+lcjMX8A8COk4TKtd9SbL+a5BeNUOcu8wWJZ/5vEHi2MaghfCr0xVDqQVrKbHQS1UH/qnholpUOD35iP4wVl9r3ftee1yuH35ZNFUZIGlAmLhvZ5LQgY=
+  - secure: gqAqV1tCjiqAzbreGsgvlcXCg9M7MLyyc+9v7/booL+eNqjevQ25CEzLSBoQQnJAKNDixHloCwCxRIbCrc3HcAl/8V6NZ8JxzUPoxKzN3yr4SPyD+KcJSNDwPqCHScKnMbuBPGKPcZFng2XyIpKAAAzqmc+zMpKRBdos4l27l5b4NdPHJUPRgFpqyL2oZY5nzeqzB/akP1c0jOZOSbfl4JVdXflYAWiXtA3zesVCJcrsYrQQ/xpL4ziETqy9UFZnMcBH9KADx6gCyoZMsf9OfVCGl0YGBb1LECIUYi/74b8TPp18+oUNYnpZScsOHmUSdmFrkIb/y714OIYPDQPhpny/aPXkBHH2ze+7AQGHNPoNJJZsG/W7/pj4AH91HGLVBxGApuA95WNFoIglHWtII+uvraeiTWaeC6VYOrwDdLHy5Aijtr1lH+zqFOfzSWGyj6Blt8x3aKsZmnFA4b8h+l0y+VjEFqmZIf9yKLlShieyhCWdZtIEwmeB120zbFIJHRfHClOs7Zwel4uE2HCJVSqP24auhA5j7uHYPBBSD/+VZRoeDiDE0qjRO0ZeXAUP6EIrplZecDWZXYZhW6XOHWpHittbCAisz2m43DEXSunISrLS5ONkjeDUfn42q24c80/gwPlG+7zLynwrJ1sO7EHECPhoPmUpilaQ+j4kmt4=
 
 before_cache:
-  - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
-
+- rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
 cache:
   directories:
-    - $HOME/.gradle/caches/
-    - $HOME/.gradle/wrapper/
-    - $HOME/.thrift-build
-
+  - $HOME/.gradle/caches/
+  - $HOME/.gradle/wrapper/
+  - $HOME/.thrift-build
 before_install:
-  - apt-cache madison docker-engine
-  - sudo apt-get -o Dpkg::Options::="--force-confnew" install -y docker-engine=${DOCKER_VERSION}
-  - docker version
-  - sudo rm /usr/local/bin/docker-compose
-  - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
-  - chmod +x docker-compose
-  - sudo mv docker-compose /usr/local/bin
-  - docker-compose version
-  - bash travis/install-thrift.sh
-
+- apt-cache madison docker-engine
+- sudo apt-get -o Dpkg::Options::="--force-confnew" install -y docker-engine=${DOCKER_VERSION}
+- docker version
+- sudo rm /usr/local/bin/docker-compose
+- curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname
+  -s`-`uname -m` > docker-compose
+- chmod +x docker-compose
+- sudo mv docker-compose /usr/local/bin
+- docker-compose version
+- bash travis/install-thrift.sh
 script:
-  - make test
-
+- make test
 after_success:
-  - ./gradlew jacocoTestReport coveralls
+- ./gradlew jacocoTestReport coveralls
+- ./gradlew uploadArchives -PossrhUsername="${SONATYPE_USERNAME}" -PossrhPassword="${SONATYPE_PASSWORD}"
