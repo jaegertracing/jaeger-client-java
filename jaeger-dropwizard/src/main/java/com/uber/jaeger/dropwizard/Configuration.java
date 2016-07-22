@@ -19,18 +19,25 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.uber.jaeger.context;
+package com.uber.jaeger.dropwizard;
 
-import java.util.concurrent.ExecutorService;
+import com.codahale.metrics.MetricRegistry;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class TracingUtils {
-    private static final TraceContext traceContext = new ThreadLocalTraceContext();
-
-    public static TraceContext getTraceContext() {
-        return traceContext;
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class Configuration extends com.uber.jaeger.filters.jaxrs2.Configuration {
+    @JsonCreator
+    public Configuration(@JsonProperty("serviceName") String serviceName,
+                         @JsonProperty("disable") Boolean disable,
+                         @JsonProperty("sampler") SamplerConfiguration samplerConfig,
+                         @JsonProperty("reporter") ReporterConfiguration reporterConfig) {
+        super(serviceName, disable, samplerConfig, reporterConfig);
     }
 
-    public static ExecutorService tracedExecutor(ExecutorService wrappedExecutorService) {
-        return new TracedExecutorService(wrappedExecutorService, traceContext);
+    public Configuration setMetricRegistry(MetricRegistry registry) {
+        super.setStatsFactory(new StatsFactory(registry));
+        return this;
     }
 }

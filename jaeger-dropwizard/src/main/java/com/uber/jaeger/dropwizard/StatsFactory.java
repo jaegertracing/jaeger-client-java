@@ -19,18 +19,34 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.uber.jaeger.context;
+package com.uber.jaeger.dropwizard;
 
-import java.util.concurrent.ExecutorService;
+import com.codahale.metrics.MetricRegistry;
+import com.uber.jaeger.metrics.Counter;
+import com.uber.jaeger.metrics.Gauge;
+import com.uber.jaeger.metrics.Timer;
 
-public class TracingUtils {
-    private static final TraceContext traceContext = new ThreadLocalTraceContext();
+import java.util.Map;
 
-    public static TraceContext getTraceContext() {
-        return traceContext;
+public class StatsFactory implements com.uber.jaeger.metrics.StatsFactory {
+    private final MetricRegistry registry;
+
+    public StatsFactory(MetricRegistry registry) {
+        this.registry = registry;
     }
 
-    public static ExecutorService tracedExecutor(ExecutorService wrappedExecutorService) {
-        return new TracedExecutorService(wrappedExecutorService, traceContext);
+    @Override
+    public Counter createCounter(String name, Map<String, String> tags) {
+        return new CounterImpl(name, tags, registry);
+    }
+
+    @Override
+    public Timer createTimer(String name, Map<String, String> tags) {
+        return new TimerImpl(name, tags, registry);
+    }
+
+    @Override
+    public Gauge createGauge(String name, Map<String, String> tags) {
+        return new GaugeImpl(name, tags, registry);
     }
 }

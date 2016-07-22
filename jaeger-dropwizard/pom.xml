@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.uber.jaeger</groupId>
+        <artifactId>jaeger-client-java</artifactId>
+        <version>0.3.1</version>
+    </parent>
+
+    <artifactId>jaeger-dropwizard</artifactId>
+    <packaging>jar</packaging>
+
+    <properties>
+        <dropwizard-hibernate.version>0.9.1</dropwizard-hibernate.version>
+        <metrics-core.version>3.1.0</metrics-core.version>
+        <metrics3-statsd.version>4.1.0</metrics3-statsd.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.uber.jaeger</groupId>
+            <artifactId>jaeger-jaxrs2</artifactId>
+            <version>0.3.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.dropwizard.metrics</groupId>
+            <artifactId>metrics-core</artifactId>
+            <version>${metrics-core.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.readytalk</groupId>
+            <artifactId>metrics3-statsd</artifactId>
+            <version>${metrics3-statsd.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.dropwizard</groupId>
+            <artifactId>dropwizard-hibernate</artifactId>
+            <version>${dropwizard-hibernate.version}</version>
+        </dependency>
+
+    </dependencies>
+</project>
