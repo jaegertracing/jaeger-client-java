@@ -20,28 +20,28 @@
  * THE SOFTWARE.
  */
 package com.uber.jaeger.filters.jaxrs2;
-
+import com.uber.jaeger.context.ThreadLocalTraceContext;
 import com.uber.jaeger.context.TraceContext;
+import com.uber.jaeger.context.TracedExecutorService;
 
 import java.util.concurrent.ExecutorService;
 
 public class TracingUtils {
+    private static final TraceContext traceContext = new ThreadLocalTraceContext();
 
-    @Deprecated
     public static TraceContext getTraceContext() {
-        return com.uber.jaeger.context.TracingUtils.getTraceContext();
+        return traceContext;
     }
 
-    @Deprecated
     public static ExecutorService tracedExecutor(ExecutorService wrappedExecutorService) {
-        return com.uber.jaeger.context.TracingUtils.tracedExecutor(wrappedExecutorService);
+        return new TracedExecutorService(wrappedExecutorService, traceContext);
     }
 
     public static ClientFilter clientFilter(Configuration configuration) {
-        return new ClientFilter(configuration.getTracer(), TracingUtils.getTraceContext());
+        return new ClientFilter(configuration.getTracer(), traceContext);
     }
 
     public static ServerFilter serverFilter(Configuration configuration) {
-        return new ServerFilter(configuration.getTracer(), TracingUtils.getTraceContext());
+        return new ServerFilter(configuration.getTracer(), traceContext);
     }
 }
