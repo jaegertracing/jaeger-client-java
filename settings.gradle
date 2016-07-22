@@ -1,2 +1,5 @@
 rootProject.name = 'jaeger-client'
 include 'jaeger-core'
+include 'jaeger-jaxrs2'
+include 'jaeger-context'
+include 'jaeger-dropwizard'
