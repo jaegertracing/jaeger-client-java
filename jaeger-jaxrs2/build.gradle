@@ -1,49 +1,25 @@
-apply plugin: 'org.jruyi.thrift'
 apply plugin: 'jacoco'
 apply plugin: 'com.github.kt3k.coveralls'
 
-description = 'Core library for jaeger-client'
+description = 'Instrumentation library for jaeger-jaxrs 2.0'
 
 dependencies {
-    //compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.16.8'
-    //testCompileOnly group: 'org.projectlombok', name: 'lombok', version: '1.16.8'
+    compile group: 'javax.ws.rs', name: 'javax.ws.rs-api', version: '2.0'
+    compile project(':jaeger-core')
+    compile project(':jaeger-context')
 
-    compile group: 'io.opentracing', name: 'opentracing-api', version: '0.2.0'
-    compile group: 'org.apache.thrift', name: 'libthrift', version: '0.9.3'
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.7.4'
-    compile group: 'com.google.guava', name: 'guava', version: '18.0'
-    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.16'
-
-    // Testing frameworks
-    // Jersey dependencies for unit tests
     testCompile group: 'org.glassfish.jersey.containers', name: 'jersey-container-grizzly2-http', version: jerseyVersion
     testCompile group: 'org.glassfish.jersey.containers', name: 'jersey-container-servlet', version: jerseyVersion
     testCompile group: 'org.glassfish.jersey.core', name: 'jersey-client', version: jerseyVersion
     testCompile group: 'org.glassfish.jersey.media', name: 'jersey-media-json-jackson', version: jerseyVersion
-    testCompile group: 'org.glassfish.jersey.media', name: 'jersey-media-moxy', version: '2.12'
-
+    testCompile group: 'org.glassfish.jersey.media', name: 'jersey-media-moxy', version: jerseyVersion
+    testCompile group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: '2.7.4'
     testCompile group: 'junit', name: 'junit', version: '4.12'
     testCompile group: 'org.mockito', name: 'mockito-all', version: '2.0.2-beta'
     // TODO use only one mocking framework
     testCompile group: 'org.powermock', name: 'powermock-api-mockito', version: powermockVersion
     testCompile group: 'org.powermock', name: 'powermock-core', version: powermockVersion
     testCompile group: 'org.powermock', name: 'powermock-module-junit4', version: powermockVersion
-}
-
-compileThrift {
-    recurse true
-    sourceDir "${projectDir}/../idl/"
-    outputDir 'src/main/gen-java'
-    generator 'java', 'private-members'
-    createGenFolder false
-}
-
-javadoc {
-    exclude '**/gen-java/**'
-    exclude '**/com/twitter/zipkin/thriftjava/**'
-    exclude '**/com/uber/jaeger/agent/thrift/**'
-    exclude '**/com/uber/jaeger/thrift/sampling_manager/**'
-    exclude '**/com/uber/jaeger/crossdock/tracetest/**'
 }
 
 jacocoTestReport {
@@ -57,13 +33,7 @@ jacocoTestReport {
         classDirectories = files(classDirectories.files.collect {
             fileTree(dir: it,
                 exclude: [
-                    '**/gen-java/**',
                     '**/*Test*',
-                    '**/exception/**',
-                    '**/com/twitter/zipkin/thriftjava/**',
-                    '**/com/uber/jaeger/agent/thrift/**',
-                    '**/com/uber/jaeger/thrift/sampling_manager/**',
-                    '**/com/uber/jaeger/crossdock/tracetest/**'
                 ])
         })
     }
@@ -73,14 +43,12 @@ sourceSets {
     main {
         java {
             srcDir 'src/main/java'
-            srcDir 'src/main/gen-java'
         }
     }
 
     test {
         java {
             srcDir 'src/test/java'
-            srcDir 'src/test/gen-java'
         }
     }
 }
@@ -90,6 +58,6 @@ jar {
     from sourceSets.test.output
     from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
     manifest {
-        attributes('Implementation-jaeger-core': 'jaeger-core', 'Implementation-Version': project.version)
+        attributes('Implementation-jaeger-jaxrs2': 'jaeger-jaxrs2', 'Implementation-Version': project.version)
     }
 }

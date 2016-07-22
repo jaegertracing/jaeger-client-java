@@ -111,6 +111,10 @@ public class Configuration {
             this(type, param, null);
         }
 
+        public SamplerConfiguration() {
+            this(null, null, null);
+        }
+
         public SamplerConfiguration(String type, Number param, String managerHostPort) {
             this.type = type;
             this.param = param;
@@ -143,6 +147,18 @@ public class Configuration {
             }
 
             throw new IllegalStateException(String.format("Invalid sampling strategy %s", samplerType));
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public Number getParam() {
+            return param;
+        }
+
+        public String getDefaultManagerHostPort() {
+            return managerHostPort;
         }
     }
 
@@ -192,6 +208,26 @@ public class Configuration {
                 reporter = new CompositeReporter(reporter, loggingReporter);
             }
             return reporter;
+        }
+
+        public Boolean getLogSpans() {
+            return logSpans;
+        }
+
+        public String getAgentHost() {
+            return agentHost;
+        }
+
+        public Integer getAgentPort() {
+            return agentPort;
+        }
+
+        public Integer getFlushIntervalMs() {
+            return flushIntervalMs;
+        }
+
+        public Integer getMaxQueueSize() {
+            return maxQueueSize;
         }
     }
 
