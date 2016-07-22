@@ -19,18 +19,22 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.uber.jaeger.context;
+package com.uber.jaeger.dropwizard;
 
-import java.util.concurrent.ExecutorService;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.uber.jaeger.Configuration;
 
-public class TracingUtils {
-    private static final TraceContext traceContext = new ThreadLocalTraceContext();
+public class ReporterConfiguration extends Configuration.ReporterConfiguration {
 
-    public static TraceContext getTraceContext() {
-        return traceContext;
-    }
-
-    public static ExecutorService tracedExecutor(ExecutorService wrappedExecutorService) {
-        return new TracedExecutorService(wrappedExecutorService, traceContext);
+    @JsonCreator
+    public ReporterConfiguration(
+            @JsonProperty("logSpans") Boolean logSpans,
+            @JsonProperty("agentHost") String agentHost,
+            @JsonProperty("agentPort") Integer agentPort,
+            @JsonProperty("flushIntervalMs") Integer flushIntervalMs,
+            @JsonProperty("maxQueueSize") Integer maxQueueSize
+    ) {
+        super(logSpans, agentHost, agentPort, flushIntervalMs, maxQueueSize);
     }
 }

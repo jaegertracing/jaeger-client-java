@@ -19,18 +19,35 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.uber.jaeger.context;
+package com.uber.jaeger.dropwizard;
 
-import java.util.concurrent.ExecutorService;
+import com.uber.jaeger.filters.jaxrs2.TracingUtils;
 
-public class TracingUtils {
-    private static final TraceContext traceContext = new ThreadLocalTraceContext();
+import javax.ws.rs.core.Feature;
+import javax.ws.rs.core.FeatureContext;
 
-    public static TraceContext getTraceContext() {
-        return traceContext;
+public class JaegerFeature implements Feature {
+    private final Configuration jaegerConfig;
+
+    public JaegerFeature(Configuration jaegerConfig) {
+        this.jaegerConfig = jaegerConfig;
     }
 
-    public static ExecutorService tracedExecutor(ExecutorService wrappedExecutorService) {
-        return new TracedExecutorService(wrappedExecutorService, traceContext);
+    @Override
+    public boolean configure(FeatureContext featureContext) {
+        if (featureContext.getConfiguration().isEnabled(this.getClass())) {
+            return false;
+        }
+
+        switch (featureContext.getConfiguration().getRuntimeType()) {
+            case SERVER:
+                featureContext.register(TracingUtils.serverFilter(jaegerConfig));
+                break;
+            case CLIENT:
+                featureContext.register(TracingUtils.clientFilter(jaegerConfig));
+                break;
+        }
+
+        return true;
     }
 }

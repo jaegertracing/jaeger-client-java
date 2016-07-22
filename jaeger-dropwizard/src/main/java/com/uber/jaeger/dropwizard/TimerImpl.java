@@ -19,18 +19,24 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.uber.jaeger.context;
+package com.uber.jaeger.dropwizard;
 
-import java.util.concurrent.ExecutorService;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
 
-public class TracingUtils {
-    private static final TraceContext traceContext = new ThreadLocalTraceContext();
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
-    public static TraceContext getTraceContext() {
-        return traceContext;
+public class TimerImpl implements com.uber.jaeger.metrics.Timer {
+    private final Timer timer;
+
+    TimerImpl(String name, Map<String, String> tags, MetricRegistry registry) {
+        String metricName = com.uber.jaeger.metrics.Metrics.addTagsToMetricName(name, tags);
+        timer = registry.timer(metricName);
     }
 
-    public static ExecutorService tracedExecutor(ExecutorService wrappedExecutorService) {
-        return new TracedExecutorService(wrappedExecutorService, traceContext);
+    @Override
+    public void durationMicros(long time) {
+        timer.update(time, TimeUnit.MICROSECONDS);
     }
 }
