@@ -1,22 +1,33 @@
 sudo: required
+
 language: java
+
 services:
 - docker
+
 env:
   global:
   - DOCKER_VERSION=1.11.1-0~trusty
   - DOCKER_COMPOSE_VERSION=1.7.0
   - COMMIT=${TRAVIS_COMMIT::8}
+  # SONATYPE_USERNAME=<sonatype username>
   - secure: PRiEM4oGX4yjIzQlGMg+C28LdrkikUO8fsCXul0O+mJQ6Yua3b+G9HOC586UvyqAY4mFvSGP/EIefBuRLVQhFKvHpxHtfjpGg3w2Txq9KxiY5DjaYFuihKPz8Zs+PAZXd8rWqQvjZFkpHHmXdQG5I4MRSCb5Pkk/T3uwJqDCpcQeaBxWIglwVm4etM4pBxQT7BCVKvh4CJ6vNJuLPRRqn4CqgnZV9ytcrUoOF3binbdP2S2KImBqimAyLW3ThqTaJ2xkGWTKI7oc3k2NCejIFUPcf9dzzZ4aKKu9x9t94v7QSwLOE+9tQh5F0W3C89qcG9SmPVaTS7QwQhKwFP92BfMbobu056VSxSFielQ5DvPTaAiStGBzr/2Uhn+KITjSRNj6dX6tjaL9q/8TFE+g0QZIP00PhfzzNOde5Nlh8fUu3bo+4X6Y+WPXHEe8SfLdVYIb6+1zvxkNyWHQoeN+uDGIDSOgWYT74tz0HBcpt2WIrOPaSc6m6RaZKC8dOuWODY+HRZXetwvsYa/aw+Y/7aGJgh7oJqNM5/D2Cc9tp/Q81J5pGZZEjNF+lcjMX8A8COk4TKtd9SbL+a5BeNUOcu8wWJZ/5vEHi2MaghfCr0xVDqQVrKbHQS1UH/qnholpUOD35iP4wVl9r3ftee1yuH35ZNFUZIGlAmLhvZ5LQgY=
+  # SONATYPE_PASSWORD=<sonatype password>
   - secure: gqAqV1tCjiqAzbreGsgvlcXCg9M7MLyyc+9v7/booL+eNqjevQ25CEzLSBoQQnJAKNDixHloCwCxRIbCrc3HcAl/8V6NZ8JxzUPoxKzN3yr4SPyD+KcJSNDwPqCHScKnMbuBPGKPcZFng2XyIpKAAAzqmc+zMpKRBdos4l27l5b4NdPHJUPRgFpqyL2oZY5nzeqzB/akP1c0jOZOSbfl4JVdXflYAWiXtA3zesVCJcrsYrQQ/xpL4ziETqy9UFZnMcBH9KADx6gCyoZMsf9OfVCGl0YGBb1LECIUYi/74b8TPp18+oUNYnpZScsOHmUSdmFrkIb/y714OIYPDQPhpny/aPXkBHH2ze+7AQGHNPoNJJZsG/W7/pj4AH91HGLVBxGApuA95WNFoIglHWtII+uvraeiTWaeC6VYOrwDdLHy5Aijtr1lH+zqFOfzSWGyj6Blt8x3aKsZmnFA4b8h+l0y+VjEFqmZIf9yKLlShieyhCWdZtIEwmeB120zbFIJHRfHClOs7Zwel4uE2HCJVSqP24auhA5j7uHYPBBSD/+VZRoeDiDE0qjRO0ZeXAUP6EIrplZecDWZXYZhW6XOHWpHittbCAisz2m43DEXSunISrLS5ONkjeDUfn42q24c80/gwPlG+7zLynwrJ1sO7EHECPhoPmUpilaQ+j4kmt4=
+  # DOCKER_USERNAME=<docker username>
+  - secure: q19fJLh2aO583rOALLKor4FeQr5u3EWKtUNhOyrUR9k7FLVk/9cLIrLr77DWdYxn0DE123DeHHm+GB7vEL85DmhJXUy3Bqpkjqr/eOZwtzGuCeDY9q7pO3eJJ8V3Fhw0p9rvGq1yg/nEO6S9whE+IUFxUanSIsjltM93KEfeaOGEvi5vkfKoD1etgGh8tx3d69Q17SyfHl+xRMW4KOVe3vdjUUnFPINhqmjKaYRmbsZ3yx7cuX+i6qbpW3Biypy/zjeu/35CfjQIiB8rgo8G6qtbGj9gfMzt3xmDL2LEOJtIx4nDJ3wPMVsGUGbu8LhNzX71EddbnqdWwjLnyoYAEYynu13q8rHljA+NlT8mPBP4wX00TTtJoWmwCmMnWgRcFPMS50cVBDwLLANZcVPU6iNY/+0AE4ANlzWHDLD/0pTqvYB5Z2UIVbXPuvkys7xBL5pKFnqTXVlWQuTRkSO8PXnSo24QP04AcjlkHnqNPesjkztFh4DSOfyL/6BiLebKDo6C+KNcN6Ep9SYpVfkwYDLV2qtfbiLxu4wjAgQjxPk701VGMfywmMvHaqa7UQpXQfEvHM/kTYJGknqf80WvXo/ilnvb9esANEP6cJZ3Z9h7Sq9P/ytec5NqPRaKVaMmN5bJXNY30g7MLkyD1fAMKIkaUfFdKNFzZVAAmsC7fho=
+  # DOCKER_PASSWORD=<docker password>
+  - secure: aj5LcCTpFS+e/bgOkyteSj85SplvGAgeje+Rbo8C5jgxScnHutalAEECnlXJBvxdke8OE4s+J8dX4cKoHf0XXial8hwEwfm+r/wPeTpr06L0eleBGfGsiF0dsYApIs3EmIoA+4x3LGB0BTta/XOfNzj9TFkaf3NExn6GClXAzx51tyJm3C8Yt3OP756dga8opU8iIBvKIA7bgn2pOs7xBSd2Dx7J8jBsw3uBXKtpyVLj6n7fl0EaVEVpF9Od7ASeJ0+P9x2pEkiqZhuMHm4mj+BaUqIJABRZ93PqiEDxHG/pnoJiIbXVis3LFTxFKQVYLG53eoZuww1h09TW+m1oDe6cNpkt7TanaKZ8a5oT/sgHUZHzP5Tlvv8UiqcaTQDlxaszYgcOZkfRHctMNVc0Wyr0QEft77c0jsK8lCyudzMhXKxj+MFoYxkUx61vBWQvnToJdP1YHk0c7YWzPADEIwRG2v2rXZvx1CmWcMDtxtcU+gSrtcD/8GMFuKKHDV7EAvApKSLl5OoAioHPVZLNvZbrPFaVV6dpdrGB3kkWNf+WSu6F0IG/CCGStykJbNivyBYv87Ngs6iAVKYUW2uiuICd8Eb+Ak/J2T05t1kJaZRwfzXKVGAOHdn3lloah8bSGRPhbvT3PwkRXPwYRHL/jE5g/el0Bq1LI3tn/6VyDhM=
 
 before_cache:
 - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+
 cache:
   directories:
   - $HOME/.gradle/caches/
   - $HOME/.gradle/wrapper/
   - $HOME/.thrift-build
+
 before_install:
 - apt-cache madison docker-engine
 - sudo apt-get -o Dpkg::Options::="--force-confnew" install -y docker-engine=${DOCKER_VERSION}
@@ -28,8 +39,14 @@ before_install:
 - sudo mv docker-compose /usr/local/bin
 - docker-compose version
 - bash travis/install-thrift.sh
+
 script:
 - make test
+- make crossdock-fresh
+
 after_success:
 - ./gradlew jacocoTestReport coveralls
 - ./gradlew uploadArchives -PossrhUsername="${SONATYPE_USERNAME}" -PossrhPassword="${SONATYPE_PASSWORD}"
+
+after_script:
+- bash travis/publish_docker_image.sh
