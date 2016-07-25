@@ -22,11 +22,9 @@
 package com.uber.jaeger.filters.jaxrs2;
 
 import com.uber.jaeger.context.TraceContext;
-
 import java.util.concurrent.ExecutorService;
 
 public class TracingUtils {
-
     @Deprecated
     public static TraceContext getTraceContext() {
         return com.uber.jaeger.context.TracingUtils.getTraceContext();
@@ -38,10 +36,10 @@ public class TracingUtils {
     }
 
     public static ClientFilter clientFilter(Configuration configuration) {
-        return new ClientFilter(configuration.getTracer(), TracingUtils.getTraceContext());
+        return new ClientFilter(configuration.getTracer(), getTraceContext());
     }
 
     public static ServerFilter serverFilter(Configuration configuration) {
-        return new ServerFilter(configuration.getTracer(), TracingUtils.getTraceContext());
+        return new ServerFilter(configuration.getTracer(), getTraceContext());
     }
 }
