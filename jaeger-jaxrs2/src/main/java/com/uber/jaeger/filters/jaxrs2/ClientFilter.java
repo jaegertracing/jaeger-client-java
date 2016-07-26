@@ -25,6 +25,8 @@ import com.uber.jaeger.context.TraceContext;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.tag.Tags;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.ConstrainedTo;
 import javax.ws.rs.RuntimeType;
@@ -40,6 +42,7 @@ import java.io.IOException;
 public class ClientFilter implements ClientRequestFilter, ClientResponseFilter {
     private final Tracer tracer;
     private final TraceContext traceContext;
+    private final Logger logger = LoggerFactory.getLogger(ClientFilter.class);
 
     public ClientFilter(Tracer tracer, TraceContext traceContext) {
         this.tracer = tracer;
@@ -62,8 +65,7 @@ public class ClientFilter implements ClientRequestFilter, ClientResponseFilter {
             clientRequestContext.setProperty(Constants.CURRENT_SPAN_CONTEXT_KEY, clientSpan);
             tracer.inject(clientSpan, clientRequestContext);
         } catch (Exception e) {
-            // TODO(oibe) add a real logger
-            e.printStackTrace();
+            logger.error("Client Filter Request:", e);
         }
     }
 
@@ -76,8 +78,7 @@ public class ClientFilter implements ClientRequestFilter, ClientResponseFilter {
                 clientSpan.finish();
             }
         } catch (Exception e) {
-            // TODO(oibe) add a real logger
-            e.printStackTrace();
+            logger.error("Client Filter Response:", e);
         }
     }
 }

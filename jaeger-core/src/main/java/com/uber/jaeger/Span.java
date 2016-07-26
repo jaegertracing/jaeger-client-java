@@ -251,7 +251,6 @@ public class Span implements io.opentracing.Span {
 
     @Override
     public Span log(long instantMicroseconds, String message, /* @Nullable */ Object payload) {
-        // TODO(oibe) maybe use a concurrent structure instead of synchronizing
         synchronized (this) {
             if (context.isSampled()) {
                 if (logs == null) {

@@ -25,6 +25,8 @@ import com.uber.jaeger.context.TraceContext;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.tag.Tags;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
@@ -38,6 +40,7 @@ import java.io.IOException;
 public class ServerFilter implements ContainerRequestFilter, ContainerResponseFilter {
     private final Tracer tracer;
     private final TraceContext traceContext;
+    private final Logger logger = LoggerFactory.getLogger(ServerFilter.class);
 
     public ServerFilter(Tracer tracer, TraceContext traceContext) {
         this.tracer = tracer;
@@ -63,8 +66,7 @@ public class ServerFilter implements ContainerRequestFilter, ContainerResponseFi
 
             traceContext.push(serverSpan);
         } catch (Exception e) {
-            // TODO(oibe) add logging
-            e.printStackTrace();
+            logger.error("Server Filter Request:", e);
         }
     }
 
@@ -81,8 +83,7 @@ public class ServerFilter implements ContainerRequestFilter, ContainerResponseFi
             Tags.HTTP_STATUS.set(serverSpan, containerResponseContext.getStatus());
             serverSpan.finish();
         } catch (Exception e) {
-            // TODO(oibe) add logging
-            e.printStackTrace();
+            logger.error("Server Filter Response:", e);
         }
     }
 }
