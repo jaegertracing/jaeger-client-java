@@ -118,6 +118,7 @@ public class RemoteControlledSampler implements Sampler {
 
     @Override
     public boolean equals(Object sampler) {
+        if (this == sampler) return true;
         if (sampler instanceof RemoteControlledSampler) {
             RemoteControlledSampler remoteSampler = ((RemoteControlledSampler) sampler);
             synchronized (this) {

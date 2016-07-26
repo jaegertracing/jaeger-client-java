@@ -51,6 +51,7 @@ public class ProbabilisticSampler implements Sampler {
 
     @Override
     public boolean equals(Object other) {
+        if (this == other) return true;
         if (other instanceof ProbabilisticSampler) {
             return this.samplingRate == ((ProbabilisticSampler) other).samplingRate;
         }
