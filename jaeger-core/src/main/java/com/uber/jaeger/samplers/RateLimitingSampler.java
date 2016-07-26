@@ -39,6 +39,7 @@ public class RateLimitingSampler implements Sampler {
 
     @Override
     public boolean equals(Object other) {
+        if (this == other) return true;
         if (other instanceof  RateLimitingSampler) {
             return this.maxTracesPerSecond == ((RateLimitingSampler) other).maxTracesPerSecond;
         }
