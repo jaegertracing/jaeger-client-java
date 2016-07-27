@@ -23,6 +23,7 @@ package com.uber.jaeger.propagation;
 
 import com.uber.jaeger.context.TraceContext;
 import com.uber.jaeger.filters.jaxrs2.ServerFilter;
+import com.uber.jaeger.metrics.StatsFactory;
 import io.opentracing.Tracer;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
@@ -32,6 +33,8 @@ import org.glassfish.jersey.server.ResourceConfig;
 
 import java.io.IOException;
 import java.net.URI;
+
+import static org.mockito.Mockito.mock;
 
 
 public class JerseyServer {
@@ -56,7 +59,7 @@ public class JerseyServer {
     public HttpServer getServer() {
         // create a resource config that scans for JAX-RS resources and providers
         final ResourceConfig rc = new ResourceConfig()
-                .register(new ServerFilter(tracer, traceContext))
+                .register(new ServerFilter(tracer, traceContext, mock(StatsFactory.class)))
                 .register(
                         new AbstractBinder() {
                             @Override

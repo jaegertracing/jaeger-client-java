@@ -36,10 +36,10 @@ public class TracingUtils {
     }
 
     public static ClientFilter clientFilter(Configuration configuration) {
-        return new ClientFilter(configuration.getTracer(), getTraceContext());
+        return new ClientFilter(configuration.getTracer(), getTraceContext(), configuration.getStatsFactory());
     }
 
     public static ServerFilter serverFilter(Configuration configuration) {
-        return new ServerFilter(configuration.getTracer(), getTraceContext());
+        return new ServerFilter(configuration.getTracer(), getTraceContext(), configuration.getStatsFactory());
     }
 }

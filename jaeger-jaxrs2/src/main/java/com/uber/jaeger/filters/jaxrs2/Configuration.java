@@ -63,6 +63,10 @@ public class Configuration extends com.uber.jaeger.Configuration {
         this.statsFactory = statsFactory;
     }
 
+    public StatsFactory getStatsFactory() {
+       return statsFactory;
+    }
+
     public io.opentracing.Tracer getTracer() {
         if (disable) {
             getNoopTracer();
