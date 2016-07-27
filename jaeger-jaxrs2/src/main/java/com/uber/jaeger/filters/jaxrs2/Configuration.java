@@ -59,8 +59,12 @@ public class Configuration extends com.uber.jaeger.Configuration {
         }
     }
 
-    protected void setStatsFactory(StatsFactory statsFactory) {
+    public void setStatsFactory(StatsFactory statsFactory) {
         this.statsFactory = statsFactory;
+    }
+
+    public StatsFactory getStatsFactory() {
+       return statsFactory;
     }
 
     public io.opentracing.Tracer getTracer() {

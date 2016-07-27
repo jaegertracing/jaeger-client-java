@@ -22,6 +22,8 @@
 package com.uber.jaeger.filters.jaxrs2;
 
 import com.uber.jaeger.context.TraceContext;
+import com.uber.jaeger.metrics.Metrics;
+import com.uber.jaeger.metrics.StatsFactory;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.tag.Tags;
@@ -37,14 +39,20 @@ import javax.ws.rs.ext.Provider;
 import java.io.IOException;
 
 @Provider
-public class ServerFilter implements ContainerRequestFilter, ContainerResponseFilter {
+class ServerFilter implements ContainerRequestFilter, ContainerResponseFilter {
     private final Tracer tracer;
     private final TraceContext traceContext;
     private final Logger logger = LoggerFactory.getLogger(ServerFilter.class);
+    private Metrics metrics;
 
-    public ServerFilter(Tracer tracer, TraceContext traceContext) {
+    ServerFilter(Tracer tracer, TraceContext traceContext) {
         this.tracer = tracer;
         this.traceContext = traceContext;
+    }
+
+    ServerFilter(Tracer tracer, TraceContext traceContext, StatsFactory statsFactory) {
+        this(tracer, traceContext);
+        this.metrics = new Metrics(statsFactory);
     }
 
     @Override
@@ -67,6 +75,7 @@ public class ServerFilter implements ContainerRequestFilter, ContainerResponseFi
             traceContext.push(serverSpan);
         } catch (Exception e) {
             logger.error("Server Filter Request:", e);
+            metrics.serverFilterExceptionRequest.inc(1);
         }
     }
 
@@ -84,6 +93,7 @@ public class ServerFilter implements ContainerRequestFilter, ContainerResponseFi
             serverSpan.finish();
         } catch (Exception e) {
             logger.error("Server Filter Response:", e);
+            metrics.serverFilterExceptionResponse.inc(1);
         }
     }
 }

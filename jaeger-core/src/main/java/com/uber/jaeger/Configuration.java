@@ -179,8 +179,17 @@ public class Configuration {
 
         private final Integer maxQueueSize;
 
+        private Boolean testReporter = false;
+
+        private Reporter internalReporter;
+
         public ReporterConfiguration() {
             this(null, null, null, null, null);
+        }
+
+        public ReporterConfiguration(Reporter internalReporter) {
+            this(null, null, null, null, null);
+            this.internalReporter = internalReporter;
         }
 
         public ReporterConfiguration(Boolean logSpans, String agentHost, Integer agentPort, Integer flushIntervalMs, Integer maxQueueSize) {
@@ -192,6 +201,10 @@ public class Configuration {
         }
 
         private Reporter getReporter(Metrics metrics) {
+            if (internalReporter != null) {
+                return internalReporter;
+            }
+
             UDPSender sender = new UDPSender(
                     stringOrDefault(this.agentHost, defaultAgentHost),
                     numberOrDefault(this.agentPort, defaultAgentPort).intValue(),

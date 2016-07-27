@@ -22,7 +22,8 @@
 package com.uber.jaeger.propagation;
 
 import com.uber.jaeger.context.TraceContext;
-import com.uber.jaeger.filters.jaxrs2.ServerFilter;
+import com.uber.jaeger.filters.jaxrs2.Configuration;
+import com.uber.jaeger.filters.jaxrs2.TracingUtils;
 import io.opentracing.Tracer;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
@@ -40,10 +41,12 @@ public class JerseyServer {
     private final Tracer tracer;
     private final TraceContext traceContext;
     private HttpServer server;
+    private Configuration configuration;
 
-    public JerseyServer(Tracer tracer, TraceContext traceContext) throws IOException {
+    public JerseyServer(Tracer tracer, TraceContext traceContext, Configuration configuration) throws IOException {
         this.tracer = tracer;
         this.traceContext = traceContext;
+        this.configuration = configuration;
         server = getServer();
         server.start();
     }
@@ -56,12 +59,13 @@ public class JerseyServer {
     public HttpServer getServer() {
         // create a resource config that scans for JAX-RS resources and providers
         final ResourceConfig rc = new ResourceConfig()
-                .register(new ServerFilter(tracer, traceContext))
+                .register(TracingUtils.serverFilter(configuration))
                 .register(
                         new AbstractBinder() {
                             @Override
                             protected void configure() {
                                 bind(tracer).to(Tracer.class);
+                                bind(configuration).to(Configuration.class);
                                 bind(traceContext).to(TraceContext.class);
                             }
                         })
