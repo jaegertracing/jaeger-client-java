@@ -79,7 +79,6 @@ public class ThriftSpanConverter {
         if (logs != null) {
             for (LogData logData : logs) {
                 annotations.add(new Annotation(logData.getTime(), logData.getMessage()));
-                // TODO(oibe) handle log payload data
             }
         }
 
