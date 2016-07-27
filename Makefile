@@ -1,4 +1,4 @@
-
+-include jaeger-java-crossdock/rules.mk
 
 .PHONY: clean
 clean:
