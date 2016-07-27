@@ -22,6 +22,8 @@
 package com.uber.jaeger.filters.jaxrs2;
 
 import com.uber.jaeger.context.TraceContext;
+import com.uber.jaeger.metrics.Metrics;
+import com.uber.jaeger.metrics.StatsFactory;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.tag.Tags;
@@ -40,10 +42,12 @@ import java.io.IOException;
 public class ClientFilter implements ClientRequestFilter, ClientResponseFilter {
     private final Tracer tracer;
     private final TraceContext traceContext;
+    private final Metrics metrics;
 
-    public ClientFilter(Tracer tracer, TraceContext traceContext) {
+    public ClientFilter(Tracer tracer, TraceContext traceContext, StatsFactory statsFactory) {
         this.tracer = tracer;
         this.traceContext = traceContext;
+        this.metrics = new Metrics(statsFactory);
     }
 
     @Override
@@ -62,6 +66,7 @@ public class ClientFilter implements ClientRequestFilter, ClientResponseFilter {
             clientRequestContext.setProperty(Constants.CURRENT_SPAN_CONTEXT_KEY, clientSpan);
             tracer.inject(clientSpan, clientRequestContext);
         } catch (Exception e) {
+            metrics.clientFilterExceptionRequest.inc(1);
             // TODO(oibe) add a real logger
             e.printStackTrace();
         }
@@ -76,6 +81,7 @@ public class ClientFilter implements ClientRequestFilter, ClientResponseFilter {
                 clientSpan.finish();
             }
         } catch (Exception e) {
+            metrics.clientFilterExceptionResponse.inc(1);
             // TODO(oibe) add a real logger
             e.printStackTrace();
         }

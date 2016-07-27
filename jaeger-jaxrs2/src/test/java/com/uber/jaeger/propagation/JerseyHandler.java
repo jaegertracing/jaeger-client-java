@@ -24,6 +24,7 @@ package com.uber.jaeger.propagation;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uber.jaeger.context.TraceContext;
 import com.uber.jaeger.filters.jaxrs2.ClientFilter;
+import com.uber.jaeger.metrics.StatsFactory;
 import io.opentracing.Tracer;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.jackson.JacksonFeature;
@@ -44,6 +45,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.mockito.Mockito.mock;
+
 @Path("jersey")
 public class JerseyHandler {
     @Inject
@@ -58,7 +61,7 @@ public class JerseyHandler {
     private Client getClient() {
         if (client == null) {
             client = ClientBuilder.newClient()
-                .register(new ClientFilter(tracer, traceContext))
+                .register(new ClientFilter(tracer, traceContext, mock(StatsFactory.class)))
                 .register(
                         new AbstractBinder() {
                             @Override

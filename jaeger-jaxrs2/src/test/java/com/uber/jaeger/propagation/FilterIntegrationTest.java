@@ -36,6 +36,7 @@ import com.uber.jaeger.context.ThreadLocalTraceContext;
 import com.uber.jaeger.context.TraceContext;
 import com.uber.jaeger.filters.jaxrs2.ClientFilter;
 import com.uber.jaeger.metrics.InMemoryStatsReporter;
+import com.uber.jaeger.metrics.StatsFactoryImpl;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
 import io.opentracing.Tracer;
@@ -83,7 +84,7 @@ public class FilterIntegrationTest {
         server.start();
         // create the client
         client = ClientBuilder.newClient()
-                .register(new ClientFilter(tracer, traceContext))
+                .register(new ClientFilter(tracer, traceContext, new StatsFactoryImpl(metricsReporter)))
                 .register(JacksonFeature.class);
     }
 
