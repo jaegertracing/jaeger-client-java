@@ -10,8 +10,8 @@ dependencies {
     compile group: 'io.dropwizard', name: 'dropwizard-hibernate', version: '0.9.1'
 
     testCompile group: 'org.glassfish.jersey.containers', name: 'jersey-container-grizzly2-http', version: jerseyVersion
-    testCompile group: 'junit', name: 'junit', version: '4.12'
-    testCompile group: 'org.mockito', name: 'mockito-all', version: '2.0.2-beta'
+    testCompile group: 'junit', name: 'junit', version: junitVersion
+    testCompile group: 'org.mockito', name: 'mockito-all', version: mockitoVersion
 }
 
 jacocoTestReport {
