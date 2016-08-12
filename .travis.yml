@@ -39,7 +39,7 @@ before_install:
 - bash travis/install-thrift.sh
 
 script:
-- make clean est
+- make clean test
 - make crossdock-fresh
 
 after_success:
