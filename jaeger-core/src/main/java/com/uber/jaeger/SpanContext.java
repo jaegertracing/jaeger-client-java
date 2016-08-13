@@ -90,6 +90,11 @@ public class SpanContext implements io.opentracing.SpanContext {
         return String.format("%x:%x:%x:%x", traceID, spanID, parentID, flags);
     }
 
+    @Override
+    public String toString() {
+        return contextAsString();
+    }
+
     public static SpanContext contextFromString(String value) throws MalformedTracerStateStringException, EmptyTracerStateStringException{
         if (value == null || value.equals("")) {
             throw new EmptyTracerStateStringException();

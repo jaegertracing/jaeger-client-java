@@ -42,7 +42,7 @@ import com.uber.jaeger.crossdock.tracetest_manual.JoinTraceRequest;
 import com.uber.jaeger.crossdock.tracetest_manual.ObservedSpan;
 import com.uber.jaeger.crossdock.tracetest_manual.StartTraceRequest;
 import com.uber.jaeger.crossdock.tracetest_manual.TraceResponse;
-import com.uber.jaeger.filters.jaxrs2.TracingUtils;
+import com.uber.jaeger.context.TracingUtils;
 import io.opentracing.tag.Tags;
 
 @Path("")
@@ -117,9 +117,14 @@ public class TraceBehaviorResource {
 
     private ObservedSpan observeSpan() {
         com.uber.jaeger.context.TraceContext traceContext = TracingUtils.getTraceContext();
+        if (traceContext.isEmpty()) {
+            System.err.println("No span found");
+            return new ObservedSpan("no span found", false, "no span found");
+        }
         Span span = (Span) traceContext.getCurrentSpan();
         if (span == null) {
-            throw new IllegalStateException("null span received in observeSpan");
+            System.err.println("No span found");
+            return new ObservedSpan("no span found", false, "no span found");
         }
 
         SpanContext context = span.getContext();

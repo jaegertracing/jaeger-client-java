@@ -224,12 +224,13 @@ public class Tracer implements io.opentracing.Tracer {
             this.sampler = sampler;
             this.metrics = new Metrics(new StatsFactoryImpl(new NullStatsReporter()));
 
-            TextMapCodec textMapCodec = new TextMapCodec();
+            TextMapCodec textMapCodec = new TextMapCodec(false);
             this.registerInjector(Format.Builtin.TEXT_MAP, textMapCodec);
             this.registerExtractor(Format.Builtin.TEXT_MAP, textMapCodec);
             // TODO for now we register the same codec for HTTP_HEADERS
-            this.registerInjector(Format.Builtin.HTTP_HEADERS, textMapCodec);
-            this.registerExtractor(Format.Builtin.HTTP_HEADERS, textMapCodec);
+            TextMapCodec httpCodec = new TextMapCodec(true);
+            this.registerInjector(Format.Builtin.HTTP_HEADERS, httpCodec);
+            this.registerExtractor(Format.Builtin.HTTP_HEADERS, httpCodec);
             // TODO binary codec not implemented
         }
 

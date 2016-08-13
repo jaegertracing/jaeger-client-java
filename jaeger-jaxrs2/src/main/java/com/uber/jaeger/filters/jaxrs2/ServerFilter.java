@@ -52,8 +52,6 @@ public class ServerFilter implements ContainerRequestFilter, ContainerResponseFi
     @Override
     public void filter(ContainerRequestContext containerRequestContext) throws IOException {
         try {
-            ServerRequestAdapter carrier = new ServerRequestAdapter(containerRequestContext);
-            SpanContext spanContext = tracer.extract(Format.Builtin.HTTP_HEADERS, carrier);
             Tracer.SpanBuilder builder = tracer.buildSpan(containerRequestContext.getMethod())
                     .withTag(
                             Tags.SPAN_KIND.getKey(),
@@ -71,6 +69,8 @@ public class ServerFilter implements ContainerRequestFilter, ContainerResponseFi
                         headers.getFirst(com.uber.jaeger.Constants.X_UBER_SOURCE));
             }
 
+            ServerRequestAdapter carrier = new ServerRequestAdapter(containerRequestContext);
+            SpanContext spanContext = tracer.extract(Format.Builtin.HTTP_HEADERS, carrier);
             if (spanContext != null) {
                 builder = builder.asChildOf(spanContext);
             }

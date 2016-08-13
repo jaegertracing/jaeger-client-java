@@ -24,6 +24,9 @@ package com.uber.jaeger.propagation;
 import com.uber.jaeger.SpanContext;
 import io.opentracing.propagation.TextMap;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,14 +36,24 @@ import static com.uber.jaeger.propagation.PrefixedKeys.prefixedKey;
 import static com.uber.jaeger.propagation.PrefixedKeys.unprefixedKey;
 
 public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
+
     private final String contextKey = TRACER_STATE_HEADER_NAME;
+
     private final String baggagePrefix = TRACER_BAGGAGE_HEADER_PREFIX;
+
+    private final boolean urlEncoding;
+
+    public TextMapCodec(boolean urlEncoding) {
+        this.urlEncoding = urlEncoding;
+    }
 
     @Override
     public void inject(SpanContext spanContext, TextMap carrier) {
-        carrier.put(contextKey, spanContext.contextAsString());
+        carrier.put(contextKey, encodedValue(spanContext.contextAsString()));
         for (Map.Entry<String, String> entry: spanContext.baggageItems()) {
-            carrier.put(prefixedKey(entry.getKey(), baggagePrefix), entry.getValue());
+            carrier.put(
+                    prefixedKey(entry.getKey(), baggagePrefix),
+                    encodedValue(entry.getValue()));
         }
     }
 
@@ -52,12 +65,15 @@ public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
             // TODO there should be no lower-case here
             String key = entry.getKey().toLowerCase();
             if (key.equals(contextKey)) {
-                context = SpanContext.contextFromString(entry.getValue());
+                context = SpanContext.contextFromString(
+                        decodedValue(entry.getValue()));
             } else if (key.startsWith(baggagePrefix)) {
                 if (baggage == null) {
                     baggage = new HashMap<>();
                 }
-                baggage.put(unprefixedKey(key, baggagePrefix), entry.getValue());
+                baggage.put(
+                        unprefixedKey(key, baggagePrefix),
+                        decodedValue(entry.getValue()));
             }
         }
         if (context == null) {
@@ -68,4 +84,29 @@ public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
         }
         return context.withBaggage(baggage);
     }
+
+    private String encodedValue(String value) {
+        if (!urlEncoding) {
+            return value;
+        }
+        try {
+            return URLEncoder.encode(value, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            // not much we can do, try raw value
+            return value;
+        }
+    }
+
+    private String decodedValue(String value) {
+        if (!urlEncoding) {
+            return value;
+        }
+        try {
+            return URLDecoder.decode(value, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            // not much we can do, try raw value
+            return value;
+        }
+    }
+
 }

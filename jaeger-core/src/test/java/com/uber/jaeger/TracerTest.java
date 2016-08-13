@@ -71,8 +71,7 @@ public class TracerTest {
 
     @Test
     public void testRegisterInjector() {
-        TextMap carrier = mock(TextMap.class);
-        Injector<TextMap> injector = mock(Injector.class);
+        @SuppressWarnings("unchecked") Injector<TextMap> injector = mock(Injector.class);
 
         Tracer tracer = new Tracer.Builder(
                 "TracerTestService",
@@ -82,6 +81,7 @@ public class TracerTest {
                 .registerInjector(Format.Builtin.TEXT_MAP, injector).build();
         Span span = (com.uber.jaeger.Span) tracer.buildSpan("leela").start();
 
+        TextMap carrier = mock(TextMap.class);
         tracer.inject(span.context(), Format.Builtin.TEXT_MAP, carrier);
 
         verify(injector).inject(any(SpanContext.class), any(TextMap.class));

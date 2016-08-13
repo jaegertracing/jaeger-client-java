@@ -19,3 +19,8 @@ crossdock-fresh: gradle-compile
 
 gradle-compile:
 	./gradlew clean :jaeger-java-crossdock:shadowJar
+
+.PHONE: crossdock-logs
+crossdock-logs:
+	docker-compose -f $(XDOCK_YAML) logs
+
