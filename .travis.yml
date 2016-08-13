@@ -26,20 +26,20 @@ cache:
   directories:
   - $HOME/.gradle/caches/
   - $HOME/.gradle/wrapper/
-  - $HOME/.thrift-build
 
 before_install:
 - docker version
-- sudo rm /usr/local/bin/docker-compose
+- sudo rm -rf /usr/local/bin/docker-compose
 - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname
   -s`-`uname -m` > docker-compose
 - chmod +x docker-compose
 - sudo mv docker-compose /usr/local/bin
 - docker-compose version
-- bash travis/install-thrift.sh
+- sudo rm -rf /usr/local/bin/thrift
+- sudo cp travis/docker-thrift/thrift /usr/local/bin/
 
 script:
-- make clean test
+- make test
 - make crossdock-fresh
 
 after_success:

@@ -59,8 +59,8 @@ subprojects {
     license {
         header rootProject.file('license-template')
         strictCheck true
-        include '**/*.java'
-        exclude '**/gen-java/**'
+        include "**/*.java"
+        excludes(["**/gen-java/**"])
         ext.year = Calendar.getInstance().get(Calendar.YEAR)
         ext.name = 'Uber Technologies, Inc'
         ignoreFailures = false
