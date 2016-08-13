@@ -6,4 +6,4 @@ clean:
 
 .PHONY: test
 test:
-	./gradlew test
+	PATH=$(PWD)/travis/docker-thrift:$$PATH ./gradlew test

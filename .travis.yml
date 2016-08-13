@@ -26,7 +26,6 @@ cache:
   directories:
   - $HOME/.gradle/caches/
   - $HOME/.gradle/wrapper/
-  - $HOME/.thrift-build
 
 before_install:
 - docker version
@@ -36,7 +35,6 @@ before_install:
 - chmod +x docker-compose
 - sudo mv docker-compose /usr/local/bin
 - docker-compose version
-- bash travis/install-thrift.sh
 
 script:
 - make clean test
