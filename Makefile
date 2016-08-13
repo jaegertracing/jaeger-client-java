@@ -8,7 +8,7 @@ clean:
 
 .PHONY: compile-thrift
 compile-thrift:
-	PATH=$(PWD)/travis/docker-thrift:$$PATH ./gradlew :jaeger-core:compileThrift
+	PATH=$(PWD)/travis/docker-thrift:$$PATH ./gradlew :jaeger-core:compileThrift :jaeger-core:licenseFormatMain
 
 .PHONY: test
 test:
