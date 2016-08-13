@@ -37,7 +37,7 @@ before_install:
 - docker-compose version
 - sudo rm -rf /usr/local/bin/thrift
 - sudo cp travis/docker-thrift/thrift /usr/local/bin/
-- sudo make clean
+- sudo rm -rf jaeger-core/src/main/gen-java
 
 script:
 - make test
