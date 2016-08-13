@@ -35,8 +35,8 @@ before_install:
 - chmod +x docker-compose
 - sudo mv docker-compose /usr/local/bin
 - docker-compose version
-# we generate thrift files here because Travis runs gradle assemble prior to 'script' steps
-- make clean compile-thrift
+- sudo rm /usr/local/bin/thrift
+- sudo cp travis/docker-thrift/thrift /usr/local/bin/
 
 script:
 - make test
