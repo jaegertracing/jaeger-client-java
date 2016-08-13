@@ -37,9 +37,9 @@ before_install:
 - docker-compose version
 - sudo rm -rf /usr/local/bin/thrift
 - sudo cp travis/docker-thrift/thrift /usr/local/bin/
-- sudo rm -rf jaeger-core/src/main/gen-java
-- ./gradlew :jaeger-core:compileThrift
-- sudo chmod -R 0777 jaeger-core/src/main/gen-java
+#- sudo rm -rf jaeger-core/src/main/gen-java
+#- ./gradlew :jaeger-core:compileThrift
+#- sudo chmod -R 0777 jaeger-core/src/main/gen-java
 
 script:
 - make test
