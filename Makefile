@@ -3,7 +3,13 @@
 .PHONY: clean
 clean:
 	./gradlew clean
+	rm -rf jaeger-core/src/main/gen-java
+
+
+.PHONY: compile-thrift
+compile-thrift:
+	PATH=$(PWD)/travis/docker-thrift:$$PATH ./gradlew :jaeger-core:compileThrift
 
 .PHONY: test
 test:
-	PATH=$(PWD)/travis/docker-thrift:$$PATH ./gradlew test
+	./gradlew test
