@@ -33,11 +33,14 @@ import static com.uber.jaeger.propagation.PrefixedKeys.prefixedKey;
 import static com.uber.jaeger.propagation.PrefixedKeys.unprefixedKey;
 
 public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
+    private final String contextKey = TRACER_STATE_HEADER_NAME;
+    private final String baggagePrefix = TRACER_BAGGAGE_HEADER_PREFIX;
+
     @Override
     public void inject(SpanContext spanContext, TextMap carrier) {
-        carrier.put(TRACER_STATE_HEADER_NAME, spanContext.contextAsString());
+        carrier.put(contextKey, spanContext.contextAsString());
         for (Map.Entry<String, String> entry: spanContext.baggageItems()) {
-            carrier.put(prefixedKey(entry.getKey(), TRACER_BAGGAGE_HEADER_PREFIX), entry.getValue());
+            carrier.put(prefixedKey(entry.getKey(), baggagePrefix), entry.getValue());
         }
     }
 
@@ -48,13 +51,13 @@ public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
         for (Map.Entry<String, String> entry : carrier) {
             // TODO there should be no lower-case here
             String key = entry.getKey().toLowerCase();
-            if (key.equals(TRACER_STATE_HEADER_NAME)) {
+            if (key.equals(contextKey)) {
                 context = SpanContext.contextFromString(entry.getValue());
-            } else if (key.startsWith(TRACER_BAGGAGE_HEADER_PREFIX)) {
+            } else if (key.startsWith(baggagePrefix)) {
                 if (baggage == null) {
                     baggage = new HashMap<>();
                 }
-                baggage.put(unprefixedKey(key, TRACER_BAGGAGE_HEADER_PREFIX), entry.getValue());
+                baggage.put(unprefixedKey(key, baggagePrefix), entry.getValue());
             }
         }
         if (context == null) {
