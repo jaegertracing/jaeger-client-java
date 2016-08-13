@@ -7,7 +7,7 @@ plugins {
 }
 
 
-ext.opentracingVersion = '0.2.0'
+ext.opentracingVersion = '0.13.0'
 ext.guavaVersion = '18.0'
 ext.apacheThriftVersion = '0.9.3'
 ext.jerseyVersion = '2.22.2'
@@ -50,6 +50,9 @@ subprojects {
 
     repositories {
         mavenCentral()
+        maven {
+            url  "http://dl.bintray.com/opentracing/maven" 
+        }
     }
 
     task listJars(description: 'Display all compile jars.') << {

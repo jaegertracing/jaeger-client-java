@@ -19,10 +19,15 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.uber.jaeger;
+package com.uber.jaeger.propagation;
 
-import io.opentracing.Tracer;
+// TODO profile and cache prefixed and unprefixed keys if necessary
+public final class PrefixedKeys {
+    public static String prefixedKey(String key, String prefix) {
+        return prefix + key;
+    }
 
-public interface Extractor<T> {
-    Tracer.SpanBuilder join(T carrier);
+    public static String unprefixedKey(String key, String prefix) {
+        return key.substring(prefix.length());
+    }
 }

@@ -23,7 +23,9 @@ package com.uber.jaeger.filters.jaxrs2;
 
 import com.uber.jaeger.context.TraceContext;
 import io.opentracing.Span;
+import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
+import io.opentracing.propagation.Format;
 import io.opentracing.tag.Tags;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,19 +52,29 @@ public class ServerFilter implements ContainerRequestFilter, ContainerResponseFi
     @Override
     public void filter(ContainerRequestContext containerRequestContext) throws IOException {
         try {
-            Tracer.SpanBuilder spanBuilder = tracer.join(containerRequestContext);
-            Span serverSpan = spanBuilder.withOperationName(containerRequestContext.getMethod()).start();
+            ServerRequestAdapter carrier = new ServerRequestAdapter(containerRequestContext);
+            SpanContext spanContext = tracer.extract(Format.Builtin.HTTP_HEADERS, carrier);
+            Tracer.SpanBuilder builder = tracer.buildSpan(containerRequestContext.getMethod())
+                    .withTag(
+                            Tags.SPAN_KIND.getKey(),
+                            Tags.SPAN_KIND_SERVER)
+                    //TODO(oibe) figure out how to get remote addr from grizzly HttpServletRequest
+                    .withTag(
+                            Tags.HTTP_URL.getKey(),
+                            containerRequestContext.getUriInfo().toString());
 
-            Tags.SPAN_KIND.set(serverSpan, Tags.SPAN_KIND_SERVER);
-
-            //TODO(oibe) figure out how to get remote addr from grizzly HttpServletRequest
-            Tags.HTTP_URL.set(serverSpan, containerRequestContext.getUriInfo().toString());
-
-            MultivaluedMap<String, String> headers = containerRequestContext.getHeaders();
             // TODO(oibe) make X_UBER_SOURCE configurable for open source projects
+            MultivaluedMap<String, String> headers = containerRequestContext.getHeaders();
             if (headers.containsKey(com.uber.jaeger.Constants.X_UBER_SOURCE)) {
-                Tags.PEER_SERVICE.set(serverSpan, headers.getFirst(com.uber.jaeger.Constants.X_UBER_SOURCE));
+                builder = builder.withTag(
+                        Tags.PEER_SERVICE.getKey(),
+                        headers.getFirst(com.uber.jaeger.Constants.X_UBER_SOURCE));
             }
+
+            if (spanContext != null) {
+                builder = builder.asChildOf(spanContext);
+            }
+            Span serverSpan = builder.start();
 
             traceContext.push(serverSpan);
         } catch (Exception e) {

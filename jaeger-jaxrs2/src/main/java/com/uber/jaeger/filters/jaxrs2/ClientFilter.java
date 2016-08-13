@@ -24,6 +24,7 @@ package com.uber.jaeger.filters.jaxrs2;
 import com.uber.jaeger.context.TraceContext;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
+import io.opentracing.propagation.Format;
 import io.opentracing.tag.Tags;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +55,7 @@ public class ClientFilter implements ClientRequestFilter, ClientResponseFilter {
         try {
             Tracer.SpanBuilder clientSpanBuilder = tracer.buildSpan(clientRequestContext.getMethod());
             if (!traceContext.isEmpty()) {
-                clientSpanBuilder.withParent(traceContext.getCurrentSpan());
+                clientSpanBuilder.asChildOf(traceContext.getCurrentSpan());
             }
             Span clientSpan = clientSpanBuilder.start();
 
@@ -62,8 +63,12 @@ public class ClientFilter implements ClientRequestFilter, ClientResponseFilter {
             Tags.HTTP_URL.set(clientSpan, clientRequestContext.getUri().toString());
             Tags.PEER_HOSTNAME.set(clientSpan, clientRequestContext.getUri().getHost());
 
+            tracer.inject(
+                    clientSpan.context(),
+                    Format.Builtin.HTTP_HEADERS,
+                    new ClientRequestAdapter(clientRequestContext));
+
             clientRequestContext.setProperty(Constants.CURRENT_SPAN_CONTEXT_KEY, clientSpan);
-            tracer.inject(clientSpan, clientRequestContext);
         } catch (Exception e) {
             logger.error("Client Filter Request:", e);
         }

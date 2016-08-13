@@ -34,7 +34,7 @@ import javax.ws.rs.ext.Provider;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uber.jaeger.Span;
-import com.uber.jaeger.TraceContext;
+import com.uber.jaeger.SpanContext;
 import com.uber.jaeger.crossdock.Constants;
 import com.uber.jaeger.crossdock.JerseyServer;
 import com.uber.jaeger.crossdock.tracetest_manual.Downstream;
@@ -122,7 +122,7 @@ public class TraceBehaviorResource {
             throw new IllegalStateException("null span received in observeSpan");
         }
 
-        TraceContext context = span.getContext();
+        SpanContext context = span.getContext();
         String traceID = String.format("%x", context.getTraceID());
         boolean sampled = context.isSampled();
         String baggage = span.getBaggageItem(Constants.BAGGAGE_KEY);

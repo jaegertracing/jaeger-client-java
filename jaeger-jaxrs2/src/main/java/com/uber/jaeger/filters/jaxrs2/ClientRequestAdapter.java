@@ -19,11 +19,30 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.uber.jaeger.propagation;
+package com.uber.jaeger.filters.jaxrs2;
 
-import com.uber.jaeger.Extractor;
-import com.uber.jaeger.Tracer;
+import io.opentracing.propagation.TextMap;
 
-public interface ExtractorFactory<T> {
-    Extractor<T> provide(Tracer tracer);
+import javax.ws.rs.client.ClientRequestContext;
+import javax.ws.rs.core.MultivaluedMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+public class ClientRequestAdapter implements TextMap {
+    private final ClientRequestContext requestContext;
+
+    public ClientRequestAdapter(ClientRequestContext requestContext) {
+        this.requestContext = requestContext;
+    }
+
+    @Override
+    public Iterator<Map.Entry<String, String>> iterator() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void put(String key, String value) {
+        requestContext.getHeaders().putSingle(key, value);
+    }
 }

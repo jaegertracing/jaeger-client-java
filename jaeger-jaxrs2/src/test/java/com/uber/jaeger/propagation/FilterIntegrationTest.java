@@ -26,6 +26,7 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.ClientRequestContext;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Form;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.Response;
@@ -35,16 +36,20 @@ import com.uber.jaeger.Span;
 import com.uber.jaeger.context.ThreadLocalTraceContext;
 import com.uber.jaeger.context.TraceContext;
 import com.uber.jaeger.filters.jaxrs2.ClientFilter;
+import com.uber.jaeger.filters.jaxrs2.ServerRequestAdapter;
 import com.uber.jaeger.metrics.InMemoryStatsReporter;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
+import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
+import io.opentracing.propagation.Format;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.BDDMockito.given;
 import static org.powermock.api.mockito.PowerMockito.mock;
@@ -68,12 +73,6 @@ public class FilterIntegrationTest {
         reporter = new InMemoryReporter();
         tracer = new com.uber.jaeger.Tracer.Builder("some-op-name", reporter, new ConstSampler(true))
             .withStatsReporter(metricsReporter)
-            .register(ContainerRequestContext.class, new ExtractorFactory<ContainerRequestContext>() {
-                public JerseyContainerRequestExtractor provide(com.uber.jaeger.Tracer tracer) {
-                    return new JerseyContainerRequestExtractor(tracer);
-                }
-            })
-            .register(ClientRequestContext.class, new JerseyClientRequestInjector())
             .build();
 
         traceContext = new ThreadLocalTraceContext();
@@ -128,13 +127,11 @@ public class FilterIntegrationTest {
     * building a span.
     */
     @Test
-    public void testExtractorReturnsSpanWhenTracerStateHeaderIsMissing() {
-        ContainerRequestContext carrier = mock(ContainerRequestContext.class);
-        given(carrier.getMethod()).willReturn("GET");
-        given(carrier.getHeaders()).willReturn(new MultivaluedHashMap<String, String>());
-
-        Tracer.SpanBuilder builder = tracer.join(carrier);
-        Span span = (Span) builder.start();
-        assertTrue(span != null);
+    public void testExtractorReturnsNullWhenTracerStateHeaderIsMissing() {
+        ContainerRequestContext reqContext = mock(ContainerRequestContext.class);
+        given(reqContext.getHeaders()).willReturn(new MultivaluedHashMap<String, String>());
+        ServerRequestAdapter carrier = new ServerRequestAdapter(reqContext);
+        SpanContext spanCtx = tracer.extract(Format.Builtin.HTTP_HEADERS, carrier);
+        assertNull(spanCtx);
     }
 }
