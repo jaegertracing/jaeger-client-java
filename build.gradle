@@ -22,7 +22,7 @@ allprojects {
     apply plugin: 'idea' // intellij support
 
     group = 'com.uber.jaeger'
-    version = '0.5.1-SNAPSHOT'
+    version = '0.7.0-SNAPSHOT'
 
     task wrapper(type: Wrapper) {
         gradleVersion = '2.12' //version required
@@ -50,9 +50,6 @@ subprojects {
 
     repositories {
         mavenCentral()
-        maven {
-            url  "http://dl.bintray.com/opentracing/maven" 
-        }
     }
 
     task listJars(description: 'Display all compile jars.') << {
