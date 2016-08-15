@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.uber.jaeger.Span;
-import com.uber.jaeger.TraceContext;
+import com.uber.jaeger.SpanContext;
 import com.uber.jaeger.Tracer;
 import com.uber.jaeger.agent.thrift.Agent;
 import com.uber.jaeger.exceptions.SenderException;
@@ -144,7 +144,7 @@ public class UDPSenderTest {
         assertEquals(spans.size(), expectedNumSpans);
 
         com.twitter.zipkin.thriftjava.Span actualSpan = spans.get(0);
-        TraceContext context = expectedSpan.getContext();
+        SpanContext context = expectedSpan.getContext();
 
         assertEquals(context.getTraceID(), actualSpan.getTrace_id());
         assertEquals(context.getSpanID(), actualSpan.getId());

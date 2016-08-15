@@ -21,9 +21,13 @@
  */
 package com.uber.jaeger.propagation;
 
-import com.uber.jaeger.Extractor;
-import com.uber.jaeger.Tracer;
+// TODO profile and cache prefixed and unprefixed keys if necessary
+public final class PrefixedKeys {
+    public static String prefixedKey(String key, String prefix) {
+        return prefix + key;
+    }
 
-public interface ExtractorFactory<T> {
-    Extractor<T> provide(Tracer tracer);
+    public static String unprefixedKey(String key, String prefix) {
+        return key.substring(prefix.length());
+    }
 }

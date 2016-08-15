@@ -23,7 +23,6 @@ package com.uber.jaeger;
 
 import com.uber.jaeger.exceptions.EmptyTracerStateStringException;
 import com.uber.jaeger.exceptions.MalformedTracerStateStringException;
-import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -32,17 +31,17 @@ public class TraceContextTest {
 
     @Test(expected=MalformedTracerStateStringException.class)
     public void testContextFromStringMalformedException() throws EmptyTracerStateStringException, MalformedTracerStateStringException {
-        TraceContext.contextFromString("ff:ff:ff");
+        SpanContext.contextFromString("ff:ff:ff");
     }
 
     @Test(expected=EmptyTracerStateStringException.class)
     public void testContextFromStringEmptyException() throws EmptyTracerStateStringException, MalformedTracerStateStringException {
-        TraceContext.contextFromString("");
+        SpanContext.contextFromString("");
     }
 
     @Test
     public void testContextFromString() throws EmptyTracerStateStringException, MalformedTracerStateStringException {
-        TraceContext context = TraceContext.contextFromString("ff:dd:cc:4");
+        SpanContext context = SpanContext.contextFromString("ff:dd:cc:4");
         assertEquals(context.getTraceID(), 255);
         assertEquals(context.getSpanID(), 221);
         assertEquals(context.getParentID(), 204);
@@ -59,12 +58,12 @@ public class TraceContextTest {
 
         // I use MIN_VALUE because the most significant bit, and thats when
         // we want to make sure the hex number is positive.
-        TraceContext context = new TraceContext(traceID, spanID, parentID, flags);
+        SpanContext context = new SpanContext(traceID, spanID, parentID, flags);
 
         context.contextAsString().split(":");
 
         assertEquals("fffffffffffffff7:fffffffffffffff7:fffffffffffffff7:81", context.contextAsString());
-        TraceContext contextFromStr = TraceContext.contextFromString(context.contextAsString());
+        SpanContext contextFromStr = SpanContext.contextFromString(context.contextAsString());
         assertEquals(traceID, contextFromStr.getTraceID());
         assertEquals(spanID, contextFromStr.getSpanID());
         assertEquals(parentID, contextFromStr.getParentID());

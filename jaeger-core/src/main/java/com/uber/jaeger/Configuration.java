@@ -21,6 +21,7 @@
  */
 package com.uber.jaeger;
 
+// TODO don't pull the whole guava dependency because of a single class
 import com.google.common.base.Strings;
 import com.uber.jaeger.metrics.Metrics;
 import com.uber.jaeger.metrics.StatsFactory;

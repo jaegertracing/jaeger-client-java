@@ -25,9 +25,6 @@ import com.uber.jaeger.Tracer;
 import com.uber.jaeger.metrics.NullStatsReporter;
 import com.uber.jaeger.metrics.StatsFactory;
 import com.uber.jaeger.metrics.StatsFactoryImpl;
-import com.uber.jaeger.propagation.ExtractorFactory;
-import com.uber.jaeger.propagation.JerseyClientRequestInjector;
-import com.uber.jaeger.propagation.JerseyContainerRequestExtractor;
 
 import javax.ws.rs.client.ClientRequestContext;
 import javax.ws.rs.container.ContainerRequestContext;
@@ -76,13 +73,7 @@ public class Configuration extends com.uber.jaeger.Configuration {
             statsFactory = new StatsFactoryImpl(new NullStatsReporter());
         }
 
-        tracer = this.getTracerBuilder(statsFactory)
-                .register(ContainerRequestContext.class, new ExtractorFactory<ContainerRequestContext>() {
-                    public JerseyContainerRequestExtractor provide(Tracer tracer) {
-                        return new JerseyContainerRequestExtractor(tracer);
-                    }
-                })
-                .register(ClientRequestContext.class, new JerseyClientRequestInjector()).build();
+        tracer = this.getTracerBuilder(statsFactory).build();
         return tracer;
     }
 }

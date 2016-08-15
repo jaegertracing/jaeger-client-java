@@ -19,10 +19,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.uber.jaeger;
+package com.uber.jaeger.exceptions;
 
-import io.opentracing.Span;
+import io.opentracing.propagation.Format;
 
-public interface Injector<T> {
-    void inject(Span span, T carrier);
+public class UnsupportedFormatException extends RuntimeException {
+    public UnsupportedFormatException(Format<?> format) {
+        super(format.toString());
+    }
 }

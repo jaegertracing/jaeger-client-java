@@ -22,6 +22,7 @@
 package com.uber.jaeger;
 
 public class Constants {
+    // TODO do not need to be public
     public static final String TRACER_STATE_HEADER_NAME = "uber-trace-id";
     public static final String TRACER_BAGGAGE_HEADER_PREFIX = "uberctx-";
     public static final String X_UBER_SOURCE = "x-uber-source";

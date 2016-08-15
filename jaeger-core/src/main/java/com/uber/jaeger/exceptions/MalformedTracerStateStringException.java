@@ -22,7 +22,7 @@
 package com.uber.jaeger.exceptions;
 
 public class MalformedTracerStateStringException extends RuntimeException {
-    public MalformedTracerStateStringException() {
-        super("String does not match tracer state format");
+    public MalformedTracerStateStringException(String value) {
+        super("String does not match tracer state format: " + value);
     }
 }

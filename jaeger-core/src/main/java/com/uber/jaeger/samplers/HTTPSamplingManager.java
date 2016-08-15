@@ -104,7 +104,7 @@ public class HTTPSamplingManager implements SamplingManager {
     public SamplingStrategyResponse getSamplingStrategy(String serviceName) throws SamplingStrategyErrorException {
         String jsonString;
         try {
-            jsonString = makeGetRequest("http://" + hostPort + "/?service=" + URLEncoder.encode(serviceName));
+            jsonString = makeGetRequest("http://" + hostPort + "/?service=" + URLEncoder.encode(serviceName, "UTF-8"));
         } catch (IOException e) {
             throw new SamplingStrategyErrorException("http call to get sampling strategy from local agent failed.", e);
         }

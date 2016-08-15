@@ -43,10 +43,10 @@ import static org.junit.Assert.assertTrue;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(Utils.class)
 public class SpanTest {
-    Tracer tracer;
-    Span span;
-    InMemoryStatsReporter metricsReporter;
-    TraceContext context;
+    private Tracer tracer;
+    private Span span;
+    private InMemoryStatsReporter metricsReporter;
+    private SpanContext context;
 
     @Before
     public void setUp() throws Exception {
@@ -58,7 +58,7 @@ public class SpanTest {
         span = (Span) tracer.buildSpan("some-operation").start();
 
         Random rand = new Random();
-        context = new TraceContext(rand.nextLong(), rand.nextLong(), rand.nextLong(), (byte)1);
+        context = new SpanContext(rand.nextLong(), rand.nextLong(), rand.nextLong(), (byte)1);
     }
 
     @Test
@@ -105,7 +105,7 @@ public class SpanTest {
 
     @Test
     public void testSpanFinish() {
-        Span span = (Span) tracer.getExtractedSpanBuilder("test-service-name", context, new HashMap<String, String>()).withStartTimestamp(333).start();
+        Span span = (Span) tracer.buildSpan("test-service-name").withStartTimestamp(333).start();
 
         PowerMockito.mockStatic(Utils.class);
         BDDMockito.given(Utils.getMicroseconds()).willReturn(999L);
@@ -119,8 +119,8 @@ public class SpanTest {
     @Test
     public void testSpanToString() {
         Span span = (Span) tracer.buildSpan("test-operation").start();
-        TraceContext expectedContext = span.getContext();
-        TraceContext actualContext = TraceContext.contextFromString(span.getContext().contextAsString());
+        SpanContext expectedContext = span.getContext();
+        SpanContext actualContext = SpanContext.contextFromString(span.getContext().contextAsString());
 
         assertEquals(expectedContext.getTraceID(), actualContext.getTraceID());
         assertEquals(expectedContext.getSpanID(), actualContext.getSpanID());
@@ -131,7 +131,7 @@ public class SpanTest {
     @Test
     public void testOperationName() {
         String expectedOperation = "leela";
-        Span span = (Span) tracer.getExtractedSpanBuilder("test-service-name", context, new HashMap<String, String>()).withOperationName(expectedOperation).start();
+        Span span = (Span) tracer.buildSpan(expectedOperation).start();
         assertEquals(expectedOperation, span.getOperationName());
     }
 
@@ -206,16 +206,16 @@ public class SpanTest {
         Span span = (Span) tracer.buildSpan("test-service-operation").start();
         Tags.SAMPLING_PRIORITY.set(span,(short) 1);
 
-        assertEquals(span.getContext().getFlags() & TraceContext.flagSampled, TraceContext.flagSampled);
-        assertEquals(span.getContext().getFlags() & TraceContext.flagDebug, TraceContext.flagDebug);
+        assertEquals(span.getContext().getFlags() & SpanContext.flagSampled, SpanContext.flagSampled);
+        assertEquals(span.getContext().getFlags() & SpanContext.flagDebug, SpanContext.flagDebug);
     }
 
     @Test
     public void testSpanDetectsSamplingPriorityLessThanZero() {
         Span span = (Span) tracer.buildSpan("test-service-operation").start();
 
-        assertEquals(span.getContext().getFlags() & TraceContext.flagSampled, TraceContext.flagSampled);
+        assertEquals(span.getContext().getFlags() & SpanContext.flagSampled, SpanContext.flagSampled);
         Tags.SAMPLING_PRIORITY.set(span,(short) -1);
-        assertEquals(span.getContext().getFlags() & TraceContext.flagSampled, 0);
+        assertEquals(span.getContext().getFlags() & SpanContext.flagSampled, 0);
     }
 }

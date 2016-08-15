@@ -19,48 +19,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.uber.jaeger.noop;
+package com.uber.jaeger.propagation;
 
-import io.opentracing.Span;
-import io.opentracing.Tracer;
+import com.uber.jaeger.SpanContext;
 
-final class NoopSpanBuilder implements Tracer.SpanBuilder {
-    static final Tracer.SpanBuilder INSTANCE = new NoopSpanBuilder();
-
-    private NoopSpanBuilder() {}
-
-    @Override
-    public Tracer.SpanBuilder withOperationName(String operationName) {
-        return this;
-    }
-
-    @Override
-    public Tracer.SpanBuilder withParent(Span parent) {
-        return this;
-    }
-
-    @Override
-    public Tracer.SpanBuilder withTag(String key, String value) {
-        return this;
-    }
-
-    @Override
-    public Tracer.SpanBuilder withTag(String key, boolean value) {
-        return this;
-    }
-
-    @Override
-    public Tracer.SpanBuilder withTag(String key, Number value) {
-        return this;
-    }
-
-    @Override
-    public Tracer.SpanBuilder withStartTimestamp(long microseconds) {
-        return this;
-    }
-
-    @Override
-    public Span start() {
-        return NoopSpan.INSTANCE;
-    }
+public interface Extractor<T> {
+    SpanContext extract(T carrier);
 }

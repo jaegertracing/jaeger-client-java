@@ -35,6 +35,7 @@ import com.uber.jaeger.Configuration.ReporterConfiguration;
 import com.uber.jaeger.Configuration.SamplerConfiguration;
 import com.uber.jaeger.filters.jaxrs2.Configuration;
 import com.uber.jaeger.filters.jaxrs2.TracingUtils;
+import io.opentracing.Tracer;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.filter.LoggingFilter;
@@ -43,10 +44,13 @@ import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 
 public class JerseyServer {
-    private final HttpServer server;
-    public static Client client;
-    public final static String SERVICE_NAME = "java";
+    public static final String SERVICE_NAME = "java";
 
+    public static Client client;
+
+    private final HttpServer server;
+
+    private final Configuration config;
 
     public JerseyServer(String hostPort, Class... resourceClasses) {
         final String samplingType = SamplerConfiguration.CONST;
@@ -54,7 +58,7 @@ public class JerseyServer {
         final boolean disable = false;
         final boolean logging = true;
 
-        final Configuration config = new Configuration(SERVICE_NAME, disable,
+        config = new Configuration(SERVICE_NAME, disable,
                 new SamplerConfiguration(samplingType, samplingParam),
                 new ReporterConfiguration(logging, null, null, null, null));
 
@@ -100,6 +104,10 @@ public class JerseyServer {
 
     public void shutdown() {
         server.shutdown();
+    }
+
+    public Tracer getTracer() {
+        return config.getTracer();
     }
 
     public static void main(String[] args) throws Exception {

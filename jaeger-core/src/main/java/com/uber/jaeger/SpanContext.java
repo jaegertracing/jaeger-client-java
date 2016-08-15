@@ -24,8 +24,12 @@ package com.uber.jaeger;
 import com.uber.jaeger.exceptions.*;
 
 import java.math.BigInteger;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
-public class TraceContext {
+public class SpanContext implements io.opentracing.SpanContext {
     public static final byte flagSampled = 1;
     public static final byte flagDebug = 2;
 
@@ -33,12 +37,32 @@ public class TraceContext {
     private final long spanID;
     private final long parentID;
     private final byte flags;
+    private final Map<String, String> baggage;
 
-    TraceContext(long traceID, long spanID, long parentID, byte flags) {
+    SpanContext(long traceID, long spanID, long parentID, byte flags) {
+        this(traceID, spanID, parentID, flags, Collections.<String, String>emptyMap());
+    }
+
+    SpanContext(long traceID, long spanID, long parentID, byte flags, Map<String, String> baggage) {
+        if (baggage == null) {
+            throw new NullPointerException();
+        }
         this.traceID = traceID;
         this.spanID = spanID;
         this.parentID = parentID;
         this.flags = flags;
+        this.baggage = baggage;
+    }
+
+    @Override
+    public Iterable<Map.Entry<String, String>> baggageItems() {
+        return baggage.entrySet();
+    }
+
+    public String getBaggageItem(String key) { return this.baggage.get(key); }
+
+    Map<String, String> baggage() {
+        return this.baggage;
     }
 
     public long getTraceID() {
@@ -66,25 +90,43 @@ public class TraceContext {
         return String.format("%x:%x:%x:%x", traceID, spanID, parentID, flags);
     }
 
-    public static TraceContext contextFromString(String value) throws MalformedTracerStateStringException, EmptyTracerStateStringException{
+    @Override
+    public String toString() {
+        return contextAsString();
+    }
+
+    public static SpanContext contextFromString(String value) throws MalformedTracerStateStringException, EmptyTracerStateStringException{
         if (value == null || value.equals("")) {
             throw new EmptyTracerStateStringException();
         }
 
         String[] parts = value.split(":");
         if (parts.length != 4) {
-            throw new MalformedTracerStateStringException();
+            throw new MalformedTracerStateStringException(value);
         }
 
         /*
            TODO(oibe) because java doesn't like to convert large hex strings to longs
            we should write this manually instead of using BigInteger.
          */
-        return new TraceContext(
+        return new SpanContext(
             new BigInteger(parts[0], 16).longValue(),
             new BigInteger(parts[1], 16).longValue(),
             new BigInteger(parts[2], 16).longValue(),
-            new BigInteger(parts[3], 16).byteValue()
-        );
+            new BigInteger(parts[3], 16).byteValue());
+    }
+
+    public SpanContext withBaggageItem(String key, String val) {
+        Map<String, String> newBaggage = new HashMap<>(this.baggage);
+        newBaggage.put(key, val);
+        return new SpanContext(traceID, spanID, parentID, flags, newBaggage);
+    }
+
+    public SpanContext withBaggage(Map<String, String> newBaggage) {
+        return new SpanContext(traceID, spanID, parentID, flags, newBaggage);
+    }
+
+    public SpanContext withFlags(byte flags) {
+        return new SpanContext(traceID, spanID, parentID, flags, baggage);
     }
 }

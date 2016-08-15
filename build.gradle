@@ -7,7 +7,7 @@ plugins {
 }
 
 
-ext.opentracingVersion = '0.2.0'
+ext.opentracingVersion = '0.13.0'
 ext.guavaVersion = '18.0'
 ext.apacheThriftVersion = '0.9.3'
 ext.jerseyVersion = '2.22.2'
@@ -22,7 +22,7 @@ allprojects {
     apply plugin: 'idea' // intellij support
 
     group = 'com.uber.jaeger'
-    version = '0.5.1-SNAPSHOT'
+    version = '0.7.0-SNAPSHOT'
 
     task wrapper(type: Wrapper) {
         gradleVersion = '2.12' //version required
