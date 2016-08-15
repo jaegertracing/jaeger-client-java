@@ -203,4 +203,32 @@ public class Metrics {
     })
     // Number of times the Sampler failed to parse retrieved sampling strategy
     public Counter samplerParsingFailure;
+
+    @Metric(name="spans", tags = {
+            @Tag(key = "instrumented", value = "client"),
+            @Tag(key = "type", value = "request")
+    })
+    // Number of exceptions being emitted from a client filter request
+    public Counter clientFilterExceptionRequest;
+
+    @Metric(name="spans", tags = {
+            @Tag(key = "instrumented", value = "client"),
+            @Tag(key = "type", value = "response")
+    })
+    // Number of exceptions being emitted from a client filter response
+    public Counter clientFilterExceptionResponse;
+
+    @Metric(name="spans", tags = {
+            @Tag(key = "instrumented", value = "server"),
+            @Tag(key = "type", value = "request"),
+    })
+    // Number of exceptions being emitted from a server filter request
+    public Counter serverFilterExceptionRequest;
+
+    @Metric(name="spans", tags = {
+            @Tag(key = "instrumented", value = "server"),
+            @Tag(key = "type", value = "response"),
+    })
+    // Number of exceptions being emitted from a server filter response
+    public Counter serverFilterExceptionResponse;
 }

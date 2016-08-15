@@ -23,7 +23,8 @@ package com.uber.jaeger.propagation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uber.jaeger.context.TraceContext;
-import com.uber.jaeger.filters.jaxrs2.ClientFilter;
+import com.uber.jaeger.filters.jaxrs2.Configuration;
+import com.uber.jaeger.filters.jaxrs2.TracingUtils;
 import io.opentracing.Tracer;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.jackson.JacksonFeature;
@@ -52,13 +53,16 @@ public class JerseyHandler {
     @Inject
     TraceContext traceContext;
 
+    @Inject
+    Configuration configuration;
+
     private Client client;
     private ObjectMapper mapper = new ObjectMapper();
 
     private Client getClient() {
         if (client == null) {
             client = ClientBuilder.newClient()
-                .register(new ClientFilter(tracer, traceContext))
+                .register(TracingUtils.clientFilter(configuration))
                 .register(
                         new AbstractBinder() {
                             @Override
