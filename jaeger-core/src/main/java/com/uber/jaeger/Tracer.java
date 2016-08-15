@@ -111,7 +111,7 @@ public class Tracer implements io.opentracing.Tracer {
 
         private String operationName = null;
         private long start;
-        private SpanContext firstParent;
+        private SpanContext parent;
         private final Map<String, Object> tags = new HashMap<>();
 
         SpanBuilder(String operationName) {
@@ -130,9 +130,9 @@ public class Tracer implements io.opentracing.Tracer {
 
         @Override
         public io.opentracing.Tracer.SpanBuilder addReference(String referenceType, io.opentracing.SpanContext referencedContext) {
-            if (firstParent == null && (
+            if (parent == null && (
                     referenceType == References.CHILD_OF || referenceType == References.FOLLOWS_FROM)) {
-                this.firstParent = (SpanContext) referencedContext;
+                this.parent = (SpanContext) referencedContext;
             }
             return this;
         }
@@ -177,24 +177,24 @@ public class Tracer implements io.opentracing.Tracer {
         private SpanContext createChildContext() {
             // For server-side RPC spans we reuse spanID per Zipkin convention
             if (tags.get(Tags.SPAN_KIND.getKey()) == Tags.SPAN_KIND_SERVER) {
-                if (firstParent.isSampled()) {
+                if (parent.isSampled()) {
                     metrics.tracesJoinedSampled.inc(1);
                 } else {
                     metrics.tracesJoinedNotSampled.inc(1);
                 }
-                return firstParent;
+                return parent;
             }
             return new SpanContext(
-                    firstParent.getTraceID(),
+                    parent.getTraceID(),
                     Utils.uniqueID(),
-                    firstParent.getSpanID(),
-                    firstParent.getFlags(),
-                    firstParent.baggage());
+                    parent.getSpanID(),
+                    parent.getFlags(),
+                    parent.baggage());
         }
 
         @Override
         public io.opentracing.Span start() {
-            SpanContext context = firstParent == null ? createNewContext() : createChildContext();
+            SpanContext context = parent == null ? createNewContext() : createChildContext();
 
             if (start == 0) {
                 start = Utils.getMicroseconds();

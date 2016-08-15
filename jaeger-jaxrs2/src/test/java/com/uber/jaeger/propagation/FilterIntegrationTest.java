@@ -23,10 +23,8 @@ package com.uber.jaeger.propagation;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.ClientRequestContext;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Form;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.Response;
@@ -36,7 +34,7 @@ import com.uber.jaeger.Span;
 import com.uber.jaeger.context.ThreadLocalTraceContext;
 import com.uber.jaeger.context.TraceContext;
 import com.uber.jaeger.filters.jaxrs2.ClientFilter;
-import com.uber.jaeger.filters.jaxrs2.ServerRequestAdapter;
+import com.uber.jaeger.filters.jaxrs2.ServerRequestCarrier;
 import com.uber.jaeger.metrics.InMemoryStatsReporter;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
@@ -130,7 +128,7 @@ public class FilterIntegrationTest {
     public void testExtractorReturnsNullWhenTracerStateHeaderIsMissing() {
         ContainerRequestContext reqContext = mock(ContainerRequestContext.class);
         given(reqContext.getHeaders()).willReturn(new MultivaluedHashMap<String, String>());
-        ServerRequestAdapter carrier = new ServerRequestAdapter(reqContext);
+        ServerRequestCarrier carrier = new ServerRequestCarrier(reqContext);
         SpanContext spanCtx = tracer.extract(Format.Builtin.HTTP_HEADERS, carrier);
         assertNull(spanCtx);
     }

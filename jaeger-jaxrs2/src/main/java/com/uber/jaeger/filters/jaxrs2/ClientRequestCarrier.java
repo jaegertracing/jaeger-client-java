@@ -29,10 +29,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-public class ClientRequestAdapter implements TextMap {
+public class ClientRequestCarrier implements TextMap {
     private final ClientRequestContext requestContext;
 
-    public ClientRequestAdapter(ClientRequestContext requestContext) {
+    public ClientRequestCarrier(ClientRequestContext requestContext) {
         this.requestContext = requestContext;
     }
 

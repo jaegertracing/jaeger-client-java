@@ -66,7 +66,7 @@ public class ClientFilter implements ClientRequestFilter, ClientResponseFilter {
             tracer.inject(
                     clientSpan.context(),
                     Format.Builtin.HTTP_HEADERS,
-                    new ClientRequestAdapter(clientRequestContext));
+                    new ClientRequestCarrier(clientRequestContext));
 
             clientRequestContext.setProperty(Constants.CURRENT_SPAN_CONTEXT_KEY, clientSpan);
         } catch (Exception e) {

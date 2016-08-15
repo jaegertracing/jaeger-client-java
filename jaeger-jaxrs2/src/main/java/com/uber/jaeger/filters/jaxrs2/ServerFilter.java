@@ -69,7 +69,7 @@ public class ServerFilter implements ContainerRequestFilter, ContainerResponseFi
                         headers.getFirst(com.uber.jaeger.Constants.X_UBER_SOURCE));
             }
 
-            ServerRequestAdapter carrier = new ServerRequestAdapter(containerRequestContext);
+            ServerRequestCarrier carrier = new ServerRequestCarrier(containerRequestContext);
             SpanContext spanContext = tracer.extract(Format.Builtin.HTTP_HEADERS, carrier);
             if (spanContext != null) {
                 builder = builder.asChildOf(spanContext);
