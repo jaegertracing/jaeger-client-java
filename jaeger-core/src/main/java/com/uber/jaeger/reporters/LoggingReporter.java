@@ -21,7 +21,7 @@
  */
 package com.uber.jaeger.reporters;
 
-import io.opentracing.Span;
+import com.uber.jaeger.Span;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

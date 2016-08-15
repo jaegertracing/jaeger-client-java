@@ -30,8 +30,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SpanContext implements io.opentracing.SpanContext {
-    public static final byte flagSampled = 1;
-    public static final byte flagDebug = 2;
+    protected static final byte flagSampled = 1;
+    protected static final byte flagDebug = 2;
 
     private final long traceID;
     private final long spanID;
@@ -83,6 +83,10 @@ public class SpanContext implements io.opentracing.SpanContext {
 
     public boolean isSampled() {
         return (flags & flagSampled) == flagSampled;
+    }
+
+    public boolean isDebug() {
+        return (flags & flagDebug) == flagDebug;
     }
 
     public String contextAsString() {

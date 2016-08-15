@@ -55,7 +55,7 @@ public class ThriftSpanConverter {
             buildAnnotations(span, host),
             buildBinaryAnnotations(span, host))
         .setParent_id(context.getParentID())
-        .setDebug((context.getFlags() & SpanContext.flagDebug) != 0)
+        .setDebug(context.isDebug())
         .setTimestamp(span.getStart())
         .setDuration(span.getDuration());
     }
