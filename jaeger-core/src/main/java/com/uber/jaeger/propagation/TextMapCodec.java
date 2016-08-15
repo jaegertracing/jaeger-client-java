@@ -30,16 +30,18 @@ import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.uber.jaeger.Constants.TRACER_BAGGAGE_HEADER_PREFIX;
-import static com.uber.jaeger.Constants.TRACER_STATE_HEADER_NAME;
-import static com.uber.jaeger.propagation.PrefixedKeys.prefixedKey;
-import static com.uber.jaeger.propagation.PrefixedKeys.unprefixedKey;
-
 public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
+    /** Key used to store serialized span context representation */
+    private static final String SPAN_CONTEXT_KEY = "uber-trace-id";
 
-    private final String contextKey = TRACER_STATE_HEADER_NAME;
+    /** Key prefix used for baggage items */
+    private static final String BAGGAGE_KEY_PREFIX = "uberctx-";
 
-    private final String baggagePrefix = TRACER_BAGGAGE_HEADER_PREFIX;
+    private static final PrefixedKeys keys = new PrefixedKeys();
+
+    private final String contextKey = SPAN_CONTEXT_KEY;
+
+    private final String baggagePrefix = BAGGAGE_KEY_PREFIX;
 
     private final boolean urlEncoding;
 
@@ -52,7 +54,7 @@ public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
         carrier.put(contextKey, encodedValue(spanContext.contextAsString()));
         for (Map.Entry<String, String> entry: spanContext.baggageItems()) {
             carrier.put(
-                    prefixedKey(entry.getKey(), baggagePrefix),
+                    keys.prefixedKey(entry.getKey(), baggagePrefix),
                     encodedValue(entry.getValue()));
         }
     }
@@ -72,7 +74,7 @@ public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
                     baggage = new HashMap<>();
                 }
                 baggage.put(
-                        unprefixedKey(key, baggagePrefix),
+                        keys.unprefixedKey(key, baggagePrefix),
                         decodedValue(entry.getValue()));
             }
         }
