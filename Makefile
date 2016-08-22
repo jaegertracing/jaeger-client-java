@@ -7,3 +7,7 @@ clean:
 .PHONY: test
 test:
 	./gradlew test
+
+.PHONY: release
+release:
+	./gradlew uploadArchives
