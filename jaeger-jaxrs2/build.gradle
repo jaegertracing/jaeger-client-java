@@ -56,8 +56,7 @@ sourceSets {
 jar {
     from sourceSets.main.output
     from sourceSets.test.output
-    from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
     manifest {
-        attributes('Implementation-jaeger-jaxrs2': 'jaeger-jaxrs2', 'Implementation-Version': project.version)
+        attributes('Implementation-Title': 'jaeger-jaxrs2', 'Implementation-Version': project.version)
     }
 }

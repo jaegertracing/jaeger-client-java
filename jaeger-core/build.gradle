@@ -85,8 +85,7 @@ sourceSets {
 jar {
     from sourceSets.main.output
     from sourceSets.test.output
-    from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
     manifest {
-        attributes('Implementation-jaeger-core': 'jaeger-core', 'Implementation-Version': project.version)
+        attributes('Implementation-Title': 'jaeger-core', 'Implementation-Version': project.version)
     }
 }
