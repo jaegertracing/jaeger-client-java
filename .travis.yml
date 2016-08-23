@@ -45,7 +45,7 @@ script:
 after_success:
 - ./gradlew jacocoTestReport coveralls
 - ./gradlew uploadArchives -PossrhUsername="${SONATYPE_USERNAME}" -PossrhPassword="${SONATYPE_PASSWORD}"
-- pushd 'jaeger-java-crossdock'
+- pushd 'jaeger-crossdock'
 - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
 - export REPO=jaegertracing/xdock-java
 - export PR=https://api.github.com/repos/$TRAVIS_REPO_SLUG/pulls/$TRAVIS_PULL_REQUEST
