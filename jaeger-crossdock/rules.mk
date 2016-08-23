@@ -1,5 +1,5 @@
-PROJCT=jaeger-java-crossdock
-XDOCK_YAML=$(PROJCT)/docker-compose.yml
+PROJECT=jaeger-crossdock
+XDOCK_YAML=$(PROJECT)/docker-compose.yml
 
 .PHONY: crossdock
 crossdock: gradle-compile
@@ -18,7 +18,7 @@ crossdock-fresh: gradle-compile
 	docker-compose -f $(XDOCK_YAML) run crossdock
 
 gradle-compile:
-	./gradlew clean :jaeger-java-crossdock:shadowJar
+	./gradlew clean :jaeger-crossdock:shadowJar
 
 .PHONE: crossdock-logs
 crossdock-logs:

@@ -5,7 +5,7 @@ apply plugin: 'com.github.johnrengelman.shadow'
 
 description = 'A jaeger instrumented java server meant for testing interoperability with different Jaeger clients through the use of crossdock (https://github.com/crossdock/crossdock)'
 ext.jacksonVersion = '2.7.4'
-shadowJar.archiveName = 'jaeger-java-crossdock.jar'
+shadowJar.archiveName = 'jaeger-crossdock.jar'
 
 dependencies {
     compile project(':jaeger-jaxrs2')
@@ -60,7 +60,7 @@ jar {
     from sourceSets.main.output
     from sourceSets.test.output
     manifest {
-        attributes('Implementation-jaeger-java-crossdock': 'jaeger-java-crossdock', 'Implementation-Version': project.version)
+        attributes('Implementation-Title': 'jaeger-crossdock', 'Implementation-Version': project.version)
         attributes 'Main-Class': 'com.uber.jaeger.crossdock.JerseyServer'
     }
 }
