@@ -120,7 +120,7 @@ public class JerseyServer {
         BasicConfigurator.configure();
         JerseyServer server = new JerseyServer("0.0.0.0:8081", TraceBehaviorResource.class);
         TraceBehavior behavior = new TraceBehavior();
-        new TChannelServer(8082, behavior, server.getTracer()).start();
+        new TChannelServer(8082, behavior, server.getTracer(), false).start();
         new JerseyServer("0.0.0.0:8080", HealthResource.class);
     }
 }

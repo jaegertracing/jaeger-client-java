@@ -28,7 +28,7 @@ import com.uber.jaeger.context.TracingUtils;
 import com.uber.jaeger.crossdock.Constants;
 import com.uber.jaeger.crossdock.JerseyServer;
 import com.uber.jaeger.crossdock.resources.behavior.tchannel.TChannelServer;
-import com.uber.jaeger.crossdock.tracetest.TracedService;
+import com.uber.jaeger.crossdock.thrift.TracedService;
 import com.uber.jaeger.crossdock.tracetest_manual.Downstream;
 import com.uber.jaeger.crossdock.tracetest_manual.JoinTraceRequest;
 import com.uber.jaeger.crossdock.tracetest_manual.ObservedSpan;
@@ -97,8 +97,8 @@ public class TraceBehavior {
     }
 
     public TraceResponse callDownstreamTChannel(Downstream downstream) throws Exception {
-        com.uber.jaeger.crossdock.tracetest.JoinTraceRequest joinTraceRequest =
-                new com.uber.jaeger.crossdock.tracetest.JoinTraceRequest(downstream.getServerRole());
+        com.uber.jaeger.crossdock.thrift.JoinTraceRequest joinTraceRequest =
+                new com.uber.jaeger.crossdock.thrift.JoinTraceRequest(downstream.getServerRole());
         joinTraceRequest.setDownstream(Downstream.toThrift(downstream.getDownstream()));
 
         SubChannel subChannel = TChannelServer.server.makeSubChannel(downstream.getServiceName());

@@ -29,7 +29,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.uber.jaeger.crossdock.Constants;
 import com.uber.jaeger.crossdock.deserializers.DownstreamDeserializer;
 import com.uber.jaeger.crossdock.serializers.DownstreamSerializer;
-import com.uber.jaeger.crossdock.tracetest.Transport;
+import com.uber.jaeger.crossdock.thrift.Transport;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonSerialize(using = DownstreamSerializer.class)
@@ -93,7 +93,7 @@ public class Downstream {
                 '}';
     }
 
-    public static Downstream fromThrift(com.uber.jaeger.crossdock.tracetest.Downstream downstream) {
+    public static Downstream fromThrift(com.uber.jaeger.crossdock.thrift.Downstream downstream) {
         if (downstream == null) {
             return null;
         }
@@ -117,11 +117,11 @@ public class Downstream {
         throw new IllegalArgumentException("Unknown transport " + transport);
     }
 
-    public static com.uber.jaeger.crossdock.tracetest.Downstream toThrift(Downstream downstream) {
+    public static com.uber.jaeger.crossdock.thrift.Downstream toThrift(Downstream downstream) {
         if (downstream == null) {
             return null;
         }
-        return new com.uber.jaeger.crossdock.tracetest.Downstream(
+        return new com.uber.jaeger.crossdock.thrift.Downstream(
                 downstream.getServiceName(),
                 downstream.getServerRole(),
                 downstream.getHost(),

@@ -29,14 +29,19 @@ import com.uber.tchannel.tracing.TracingContext;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
 
+import java.net.InetAddress;
 import java.util.EmptyStackException;
 
 public class TChannelServer {
     // TODO should not be static
     public static TChannel server;
 
-    public TChannelServer(int port, TraceBehavior behavior, Tracer tracer) {
-        server = new TChannel.Builder(JerseyServer.SERVICE_NAME)
+    public TChannelServer(int port, TraceBehavior behavior, Tracer tracer, boolean useLoopback) {
+        TChannel.Builder builder = new TChannel.Builder(JerseyServer.SERVICE_NAME);
+        if (useLoopback) {
+            builder.setServerHost(InetAddress.getLoopbackAddress());
+        }
+        server = builder
                 .setServerPort(port)
                 .setTracer(tracer)
                 .setTracingContext(new TracingContextAdapter())

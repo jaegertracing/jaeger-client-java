@@ -56,7 +56,7 @@ public class ObservedSpan {
         return baggage;
     }
 
-    static ObservedSpan fromThrift(com.uber.jaeger.crossdock.tracetest.ObservedSpan span) {
+    static ObservedSpan fromThrift(com.uber.jaeger.crossdock.thrift.ObservedSpan span) {
         return new ObservedSpan(
                 span.getTraceId(),
                 span.isSampled(),

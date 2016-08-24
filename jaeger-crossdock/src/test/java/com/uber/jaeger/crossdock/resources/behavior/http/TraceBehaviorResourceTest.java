@@ -154,7 +154,7 @@ public class TraceBehaviorResourceTest {
 
     @Test
     public void testJoinTraceTChannel() throws Exception {
-        TChannelServer tchannel = new TChannelServer(8081, behavior, server.getTracer());
+        TChannelServer tchannel = new TChannelServer(8081, behavior, server.getTracer(), true);
         tchannel.start();
 
         Span span = (Span) server.getTracer().buildSpan("root").start();

@@ -6,8 +6,7 @@ crossdock: gradle-compile
 	docker-compose -f $(XDOCK_YAML) kill java
 	docker-compose -f $(XDOCK_YAML) rm -f java
 	docker-compose -f $(XDOCK_YAML) build java
-	docker-compose -f $(XDOCK_YAML) run crossdock 2>&1 | tee run-crossdock.log
-	grep 'Tests passed!' run-crossdock.log
+	docker-compose -f $(XDOCK_YAML) run crossdock
 
 .PHONY: crossdock-fresh
 crossdock-fresh: gradle-compile
