@@ -65,6 +65,10 @@ public class TraceBehavior {
 
     private TraceResponse callDownstream(Downstream downstream) throws Exception {
         logger.info("Calling downstream {}", downstream);
+        logger.info("Downstream service {} -> {}:{}",
+                downstream.getServiceName(),
+                InetAddress.getByName(downstream.getHost()),
+                downstream.getPort());
         String transport = downstream.getTransport();
         switch (transport) {
             case Constants.TRANSPORT_HTTP:
