@@ -59,4 +59,14 @@ public class StartTraceRequest {
     public Downstream getDownstream() {
         return downstream;
     }
+
+    @Override
+    public String toString() {
+        return "StartTraceRequest{" +
+                "sampled=" + sampled +
+                ", baggage='" + baggage + '\'' +
+                ", downstream=" + downstream +
+                ", serverRole='" + serverRole + '\'' +
+                '}';
+    }
 }

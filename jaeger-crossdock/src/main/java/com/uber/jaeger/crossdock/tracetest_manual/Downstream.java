@@ -26,8 +26,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.uber.jaeger.crossdock.Constants;
 import com.uber.jaeger.crossdock.deserializers.DownstreamDeserializer;
 import com.uber.jaeger.crossdock.serializers.DownstreamSerializer;
+import com.uber.jaeger.crossdock.tracetest.Transport;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonSerialize(using = DownstreamSerializer.class)
@@ -77,5 +79,64 @@ public class Downstream {
 
     public Downstream getDownstream() {
         return downstream;
+    }
+
+    @Override
+    public String toString() {
+        return "Downstream{" +
+                "serviceName='" + serviceName + '\'' +
+                ", host='" + host + '\'' +
+                ", port='" + port + '\'' +
+                ", transport='" + transport + '\'' +
+                ", serverRole='" + serverRole + '\'' +
+                ", downstream=" + downstream +
+                '}';
+    }
+
+    public static Downstream fromThrift(com.uber.jaeger.crossdock.tracetest.Downstream downstream) {
+        if (downstream == null) {
+            return null;
+        }
+        return new Downstream(
+                downstream.getServiceName(),
+                downstream.getHost(),
+                downstream.getPort(),
+                fromThrift(downstream.getTransport()),
+                downstream.getServerRole(),
+                fromThrift(downstream.getDownstream())
+        );
+    }
+
+    private static String fromThrift(Transport transport) {
+        switch (transport) {
+            case HTTP:
+                return Constants.TRANSPORT_HTTP;
+            case TCHANNEL:
+                return Constants.TRANSPORT_TCHANNEL;
+        }
+        throw new IllegalArgumentException("Unknown transport " + transport);
+    }
+
+    public static com.uber.jaeger.crossdock.tracetest.Downstream toThrift(Downstream downstream) {
+        if (downstream == null) {
+            return null;
+        }
+        return new com.uber.jaeger.crossdock.tracetest.Downstream(
+                downstream.getServiceName(),
+                downstream.getServerRole(),
+                downstream.getHost(),
+                downstream.getPort(),
+                toThrift(downstream.getTransport())
+        );
+    }
+
+    private static Transport toThrift(String transport) {
+        if (Constants.TRANSPORT_HTTP.equals(transport)) {
+            return Transport.HTTP;
+        }
+        if (Constants.TRANSPORT_TCHANNEL.equals(transport)) {
+            return Transport.TCHANNEL;
+        }
+        throw new IllegalArgumentException("Unknown transport " + transport);
     }
 }

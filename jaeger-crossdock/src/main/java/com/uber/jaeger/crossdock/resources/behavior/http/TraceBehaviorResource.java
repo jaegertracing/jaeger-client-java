@@ -21,51 +21,52 @@
  */
 package com.uber.jaeger.crossdock.resources.behavior.http;
 
-import java.io.IOException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.uber.jaeger.Span;
+import com.uber.jaeger.context.TracingUtils;
+import com.uber.jaeger.crossdock.Constants;
+import com.uber.jaeger.crossdock.resources.behavior.TraceBehavior;
+import com.uber.jaeger.crossdock.tracetest_manual.JoinTraceRequest;
+import com.uber.jaeger.crossdock.tracetest_manual.StartTraceRequest;
+import com.uber.jaeger.crossdock.tracetest_manual.TraceResponse;
+import io.opentracing.tag.Tags;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.uber.jaeger.Span;
-import com.uber.jaeger.SpanContext;
-import com.uber.jaeger.crossdock.Constants;
-import com.uber.jaeger.crossdock.JerseyServer;
-import com.uber.jaeger.crossdock.tracetest_manual.Downstream;
-import com.uber.jaeger.crossdock.tracetest_manual.JoinTraceRequest;
-import com.uber.jaeger.crossdock.tracetest_manual.ObservedSpan;
-import com.uber.jaeger.crossdock.tracetest_manual.StartTraceRequest;
-import com.uber.jaeger.crossdock.tracetest_manual.TraceResponse;
-import com.uber.jaeger.context.TracingUtils;
-import io.opentracing.tag.Tags;
 
 @Path("")
 @Provider
 public class TraceBehaviorResource {
-    private ObjectMapper mapper = new ObjectMapper();
+    private static final Logger logger = LoggerFactory.getLogger(TraceBehaviorResource.class);
+
+    private final ObjectMapper mapper = new ObjectMapper();
+    private final TraceBehavior behavior;
+
+    public TraceBehaviorResource() {
+        this.behavior = new TraceBehavior();
+    }
 
     @POST
     @Path("start_trace")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public TraceResponse startTrace(StartTraceRequest startRequest) throws IOException {
+    public TraceResponse startTrace(StartTraceRequest startRequest) throws Exception {
+        logger.info("http:start_trace request: {}", mapper.writeValueAsString(startRequest));
+        // TODO should be starting new root span
         Span span = (Span) TracingUtils.getTraceContext().getCurrentSpan();
         String baggage = startRequest.getBaggage();
         span.setBaggageItem(Constants.BAGGAGE_KEY, baggage);
         if (startRequest.getSampled()) {
             Tags.SAMPLING_PRIORITY.set(span, (short) 1);
         }
-
-        TraceResponse response = prepareResponse(startRequest.getDownstream());
-
-        System.out.println("start_trace response: " + mapper.writeValueAsString(response));
-
+        TraceResponse response = behavior.prepareResponse(startRequest.getDownstream());
+        logger.info("http:start_trace response: {}", mapper.writeValueAsString(response));
         return response;
     }
 
@@ -73,64 +74,10 @@ public class TraceBehaviorResource {
     @Path("join_trace")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public TraceResponse joinTrace(JoinTraceRequest joinRequest) throws IOException {
-        TraceResponse response = prepareResponse(joinRequest.getDownstream());
-        System.out.println("join_trace response: " + mapper.writeValueAsString(response));
+    public TraceResponse joinTrace(JoinTraceRequest joinRequest) throws Exception {
+        logger.info("http:join_trace request: {}", mapper.writeValueAsString(joinRequest));
+        TraceResponse response = behavior.prepareResponse(joinRequest.getDownstream());
+        logger.info("http:join_trace response: {}", mapper.writeValueAsString(response));
         return response;
-    }
-
-    private TraceResponse prepareResponse(Downstream downstream) throws IOException {
-        TraceResponse response = new TraceResponse(observeSpan());
-
-        if (downstream != null) {
-            TraceResponse downstreamResponse = callDownstream(downstream);
-            response.setDownstream(downstreamResponse);
-        }
-
-        return response;
-    }
-
-    private TraceResponse callDownstream(Downstream downstream) throws IOException {
-        String transport = downstream.getTransport();
-        switch (transport) {
-            case Constants.TRANSPORT_HTTP:
-                return callDownstreamHTTP(downstream);
-            case Constants.TRANSPORT_TCHANNEL:
-                return new TraceResponse("TChannel support not implemented for java");
-            default:
-                throw new IllegalArgumentException("Unrecognized transport received: %s" + transport);
-        }
-    }
-
-    private TraceResponse callDownstreamHTTP(Downstream downstream) throws IOException {
-        String downstreamURL = String.format("http://%s:%s/join_trace", downstream.getHost(), downstream.getPort());
-
-        System.out.println(String.format("Calling downstream service %s at %s", downstream.getServiceName(), downstreamURL));
-
-        Response resp = JerseyServer.client.target(downstreamURL)
-                .request(MediaType.APPLICATION_JSON)
-                .post(Entity.json(new JoinTraceRequest(downstream.getServerRole(), downstream.getDownstream())));
-
-        String respStr = resp.readEntity(String.class);
-        return mapper.readValue(respStr, TraceResponse.class);
-    }
-
-    private ObservedSpan observeSpan() {
-        com.uber.jaeger.context.TraceContext traceContext = TracingUtils.getTraceContext();
-        if (traceContext.isEmpty()) {
-            System.err.println("No span found");
-            return new ObservedSpan("no span found", false, "no span found");
-        }
-        Span span = (Span) traceContext.getCurrentSpan();
-        if (span == null) {
-            System.err.println("No span found");
-            return new ObservedSpan("no span found", false, "no span found");
-        }
-
-        SpanContext context = span.getContext();
-        String traceID = String.format("%x", context.getTraceID());
-        boolean sampled = context.isSampled();
-        String baggage = span.getBaggageItem(Constants.BAGGAGE_KEY);
-        return new ObservedSpan(traceID, sampled, baggage);
     }
 }

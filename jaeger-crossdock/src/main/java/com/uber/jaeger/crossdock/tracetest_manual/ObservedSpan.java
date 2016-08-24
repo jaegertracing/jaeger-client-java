@@ -55,4 +55,21 @@ public class ObservedSpan {
     public String getBaggage() {
         return baggage;
     }
+
+    static ObservedSpan fromThrift(com.uber.jaeger.crossdock.tracetest.ObservedSpan span) {
+        return new ObservedSpan(
+                span.getTraceId(),
+                span.isSampled(),
+                span.getBaggage()
+        );
+    }
+
+    @Override
+    public String toString() {
+        return "ObservedSpan{" +
+                "traceID='" + traceID + '\'' +
+                ", sampled=" + sampled +
+                ", baggage='" + baggage + '\'' +
+                '}';
+    }
 }

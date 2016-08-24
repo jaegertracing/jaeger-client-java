@@ -21,21 +21,18 @@
  */
 package com.uber.jaeger.crossdock;
 
-import java.net.URI;
-
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-
+import com.uber.jaeger.Configuration.ReporterConfiguration;
+import com.uber.jaeger.Configuration.SamplerConfiguration;
 import com.uber.jaeger.context.TraceContext;
 import com.uber.jaeger.crossdock.resources.behavior.ExceptionMapper;
+import com.uber.jaeger.crossdock.resources.behavior.TraceBehavior;
 import com.uber.jaeger.crossdock.resources.behavior.http.TraceBehaviorResource;
 import com.uber.jaeger.crossdock.resources.behavior.tchannel.TChannelServer;
 import com.uber.jaeger.crossdock.resources.health.HealthResource;
-import com.uber.jaeger.Configuration.ReporterConfiguration;
-import com.uber.jaeger.Configuration.SamplerConfiguration;
 import com.uber.jaeger.filters.jaxrs2.Configuration;
 import com.uber.jaeger.filters.jaxrs2.TracingUtils;
 import io.opentracing.Tracer;
+import org.apache.log4j.BasicConfigurator;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.filter.LoggingFilter;
@@ -43,9 +40,14 @@ import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import java.net.URI;
+
 public class JerseyServer {
     public static final String SERVICE_NAME = "java";
 
+    // TODO should not be static
     public static Client client;
 
     private final HttpServer server;
@@ -88,6 +90,10 @@ public class JerseyServer {
         client = initializeClient(config);
     }
 
+    private static TraceContext traceContext() {
+        return com.uber.jaeger.context.TracingUtils.getTraceContext();
+    }
+
     private static Client initializeClient(final Configuration config) {
         return ClientBuilder.newClient()
                 .register(ExceptionMapper.class)
@@ -96,8 +102,8 @@ public class JerseyServer {
                         new AbstractBinder() {
                             @Override
                             protected void configure() {
-                                bind(TracingUtils.getTraceContext()).to(TraceContext.class);
-                            }
+                                bind(traceContext()).to(TraceContext.class);
+                                }
                         })
                 .register(JacksonFeature.class);
     }
@@ -111,8 +117,10 @@ public class JerseyServer {
     }
 
     public static void main(String[] args) throws Exception {
-        new JerseyServer("0.0.0.0:8081", TraceBehaviorResource.class);
-        new TChannelServer(8082).start();
+        BasicConfigurator.configure();
+        JerseyServer server = new JerseyServer("0.0.0.0:8081", TraceBehaviorResource.class);
+        TraceBehavior behavior = new TraceBehavior();
+        new TChannelServer(8082, behavior, server.getTracer()).start();
         new JerseyServer("0.0.0.0:8080", HealthResource.class);
     }
 }

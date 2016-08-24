@@ -46,4 +46,12 @@ public class JoinTraceRequest {
     public Downstream getDownstream() {
         return downstream;
     }
+
+    @Override
+    public String toString() {
+        return "JoinTraceRequest{" +
+                "serverRole='" + serverRole + '\'' +
+                ", downstream=" + downstream +
+                '}';
+    }
 }

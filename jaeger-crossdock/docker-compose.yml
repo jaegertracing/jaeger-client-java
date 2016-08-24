@@ -21,7 +21,7 @@ services:
 
             - REPORT=compact
     go:
-        image: jaegertracing/xdock-go
+        image: jaegertracing/xdock-go:upgrade-crossdock-tests-for-native-opentracing-in-tchannel
         ports:
             - "8080-8082"
 

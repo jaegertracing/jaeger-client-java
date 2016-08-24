@@ -8,7 +8,6 @@ dependencies {
     compile group: 'io.opentracing', name: 'opentracing-api', version: opentracingVersion
     compile group: 'org.apache.thrift', name: 'libthrift', version: apacheThriftVersion
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
-    compile group: 'com.google.guava', name: 'guava', version: guavaVersion
     compile group: 'org.slf4j', name: 'slf4j-api', version: slf4jVersion
 
     // Testing frameworks

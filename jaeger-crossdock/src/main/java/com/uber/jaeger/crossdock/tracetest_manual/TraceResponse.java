@@ -68,4 +68,45 @@ public class TraceResponse {
     public TraceResponse getDownstream() {
         return downstream;
     }
+
+    @Override
+    public String toString() {
+        return "TraceResponse{" +
+                "notImplementedError='" + notImplementedError + '\'' +
+                ", span=" + span +
+                ", downstream=" + downstream +
+                '}';
+    }
+
+    public static com.uber.jaeger.crossdock.tracetest.TraceResponse toThrift(TraceResponse resp) {
+        if (resp == null) {
+            return null;
+        }
+        com.uber.jaeger.crossdock.tracetest.TraceResponse response =
+                new com.uber.jaeger.crossdock.tracetest.TraceResponse();
+        response.setSpan(toThrift(resp.getObservedSpan()));
+        response.setDownstream(toThrift(resp.getDownstream()));
+        response.setNotImplementedError("");
+        return response;
+    }
+
+    private static com.uber.jaeger.crossdock.tracetest.ObservedSpan toThrift(ObservedSpan observedSpan) {
+        com.uber.jaeger.crossdock.tracetest.ObservedSpan res =
+                new com.uber.jaeger.crossdock.tracetest.ObservedSpan();
+        res.setTraceId(observedSpan.getTraceID());
+        res.setBaggage(observedSpan.getBaggage());
+        res.setSampled(observedSpan.getSampled());
+        return res;
+    }
+
+    public static TraceResponse fromThrift(com.uber.jaeger.crossdock.tracetest.TraceResponse thrift) {
+        if (thrift == null) {
+            return null;
+        }
+        return new TraceResponse(
+                thrift.getNotImplementedError(),
+                ObservedSpan.fromThrift(thrift.getSpan()),
+                TraceResponse.fromThrift(thrift.getDownstream())
+        );
+    }
 }

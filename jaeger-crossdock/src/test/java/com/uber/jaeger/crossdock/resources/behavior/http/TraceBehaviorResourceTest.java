@@ -25,36 +25,55 @@ import com.uber.jaeger.Span;
 import com.uber.jaeger.context.TracingUtils;
 import com.uber.jaeger.crossdock.Constants;
 import com.uber.jaeger.crossdock.JerseyServer;
+import com.uber.jaeger.crossdock.resources.behavior.TraceBehavior;
 import com.uber.jaeger.crossdock.resources.behavior.tchannel.TChannelServer;
-import com.uber.jaeger.crossdock.tracetest.TracedService;
 import com.uber.jaeger.crossdock.tracetest_manual.Downstream;
 import com.uber.jaeger.crossdock.tracetest_manual.JoinTraceRequest;
 import com.uber.jaeger.crossdock.tracetest_manual.ObservedSpan;
 import com.uber.jaeger.crossdock.tracetest_manual.StartTraceRequest;
 import com.uber.jaeger.crossdock.tracetest_manual.TraceResponse;
-import com.uber.tchannel.api.SubChannel;
-import com.uber.tchannel.api.TChannel;
-import com.uber.tchannel.api.TFuture;
-import com.uber.tchannel.messages.ThriftRequest;
-import com.uber.tchannel.messages.ThriftResponse;
-import com.uber.tchannel.utils.TChannelUtilities;
+import io.opentracing.tag.Tags;
 import org.apache.log4j.BasicConfigurator;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
+@RunWith(Parameterized.class)
 public class TraceBehaviorResourceTest {
     private JerseyServer server;
-
+    private TraceBehavior behavior;
     private String port;
     private String hostPort;
+
+    private final boolean expectedSampled;
+
+    public TraceBehaviorResourceTest(boolean sampled) {
+        this.expectedSampled = sampled;
+    }
+
+    @Parameterized.Parameters(name = "{index}: sampled({0})")
+    public static Collection<Object[]> data() {
+        boolean[] sampling = new boolean[]{true, false};
+        List<Object[]> data = new ArrayList<>();
+        for (boolean sampled : sampling) {
+            data.add(new Object[]{sampled});
+        }
+        return data;
+    }
 
     @BeforeClass
     public static void setUpLogger() {
@@ -65,39 +84,16 @@ public class TraceBehaviorResourceTest {
     public void setUp() throws Exception {
         port = System.getenv("TRACE_TEST_BEHAVIOR_PORT");
         if (port == null) {
-            port = "32654";
+            port = "55555";
         }
         hostPort = String.format("127.0.0.1:%s", port);
         server = new JerseyServer(hostPort, TraceBehaviorResource.class);
+        behavior = new TraceBehavior();
     }
 
     @After
     public void tearDown() {
         server.shutdown();
-    }
-
-    void validateTraceResponse(
-            TraceResponse response,
-            String expectedTraceId,
-            String expectedBaggage,
-            boolean expectedSampled,
-            int expectedDownstream
-    ) {
-        ObservedSpan span = response.getObservedSpan();
-        assertEquals(expectedTraceId, span.getTraceID());
-        assertEquals(expectedBaggage, span.getBaggage());
-        assertEquals(expectedSampled, span.getSampled());
-
-        if (expectedDownstream > 0) {
-            TraceResponse downstream = response.getDownstream();
-            assertNotNull(downstream);
-            validateTraceResponse(
-                    downstream,
-                    expectedTraceId,
-                    expectedBaggage,
-                    expectedSampled,
-                    expectedDownstream - 1);
-        }
     }
 
     @Test
@@ -107,7 +103,6 @@ public class TraceBehaviorResourceTest {
 
         String expectedTraceId = String.format("%x", span.getContext().getTraceID());
         String expectedBaggage = "baggage-example";
-        boolean expectedSampled = true;
 
         Downstream downstream = new Downstream("java", "127.0.0.1", port, Constants.TRANSPORT_HTTP, "server", null);
         StartTraceRequest startTraceRequest = new StartTraceRequest("server-role", expectedSampled, expectedBaggage, downstream);
@@ -119,7 +114,11 @@ public class TraceBehaviorResourceTest {
         TraceResponse traceResponse = resp.readEntity(TraceResponse.class);
 
         assertNotNull(traceResponse.getDownstream());
-        validateTraceResponse(traceResponse, expectedTraceId, expectedBaggage, expectedSampled, 1);
+        validateTraceResponse(
+                traceResponse,
+                expectedTraceId,
+                expectedBaggage,
+                1);
     }
 
     @Test
@@ -129,8 +128,10 @@ public class TraceBehaviorResourceTest {
 
         String expectedTraceId = String.format("%x", span.getContext().getTraceID());
         String expectedBaggage = "baggage-example";
-        boolean expectedSampled = false;
         span.setBaggageItem(Constants.BAGGAGE_KEY, expectedBaggage);
+        if (expectedSampled) {
+            Tags.SAMPLING_PRIORITY.set(span, (short) 1);
+        }
 
         Downstream bottomDownstream = new Downstream("java", "127.0.0.1", port, Constants.TRANSPORT_HTTP, "server", null);
         Downstream topDownstream = new Downstream("java", "127.0.0.1", port, Constants.TRANSPORT_HTTP, "server", bottomDownstream);
@@ -145,35 +146,71 @@ public class TraceBehaviorResourceTest {
         TraceResponse traceResponse = resp.readEntity(TraceResponse.class);
 
         assertNotNull(traceResponse.getDownstream());
-        validateTraceResponse(traceResponse, expectedTraceId, expectedBaggage, expectedSampled, 2);
+        validateTraceResponse(
+                traceResponse,
+                expectedTraceId,
+                expectedBaggage, 2);
     }
 
     @Test
     public void testJoinTraceTChannel() throws Exception {
-        // Start server
-        TChannelServer server = new TChannelServer(Integer.parseInt(port));
-        server.start();
+        TChannelServer tchannel = new TChannelServer(8081, behavior, server.getTracer());
+        tchannel.start();
 
-        // Setup test data used in assertions and parameters
-        com.uber.jaeger.crossdock.tracetest.JoinTraceRequest joinTraceRequest = new com.uber.jaeger.crossdock.tracetest.JoinTraceRequest("server-role");
+        Span span = (Span) server.getTracer().buildSpan("root").start();
+        TracingUtils.getTraceContext().push(span);
 
-        TChannel tchannel = new TChannel.Builder("java-client").build();
-        SubChannel subChannel = tchannel.makeSubChannel(JerseyServer.SERVICE_NAME);
-
-        TFuture<ThriftResponse<TracedService.joinTrace_result>> future = subChannel.send(
-                new ThriftRequest.Builder<TracedService.joinTrace_args>(JerseyServer.SERVICE_NAME, "TracedService::joinTrace")
-                        .setTimeout(1000)
-                        .setBody(new TracedService.joinTrace_args(joinTraceRequest))
-                        .build(),
-                TChannelUtilities.getCurrentIp(),
-                Integer.parseInt(port)
-        );
-
-        try (ThriftResponse<TracedService.joinTrace_result> traceResponse = future.get()) {
-            com.uber.jaeger.crossdock.tracetest.TraceResponse response = traceResponse.getBody(TracedService.joinTrace_result.class).getSuccess();
-            assertEquals(response.getNotImplementedError(), "TChannel not implemented for java.");
+        String expectedTraceId = String.format("%x", span.getContext().getTraceID());
+        String expectedBaggage = "baggage-example";
+        span.setBaggageItem(Constants.BAGGAGE_KEY, expectedBaggage);
+        if (expectedSampled) {
+            Tags.SAMPLING_PRIORITY.set(span, (short) 1);
         }
 
-        server.shutdown();
+        TraceResponse response = behavior.callDownstreamTChannel(new Downstream(
+                JerseyServer.SERVICE_NAME,
+                tchannel.getChannel().getListeningHost(),
+                String.valueOf(tchannel.getChannel().getListeningPort()),
+                Constants.TRANSPORT_TCHANNEL,
+                "s2",
+                new Downstream(
+                        JerseyServer.SERVICE_NAME,
+                        tchannel.getChannel().getListeningHost(),
+                        String.valueOf(tchannel.getChannel().getListeningPort()),
+                        Constants.TRANSPORT_TCHANNEL,
+                        "s3",
+                        null)));
+        assertNotNull(response);
+        validateTraceResponse(
+                response,
+                expectedTraceId,
+                expectedBaggage,
+                1);
+
+        tchannel.shutdown();
+    }
+
+    private void validateTraceResponse(
+            TraceResponse response,
+            String expectedTraceId,
+            String expectedBaggage,
+            int expectedDownstream
+    ) {
+        ObservedSpan span = response.getObservedSpan();
+        assertEquals(expectedTraceId, span.getTraceID());
+        assertEquals(expectedBaggage, span.getBaggage());
+        assertEquals(expectedSampled, span.getSampled());
+
+        TraceResponse downstream = response.getDownstream();
+        if (expectedDownstream > 0) {
+            assertNotNull(downstream);
+            validateTraceResponse(
+                    downstream,
+                    expectedTraceId,
+                    expectedBaggage,
+                    expectedDownstream - 1);
+        } else {
+            assertNull(downstream);
+        }
     }
 }
