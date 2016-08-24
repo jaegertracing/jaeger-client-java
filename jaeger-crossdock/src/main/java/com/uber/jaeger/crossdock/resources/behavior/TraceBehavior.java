@@ -104,7 +104,7 @@ public class TraceBehavior {
                 downstream.getServiceName(),
                 "TracedService::joinTrace"
         )
-                .setTimeout(2000)
+                    .setTimeout(2000)
                 .setBody(new TracedService.joinTrace_args(joinTraceRequest))
                 .build();
         TFuture<ThriftResponse<TracedService.joinTrace_result>> future = subChannel.send(
