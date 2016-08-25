@@ -26,7 +26,7 @@ import java.io.IOException;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
-import com.uber.jaeger.crossdock.tracetest_manual.ObservedSpan;
+import com.uber.jaeger.crossdock.api.ObservedSpan;
 
 public class ObservedSpanSerializer extends JsonSerializer<ObservedSpan> {
 

@@ -26,7 +26,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.uber.jaeger.crossdock.tracetest_manual.Downstream;
+import com.uber.jaeger.crossdock.api.Downstream;
 
 import java.io.IOException;
 

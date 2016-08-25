@@ -26,8 +26,8 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.uber.jaeger.crossdock.tracetest_manual.ObservedSpan;
-import com.uber.jaeger.crossdock.tracetest_manual.TraceResponse;
+import com.uber.jaeger.crossdock.api.ObservedSpan;
+import com.uber.jaeger.crossdock.api.TraceResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
