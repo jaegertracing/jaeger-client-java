@@ -39,7 +39,7 @@ javadoc {
     exclude '**/com/twitter/zipkin/thriftjava/**'
     exclude '**/com/uber/jaeger/agent/thrift/**'
     exclude '**/com/uber/jaeger/thrift/sampling_manager/**'
-    exclude '**/com/uber/jaeger/crossdock/tracetest/**'
+    exclude '**/com/uber/jaeger/crossdock/thrift/**'
 }
 
 jacocoTestReport {
