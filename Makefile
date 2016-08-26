@@ -1,4 +1,4 @@
--include jaeger-java-crossdock/rules.mk
+-include jaeger-crossdock/rules.mk
 
 .PHONY: clean
 clean:
@@ -7,3 +7,7 @@ clean:
 .PHONY: test
 test:
 	./gradlew test
+
+.PHONY: release
+release:
+	./gradlew uploadArchives

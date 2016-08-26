@@ -13,6 +13,7 @@ with Zipkin-compatible data model.
  1. `git submodule init update`
  2. `./gradlew clean test`
 
+
   [ci-img]: https://travis-ci.org/uber/jaeger-client-java.svg?branch=master
   [cov-img]: https://coveralls.io/repos/github/uber/jaeger-client-java/badge.svg?branch=master
   [ci]: https://travis-ci.org/uber/jaeger-client-java

@@ -22,8 +22,7 @@
 package com.uber.jaeger;
 
 public class Constants {
-    public static final String TRACER_STATE_HEADER_NAME = "uber-trace-id";
-    public static final String TRACER_BAGGAGE_HEADER_PREFIX = "uberctx-";
+    // TODO these should be configurable
     public static final String X_UBER_SOURCE = "x-uber-source";
     public static final int MAX_ANNOTATION_LENGTH = 256;
 }

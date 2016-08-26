@@ -1,0 +1,52 @@
+version: '2'
+
+services:
+    crossdock:
+        image: crossdock/crossdock
+        links:
+            - go
+            - java
+        environment:
+            - WAIT_FOR=go,java
+
+            - AXIS_CLIENT=go
+            - AXIS_S1NAME=go,java
+            - AXIS_SAMPLED=true,false
+            - AXIS_S2NAME=go,java
+            - AXIS_S2TRANSPORT=http,tchannel
+            - AXIS_S3NAME=go,java
+            - AXIS_S3TRANSPORT=http,tchannel
+
+            - BEHAVIOR_TRACE=client,s1name,sampled,s2name,s2transport,s3name,s3transport
+
+            - REPORT=compact
+    go:
+        image: jaegertracing/xdock-go:upgrade-crossdock-tests-for-native-opentracing-in-tchannel
+        ports:
+            - "8080-8082"
+
+    java:
+        build: .
+        ports:
+            - "8080-8082"
+#    node:
+#        image: yarpc/yarpc-node
+#        ports:
+#            - "8080-8082"
+#
+#    java:
+#        image: yarpc/yarpc-java
+#        ports:
+#            - "8080-8082"
+#
+#    python:
+#        image: yarpc/yarpc-python
+#        ports:
+#            - "8080:8082"
+#
+#    python-sync:
+#        image: yarpc/yarpc-python
+#        ports:
+#            - 8080
+#        environment:
+#            - SYNC=1

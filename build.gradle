@@ -7,21 +7,22 @@ plugins {
 }
 
 
+ext.opentracingVersion = '0.13.0'
 ext.guavaVersion = '18.0'
 ext.apacheThriftVersion = '0.9.3'
-ext.mavenThriftPluginVersion = '0.1.11'
-ext.opentracingVersion = '0.2.0'
 ext.jerseyVersion = '2.22.2'
-ext.mockitoVersion = '1.10.19'
-ext.powermockVersion = '1.6.4'
-ext.slf4jVersion = '1.7.12'
+ext.slf4jVersion = '1.7.16'
+ext.jacksonVersion = '2.7.4'
 
+ext.junitVersion = '4.12'
+ext.mockitoVersion = '2.0.2-beta'
+ext.powermockVersion = '1.6.4'
 
 allprojects {
     apply plugin: 'idea' // intellij support
 
     group = 'com.uber.jaeger'
-    version = '0.5.1-SNAPSHOT'
+    version = '0.7.2-SNAPSHOT'
 
     task wrapper(type: Wrapper) {
         gradleVersion = '2.12' //version required
@@ -58,8 +59,8 @@ subprojects {
     license {
         header rootProject.file('license-template')
         strictCheck true
-        include '**/*.java'
-        exclude '**/gen-java/**'
+        include "**/*.java"
+        excludes(["**/gen-java/**"])
         ext.year = Calendar.getInstance().get(Calendar.YEAR)
         ext.name = 'Uber Technologies, Inc'
         ignoreFailures = false

@@ -1,0 +1,65 @@
+apply plugin: 'jacoco'
+apply plugin: 'com.github.kt3k.coveralls'
+apply plugin: 'com.github.johnrengelman.shadow'
+
+
+description = 'A jaeger instrumented java server meant for testing interoperability with different Jaeger clients through the use of crossdock (https://github.com/crossdock/crossdock)'
+ext.jacksonVersion = '2.7.4'
+shadowJar.archiveName = 'jaeger-crossdock.jar'
+
+dependencies {
+    compile project(':jaeger-jaxrs2')
+
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
+    compile group: 'org.glassfish.jersey.containers', name: 'jersey-container-grizzly2-http', version: jerseyVersion
+    compile group: 'org.glassfish.jersey.containers', name: 'jersey-container-servlet', version: jerseyVersion
+    compile group: 'org.glassfish.jersey.core', name: 'jersey-client', version: jerseyVersion
+    compile group: 'org.glassfish.jersey.media', name: 'jersey-media-json-jackson', version: jerseyVersion
+    compile group: 'org.glassfish.jersey.media', name: 'jersey-media-moxy', version: '2.12'
+    compile group: 'javax.servlet', name: 'servlet-api', version: '2.5'
+    compile group: 'com.uber.tchannel', name: 'tchannel-core', version: '0.5.0'
+    compile group: 'org.slf4j', name: 'slf4j-log4j12', version: slf4jVersion
+
+    // Testing Frameworks
+    testCompile group: 'junit', name: 'junit', version: junitVersion
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled = true // coveralls plugin depends on xml format report
+        html.enabled = true
+        html.destination "${buildDir}/jacocoHtml"
+    }
+
+    afterEvaluate {
+        classDirectories = files(classDirectories.files.collect {
+            fileTree(dir: it,
+                exclude: [
+                    '**/*Test*',
+                ])
+        })
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main/java'
+        }
+    }
+
+    test {
+        java {
+            srcDir 'src/test/java'
+        }
+    }
+}
+
+jar {
+    from sourceSets.main.output
+    from sourceSets.test.output
+    manifest {
+        attributes('Implementation-Title': 'jaeger-crossdock', 'Implementation-Version': project.version)
+        attributes 'Main-Class': 'com.uber.jaeger.crossdock.JerseyServer'
+    }
+}

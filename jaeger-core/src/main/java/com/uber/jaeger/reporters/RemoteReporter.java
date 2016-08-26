@@ -73,14 +73,14 @@ public class RemoteReporter implements Reporter {
     }
 
     @Override
-    public void report(io.opentracing.Span span) {
+    public void report(Span span) {
         // Its better to drop spans, than to block here
         if (commandQueue.size() == maxQueueSize) {
             metrics.reporterDropped.inc(1);
             return;
         }
 
-        commandQueue.add(new AppendCommand(ThriftSpanConverter.convertSpan((Span) span)));
+        commandQueue.add(new AppendCommand(ThriftSpanConverter.convertSpan(span)));
     }
 
     @Override

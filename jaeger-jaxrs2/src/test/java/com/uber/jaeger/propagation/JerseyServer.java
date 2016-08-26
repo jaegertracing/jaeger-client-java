@@ -78,6 +78,6 @@ public class JerseyServer {
     }
 
     public void stop() {
-        server.stop();
+        server.shutdownNow();
     }
 }

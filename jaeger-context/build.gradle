@@ -4,11 +4,11 @@ apply plugin: 'com.github.kt3k.coveralls'
 description = 'A library for thread-local context and utility methods for propagating spans across thread boundaries'
 
 dependencies {
-    compile group: 'io.opentracing', name: 'opentracing-api', version: '0.2.0'
+    compile group: 'io.opentracing', name: 'opentracing-api', version: opentracingVersion
 
     // Testing Frameworks
-    testCompile group: 'junit', name: 'junit', version: '4.12'
-    testCompile group: 'org.mockito', name: 'mockito-all', version: '2.0.2-beta'
+    testCompile group: 'junit', name: 'junit', version: junitVersion
+    testCompile group: 'org.mockito', name: 'mockito-all', version: mockitoVersion
 }
 
 jacocoTestReport {
@@ -45,8 +45,7 @@ sourceSets {
 jar {
     from sourceSets.main.output
     from sourceSets.test.output
-    from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
     manifest {
-        attributes('Implementation-jaeger-context': 'jaeger-context', 'Implementation-Version': project.version)
+        attributes('Implementation-Title': 'jaeger-context', 'Implementation-Version': project.version)
     }
 }

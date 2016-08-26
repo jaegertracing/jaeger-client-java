@@ -26,19 +26,17 @@ cache:
   directories:
   - $HOME/.gradle/caches/
   - $HOME/.gradle/wrapper/
-  - $HOME/.thrift-build
 
 before_install:
-- apt-cache madison docker-engine
-- sudo apt-get -o Dpkg::Options::="--force-confnew" install -y docker-engine=${DOCKER_VERSION}
 - docker version
-- sudo rm /usr/local/bin/docker-compose
+- sudo rm -rf /usr/local/bin/docker-compose
 - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname
   -s`-`uname -m` > docker-compose
 - chmod +x docker-compose
 - sudo mv docker-compose /usr/local/bin
 - docker-compose version
-- bash travis/install-thrift.sh
+- sudo rm -rf /usr/local/bin/thrift
+- sudo cp travis/docker-thrift/thrift /usr/local/bin/
 
 script:
 - make test
@@ -47,7 +45,7 @@ script:
 after_success:
 - ./gradlew jacocoTestReport coveralls
 - ./gradlew uploadArchives -PossrhUsername="${SONATYPE_USERNAME}" -PossrhPassword="${SONATYPE_PASSWORD}"
-- pushd 'jaeger-java-crossdock'
+- pushd 'jaeger-crossdock'
 - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
 - export REPO=jaegertracing/xdock-java
 - export PR=https://api.github.com/repos/$TRAVIS_REPO_SLUG/pulls/$TRAVIS_PULL_REQUEST

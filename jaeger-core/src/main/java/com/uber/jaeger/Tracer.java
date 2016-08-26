@@ -21,19 +21,25 @@
  */
 package com.uber.jaeger;
 
-import java.net.Inet4Address;
-import java.net.UnknownHostException;
-import java.util.HashMap;
-import java.util.Map;
-
+import com.uber.jaeger.exceptions.UnsupportedFormatException;
 import com.uber.jaeger.metrics.Metrics;
 import com.uber.jaeger.metrics.NullStatsReporter;
 import com.uber.jaeger.metrics.StatsFactoryImpl;
 import com.uber.jaeger.metrics.StatsReporter;
-import com.uber.jaeger.propagation.ExtractorFactory;
+import com.uber.jaeger.propagation.Extractor;
+import com.uber.jaeger.propagation.Injector;
+import com.uber.jaeger.propagation.TextMapCodec;
 import com.uber.jaeger.reporters.Reporter;
 import com.uber.jaeger.samplers.Sampler;
 import com.uber.jaeger.utils.Utils;
+import io.opentracing.References;
+import io.opentracing.propagation.Format;
+import io.opentracing.tag.Tags;
+
+import java.net.Inet4Address;
+import java.net.UnknownHostException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Tracer implements io.opentracing.Tracer {
     private final Reporter reporter;
@@ -69,51 +75,6 @@ public class Tracer implements io.opentracing.Tracer {
         return ip;
     }
 
-    public io.opentracing.Tracer.SpanBuilder getExtractedSpanBuilder(String operationName,
-                                                        TraceContext context,
-                                                        HashMap<String, String> baggage) {
-        return new ExtractedSpanBuilder(operationName, context, baggage);
-    }
-
-    public static final class Builder {
-        private final Sampler sampler;
-        private final Reporter reporter;
-        private final PropagationRegistry registry = new PropagationRegistry();
-        private Metrics metrics;
-        private String serviceName;
-
-        public Builder(String serviceName, Reporter reporter, Sampler sampler) {
-            this.serviceName = serviceName;
-            this.reporter = reporter;
-            this.sampler = sampler;
-            this.metrics = new Metrics(new StatsFactoryImpl(new NullStatsReporter()));
-        }
-
-        public <T> Builder register(Class<T> key, Injector<T> injector) {
-            this.registry.register(key, injector);
-            return this;
-        }
-
-        public <T> Builder register(Class<T> key, ExtractorFactory extractor) {
-            this.registry.register(key, extractor);
-            return this;
-        }
-
-        public Builder withStatsReporter(StatsReporter statsReporter) {
-            this.metrics = new Metrics(new StatsFactoryImpl(statsReporter));
-            return this;
-        }
-
-        Builder withMetrics(Metrics metrics) {
-            this.metrics = metrics;
-            return this;
-        }
-
-        public Tracer build() {
-            return new Tracer(this.serviceName, reporter, sampler, registry, metrics);
-        }
-    }
-
     Reporter getReporter() {
         return reporter;
     }
@@ -129,90 +90,50 @@ public class Tracer implements io.opentracing.Tracer {
     }
 
     @Override
-    public <T> void inject(io.opentracing.Span span, T carrier) {
-        registry.getInjector(carrier.getClass()).inject(span, carrier);
+    public <T> void inject(io.opentracing.SpanContext spanContext, Format<T> format, T carrier) {
+        Injector<T> injector = registry.getInjector(format);
+        if (injector == null) {
+            throw new UnsupportedFormatException(format);
+        }
+        injector.inject((SpanContext) spanContext, carrier);
     }
 
     @Override
-    public <T> io.opentracing.Tracer.SpanBuilder join(T carrier) {
-        return registry.getExtractor(carrier.getClass()).provide(this).join(carrier);
+    public <T> io.opentracing.SpanContext extract(Format<T> format, T carrier) {
+        Extractor<T> extractor = registry.getExtractor(format);
+        if (extractor == null) {
+            throw new UnsupportedFormatException(format);
+        }
+        return extractor.extract(carrier);
     }
 
-    private static class PropagationRegistry {
-        private final Map<Class, Injector<?>> injectors = new HashMap<>();
-        private final Map<Class, ExtractorFactory> extractors = new HashMap<>();
-
-        Object lookup(Class<?> carrierType, Map<Class, ?> codecMap, String type) {
-            Class<?> c = carrierType;
-            // match first on concrete classes
-            do {
-                if (codecMap.containsKey(c)) {
-                    return codecMap.get(c);
-                }
-                c = c.getSuperclass();
-            } while (c != null);
-            // match second on interfaces
-            for (Class<?> iface : carrierType.getInterfaces()) {
-                if (codecMap.containsKey(iface)) {
-                    return codecMap.get(iface);
-                }
-            }
-            throw new IllegalArgumentException("no registered " + type + " for " + carrierType.getName());
-        }
-
-        // Lookup returns an Object reference because it must return both Injectors, and Extractors.
-        // In theory this cast is unsafe, but in reality the code won't abuse this lack of type safety.
-        @SuppressWarnings("unchecked")
-        <T> Injector<T> getInjector(Class<?> carrierType) {
-            return (Injector<T>) lookup(carrierType, injectors, "injector");
-        }
-
-        // Lookup returns an Object reference because it must return both Injectors, and Extractors.
-        // In theory this cast is unsafe, but in reality the code won't abuse this lack of type safety.
-        @SuppressWarnings("unchecked")
-        <T> ExtractorFactory<T> getExtractor(Class<?> carrierType) {
-            return (ExtractorFactory<T>) lookup(carrierType, extractors, "extractor");
-        }
-
-        public <T> Injector<T> register(Class<T> carrierType, Injector<?> injector) {
-            if (injectors.containsKey(carrierType)) {
-                return null;
-            }
-
-            // We store injectors with multiple carrierTypes, but only return the injector for the carrierType
-            // that we just registered.  Thus this is type unsafe.  However logically we know that the Injector
-            // type return the type we just associated with its key.
-            @SuppressWarnings("unchecked")
-            Injector<T> receivedInjector =  (Injector<T>) injectors.put(carrierType, injector);
-            return receivedInjector;
-        }
-
-        public <T> ExtractorFactory register(Class<T> carrierType, ExtractorFactory extractor) {
-            if (extractors.containsKey(carrierType)) {
-                return null;
-            }
-
-            return extractors.put(carrierType, extractor);
-        }
-    }
-
-    private abstract class AbstractSpanBuilder implements io.opentracing.Tracer.SpanBuilder {
+    private class SpanBuilder implements io.opentracing.Tracer.SpanBuilder {
 
         private String operationName = null;
         private long start;
+        private SpanContext parent;
         private final Map<String, Object> tags = new HashMap<>();
 
-        protected abstract Map<String, String> getBaggage();
-
-        protected abstract TraceContext getContext();
-
-        AbstractSpanBuilder(String operationName) {
+        SpanBuilder(String operationName) {
             this.operationName = operationName;
         }
 
         @Override
-        public io.opentracing.Tracer.SpanBuilder withOperationName(String operationName) {
-            this.operationName = operationName;
+        public io.opentracing.Tracer.SpanBuilder asChildOf(io.opentracing.SpanContext parent) {
+            return addReference(References.CHILD_OF, parent);
+        }
+
+        @Override
+        public io.opentracing.Tracer.SpanBuilder asChildOf(io.opentracing.Span parent) {
+            return addReference(References.CHILD_OF, parent.context());
+        }
+
+        @Override
+        public io.opentracing.Tracer.SpanBuilder addReference(String referenceType, io.opentracing.SpanContext referencedContext) {
+            if (parent == null && (
+                    referenceType == References.CHILD_OF || referenceType == References.FOLLOWS_FROM)) {
+                this.parent = (SpanContext) referencedContext;
+            }
             return this;
         }
 
@@ -240,28 +161,46 @@ public class Tracer implements io.opentracing.Tracer {
             return this;
         }
 
-        TraceContext createNewContext() {
+        private SpanContext createNewContext() {
             long id = Utils.uniqueID();
 
             byte flags = 0;
             if (sampler.isSampled(id)) {
-                flags |= TraceContext.flagSampled;
+                flags |= SpanContext.flagSampled;
                 metrics.traceStartedSampled.inc(1);
             } else {
                 metrics.traceStartedNotSampled.inc(1);
             }
-            return new TraceContext(id, id, 0, flags);
+            return new SpanContext(id, id, 0, flags);
+        }
+
+        private SpanContext createChildContext() {
+            // For server-side RPC spans we reuse spanID per Zipkin convention
+            if (tags.get(Tags.SPAN_KIND.getKey()) == Tags.SPAN_KIND_SERVER) {
+                if (parent.isSampled()) {
+                    metrics.tracesJoinedSampled.inc(1);
+                } else {
+                    metrics.tracesJoinedNotSampled.inc(1);
+                }
+                return parent;
+            }
+            return new SpanContext(
+                    parent.getTraceID(),
+                    Utils.uniqueID(),
+                    parent.getSpanID(),
+                    parent.getFlags(),
+                    parent.baggage());
         }
 
         @Override
         public io.opentracing.Span start() {
-            TraceContext context = getContext();
+            SpanContext context = parent == null ? createNewContext() : createChildContext();
 
             if (start == 0) {
                 start = Utils.getMicroseconds();
             }
 
-            Span span = new Span(Tracer.this, operationName, context, start, tags, getBaggage());
+            Span span = new Span(Tracer.this, operationName, context, start, tags);
             if (context.isSampled()) {
                 metrics.spansSampled.inc(1);
             } else {
@@ -272,77 +211,74 @@ public class Tracer implements io.opentracing.Tracer {
         }
     }
 
-    /*
-    * SpanBuilder is a span builder meant for creating a span from a parent span.
-    * This means the SpanBuilder will handle the logic of creating the child span's
-    * TraceContext.
-    */
-    private class SpanBuilder extends AbstractSpanBuilder {
-        private Span parent;
+    public static final class Builder {
+        private final Sampler sampler;
+        private final Reporter reporter;
+        private final PropagationRegistry registry = new PropagationRegistry();
+        private Metrics metrics;
+        private String serviceName;
 
-        SpanBuilder(String operationName) {
-            super(operationName);
+        public Builder(String serviceName, Reporter reporter, Sampler sampler) {
+            this.serviceName = serviceName;
+            this.reporter = reporter;
+            this.sampler = sampler;
+            this.metrics = new Metrics(new StatsFactoryImpl(new NullStatsReporter()));
+
+            TextMapCodec textMapCodec = new TextMapCodec(false);
+            this.registerInjector(Format.Builtin.TEXT_MAP, textMapCodec);
+            this.registerExtractor(Format.Builtin.TEXT_MAP, textMapCodec);
+            // TODO for now we register the same codec for HTTP_HEADERS
+            TextMapCodec httpCodec = new TextMapCodec(true);
+            this.registerInjector(Format.Builtin.HTTP_HEADERS, httpCodec);
+            this.registerExtractor(Format.Builtin.HTTP_HEADERS, httpCodec);
+            // TODO binary codec not implemented
         }
 
-        @Override
-        protected Map<String, String> getBaggage() {
-            if (parent == null) {
-                return null;
-            }
-
-            return parent.getBaggage();
-        }
-
-        @Override
-        protected TraceContext getContext() {
-            if (parent == null) {
-                return super.createNewContext();
-            }
-
-            // span must be created with a context, so no NPE possible.
-            TraceContext parentContext = parent.getContext();
-            return new TraceContext(parentContext.getTraceID(), Utils.uniqueID(), parentContext.getSpanID(), parentContext.getFlags());
-        }
-
-        @Override
-        public io.opentracing.Tracer.SpanBuilder withParent(io.opentracing.Span parent) {
-            this.parent = (Span) parent;
+        public <T> Builder registerInjector(Format<T> format, Injector<T> injector) {
+            this.registry.register(format, injector);
             return this;
+        }
+
+        public <T> Builder registerExtractor(Format<T> format, Extractor<T> extractor) {
+            this.registry.register(format, extractor);
+            return this;
+        }
+
+        public Builder withStatsReporter(StatsReporter statsReporter) {
+            this.metrics = new Metrics(new StatsFactoryImpl(statsReporter));
+            return this;
+        }
+
+        Builder withMetrics(Metrics metrics) {
+            this.metrics = metrics;
+            return this;
+        }
+
+        public Tracer build() {
+            return new Tracer(this.serviceName, reporter, sampler, registry, metrics);
         }
     }
 
-    /*
-    * ExtractedSpanBuilder is a span builder used for when you want to initialize a span from a TraceContext.
-    * Such a situation arises when you deserialize a transport (i.e. an rpc call).
-    */
-    private class ExtractedSpanBuilder extends AbstractSpanBuilder {
-        private final TraceContext context;
-        private final Map<String, String> baggage;
+    private static class PropagationRegistry {
+        private final Map<Format<?>, Injector<?>> injectors = new HashMap<>();
+        private final Map<Format<?>, Extractor<?>> extractors = new HashMap<>();
 
-        ExtractedSpanBuilder(String operationName, TraceContext context, HashMap<String, String> baggage) {
-            super(operationName);
-            this.context = context;
-            if (context.isSampled()) {
-                metrics.tracesJoinedSampled.inc(1);
-            } else {
-                metrics.tracesJoinedNotSampled.inc(1);
-            }
-            this.baggage = baggage;
+        @SuppressWarnings("unchecked")
+        <T> Injector<T> getInjector(Format<T> format) {
+            return (Injector<T>) injectors.get(format);
         }
 
-        @Override
-        public io.opentracing.Tracer.SpanBuilder withParent(io.opentracing.Span span) {
-            throw new IllegalStateException("Cannot call withParent on ExtractedSpanBuilder");
+        @SuppressWarnings("unchecked")
+        <T> Extractor<T> getExtractor(Format<T> format) {
+            return (Extractor<T>) extractors.get(format);
         }
 
-        @Override
-        protected Map<String, String> getBaggage() {
-            return baggage;
+        public <T> void register(Format<T> format, Injector<T> injector) {
+            injectors.put(format, injector);
         }
 
-        @Override
-        protected TraceContext getContext() {
-            return context;
+        public <T> void register(Format<T> format, Extractor<T> extractor) {
+            extractors.put(format, extractor);
         }
     }
 }

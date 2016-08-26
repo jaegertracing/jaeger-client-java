@@ -65,6 +65,6 @@ public class MockAgent {
     }
 
     public void stop() {
-        server.stop();
+        server.shutdown();
     }
 }

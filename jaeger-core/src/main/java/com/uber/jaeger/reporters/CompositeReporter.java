@@ -22,7 +22,7 @@
 package com.uber.jaeger.reporters;
 
 
-import io.opentracing.Span;
+import com.uber.jaeger.Span;
 
 import java.util.ArrayList;
 import java.util.List;

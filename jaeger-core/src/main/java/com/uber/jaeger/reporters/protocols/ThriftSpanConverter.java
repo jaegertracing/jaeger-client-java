@@ -29,7 +29,7 @@ import com.twitter.zipkin.thriftjava.zipkincoreConstants;
 import com.uber.jaeger.Constants;
 import com.uber.jaeger.LogData;
 import com.uber.jaeger.Span;
-import com.uber.jaeger.TraceContext;
+import com.uber.jaeger.SpanContext;
 import com.uber.jaeger.Tracer;
 
 
@@ -47,7 +47,7 @@ public class ThriftSpanConverter {
             (short)0,
             tracer.getServiceName());
 
-        TraceContext context = span.getContext();
+        SpanContext context = span.getContext();
         return new com.twitter.zipkin.thriftjava.Span(
             context.getTraceID(),
             span.getOperationName(),
@@ -55,7 +55,7 @@ public class ThriftSpanConverter {
             buildAnnotations(span, host),
             buildBinaryAnnotations(span, host))
         .setParent_id(context.getParentID())
-        .setDebug((context.getFlags() & TraceContext.flagDebug) != 0)
+        .setDebug(context.isDebug())
         .setTimestamp(span.getStart())
         .setDuration(span.getDuration());
     }

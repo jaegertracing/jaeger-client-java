@@ -1,0 +1,21 @@
+#!/bin/sh
+
+pwd=$(dirname ${PWD})
+
+THRIFT_VER=0.9.3
+THRIFT_IMG=thrift:${THRIFT_VER}
+THRIFT="docker run -v ${pwd}:/data ${THRIFT_IMG} thrift"
+
+args=$(echo $@ | sed "s|${pwd}|/data|g")
+
+echo Running Docker-based Thrift in pwd=${pwd}
+echo 'Remapped arguments:' $@
+echo '                to:' $args
+
+set -x
+set -e
+
+${THRIFT} $args
+
+# docker command runs as root, but we need normal permissions
+sudo chmod -R 0777 ${pwd}/jaeger-core/src/main/gen-java

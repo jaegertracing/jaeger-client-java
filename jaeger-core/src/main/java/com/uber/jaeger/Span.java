@@ -34,8 +34,7 @@ public class Span implements io.opentracing.Span {
     private final Tracer tracer;
     private final long start; // time in microseconds
     private final String operationName;
-    private TraceContext context;
-    private Map<String, String> baggage;
+    private SpanContext context;
     private Endpoint peer;
     private long duration; // time in microseconds
     private Map<String,Object> tags;
@@ -43,6 +42,14 @@ public class Span implements io.opentracing.Span {
     private String localComponent;
     private boolean isClient;
     private boolean isRPC;
+
+    Span(Tracer tracer, String operationName, SpanContext context, long start, Map<String, Object> tags) {
+        this.tracer = tracer;
+        this.operationName = operationName;
+        this.context = context;
+        this.start = start;
+        this.tags = tags;
+    }
 
     public String getLocalComponent() {
         return localComponent;
@@ -74,6 +81,7 @@ public class Span implements io.opentracing.Span {
 
     public Map<String, Object> getTags() {
         synchronized (this) {
+            // TODO wasteful allocation and copying
             return new HashMap<>(tags);
         }
     }
@@ -88,72 +96,54 @@ public class Span implements io.opentracing.Span {
                 return null;
             }
 
+            // TODO wasteful allocation and copying
             return new ArrayList<>(logs);
         }
     }
 
-    public Map<String, String> getBaggage() {
-        synchronized(this) {
-            if(baggage == null) {
-                return null;
-            }
-
-            return new HashMap<>(baggage);
-        }
-    }
-
     // This is public since extractors, and injectors will need access to a span's context.
-    public TraceContext getContext() {
+    public SpanContext getContext() {
         // doesn't need to be a copy since all fields are final
         return this.context;
     }
 
-    Span(Tracer tracer, String operationName, TraceContext context, long start, Map<String, Object> tags, Map<String, String> baggage) {
-        this.tracer = tracer;
-        this.operationName = operationName;
-        this.context = context;
-        this.start = start;
-        this.tags = tags;
-        this.baggage = baggage;
-    }
-
     @Override
     public io.opentracing.Span setBaggageItem(String key, String value) {
-        String normalizedKey = Utils.normalizeBaggageKey(key);
-
         synchronized (this) {
-            if (baggage == null) {
-                baggage = new HashMap<>();
-            }
-
-            baggage.put(normalizedKey, value);
-            return this;
+            this.context = this.context.withBaggageItem(key, value);
         }
+        return this;
     }
 
     @Override
     public String getBaggageItem(String key) {
-        if (baggage == null) {
-            return null;
-        }
-
-        String normalizedKey = Utils.normalizeBaggageKey(key);
         synchronized (this) {
-            return baggage.get(normalizedKey);
+            return this.context.getBaggageItem(key);
         }
     }
 
     public String toString() {
-        // no synchronization needed because context fields are immutable.
-        return context.contextAsString() + " - " + operationName;
+        synchronized (this) {
+            return context.contextAsString() + " - " + operationName;
+        }
+    }
+
+    @Override
+    public io.opentracing.SpanContext context() {
+        synchronized (this) {
+            return context;
+        }
     }
 
     @Override
     public void finish() {
-        long finish = Utils.getMicroseconds();
+        finish(Utils.getMicroseconds());
+    }
 
+    @Override
+    public void finish(long finishMicros) {
         synchronized(this) {
-            this.duration = finish - start;
+            this.duration = finishMicros - start;
         }
 
         if (context.isSampled()) {
@@ -182,6 +172,7 @@ public class Span implements io.opentracing.Span {
     }
 
     private boolean handleSpecialTag(String key, Object value) {
+        // TODO use a map of handlers for special tags, instead of if/then
         if (key.equals(Tags.COMPONENT.getKey()) && value instanceof String) {
             localComponent = (String) value;
             return true;
@@ -217,17 +208,12 @@ public class Span implements io.opentracing.Span {
                 int priority = ((Number) value).intValue();
                 byte newFlags;
                 if (priority > 0) {
-                    newFlags = (byte) (context.getFlags() | TraceContext.flagSampled | TraceContext.flagDebug);
+                    newFlags = (byte) (context.getFlags() | SpanContext.flagSampled | SpanContext.flagDebug);
                 } else {
-                    newFlags = (byte) (context.getFlags() & (~TraceContext.flagSampled));
+                    newFlags = (byte) (context.getFlags() & (~SpanContext.flagSampled));
                 }
 
-                context = new TraceContext(
-                        context.getTraceID(),
-                        context.getSpanID(),
-                        context.getParentID(),
-                        newFlags
-                );
+                context = context.withFlags(newFlags);
             }
 
             if (context.isSampled()) {

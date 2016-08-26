@@ -24,8 +24,11 @@ package com.uber.jaeger;
 
 import com.uber.jaeger.metrics.InMemoryStatsReporter;
 
+import com.uber.jaeger.propagation.Injector;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
+import io.opentracing.propagation.Format;
+import io.opentracing.propagation.TextMap;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -68,16 +71,19 @@ public class TracerTest {
 
     @Test
     public void testRegisterInjector() {
-        ContainerRequestContext carrier = mock(ContainerRequestContext.class);
-        Injector injector = mock(Injector.class);
+        @SuppressWarnings("unchecked") Injector<TextMap> injector = mock(Injector.class);
 
-        Tracer tracer = new Tracer.Builder("TracerTestService", new InMemoryReporter(), new ConstSampler(true))
-                                        .withStatsReporter(metricsReporter)
-                                           .register(carrier.getClass(), injector).build();
+        Tracer tracer = new Tracer.Builder(
+                "TracerTestService",
+                new InMemoryReporter(),
+                new ConstSampler(true))
+                .withStatsReporter(metricsReporter)
+                .registerInjector(Format.Builtin.TEXT_MAP, injector).build();
         Span span = (com.uber.jaeger.Span) tracer.buildSpan("leela").start();
 
-        tracer.inject(span, carrier);
+        TextMap carrier = mock(TextMap.class);
+        tracer.inject(span.context(), Format.Builtin.TEXT_MAP, carrier);
 
-        verify(injector).inject(any(Span.class), any(ContainerRequestContext.class));
+        verify(injector).inject(any(SpanContext.class), any(TextMap.class));
     }
 }
