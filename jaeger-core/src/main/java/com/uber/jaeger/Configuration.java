@@ -22,10 +22,13 @@
 package com.uber.jaeger;
 
 // TODO don't pull the whole guava dependency because of a single class
-import com.google.common.base.Strings;
 import com.uber.jaeger.metrics.Metrics;
 import com.uber.jaeger.metrics.StatsFactory;
-import com.uber.jaeger.reporters.*;
+import com.uber.jaeger.reporters.CompositeReporter;
+import com.uber.jaeger.reporters.LoggingReporter;
+import com.uber.jaeger.reporters.NoopReporter;
+import com.uber.jaeger.reporters.RemoteReporter;
+import com.uber.jaeger.reporters.Reporter;
 import com.uber.jaeger.samplers.ConstSampler;
 import com.uber.jaeger.samplers.HTTPSamplingManager;
 import com.uber.jaeger.samplers.ProbabilisticSampler;
@@ -48,7 +51,7 @@ public class Configuration {
     public Configuration(String serviceName,
                          SamplerConfiguration samplerConfig,
                          ReporterConfiguration reporterConfig) {
-        if (Strings.isNullOrEmpty(serviceName)) {
+        if (serviceName == null || serviceName.length() == 0) {
             throw new RuntimeException("Must provide a service name for Jaeger Configuration");
         }
 
@@ -128,7 +131,7 @@ public class Configuration {
             String hostPort = stringOrDefault(this.managerHostPort, defaultManagerHostPort);
 
             if (samplerType.equals(CONST)) {
-                return new ConstSampler(samplerParam.intValue() == 1);
+                return new ConstSampler(samplerParam.intValue() != 0);
             }
 
             if (samplerType.equals(PROBABILISTIC)) {

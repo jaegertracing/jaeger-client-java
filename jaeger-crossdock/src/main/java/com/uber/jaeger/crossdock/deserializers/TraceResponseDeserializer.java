@@ -21,36 +21,40 @@
  */
 package com.uber.jaeger.crossdock.deserializers;
 
-import java.io.IOException;
-
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.uber.jaeger.crossdock.tracetest_manual.ObservedSpan;
-import com.uber.jaeger.crossdock.tracetest_manual.TraceResponse;
+import com.uber.jaeger.crossdock.api.ObservedSpan;
+import com.uber.jaeger.crossdock.api.TraceResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 
 public class TraceResponseDeserializer extends JsonDeserializer<TraceResponse> {
+    private static final Logger logger = LoggerFactory.getLogger(TraceResponseDeserializer.class);
+
     private static final ObjectMapper mapper = new ObjectMapper();
 
     @Override
     public TraceResponse deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
         JsonNode node = jp.getCodec().readTree(jp);
 
-        System.out.println("Trace Response: " + node);
+        logger.info("Trace JSON Response: {}", node);
 
         String notImplementedError = node.get("notImplementedError").asText();
 
         ObservedSpan span = null;
         if (notImplementedError.equals("")) {
-            span = mapper.reader(ObservedSpan.class).readValue(node.get("span"));
+            span = mapper.readerFor(ObservedSpan.class).readValue(node.get("span"));
         }
 
         TraceResponse downstream = null;
         JsonNode downstreamNode = node.get("downstream");
         if (downstreamNode != null) {
-            downstream = mapper.reader(TraceResponse.class).readValue(downstreamNode);
+            downstream = mapper.readerFor(TraceResponse.class).readValue(downstreamNode);
         }
 
         return new TraceResponse(notImplementedError, span, downstream);

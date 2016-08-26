@@ -21,14 +21,14 @@
  */
 package com.uber.jaeger.crossdock.deserializers;
 
-import java.io.IOException;
-
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.uber.jaeger.crossdock.tracetest_manual.Downstream;
+import com.uber.jaeger.crossdock.api.Downstream;
+
+import java.io.IOException;
 
 public class DownstreamDeserializer extends JsonDeserializer<Downstream> {
     private static final ObjectMapper mapper = new ObjectMapper();
@@ -45,7 +45,7 @@ public class DownstreamDeserializer extends JsonDeserializer<Downstream> {
         JsonNode downstreamNode = node.get("downstream");
         Downstream downstream = null;
         if (downstreamNode != null) {
-            downstream = mapper.reader(Downstream.class).readValue(downstreamNode);
+            downstream = mapper.readerFor(Downstream.class).readValue(downstreamNode);
         }
 
         return new Downstream(serviceName, host, port, transport, serverRole, downstream);

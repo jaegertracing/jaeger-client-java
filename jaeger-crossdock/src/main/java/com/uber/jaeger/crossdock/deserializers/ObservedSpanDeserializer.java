@@ -21,18 +21,15 @@
  */
 package com.uber.jaeger.crossdock.deserializers;
 
-import java.io.IOException;
-
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.uber.jaeger.crossdock.tracetest_manual.ObservedSpan;
+import com.uber.jaeger.crossdock.api.ObservedSpan;
+
+import java.io.IOException;
 
 public class ObservedSpanDeserializer extends JsonDeserializer<ObservedSpan> {
-    private static final ObjectMapper mapper = new ObjectMapper();
-
     @Override
     public ObservedSpan deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
         JsonNode node = jp.getCodec().readTree(jp);

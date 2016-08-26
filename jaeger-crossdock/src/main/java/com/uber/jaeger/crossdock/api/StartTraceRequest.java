@@ -19,33 +19,33 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.uber.jaeger.crossdock.tracetest_manual;
+package com.uber.jaeger.crossdock.api;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.uber.jaeger.crossdock.deserializers.ObservedSpanDeserializer;
-import com.uber.jaeger.crossdock.serializers.ObservedSpanSerializer;
+import com.uber.jaeger.crossdock.deserializers.StartTraceRequestDeserializer;
 
-@JsonSerialize(using = ObservedSpanSerializer.class)
-@JsonDeserialize(using = ObservedSpanDeserializer.class)
-public class ObservedSpan {
-    private String traceID;
+@JsonDeserialize(using = StartTraceRequestDeserializer.class)
+public class StartTraceRequest {
     private boolean sampled;
     private String baggage;
+    private Downstream downstream;
+    private String serverRole;
 
     @JsonCreator
-    public ObservedSpan(@JsonProperty("traceId") String traceID,
-                        @JsonProperty("sampled") boolean sampled,
-                        @JsonProperty("baggage") String baggage) {
-        this.traceID = traceID;
+    public StartTraceRequest(@JsonProperty("serverRole") String serverRole,
+                             @JsonProperty("sampled") boolean sampled,
+                             @JsonProperty("baggage") String baggage,
+                             @JsonProperty("downstream") Downstream downstream) {
+        this.serverRole = serverRole;
         this.sampled = sampled;
         this.baggage = baggage;
+        this.downstream = downstream;
     }
 
-    public String getTraceID() {
-        return traceID;
+    public String getServerRole() {
+        return serverRole;
     }
 
     public boolean getSampled() {
@@ -54,5 +54,19 @@ public class ObservedSpan {
 
     public String getBaggage() {
         return baggage;
+    }
+
+    public Downstream getDownstream() {
+        return downstream;
+    }
+
+    @Override
+    public String toString() {
+        return "StartTraceRequest{" +
+                "sampled=" + sampled +
+                ", baggage='" + baggage + '\'' +
+                ", downstream=" + downstream +
+                ", serverRole='" + serverRole + '\'' +
+                '}';
     }
 }

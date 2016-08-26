@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.uber.jaeger.crossdock.tracetest_manual;
+package com.uber.jaeger.crossdock.api;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -45,5 +45,13 @@ public class JoinTraceRequest {
 
     public Downstream getDownstream() {
         return downstream;
+    }
+
+    @Override
+    public String toString() {
+        return "JoinTraceRequest{" +
+                "serverRole='" + serverRole + '\'' +
+                ", downstream=" + downstream +
+                '}';
     }
 }

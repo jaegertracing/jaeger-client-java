@@ -21,21 +21,39 @@
  */
 package com.uber.jaeger.crossdock.resources.behavior.tchannel;
 
+import com.uber.jaeger.context.TracingUtils;
 import com.uber.jaeger.crossdock.JerseyServer;
+import com.uber.jaeger.crossdock.resources.behavior.TraceBehavior;
 import com.uber.tchannel.api.TChannel;
+import com.uber.tchannel.tracing.TracingContext;
+import io.opentracing.Span;
+import io.opentracing.Tracer;
+
+import java.net.InetAddress;
+import java.util.EmptyStackException;
 
 public class TChannelServer {
-    private final TChannel server;
+    // TODO should not be static
+    public static TChannel server;
 
-    public TChannelServer(int port) {
-        server = new TChannel.Builder(JerseyServer.SERVICE_NAME)
-            .setServerPort(port)
-            .build();
+    public TChannelServer(int port, TraceBehavior behavior, Tracer tracer, boolean useLoopback) {
+        TChannel.Builder builder = new TChannel.Builder(JerseyServer.SERVICE_NAME);
+        if (useLoopback) {
+            builder.setServerHost(InetAddress.getLoopbackAddress());
+        }
+        server = builder
+                .setServerPort(port)
+                .setTracer(tracer)
+                .setTracingContext(new TracingContextAdapter())
+                .build();
 
         server.makeSubChannel(JerseyServer.SERVICE_NAME)
-            .registerHealthHandler()
-            .register("TracedService::joinTrace", new JoinTraceThriftHandler());
+                .registerHealthHandler()
+                .register("TracedService::joinTrace", new JoinTraceThriftHandler(behavior));
+    }
 
+    public TChannel getChannel() {
+        return server;
     }
 
     public void start() throws InterruptedException {
@@ -45,5 +63,32 @@ public class TChannelServer {
 
     public void shutdown() {
         server.shutdown(true);
+    }
+
+    private class TracingContextAdapter implements TracingContext {
+        @Override
+        public void pushSpan(Span span) {
+            TracingUtils.getTraceContext().push(span);
+        }
+
+        @Override
+        public boolean hasSpan() {
+            return !TracingUtils.getTraceContext().isEmpty();
+        }
+
+        @Override
+        public Span currentSpan() throws EmptyStackException {
+            return TracingUtils.getTraceContext().getCurrentSpan();
+        }
+
+        @Override
+        public Span popSpan() throws EmptyStackException {
+            return TracingUtils.getTraceContext().pop();
+        }
+
+        @Override
+        public void clear() {
+
+        }
     }
 }

@@ -21,30 +21,34 @@
  */
 package com.uber.jaeger.crossdock.deserializers;
 
-import java.io.IOException;
-
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.uber.jaeger.crossdock.tracetest_manual.Downstream;
-import com.uber.jaeger.crossdock.tracetest_manual.JoinTraceRequest;
+import com.uber.jaeger.crossdock.api.Downstream;
+import com.uber.jaeger.crossdock.api.JoinTraceRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 
 public class JoinTraceRequestDeserializer extends JsonDeserializer<JoinTraceRequest> {
-    private final ObjectMapper mapper = new ObjectMapper();
+    private static final Logger logger = LoggerFactory.getLogger(JoinTraceRequestDeserializer.class);
+
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     @Override
     public JoinTraceRequest deserialize(JsonParser jp, DeserializationContext deserializationContext) throws IOException {
         JsonNode node = jp.getCodec().readTree(jp);
 
-        System.out.println("join trace request: " + node.toString());
+        logger.info("join trace json request: {}", node);
 
         String serverRole = node.get("serverRole").asText();
         JsonNode downstreamNode = node.get("downstream");
         Downstream downstream = null;
         if (downstreamNode != null) {
-            downstream = mapper.reader(Downstream.class).readValue(downstreamNode);
+            downstream = mapper.readerFor(Downstream.class).readValue(downstreamNode);
         }
 
         return new JoinTraceRequest(serverRole, downstream);

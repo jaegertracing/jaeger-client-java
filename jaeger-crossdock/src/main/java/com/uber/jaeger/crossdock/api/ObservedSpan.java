@@ -19,33 +19,33 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.uber.jaeger.crossdock.tracetest_manual;
+package com.uber.jaeger.crossdock.api;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.uber.jaeger.crossdock.deserializers.StartTraceRequestDeserializer;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.uber.jaeger.crossdock.deserializers.ObservedSpanDeserializer;
+import com.uber.jaeger.crossdock.serializers.ObservedSpanSerializer;
 
-@JsonDeserialize(using = StartTraceRequestDeserializer.class)
-public class StartTraceRequest {
+@JsonSerialize(using = ObservedSpanSerializer.class)
+@JsonDeserialize(using = ObservedSpanDeserializer.class)
+public class ObservedSpan {
+    private String traceID;
     private boolean sampled;
     private String baggage;
-    private Downstream downstream;
-    private String serverRole;
 
     @JsonCreator
-    public StartTraceRequest(@JsonProperty("serverRole") String serverRole,
-                             @JsonProperty("sampled") boolean sampled,
-                             @JsonProperty("baggage") String baggage,
-                             @JsonProperty("downstream") Downstream downstream) {
-        this.serverRole = serverRole;
+    public ObservedSpan(@JsonProperty("traceId") String traceID,
+                        @JsonProperty("sampled") boolean sampled,
+                        @JsonProperty("baggage") String baggage) {
+        this.traceID = traceID;
         this.sampled = sampled;
         this.baggage = baggage;
-        this.downstream = downstream;
     }
 
-    public String getServerRole() {
-        return serverRole;
+    public String getTraceID() {
+        return traceID;
     }
 
     public boolean getSampled() {
@@ -56,7 +56,20 @@ public class StartTraceRequest {
         return baggage;
     }
 
-    public Downstream getDownstream() {
-        return downstream;
+    static ObservedSpan fromThrift(com.uber.jaeger.crossdock.thrift.ObservedSpan span) {
+        return new ObservedSpan(
+                span.getTraceId(),
+                span.isSampled(),
+                span.getBaggage()
+        );
+    }
+
+    @Override
+    public String toString() {
+        return "ObservedSpan{" +
+                "traceID='" + traceID + '\'' +
+                ", sampled=" + sampled +
+                ", baggage='" + baggage + '\'' +
+                '}';
     }
 }
