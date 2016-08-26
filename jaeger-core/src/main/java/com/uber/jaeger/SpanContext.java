@@ -39,7 +39,7 @@ public class SpanContext implements io.opentracing.SpanContext {
     private final byte flags;
     private final Map<String, String> baggage;
 
-    SpanContext(long traceID, long spanID, long parentID, byte flags) {
+    public SpanContext(long traceID, long spanID, long parentID, byte flags) {
         this(traceID, spanID, parentID, flags, Collections.<String, String>emptyMap());
     }
 
