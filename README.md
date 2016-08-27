@@ -19,16 +19,16 @@ with Zipkin-compatible data model.
 
 ## Importing Dependencies ##
 Add only one of the following dependencies to your pom.xml file.
-Please use the latest version: [![Released Version][maven-img]][maven]
+Please use the latest version: [![Released Version][maven-img]][maven].
 
 ### Dropwizard ###
 If you are using dropwizard then you can add the following:
 ```xml
-        <dependency>
-            <groupId>com.uber.jaeger</groupId>
-            <artifactId>jaeger-dropwizard</artifactId>
-            <version>$jaegerVersion</version>
-        </dependency>
+<dependency>
+    <groupId>com.uber.jaeger</groupId>
+    <artifactId>jaeger-dropwizard</artifactId>
+    <version>$jaegerVersion</version>
+</dependency>
 ```
 
 ### JAX-RS ###
