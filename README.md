@@ -6,7 +6,14 @@ This is a client side library that implements
 [Java OpenTracing API](https://github.com/opentracing/opentracing-java),
 with Zipkin-compatible data model.
 
-**This project is currently WIP and not ready for use. Do not use it until this notice goes away.**
+# Modules #
+
+ * [jaeger-core](https://github.com/uber/jaeger-client-java/tree/master/jaeger-core): the core implementation of the OpenTracing API
+ * [jaeger-context](https://github.com/uber/jaeger-client-java/tree/master/jaeger-context): in-process context propagation
+ * [jaeger-jaxrs2](https://github.com/uber/jaeger-client-java/tree/master/jaeger-jaxrs2): instrumentation for JAXRS2 filters
+ * [jaeger-dropwizard](https://github.com/uber/jaeger-client-java/tree/master/jaeger-dropwizard): a feature to initialize Jaeger from [Dropwizard](http://www.dropwizard.io/) apps (including binding to stats/metrics) 
+ * [jaeger-zipkin](https://github.com/uber/jaeger-client-java/tree/master/jaeger-zipkin): compatibility layer for using Jaeger tracer as Zipkin-compatible implementation
+
 
 # Usage #
 
