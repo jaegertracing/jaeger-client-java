@@ -86,4 +86,14 @@ public class TracerTest {
 
         verify(injector).inject(any(SpanContext.class), any(TextMap.class));
     }
+
+    @Test
+    public void testSpanListener() {
+        SpanListener mockListener = mock(SpanListener.class);
+        tracer.setSpanListener(mockListener);
+        io.opentracing.Span span = tracer.buildSpan("bonda").start();
+        span.finish();
+        verify(mockListener).listen((Span) span);
+    }
+
 }
