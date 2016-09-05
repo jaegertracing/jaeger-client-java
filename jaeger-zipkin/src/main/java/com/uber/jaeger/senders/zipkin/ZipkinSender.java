@@ -24,12 +24,14 @@ package com.uber.jaeger.senders.zipkin;
 import com.twitter.zipkin.thriftjava.Span;
 import com.uber.jaeger.exceptions.SenderException;
 import com.uber.jaeger.senders.Sender;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import zipkin.reporter.Encoding;
 import zipkin.reporter.internal.AwaitableCallback;
 import zipkin.reporter.urlconnection.URLConnectionSender;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * This sends (TBinaryProtocol big-endian) encoded spans to a Zipkin Collector (usually a
@@ -47,8 +49,8 @@ import zipkin.reporter.urlconnection.URLConnectionSender;
 public final class ZipkinSender implements Sender {
 
   /**
-   * The POST URL for zipkin's <a href="http://zipkin.io/zipkin-api/#/">v1 api</a>, usually
-   * "http://zipkinhost:9411/api/v1/spans"
+   * @param endpoint The POST URL for zipkin's <a href="http://zipkin.io/zipkin-api/#/">v1 api</a>, usually
+   *                 "http://zipkinhost:9411/api/v1/spans"
    */
   public static ZipkinSender create(String endpoint) {
     return new ZipkinSender(URLConnectionSender.create(endpoint));
@@ -62,18 +64,18 @@ public final class ZipkinSender implements Sender {
    * <pre>{@code
    * sender = ZipkinSender.create(KafkaSender.create("192.168.99.100:9092"));
    * }</pre>
+   *
+   * @param delegate indicates an alternate sender library than {@link URLConnectionSender}
    */
-  public static ZipkinSender create(zipkin.reporter.Sender<byte[]> delegate) {
+  public static ZipkinSender create(zipkin.reporter.Sender delegate) {
     return new ZipkinSender(delegate);
   }
 
   final ThriftSpanEncoder encoder = new ThriftSpanEncoder();
-  final zipkin.reporter.Sender<byte[]> delegate;
+  final zipkin.reporter.Sender delegate;
   final List<byte[]> spanBuffer;
 
-  int queuedSizeInBytes;
-
-  ZipkinSender(zipkin.reporter.Sender<byte[]> delegate) {
+  ZipkinSender(zipkin.reporter.Sender delegate) {
     this.delegate = delegate;
     this.spanBuffer = new ArrayList<byte[]>();
   }
@@ -86,21 +88,17 @@ public final class ZipkinSender implements Sender {
   @Override
   public int append(Span span) throws SenderException {
     byte[] next = encoder.encode(span);
-    int nextSizeInBytes = encoder.sizeInBytes(next);
-    // don't enqueue something larger than we can doDrain
-    if (compareToMaxMessageSize(1, nextSizeInBytes) > 0) {
-      throw new SenderException(delegate.toString() + " received a span that was too large",
-          null, 1);
+    int messageSizeOfNextSpan = delegate.messageSizeInBytes(Collections.singletonList(next));
+    // don't enqueue something larger than we can drain
+    if (Integer.compare(messageSizeOfNextSpan, delegate.messageMaxBytes()) > 0) {
+      throw new SenderException(delegate.toString() + " received a span that was too large", null, 1);
     }
 
-    int includingNextVsMaxMessageSize = compareToMaxMessageSize(
-        spanBuffer.size() + 1,
-        queuedSizeInBytes + nextSizeInBytes
-    );
+    spanBuffer.add(next); // speculatively add to the buffer so we can size it
+    int nextSizeInBytes = delegate.messageSizeInBytes(spanBuffer);
+    int includingNextVsMaxMessageSize = Integer.compare(nextSizeInBytes, delegate.messageMaxBytes());
     // If we can fit queued spans and the next into one message...
     if (includingNextVsMaxMessageSize <= 0) {
-      spanBuffer.add(next);
-      queuedSizeInBytes += nextSizeInBytes;
 
       // If there's still room, don't flush yet.
       if (includingNextVsMaxMessageSize < 0) {
@@ -110,7 +108,8 @@ public final class ZipkinSender implements Sender {
       return flush();
     }
 
-    // Otherwise, we have to flush existing spans to make room for the next.
+    // Otherwise, remove speculatively added span and flush until we have room for it.
+    spanBuffer.remove(spanBuffer.size() - 1);
     int n;
     try {
       n = flush();
@@ -121,13 +120,7 @@ public final class ZipkinSender implements Sender {
 
     // Now that there's room, add the span as the only element in the buffer
     spanBuffer.add(next);
-    queuedSizeInBytes = nextSizeInBytes;
     return n;
-  }
-
-  private int compareToMaxMessageSize(int spanCount, int spanBytes) {
-    return Integer.compare(delegate.messageEncoding().overheadInBytes(spanCount) + spanBytes,
-        delegate.messageMaxBytes());
   }
 
   @Override
@@ -145,7 +138,6 @@ public final class ZipkinSender implements Sender {
       throw new SenderException("Failed to flush spans.", e, n);
     } finally {
       spanBuffer.clear();
-      queuedSizeInBytes = 0;
       return n;
     }
   }

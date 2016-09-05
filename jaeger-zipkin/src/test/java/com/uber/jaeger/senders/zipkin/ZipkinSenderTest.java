@@ -30,16 +30,15 @@ import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.reporters.Reporter;
 import com.uber.jaeger.reporters.protocols.ThriftSpanConverter;
 import com.uber.jaeger.samplers.ConstSampler;
-import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.AutoExpandingBufferWriteTransport;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import zipkin.junit.ZipkinRule;
-import zipkin.reporter.MessageEncoder;
 import zipkin.reporter.urlconnection.URLConnectionSender;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -93,14 +92,14 @@ public class ZipkinSenderTest {
         // find size of the initial span
         AutoExpandingBufferWriteTransport memoryTransport =  new AutoExpandingBufferWriteTransport(messageMaxBytes, 2);
         com.twitter.zipkin.thriftjava.Span span = ThriftSpanConverter.convertSpan((Span) tracer.buildSpan("raza").start());
-        span.write(new TBinaryProtocol(memoryTransport));
-        int spanSize = memoryTransport.getPos();
+
+        int expectedNumSpans = 11;
+        List<byte[]> spansToSend = new ArrayList(expectedNumSpans);
+        for (int i = 0; i < expectedNumSpans; i++) spansToSend.add(new ThriftSpanEncoder().encode(span));
 
         // create a sender thats a multiple of the span size (accounting for span overhead)
         // this allows us to test the boundary conditions of writing spans.
-        int expectedNumSpans = 11;
-        int messageMaxBytes = sender.delegate.messageEncoding().overheadInBytes(expectedNumSpans)
-            + spanSize * expectedNumSpans;
+        int messageMaxBytes = sender.delegate.messageSizeInBytes(spansToSend);
         sender.close();
         sender = newSender(messageMaxBytes);
 
@@ -138,7 +137,6 @@ public class ZipkinSenderTest {
     private ZipkinSender newSender(int messageMaxBytes) {
         return ZipkinSender.create(URLConnectionSender.builder()
             .messageMaxBytes(messageMaxBytes)
-            .messageEncoder(MessageEncoder.THRIFT_BYTES)
             .endpoint(zipkinRule.httpUrl() + "/api/v1/spans")
             .build());
     }

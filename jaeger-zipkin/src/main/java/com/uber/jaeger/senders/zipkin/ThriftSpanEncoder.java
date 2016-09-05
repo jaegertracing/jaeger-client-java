@@ -22,21 +22,18 @@
 package com.uber.jaeger.senders.zipkin;
 
 import com.twitter.zipkin.thriftjava.Span;
-import java.io.ByteArrayOutputStream;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TIOStreamTransport;
 import zipkin.reporter.Encoder;
 import zipkin.reporter.Encoding;
 
-final class ThriftSpanEncoder implements Encoder<Span, byte[]> {
+import java.io.ByteArrayOutputStream;
+
+final class ThriftSpanEncoder implements Encoder<Span> {
 
   @Override public Encoding encoding() {
     return Encoding.THRIFT;
-  }
-
-  @Override public int sizeInBytes(byte[] buffer) {
-    return buffer.length;
   }
 
   @Override public byte[] encode(Span thriftSpan) {
