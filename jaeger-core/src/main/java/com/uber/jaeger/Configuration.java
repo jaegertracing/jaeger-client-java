@@ -21,7 +21,6 @@
  */
 package com.uber.jaeger;
 
-// TODO don't pull the whole guava dependency because of a single class
 import com.uber.jaeger.metrics.Metrics;
 import com.uber.jaeger.metrics.StatsFactory;
 import com.uber.jaeger.reporters.CompositeReporter;
@@ -38,6 +37,7 @@ import com.uber.jaeger.samplers.Sampler;
 import com.uber.jaeger.senders.UDPSender;
 
 public class Configuration {
+    public static final double DEFAULT_SAMPLING_PROBABILITY = 0.001;
 
     /**
      * The serviceName that the tracer will use
@@ -88,11 +88,6 @@ public class Configuration {
 
         private final static String defaultManagerHostPort = "localhost:5778";
 
-        public final static String PROBABILISTIC = "probabilistic";
-        public final static String RATE_LIMITING = "ratelimiting";
-        public final static String CONST = "const";
-        public final static String REMOTE = "remote";
-
         /**
          * The type of sampler to use in the tracer. Optional.
          * Valid values: remote (default), ratelimiting, probabilistic, const.
@@ -126,23 +121,23 @@ public class Configuration {
         }
 
         private Sampler createSampler(String serviceName, Metrics metrics) {
-            String samplerType = stringOrDefault(this.type, REMOTE);
-            Number samplerParam = numberOrDefault(this.param, 0.001);
-            String hostPort = stringOrDefault(this.managerHostPort, defaultManagerHostPort);
+            String samplerType = stringOrDefault(this.getType(), RemoteControlledSampler.TYPE);
+            Number samplerParam = numberOrDefault(this.getParam(), DEFAULT_SAMPLING_PROBABILITY);
+            String hostPort = stringOrDefault(this.getManagerHostPort(), defaultManagerHostPort);
 
-            if (samplerType.equals(CONST)) {
+            if (samplerType.equals(ConstSampler.TYPE)) {
                 return new ConstSampler(samplerParam.intValue() != 0);
             }
 
-            if (samplerType.equals(PROBABILISTIC)) {
+            if (samplerType.equals(ProbabilisticSampler.TYPE)) {
                 return new ProbabilisticSampler(samplerParam.doubleValue());
             }
 
-            if (samplerType.equals(RATE_LIMITING)) {
+            if (samplerType.equals(RateLimitingSampler.TYPE)) {
                 return new RateLimitingSampler(samplerParam.intValue());
             }
 
-            if (samplerType.equals(REMOTE)) {
+            if (samplerType.equals(RemoteControlledSampler.TYPE)) {
                 Sampler initialSampler = new ProbabilisticSampler(samplerParam.doubleValue());
 
                 HTTPSamplingManager manager = new HTTPSamplingManager(hostPort);
@@ -161,7 +156,7 @@ public class Configuration {
             return param;
         }
 
-        public String getDefaultManagerHostPort() {
+        public String getManagerHostPort() {
             return managerHostPort;
         }
     }
