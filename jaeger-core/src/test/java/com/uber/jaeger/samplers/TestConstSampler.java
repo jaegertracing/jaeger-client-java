@@ -21,25 +21,18 @@
  */
 package com.uber.jaeger.samplers;
 
-import java.util.Map;
+import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
-/**
- * Sampler is responsible for deciding if a new trace should be sampled and captured for storage.
- */
-public interface Sampler {
-    /**
-     * @param id identified of the new trace
-     * @return whether or not the new trace should be sampled
-     */
-    boolean isSampled(long id);
+public class TestConstSampler {
+    @Test
+    public void testTags() {
+        Sampler sampler = new ConstSampler(true);
+        assertEquals("const", sampler.getTags().get("sampler.type"));
+        assertEquals(true, sampler.getTags().get("sampler.param"));
 
-    /**
-     * @return a collection of tags describing this sampler
-     */
-    Map<String, Object> getTags();
-
-    /**
-     * Release any resources used by the sampler.
-     */
-    void close();
+        sampler = new ConstSampler(false);
+        assertEquals("const", sampler.getTags().get("sampler.type"));
+        assertEquals(false, sampler.getTags().get("sampler.param"));
+    }
 }

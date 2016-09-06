@@ -46,6 +46,7 @@ subprojects {
     checkstyle {
         configFile = new File(checkstyleConfigDir, "checkstyle.xml")
         configProperties.checkstyleConfigDir = checkstyleConfigDir
+        toolVersion = '7.1.1'
     }
 
     repositories {

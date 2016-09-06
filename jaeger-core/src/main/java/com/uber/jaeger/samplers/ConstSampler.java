@@ -21,11 +21,25 @@
  */
 package com.uber.jaeger.samplers;
 
+import com.uber.jaeger.Constants;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 public class ConstSampler implements Sampler {
+    public static final String TYPE = "const";
+
     private final boolean decision;
+
+    private final Map<String, Object> tags;
 
     public ConstSampler(boolean decision) {
         this.decision = decision;
+        Map<String, Object> tags = new HashMap<>();
+        tags.put(Constants.SAMPLER_TYPE_TAG_KEY, TYPE);
+        tags.put(Constants.SAMPLER_PARAM_TAG_KEY, decision);
+        this.tags = Collections.unmodifiableMap(tags);
     }
 
     /**
@@ -35,6 +49,11 @@ public class ConstSampler implements Sampler {
      */
     public boolean isSampled(long id) {
         return decision;
+    }
+
+    @Override
+    public Map<String, Object> getTags() {
+        return this.tags;
     }
 
     @Override

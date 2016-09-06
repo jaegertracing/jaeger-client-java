@@ -69,18 +69,22 @@ public class RemoteControlledSamplerTest {
         assertEquals(response.getRateLimitingSampling().getMaxTracesPerSecond(), expectedMaxTracesPerSecond);
     }
 
-    private void testEqualsAgainstSamplers(Sampler trueSampler, Sampler falseSampler) throws Exception {
+    private RemoteControlledSampler makeSamplerWith(Sampler underlyingSampler) throws Exception {
         HTTPSamplingManager manager = mock(HTTPSamplingManager.class);
         SamplingStrategyResponse response = mock(SamplingStrategyResponse.class);
         when(response.isSetProbabilisticSampling()).thenReturn(false);
         when(response.isSetRateLimitingSampling()).thenReturn(false);
         when(manager.getSamplingStrategy("jaeger")).thenReturn(response);
-        RemoteControlledSampler sampler = new RemoteControlledSampler("jaeger", manager, trueSampler, metrics);
-        RemoteControlledSampler otherSampler = new RemoteControlledSampler("jaeger", manager, trueSampler, metrics);
+        return new RemoteControlledSampler("jaeger", manager, underlyingSampler, metrics);
+    }
+
+    private void testEqualsAgainstSamplers(Sampler trueSampler, Sampler falseSampler) throws Exception {
+        RemoteControlledSampler sampler = makeSamplerWith(trueSampler);
+        RemoteControlledSampler otherSampler = makeSamplerWith(trueSampler);
 
         assertTrue(sampler.equals(otherSampler));
 
-        otherSampler = new RemoteControlledSampler("jaeger", manager, falseSampler, metrics);
+        otherSampler = makeSamplerWith(falseSampler);
 
         assertFalse(sampler.equals(otherSampler));
     }
@@ -90,6 +94,13 @@ public class RemoteControlledSamplerTest {
         testEqualsAgainstSamplers(new ConstSampler(true), new ConstSampler(false));
         testEqualsAgainstSamplers(new ProbabilisticSampler(0.1), new ProbabilisticSampler(0.01));
         testEqualsAgainstSamplers(new RateLimitingSampler(4), new RateLimitingSampler(5));
+    }
+
+    @Test
+    public void testTags() throws Exception {
+        RemoteControlledSampler sampler = makeSamplerWith(new ProbabilisticSampler(0.5));
+        assertEquals("probabilistic", sampler.getTags().get("sampler.type"));
+        assertEquals(0.5, sampler.getTags().get("sampler.param"));
     }
 
 }

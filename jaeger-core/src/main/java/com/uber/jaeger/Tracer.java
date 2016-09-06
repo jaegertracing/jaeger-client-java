@@ -35,27 +35,48 @@ import com.uber.jaeger.utils.Utils;
 import io.opentracing.References;
 import io.opentracing.propagation.Format;
 import io.opentracing.tag.Tags;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.InputStream;
 import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 public class Tracer implements io.opentracing.Tracer {
+    public static final String VERSION = loadVersion();
+    private final static Logger logger = LoggerFactory.getLogger(Tracer.class);
+
     private final Reporter reporter;
     private final Sampler sampler;
     private final PropagationRegistry registry;
     private final String serviceName;
     private final Metrics metrics;
-    private int ip;
+    private final int ip;
+    private final Map<String, Object> tags;
 
     private Tracer(String serviceName, Reporter reporter, Sampler sampler, PropagationRegistry registry, Metrics metrics) {
         this.serviceName = serviceName;
+        int ip;
         try {
-            this.ip = Utils.ipToInt(Inet4Address.getLocalHost().getHostAddress());
+            ip = Utils.ipToInt(Inet4Address.getLocalHost().getHostAddress());
         } catch (UnknownHostException e) {
-            this.ip = 0;
+            ip = 0;
         }
+        this.ip = ip;
+
+
+        Map<String, Object> tags = new HashMap<>();
+        tags.put("jaeger.version", Tracer.VERSION);
+        String hostname = getHostName();
+        if (getHostName() != null) {
+            tags.put("jaeger.hostname", getHostName());
+        }
+        this.tags = Collections.unmodifiableMap(tags);
 
         this.reporter = reporter;
         this.sampler = sampler;
@@ -167,6 +188,7 @@ public class Tracer implements io.opentracing.Tracer {
             byte flags = 0;
             if (sampler.isSampled(id)) {
                 flags |= SpanContext.flagSampled;
+                tags.putAll(sampler.getTags());
                 metrics.traceStartedSampled.inc(1);
             } else {
                 metrics.traceStartedNotSampled.inc(1);
@@ -176,7 +198,7 @@ public class Tracer implements io.opentracing.Tracer {
 
         private SpanContext createChildContext() {
             // For server-side RPC spans we reuse spanID per Zipkin convention
-            if (tags.get(Tags.SPAN_KIND.getKey()) == Tags.SPAN_KIND_SERVER) {
+            if (isRPCServer()) {
                 if (parent.isSampled()) {
                     metrics.tracesJoinedSampled.inc(1);
                 } else {
@@ -192,12 +214,21 @@ public class Tracer implements io.opentracing.Tracer {
                     parent.baggage());
         }
 
+        private boolean isRPCServer() {
+            return tags.get(Tags.SPAN_KIND.getKey()) == Tags.SPAN_KIND_SERVER;
+        }
+
         @Override
         public io.opentracing.Span start() {
             SpanContext context = parent == null ? createNewContext() : createChildContext();
 
             if (start == 0) {
                 start = Utils.getMicroseconds();
+            }
+
+            if (parent == null || isRPCServer()) {
+                // add tracer tags only to first span in the process
+                tags.putAll(Tracer.this.tags);
             }
 
             Span span = new Span(Tracer.this, operationName, context, start, tags);
@@ -211,6 +242,9 @@ public class Tracer implements io.opentracing.Tracer {
         }
     }
 
+    /**
+     * Builds Jaeger Tracer with options.
+     */
     public static final class Builder {
         private final Sampler sampler;
         private final Reporter reporter;
@@ -279,6 +313,32 @@ public class Tracer implements io.opentracing.Tracer {
 
         public <T> void register(Format<T> format, Extractor<T> extractor) {
             extractors.put(format, extractor);
+        }
+    }
+
+    private static String loadVersion() {
+        String version;
+        try {
+            try (InputStream is = Tracer.class.getResourceAsStream("jaeger.properties")) {
+                Properties prop = new Properties();
+                prop.load(is);
+                version = prop.getProperty("jaeger.version");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Cannot read jaeger.properties", e);
+        }
+        if (version == null) {
+            throw new RuntimeException("Cannot read jaeger.version from jaeger.properties");
+        }
+        return "Java-" + version;
+    }
+
+    String getHostName() {
+        try {
+            return InetAddress.getLocalHost().getHostName();
+        } catch (UnknownHostException e) {
+            logger.error("Cannot obtain host name", e);
+            return null;
         }
     }
 }

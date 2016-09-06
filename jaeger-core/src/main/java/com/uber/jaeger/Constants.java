@@ -24,5 +24,16 @@ package com.uber.jaeger;
 public class Constants {
     // TODO these should be configurable
     public static final String X_UBER_SOURCE = "x-uber-source";
+
     public static final int MAX_ANNOTATION_LENGTH = 256;
+
+    /**
+     * Span tag key to describe the type of sampler used on the root span.
+     */
+    public static final String SAMPLER_TYPE_TAG_KEY = "sampler.type";
+
+    /**
+     * Span tag key to describe the parameter of the sampler used on the root span.
+     */
+    public static final String SAMPLER_PARAM_TAG_KEY = "sampler.param";
 }

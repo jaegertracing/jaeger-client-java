@@ -21,20 +21,37 @@
  */
 package com.uber.jaeger.samplers;
 
+import com.uber.jaeger.Constants;
 import com.uber.jaeger.utils.RateLimiter;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 public class RateLimitingSampler implements Sampler {
+    public static final String TYPE = "ratelimiting";
+
     private final RateLimiter rateLimiter;
     private final int maxTracesPerSecond;
+    private final Map<String, Object> tags;
 
     public RateLimitingSampler(int maxTracesPerSecond) {
         this.maxTracesPerSecond = maxTracesPerSecond;
         this.rateLimiter = new RateLimiter(maxTracesPerSecond);
 
+        Map<String, Object> tags = new HashMap<>();
+        tags.put(Constants.SAMPLER_TYPE_TAG_KEY, TYPE);
+        tags.put(Constants.SAMPLER_PARAM_TAG_KEY, maxTracesPerSecond);
+        this.tags = Collections.unmodifiableMap(tags);
     }
 
     public boolean isSampled(long id) {
         return this.rateLimiter.checkCredit(1.0);
+    }
+
+    @Override
+    public Map<String, Object> getTags() {
+        return tags;
     }
 
     @Override

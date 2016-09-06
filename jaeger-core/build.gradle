@@ -70,6 +70,10 @@ sourceSets {
             srcDir 'src/main/java'
             srcDir 'src/main/gen-java'
         }
+        resources {
+            srcDirs = ['src/main/gen-java']
+            includes = ["**/jaeger.properties"]
+        }
     }
 
     test {
@@ -87,3 +91,12 @@ jar {
         attributes('Implementation-Title': 'jaeger-core', 'Implementation-Version': project.version)
     }
 }
+
+task jaegerVersion << {
+    def propFile = new File(projectDir,
+            'src/main/gen-java/com/uber/jaeger/jaeger.properties'
+    ).getAbsolutePath()
+    new File(propFile).write("jaeger.version=${project.version}")
+}
+
+compileJava.dependsOn jaegerVersion

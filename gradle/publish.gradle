@@ -83,7 +83,5 @@ artifacts {
 signing {
     if (isReleaseVersion) {
         sign configurations.archives
-    } else {
-        println "Jar was not signed since this was a snapshot release."
     }
 }

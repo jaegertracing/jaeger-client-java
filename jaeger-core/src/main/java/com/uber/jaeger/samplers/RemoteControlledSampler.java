@@ -28,11 +28,14 @@ import com.uber.jaeger.thrift.sampling_manager.ProbabilisticSamplingStrategy;
 import com.uber.jaeger.thrift.sampling_manager.RateLimitingSamplingStrategy;
 import com.uber.jaeger.thrift.sampling_manager.SamplingStrategyResponse;
 
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class RemoteControlledSampler implements Sampler {
+    public static final String TYPE = "remote";
+
     private final String serviceName;
     private final SamplingManager manager;
     private final Timer pollTimer;
@@ -113,6 +116,13 @@ public class RemoteControlledSampler implements Sampler {
     public boolean isSampled(long id) {
         synchronized (this) {
             return sampler.isSampled(id);
+        }
+    }
+
+    @Override
+    public Map<String, Object> getTags() {
+        synchronized (this) {
+            return sampler.getTags();
         }
     }
 
