@@ -18,6 +18,9 @@ with Zipkin-compatible data model.
 # Usage #
 
 ## Importing Dependencies ##
+All artifacts are published to Maven Central. The snapshot artifacts are also published to [Sonatype](https://oss.sonatype.org/content/repositories/snapshots/com/uber/jaeger/) (you would need to add Sonatype as a maven repository, [like this](http://stackoverflow.com/questions/7715321/how-to-download-snapshot-version-from-maven-snapshot-repository)).
+
+
 Add only one of the following dependencies to your pom.xml file.
 Please use the latest version: [![Released Version][maven-img]][maven].
 
