@@ -47,6 +47,7 @@ public class Tracer implements io.opentracing.Tracer {
     private final PropagationRegistry registry;
     private final String serviceName;
     private final Metrics metrics;
+    private SpanListener spanListener;
     private int ip;
 
     private Tracer(String serviceName, Reporter reporter, Sampler sampler, PropagationRegistry registry, Metrics metrics) {
@@ -82,6 +83,13 @@ public class Tracer implements io.opentracing.Tracer {
     void reportSpan(Span span) {
         reporter.report(span);
         metrics.spansFinished.inc(1);
+        if (spanListener != null) {
+            spanListener.listen(span);
+        }
+    }
+
+    public void setSpanListener(SpanListener listener) {
+        this.spanListener = listener;
     }
 
     @Override
