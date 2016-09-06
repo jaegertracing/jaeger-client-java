@@ -9,5 +9,5 @@ test:
 	./gradlew test
 
 .PHONY: release
-release:
+release: clean
 	./gradlew uploadArchives
