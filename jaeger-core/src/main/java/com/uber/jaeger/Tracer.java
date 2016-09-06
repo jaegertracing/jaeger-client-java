@@ -330,10 +330,10 @@ public class Tracer implements io.opentracing.Tracer {
         if (version == null) {
             throw new RuntimeException("Cannot read jaeger.version from jaeger.properties");
         }
-        return version;
+        return "Java-" + version;
     }
 
-    private String getHostName() {
+    String getHostName() {
         try {
             return InetAddress.getLocalHost().getHostName();
         } catch (UnknownHostException e) {
