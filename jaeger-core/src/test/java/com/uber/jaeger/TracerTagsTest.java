@@ -36,6 +36,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
 @RunWith(Parameterized.class)
 public class TracerTagsTest {
 
@@ -89,7 +92,7 @@ public class TracerTagsTest {
     }
 
     @Test
-    public void TestTracerTags() throws Exception {
+    public void testTracerTags() throws Exception {
         InMemoryReporter spanReporter = new InMemoryReporter();
         Tracer tracer = new Tracer
                 .Builder("x", spanReporter, new ConstSampler(true))
@@ -110,9 +113,11 @@ public class TracerTagsTest {
             Object expectedValue = expectedTags.get(key);
             Object actualValue = tags.get(key);
             if (expectedValue == SENTINEL) {
-                Assert.assertNull("Not expecting " + key + " for " + spanType, actualValue);
+                assertNull(
+                        "Not expecting " + key + " for " + spanType,
+                        actualValue);
             } else {
-                Assert.assertEquals(
+                assertEquals(
                         "Expecting " + key + " for " + spanType,
                         expectedValue,
                         actualValue);

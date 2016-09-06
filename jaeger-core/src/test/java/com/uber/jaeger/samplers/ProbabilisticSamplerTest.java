@@ -24,6 +24,7 @@ package com.uber.jaeger.samplers;
 import org.junit.Test;
 
 import static junit.framework.TestCase.assertFalse;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class ProbabilisticSamplerTest {
@@ -59,5 +60,12 @@ public class ProbabilisticSamplerTest {
     @Test(expected=IllegalArgumentException.class)
     public void testSamplerThrowsInvalidSamplingRangeExceptionOver() {
         Sampler sampler = new ProbabilisticSampler(1.1);
+    }
+
+    @Test
+    public void testTags() {
+        Sampler sampler = new ProbabilisticSampler(0.1);
+        assertEquals("probabilistic", sampler.getTags().get("sampler.type"));
+        assertEquals(0.1, sampler.getTags().get("sampler.param"));
     }
 }
