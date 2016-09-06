@@ -31,6 +31,7 @@ import com.uber.jaeger.crossdock.resources.behavior.tchannel.TChannelServer;
 import com.uber.jaeger.crossdock.resources.health.HealthResource;
 import com.uber.jaeger.filters.jaxrs2.Configuration;
 import com.uber.jaeger.filters.jaxrs2.TracingUtils;
+import com.uber.jaeger.samplers.ConstSampler;
 import io.opentracing.Tracer;
 import org.apache.log4j.BasicConfigurator;
 import org.glassfish.grizzly.http.server.HttpServer;
@@ -55,7 +56,7 @@ public class JerseyServer {
     private final Configuration config;
 
     public JerseyServer(String hostPort, Class... resourceClasses) {
-        final String samplingType = SamplerConfiguration.CONST;
+        final String samplingType = ConstSampler.TYPE;
         final Number samplingParam = 0;
         final boolean disable = false;
         final boolean logging = true;
