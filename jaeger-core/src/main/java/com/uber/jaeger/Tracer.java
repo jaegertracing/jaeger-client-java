@@ -253,6 +253,9 @@ public class Tracer implements io.opentracing.Tracer {
         private String serviceName;
 
         public Builder(String serviceName, Reporter reporter, Sampler sampler) {
+            if (serviceName == null || serviceName.trim().length() == 0) {
+                throw new IllegalArgumentException("serviceName must not be null or empty");
+            }
             this.serviceName = serviceName;
             this.reporter = reporter;
             this.sampler = sampler;
