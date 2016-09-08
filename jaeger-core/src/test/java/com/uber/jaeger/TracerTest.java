@@ -23,7 +23,6 @@ package com.uber.jaeger;
 
 
 import com.uber.jaeger.metrics.InMemoryStatsReporter;
-
 import com.uber.jaeger.propagation.Injector;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
@@ -31,8 +30,6 @@ import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
 import org.junit.Before;
 import org.junit.Test;
-
-import javax.ws.rs.container.ContainerRequestContext;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
@@ -85,5 +82,15 @@ public class TracerTest {
         tracer.inject(span.context(), Format.Builtin.TEXT_MAP, carrier);
 
         verify(injector).inject(any(SpanContext.class), any(TextMap.class));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testServiceNameNotNull() {
+        new Tracer.Builder(null, new InMemoryReporter(), new ConstSampler(true));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testServiceNameNotEmptyNull() {
+        new Tracer.Builder("  ", new InMemoryReporter(), new ConstSampler(true));
     }
 }
