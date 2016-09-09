@@ -73,8 +73,8 @@ public class Tracer implements io.opentracing.Tracer {
         Map<String, Object> tags = new HashMap<>();
         tags.put("jaeger.version", Tracer.VERSION);
         String hostname = getHostName();
-        if (getHostName() != null) {
-            tags.put("jaeger.hostname", getHostName());
+        if (hostname != null) {
+            tags.put("jaeger.hostname", hostname);
         }
         this.tags = Collections.unmodifiableMap(tags);
 

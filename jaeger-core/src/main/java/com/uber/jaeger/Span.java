@@ -21,14 +21,14 @@
  */
 package com.uber.jaeger;
 
+import com.twitter.zipkin.thriftjava.Endpoint;
+import com.uber.jaeger.utils.Utils;
+import io.opentracing.tag.Tags;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import com.twitter.zipkin.thriftjava.Endpoint;
-import com.uber.jaeger.utils.Utils;
-import io.opentracing.tag.Tags;
 
 public class Span implements io.opentracing.Span {
     private final Tracer tracer;
@@ -71,12 +71,18 @@ public class Span implements io.opentracing.Span {
 
     public Endpoint getPeer() {
         synchronized (this) {
-            if (peer == null) {
-                peer = new Endpoint();
-            }
+            return peer;
         }
 
-        return peer;
+    }
+
+    private Endpoint getOrMakePeer() {
+        synchronized (this) {
+            if (peer == null) {
+                peer = new Endpoint(0, (short) 0, "");
+            }
+            return peer;
+        }
     }
 
     public Map<String, Object> getTags() {
@@ -179,17 +185,17 @@ public class Span implements io.opentracing.Span {
         }
 
         if (key.equals(Tags.PEER_HOST_IPV4.getKey()) && value instanceof Integer) {
-            getPeer().setIpv4((Integer) value);
+            getOrMakePeer().setIpv4((Integer) value);
             return true;
         }
 
         if (key.equals(Tags.PEER_PORT.getKey()) && value instanceof Number) {
-            getPeer().setPort(((Number) value).shortValue());
+            getOrMakePeer().setPort(((Number) value).shortValue());
             return true;
         }
 
         if (key.equals(Tags.PEER_SERVICE.getKey()) && value instanceof String) {
-            getPeer().setService_name((String) value);
+            getOrMakePeer().setService_name((String) value);
             return true;
         }
 
