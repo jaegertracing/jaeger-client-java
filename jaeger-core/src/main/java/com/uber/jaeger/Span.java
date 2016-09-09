@@ -76,7 +76,7 @@ public class Span implements io.opentracing.Span {
 
     }
 
-    Endpoint getOrMakePeer() {
+    private Endpoint getOrMakePeer() {
         synchronized (this) {
             if (peer == null) {
                 peer = new Endpoint(0, (short) 0, "");
