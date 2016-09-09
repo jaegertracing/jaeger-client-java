@@ -1,6 +1,12 @@
 Changes by Version
 ==================
 
+0.8.1 (2016-09-09)
+-------------------
+
+- Default peer service name to blank as it is required in Thrift Endpoint (fixes #45)
+
+
 0.8.0 (2016-09-06)
 -------------------
 
