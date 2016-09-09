@@ -51,6 +51,7 @@ public final class ZipkinSender implements Sender {
   /**
    * @param endpoint The POST URL for zipkin's <a href="http://zipkin.io/zipkin-api/#/">v1 api</a>, usually
    *                 "http://zipkinhost:9411/api/v1/spans"
+   * @return new sender
    */
   public static ZipkinSender create(String endpoint) {
     return new ZipkinSender(URLConnectionSender.create(endpoint));
@@ -66,6 +67,7 @@ public final class ZipkinSender implements Sender {
    * }</pre>
    *
    * @param delegate indicates an alternate sender library than {@link URLConnectionSender}
+   * @return new sender
    */
   public static ZipkinSender create(zipkin.reporter.Sender delegate) {
     return new ZipkinSender(delegate);
