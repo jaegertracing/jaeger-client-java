@@ -72,7 +72,7 @@ public class Span implements io.opentracing.Span {
     public Endpoint getPeer() {
         synchronized (this) {
             if (peer == null) {
-                peer = new Endpoint();
+                peer = new Endpoint(0, (short) 0, "");
             }
         }
 
