@@ -1,6 +1,12 @@
 Changes by Version
 ==================
 
+0.8.2 (2016-09-09)
+-------------------
+
+- Exclude test classes from published jars
+
+
 0.8.1 (2016-09-09)
 -------------------
 
