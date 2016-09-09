@@ -22,7 +22,7 @@ allprojects {
     apply plugin: 'idea' // intellij support
 
     group = 'com.uber.jaeger'
-    version = '0.8.2'
+    version = '0.8.3-SNAPSHOT'
 
     task wrapper(type: Wrapper) {
         gradleVersion = '2.12' //version required
