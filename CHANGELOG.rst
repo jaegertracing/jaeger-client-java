@@ -1,6 +1,15 @@
 Changes by Version
 ==================
 
+0.9.0 (2016-09-12)
+-------------------
+
+- Introduce Clock interface for time measurements
+- Use nano-time for measuring duration
+- Remove powermock dependency
+- Upgrade to OT 0.15
+
+
 0.8.2 (2016-09-09)
 -------------------
 
