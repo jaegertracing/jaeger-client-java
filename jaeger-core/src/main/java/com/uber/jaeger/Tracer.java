@@ -243,14 +243,14 @@ public class Tracer implements io.opentracing.Tracer {
         public io.opentracing.Span start() {
             SpanContext context = parent == null ? createNewContext() : createChildContext();
 
-            long startTimeNanoseconds = 0;
-            boolean computeDurationViaNanoseconds = false;
+            long startTimeNanoTicks = 0;
+            boolean computeDurationViaNanoTicks = false;
 
             if (startTimeMicroseconds == 0) {
                 startTimeMicroseconds = clock.currentTimeMicros();
                 if (!clock.isMicrosAccurate()) {
-                    startTimeNanoseconds = clock.currentNanoTicks();
-                    computeDurationViaNanoseconds = true;
+                    startTimeNanoTicks = clock.currentNanoTicks();
+                    computeDurationViaNanoTicks = true;
                 }
             }
 
@@ -260,8 +260,8 @@ public class Tracer implements io.opentracing.Tracer {
             }
 
             Span span = new Span(Tracer.this, operationName, context,
-                    startTimeMicroseconds, startTimeNanoseconds,
-                    computeDurationViaNanoseconds, tags);
+                    startTimeMicroseconds, startTimeNanoTicks,
+                    computeDurationViaNanoTicks, tags);
             if (context.isSampled()) {
                 metrics.spansSampled.inc(1);
             } else {

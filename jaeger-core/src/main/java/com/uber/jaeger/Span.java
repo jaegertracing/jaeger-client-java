@@ -33,8 +33,8 @@ import java.util.Map;
 public class Span implements io.opentracing.Span {
     private final Tracer tracer;
     private final long startTimeMicroseconds;
-    private final long startTimeNanoseconds;
-    private final boolean computeDurationViaNanoseconds;
+    private final long startTimeNanoTicks;
+    private final boolean computeDurationViaNanoTicks;
     private long durationMicroseconds; // span durationMicroseconds
     private String operationName;
     private SpanContext context;
@@ -49,15 +49,16 @@ public class Span implements io.opentracing.Span {
          String operationName,
          SpanContext context,
          long startTimeMicroseconds,
-         long startTimeNanoseconds,
-         boolean computeDurationViaNanoseconds, Map<String, Object> tags
+         long startTimeNanoTicks,
+         boolean computeDurationViaNanoTicks,
+         Map<String, Object> tags
     ) {
         this.tracer = tracer;
         this.operationName = operationName;
         this.context = context;
         this.startTimeMicroseconds = startTimeMicroseconds;
-        this.startTimeNanoseconds = startTimeNanoseconds;
-        this.computeDurationViaNanoseconds = computeDurationViaNanoseconds;
+        this.startTimeNanoTicks = startTimeNanoTicks;
+        this.computeDurationViaNanoTicks = computeDurationViaNanoTicks;
         this.tags = tags;
     }
 
@@ -160,8 +161,8 @@ public class Span implements io.opentracing.Span {
 
     @Override
     public void finish() {
-        if (computeDurationViaNanoseconds) {
-            long nanoDuration = tracer.clock().currentNanoTicks() - startTimeNanoseconds;
+        if (computeDurationViaNanoTicks) {
+            long nanoDuration = tracer.clock().currentNanoTicks() - startTimeNanoTicks;
             finishWithDuration(nanoDuration / 1000);
         } else {
             finish(tracer.clock().currentTimeMicros());

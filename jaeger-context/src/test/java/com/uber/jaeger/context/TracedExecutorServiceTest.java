@@ -45,7 +45,6 @@ public class TracedExecutorServiceTest {
     TimeUnit TIME_UNIT = TimeUnit.MILLISECONDS;
     TracedExecutorService tracedExecutorService;
     ExecutorService wrappedExecutorService;
-    //Tracer tracer = new Tracer.Builder("test-executor-service", new InMemoryReporter(), new ConstSampler(true)).build();
     Span span;
     TraceContext traceContext;
     List<java.util.concurrent.Callable<Span>> callableList;

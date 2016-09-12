@@ -127,7 +127,6 @@ public class SpanTest {
         when(clock.currentNanoTicks())
                 .thenThrow(new IllegalStateException("currentNanoTicks() called"));
 
-        reporter.clear();
         Span span = (Span) tracer.buildSpan("test-service-name")
                 .withStartTimestamp(567)
                 .start();
@@ -173,22 +172,6 @@ public class SpanTest {
         assertEquals(1, reporter.getSpans().size());
         assertEquals(100, span.getStart());
         assertEquals(10, span.getDuration());
-    }
-
-    @Test
-    public void testWithIn() {
-        when(clock.isMicrosAccurate()).thenReturn(false);
-        when(clock.currentTimeMicros()).thenThrow(new RuntimeException("should not be called"));
-        when(clock.currentNanoTicks()).thenThrow(new RuntimeException("should not be called"));
-
-        Span span = (Span) tracer.buildSpan("test-service-name")
-                .withStartTimestamp(567)
-                .start();
-        span.finish(999);
-
-        assertEquals(1, reporter.getSpans().size());
-        assertEquals(567, span.getStart());
-        assertEquals(999-567, span.getDuration());
     }
 
     @Test
