@@ -22,32 +22,42 @@
 package com.uber.jaeger;
 
 import com.twitter.zipkin.thriftjava.Endpoint;
-import com.uber.jaeger.utils.Utils;
 import io.opentracing.tag.Tags;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class Span implements io.opentracing.Span {
     private final Tracer tracer;
-    private final long start; // time in microseconds
-    private final String operationName;
+    private final long startTimeMicroseconds;
+    private final long startTimeNanoseconds;
+    private final boolean computeDurationViaNanoseconds;
+    private long durationMicroseconds; // span durationMicroseconds
+    private String operationName;
     private SpanContext context;
     private Endpoint peer;
-    private long duration; // time in microseconds
-    private Map<String,Object> tags;
+    private Map<String, Object> tags;
     private List<LogData> logs;
     private String localComponent;
     private boolean isClient;
     private boolean isRPC;
 
-    Span(Tracer tracer, String operationName, SpanContext context, long start, Map<String, Object> tags) {
+    Span(Tracer tracer,
+         String operationName,
+         SpanContext context,
+         long startTimeMicroseconds,
+         long startTimeNanoseconds,
+         boolean computeDurationViaNanoseconds, Map<String, Object> tags
+    ) {
         this.tracer = tracer;
         this.operationName = operationName;
         this.context = context;
-        this.start = start;
+        this.startTimeMicroseconds = startTimeMicroseconds;
+        this.startTimeNanoseconds = startTimeNanoseconds;
+        this.computeDurationViaNanoseconds = computeDurationViaNanoseconds;
         this.tags = tags;
     }
 
@@ -56,12 +66,12 @@ public class Span implements io.opentracing.Span {
     }
 
     public long getStart() {
-        return start;
+        return startTimeMicroseconds;
     }
 
     public long getDuration() {
         synchronized (this) {
-            return duration;
+            return durationMicroseconds;
         }
     }
 
@@ -87,13 +97,22 @@ public class Span implements io.opentracing.Span {
 
     public Map<String, Object> getTags() {
         synchronized (this) {
-            // TODO wasteful allocation and copying
-            return new HashMap<>(tags);
+            return Collections.unmodifiableMap(tags);
         }
     }
 
+    // Will be in the Span interface as of opentracing-java 0.15
+    public Span setOperationName(String operationName) {
+        synchronized (this) {
+            this.operationName = operationName;
+        }
+        return this;
+    }
+
     public String getOperationName() {
-        return operationName;
+        synchronized (this) {
+            return operationName;
+        }
     }
 
     public List<LogData> getLogs() {
@@ -101,9 +120,7 @@ public class Span implements io.opentracing.Span {
             if (logs == null) {
                 return null;
             }
-
-            // TODO wasteful allocation and copying
-            return new ArrayList<>(logs);
+            return Collections.unmodifiableList(logs);
         }
     }
 
@@ -143,13 +160,22 @@ public class Span implements io.opentracing.Span {
 
     @Override
     public void finish() {
-        finish(Utils.getMicroseconds());
+        if (computeDurationViaNanoseconds) {
+            long nanoDuration = startTimeNanoseconds - tracer.clock().currentTimeNanos();
+            finishWithDuration(nanoDuration / 1000);
+        } else {
+            finish(tracer.clock().currentTimeMicros());
+        }
     }
 
     @Override
     public void finish(long finishMicros) {
+        finishWithDuration(finishMicros - startTimeMicroseconds);
+    }
+
+    private void finishWithDuration(long durationMicros) {
         synchronized(this) {
-            this.duration = finishMicros - start;
+            this.durationMicroseconds = durationMicros;
         }
 
         if (context.isSampled()) {
@@ -238,7 +264,7 @@ public class Span implements io.opentracing.Span {
 
     @Override
     public Span log(String message, /* @Nullable */ Object payload) {
-        return log(Utils.getMicroseconds(), message, payload);
+        return log(tracer.clock().currentTimeMicros(), message, payload);
     }
 
     @Override

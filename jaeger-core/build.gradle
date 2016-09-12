@@ -20,10 +20,6 @@ dependencies {
 
     testCompile group: 'junit', name: 'junit', version: junitVersion
     testCompile group: 'org.mockito', name: 'mockito-all', version: mockitoVersion
-    // TODO use only one mocking framework
-    testCompile group: 'org.powermock', name: 'powermock-api-mockito', version: powermockVersion
-    testCompile group: 'org.powermock', name: 'powermock-core', version: powermockVersion
-    testCompile group: 'org.powermock', name: 'powermock-module-junit4', version: powermockVersion
 }
 
 compileThrift {

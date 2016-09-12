@@ -19,11 +19,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.uber.jaeger.filters.jaxrs2;
+package com.uber.jaeger.context;
 
-import com.uber.jaeger.Tracer;
-import com.uber.jaeger.reporters.InMemoryReporter;
-import com.uber.jaeger.samplers.ConstSampler;
 import io.opentracing.Span;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,14 +32,12 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 public class RunnableTest {
-    Tracer tracer;
     TraceContext traceContext;
     Span span;
 
     @Before
     public void setUp() {
-        tracer = new Tracer.Builder("death-star", new InMemoryReporter(), new ConstSampler(true)).build();
-        span = tracer.buildSpan("destroyer").start();
+        span = mock(Span.class);
         traceContext = mock(TraceContext.class);
         when(traceContext.getCurrentSpan()).thenReturn(span);
         when(traceContext.pop()).thenReturn(span);

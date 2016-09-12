@@ -31,6 +31,8 @@ import com.uber.jaeger.propagation.Injector;
 import com.uber.jaeger.propagation.TextMapCodec;
 import com.uber.jaeger.reporters.Reporter;
 import com.uber.jaeger.samplers.Sampler;
+import com.uber.jaeger.utils.Clock;
+import com.uber.jaeger.utils.SystemClock;
 import com.uber.jaeger.utils.Utils;
 import io.opentracing.References;
 import io.opentracing.propagation.Format;
@@ -51,16 +53,30 @@ public class Tracer implements io.opentracing.Tracer {
     public static final String VERSION = loadVersion();
     private final static Logger logger = LoggerFactory.getLogger(Tracer.class);
 
+    private final String serviceName;
     private final Reporter reporter;
     private final Sampler sampler;
     private final PropagationRegistry registry;
-    private final String serviceName;
+    private final Clock clock;
     private final Metrics metrics;
     private final int ip;
     private final Map<String, Object> tags;
 
-    private Tracer(String serviceName, Reporter reporter, Sampler sampler, PropagationRegistry registry, Metrics metrics) {
+    private Tracer(
+            String serviceName,
+            Reporter reporter,
+            Sampler sampler,
+            PropagationRegistry registry,
+            Clock clock,
+            Metrics metrics
+    ) {
         this.serviceName = serviceName;
+        this.reporter = reporter;
+        this.sampler = sampler;
+        this.registry = registry;
+        this.clock = clock;
+        this.metrics = metrics;
+
         int ip;
         try {
             ip = Utils.ipToInt(Inet4Address.getLocalHost().getHostAddress());
@@ -77,11 +93,6 @@ public class Tracer implements io.opentracing.Tracer {
             tags.put("jaeger.hostname", hostname);
         }
         this.tags = Collections.unmodifiableMap(tags);
-
-        this.reporter = reporter;
-        this.sampler = sampler;
-        this.registry = registry;
-        this.metrics = metrics;
     }
 
     public Metrics getMetrics() {
@@ -95,6 +106,8 @@ public class Tracer implements io.opentracing.Tracer {
     public int getIP() {
         return ip;
     }
+
+    Clock clock() { return clock; }
 
     Reporter getReporter() {
         return reporter;
@@ -131,7 +144,7 @@ public class Tracer implements io.opentracing.Tracer {
     private class SpanBuilder implements io.opentracing.Tracer.SpanBuilder {
 
         private String operationName = null;
-        private long start;
+        private long startTimeMicroseconds;
         private SpanContext parent;
         private final Map<String, Object> tags = new HashMap<>();
 
@@ -178,7 +191,7 @@ public class Tracer implements io.opentracing.Tracer {
 
         @Override
         public io.opentracing.Tracer.SpanBuilder withStartTimestamp(long microseconds) {
-            this.start = microseconds;
+            this.startTimeMicroseconds = microseconds;
             return this;
         }
 
@@ -222,8 +235,15 @@ public class Tracer implements io.opentracing.Tracer {
         public io.opentracing.Span start() {
             SpanContext context = parent == null ? createNewContext() : createChildContext();
 
-            if (start == 0) {
-                start = Utils.getMicroseconds();
+            long startTimeNanoseconds = 0;
+            boolean computeDurationViaNanoseconds = false;
+
+            if (startTimeMicroseconds == 0) {
+                startTimeMicroseconds = clock.currentTimeMicros();
+                if (!clock.isMicrosAccurate()) {
+                    startTimeNanoseconds = clock.currentTimeNanos();
+                    computeDurationViaNanoseconds = true;
+                }
             }
 
             if (parent == null || isRPCServer()) {
@@ -231,7 +251,9 @@ public class Tracer implements io.opentracing.Tracer {
                 tags.putAll(Tracer.this.tags);
             }
 
-            Span span = new Span(Tracer.this, operationName, context, start, tags);
+            Span span = new Span(Tracer.this, operationName, context,
+                    startTimeMicroseconds, startTimeNanoseconds,
+                    computeDurationViaNanoseconds, tags);
             if (context.isSampled()) {
                 metrics.spansSampled.inc(1);
             } else {
@@ -251,6 +273,7 @@ public class Tracer implements io.opentracing.Tracer {
         private final PropagationRegistry registry = new PropagationRegistry();
         private Metrics metrics;
         private String serviceName;
+        private Clock clock = new SystemClock();
 
         public Builder(String serviceName, Reporter reporter, Sampler sampler) {
             if (serviceName == null || serviceName.trim().length() == 0) {
@@ -264,7 +287,6 @@ public class Tracer implements io.opentracing.Tracer {
             TextMapCodec textMapCodec = new TextMapCodec(false);
             this.registerInjector(Format.Builtin.TEXT_MAP, textMapCodec);
             this.registerExtractor(Format.Builtin.TEXT_MAP, textMapCodec);
-            // TODO for now we register the same codec for HTTP_HEADERS
             TextMapCodec httpCodec = new TextMapCodec(true);
             this.registerInjector(Format.Builtin.HTTP_HEADERS, httpCodec);
             this.registerExtractor(Format.Builtin.HTTP_HEADERS, httpCodec);
@@ -286,13 +308,18 @@ public class Tracer implements io.opentracing.Tracer {
             return this;
         }
 
+        public Builder withClock(Clock clock) {
+            this.clock = clock;
+            return this;
+        }
+
         Builder withMetrics(Metrics metrics) {
             this.metrics = metrics;
             return this;
         }
 
         public Tracer build() {
-            return new Tracer(this.serviceName, reporter, sampler, registry, metrics);
+            return new Tracer(this.serviceName, reporter, sampler, registry, clock, metrics);
         }
     }
 

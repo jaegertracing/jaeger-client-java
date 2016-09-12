@@ -21,27 +21,21 @@
  */
 package com.uber.jaeger;
 
-import java.util.HashMap;
-import java.util.Random;
-
 import com.uber.jaeger.metrics.InMemoryStatsReporter;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
-import com.uber.jaeger.utils.Utils;
+import com.uber.jaeger.utils.Clock;
 import io.opentracing.tag.Tags;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.BDDMockito;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+
+import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(Utils.class)
 public class SpanTest {
     private Tracer tracer;
     private Span span;
@@ -105,13 +99,21 @@ public class SpanTest {
 
     @Test
     public void testSpanFinish() {
-        Span span = (Span) tracer.buildSpan("test-service-name").withStartTimestamp(333).start();
+        Clock clock = mock(Clock.class);
+        when(clock.currentTimeMicros()).thenReturn(999L);
 
-        PowerMockito.mockStatic(Utils.class);
-        BDDMockito.given(Utils.getMicroseconds()).willReturn(999L);
+        InMemoryReporter reporter = new InMemoryReporter();
+        Tracer tracer = new Tracer.Builder("testSpanFinish",
+                reporter,
+                new ConstSampler(true))
+                .withClock(clock)
+                .build();
 
+        Span span = (Span) tracer.buildSpan("test-service-name")
+                .withStartTimestamp(333)
+                .start();
         span.finish();
-        InMemoryReporter reporter = (InMemoryReporter) tracer.getReporter();
+
         assertEquals(reporter.getSpans().size(), 1);
         assertEquals(span.getDuration(), 666);
     }
@@ -152,12 +154,19 @@ public class SpanTest {
 
     @Test
     public void testLogWithTimestamp() {
-        long expectedTimestamp = 2222;
-        String expectedLog = "some-log";
-        Object expectedPayload = this.tracer;
+        final long expectedTimestamp = 2222;
+        final String expectedLog = "some-log";
+        final Object expectedPayload = new Object();
 
-        PowerMockito.mockStatic(Utils.class);
-        BDDMockito.given(Utils.getMicroseconds()).willReturn(expectedTimestamp);
+        Clock clock = mock(Clock.class);
+        when(clock.currentTimeMicros()).thenReturn(expectedTimestamp);
+
+        InMemoryReporter reporter = new InMemoryReporter();
+        Tracer tracer = new Tracer.Builder("testLogWithTimestamp",
+                reporter,
+                new ConstSampler(true))
+                .withClock(clock)
+                .build();
 
         Span span = (Span) tracer.buildSpan("test-service-operation").start();
         span.log(expectedLog, expectedPayload);
