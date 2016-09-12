@@ -21,38 +21,28 @@
  */
 package com.uber.jaeger.utils;
 
-public class RateLimiter {
-    private final double creditsPerSecond;
-    private final double creditsPerNanosecond;
-    private final Clock clock;
-    private double balance;
-    private long lastTick;
+/**
+ * Default implementation of a clock that delegates its calls to the system clock.
+ * The microsecond-precision time is simulated by (millis * 1000), therefore
+ * the {@link #isMicrosAccurate()} is false.
+ *
+ * @see System#currentTimeMillis()
+ * @see System#nanoTime()
+ */
+public class SystemClock implements Clock {
 
-    public RateLimiter(double creditsPerSecond) {
-        this(creditsPerSecond, new SystemClock());
+    @Override
+    public long currentTimeMicros() {
+        return System.currentTimeMillis() * 1000;
     }
 
-    public RateLimiter(double creditsPerSecond, Clock clock) {
-        this.clock = clock;
-        this.creditsPerSecond = creditsPerSecond;
-        this.balance = creditsPerSecond;
-        this.creditsPerNanosecond = creditsPerSecond / 1.0e9;
+    @Override
+    public long currentNanoTicks() {
+        return System.nanoTime();
     }
 
-    public boolean checkCredit(double itemCost) {
-        long currentTime = clock.currentNanoTicks();
-        double elapsedTime = currentTime - lastTick;
-        lastTick = currentTime;
-        balance += elapsedTime * creditsPerNanosecond;
-        if (balance > creditsPerSecond) {
-            balance = creditsPerSecond;
-        }
-
-        if (balance >= itemCost) {
-            balance -= itemCost;
-            return true;
-        }
-
+    @Override
+    public boolean isMicrosAccurate() {
         return false;
     }
 }

@@ -22,49 +22,60 @@
 package com.uber.jaeger.utils;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.BDDMockito;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.concurrent.TimeUnit;
 
 import static junit.framework.TestCase.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(Utils.class)
 public class RateLimiterTest {
     RateLimiter limiter;
 
+    private static class MockClock implements Clock {
+
+        long timeNanos;
+
+        @Override
+        public long currentTimeMicros() {
+            return 0;
+        }
+
+        @Override
+        public long currentNanoTicks() {
+            return timeNanos;
+        }
+
+        @Override
+        public boolean isMicrosAccurate() {
+            return false;
+        }
+    }
+
     @Test
     public void testRateLimiterWholeNumber() {
-        RateLimiter limiter = new RateLimiter(2.0);
+        MockClock clock = new MockClock();
+        RateLimiter limiter = new RateLimiter(2.0, clock);
 
         long currentTime = TimeUnit.MICROSECONDS.toNanos(100);
-        PowerMockito.mockStatic(Utils.class);
-        BDDMockito.given(Utils.getNanoseconds()).willReturn(currentTime);
+        clock.timeNanos = currentTime;
         assertTrue(limiter.checkCredit(1.0));
         assertTrue(limiter.checkCredit(1.0));
         assertFalse(limiter.checkCredit(1.0));
         // move time 250ms forward, not enough credits to pay for 1.0 item
         currentTime += TimeUnit.MILLISECONDS.toNanos(250);
-        BDDMockito.given(Utils.getNanoseconds()).willReturn(currentTime);
+        clock.timeNanos = currentTime;
         assertFalse(limiter.checkCredit(1.0));
 
         // move time 500ms forward, now enough credits to pay for 1.0 item
         currentTime += TimeUnit.MILLISECONDS.toNanos(500);
-        BDDMockito.given(Utils.getNanoseconds()).willReturn(currentTime);
-
+        clock.timeNanos = currentTime;
 
         assertTrue(limiter.checkCredit(1.0));
         assertFalse(limiter.checkCredit(1.0));
 
         // move time 5s forward, enough to accumulate credits for 10 messages, but it should still be capped at 2
         currentTime += TimeUnit.MILLISECONDS.toNanos(5000);
-        BDDMockito.given(Utils.getNanoseconds()).willReturn(currentTime);
-
+        clock.timeNanos = currentTime;
 
         assertTrue(limiter.checkCredit(1.0));
         assertTrue(limiter.checkCredit(1.0));
@@ -75,31 +86,29 @@ public class RateLimiterTest {
 
     @Test
     public void testRateLimiterLessThanOne() {
-        RateLimiter limiter = new RateLimiter(0.5);
+        MockClock clock = new MockClock();
+        RateLimiter limiter = new RateLimiter(0.5, clock);
 
         long currentTime = TimeUnit.MICROSECONDS.toNanos(100);
-        PowerMockito.mockStatic(Utils.class);
-        BDDMockito.given(Utils.getNanoseconds()).willReturn(currentTime);
+        clock.timeNanos = currentTime;
         assertTrue(limiter.checkCredit(0.25));
         assertTrue(limiter.checkCredit(0.25));
         assertFalse(limiter.checkCredit(0.25));
         // move time 250ms forward, not enough credits to pay for 1.0 item
         currentTime += TimeUnit.MILLISECONDS.toNanos(250);
-        BDDMockito.given(Utils.getNanoseconds()).willReturn(currentTime);
+        clock.timeNanos = currentTime;
         assertFalse(limiter.checkCredit(0.25));
 
         // move time 500ms forward, now enough credits to pay for 1.0 item
         currentTime += TimeUnit.MILLISECONDS.toNanos(500);
-        BDDMockito.given(Utils.getNanoseconds()).willReturn(currentTime);
-
+        clock.timeNanos = currentTime;
 
         assertTrue(limiter.checkCredit(0.25));
         assertFalse(limiter.checkCredit(0.25));
 
         // move time 5s forward, enough to accumulate credits for 10 messages, but it should still be capped at 2
         currentTime += TimeUnit.MILLISECONDS.toNanos(5000);
-        BDDMockito.given(Utils.getNanoseconds()).willReturn(currentTime);
-
+        clock.timeNanos = currentTime;
 
         assertTrue(limiter.checkCredit(0.25));
         assertTrue(limiter.checkCredit(0.25));

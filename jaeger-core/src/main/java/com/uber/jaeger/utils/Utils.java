@@ -27,7 +27,6 @@ import com.uber.jaeger.exceptions.NotFourOctetsException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
 
 public class Utils {
     public static String normalizeBaggageKey(String key) {
@@ -63,13 +62,5 @@ public class Utils {
             val = ThreadLocalRandom.current().nextLong();
         }
         return val;
-    }
-
-    public static long getMicroseconds() {
-        return TimeUnit.MILLISECONDS.toMicros(System.currentTimeMillis()) + (TimeUnit.NANOSECONDS.toMicros(System.nanoTime()) % 1000);
-    }
-
-    public static long getNanoseconds() {
-        return TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis()) + (System.nanoTime() % 1000000);
     }
 }

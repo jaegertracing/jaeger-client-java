@@ -19,19 +19,16 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.uber.jaeger.filters.jaxrs2;
+package com.uber.jaeger.context;
+
+import io.opentracing.Span;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
-
-import com.uber.jaeger.Tracer;
-import com.uber.jaeger.reporters.InMemoryReporter;
-import com.uber.jaeger.samplers.ConstSampler;
-import io.opentracing.Span;
-import org.junit.Before;
-import org.junit.Test;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
@@ -41,14 +38,13 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.powermock.api.mockito.PowerMockito.when;
+import static org.mockito.Mockito.when;
 
 public class TracedExecutorServiceTest {
 
     TimeUnit TIME_UNIT = TimeUnit.MILLISECONDS;
     TracedExecutorService tracedExecutorService;
     ExecutorService wrappedExecutorService;
-    Tracer tracer = new Tracer.Builder("test-executor-service", new InMemoryReporter(), new ConstSampler(true)).build();
     Span span;
     TraceContext traceContext;
     List<java.util.concurrent.Callable<Span>> callableList;
@@ -56,7 +52,7 @@ public class TracedExecutorServiceTest {
     @Before
     public void setUp() {
         wrappedExecutorService = mock(ExecutorService.class);
-        span = tracer.buildSpan("span-op").start();
+        span = mock(Span.class);
         traceContext = mock(TraceContext.class);
         when(traceContext.pop()).thenReturn(span);
         when(traceContext.getCurrentSpan()).thenReturn(span);

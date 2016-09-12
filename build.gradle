@@ -7,7 +7,7 @@ plugins {
 }
 
 
-ext.opentracingVersion = '0.13.0'
+ext.opentracingVersion = '0.15.0'
 ext.guavaVersion = '18.0'
 ext.apacheThriftVersion = '0.9.3'
 ext.jerseyVersion = '2.22.2'
@@ -16,7 +16,6 @@ ext.jacksonVersion = '2.7.4'
 
 ext.junitVersion = '4.12'
 ext.mockitoVersion = '2.0.2-beta'
-ext.powermockVersion = '1.6.4'
 
 allprojects {
     apply plugin: 'idea' // intellij support
