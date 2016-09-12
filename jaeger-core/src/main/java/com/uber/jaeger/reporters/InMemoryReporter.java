@@ -50,4 +50,10 @@ public class InMemoryReporter implements Reporter {
             return spans;
         }
     }
+
+    public void clear() {
+        synchronized (this) {
+            spans.clear();
+        }
+    }
 }

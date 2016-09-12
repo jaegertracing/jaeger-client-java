@@ -41,7 +41,7 @@ public class RateLimiterTest {
         }
 
         @Override
-        public long currentTimeNanos() {
+        public long currentNanoTicks() {
             return timeNanos;
         }
 

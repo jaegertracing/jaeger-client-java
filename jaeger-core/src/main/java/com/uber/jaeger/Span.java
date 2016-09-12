@@ -101,7 +101,7 @@ public class Span implements io.opentracing.Span {
         }
     }
 
-    // Will be in the Span interface as of opentracing-java 0.15
+    @Override
     public Span setOperationName(String operationName) {
         synchronized (this) {
             this.operationName = operationName;
@@ -161,7 +161,7 @@ public class Span implements io.opentracing.Span {
     @Override
     public void finish() {
         if (computeDurationViaNanoseconds) {
-            long nanoDuration = startTimeNanoseconds - tracer.clock().currentTimeNanos();
+            long nanoDuration = tracer.clock().currentNanoTicks() - startTimeNanoseconds;
             finishWithDuration(nanoDuration / 1000);
         } else {
             finish(tracer.clock().currentTimeMicros());

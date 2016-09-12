@@ -44,13 +44,13 @@ public interface Clock {
      * @return the current value of the running Java Virtual Machine's
      *         high-resolution time source, in nanoseconds
      */
-    long currentTimeNanos();
+    long currentNanoTicks();
 
     /**
      * @return true if the time returned by {@link #currentTimeMicros()}
      * is accurate enough to calculate span duration as (end-start).
      * If this method returns false, the {@code Tracer} will use
-     * {@link #currentTimeNanos()} for calculating duration instead.
+     * {@link #currentNanoTicks()} for calculating duration instead.
      */
     boolean isMicrosAccurate();
 }

@@ -37,6 +37,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class SpanTest {
+    private Clock clock;
+    private InMemoryReporter reporter;
     private Tracer tracer;
     private Span span;
     private InMemoryStatsReporter metricsReporter;
@@ -45,9 +47,11 @@ public class SpanTest {
     @Before
     public void setUp() throws Exception {
         metricsReporter = new InMemoryStatsReporter();
-
-        tracer = new Tracer.Builder("SamplerTest", new InMemoryReporter(), new ConstSampler(true))
+        reporter = new InMemoryReporter();
+        clock = mock(Clock.class);
+        tracer = new Tracer.Builder("SamplerTest", reporter, new ConstSampler(true))
                 .withStatsReporter(metricsReporter)
+                .withClock(clock)
                 .build();
         span = (Span) tracer.buildSpan("some-operation").start();
 
@@ -80,6 +84,15 @@ public class SpanTest {
     }
 
     @Test
+    public void testSetOperationName() {
+        String expected = "modified.operation";
+
+        assertEquals("some-operation", span.getOperationName());
+        span.setOperationName(expected);
+        assertEquals(expected, span.getOperationName());
+    }
+
+    @Test
     public void testSetStringTag() {
         String expected = "expected.value";
         String key = "tag.key";
@@ -98,24 +111,84 @@ public class SpanTest {
     }
 
     @Test
-    public void testSpanFinish() {
-        Clock clock = mock(Clock.class);
-        when(clock.currentTimeMicros()).thenReturn(999L);
+    public void testWithTimestampAccurateClock() {
+        testWithTimestamp(true);
+    }
 
-        InMemoryReporter reporter = new InMemoryReporter();
-        Tracer tracer = new Tracer.Builder("testSpanFinish",
-                reporter,
-                new ConstSampler(true))
-                .withClock(clock)
-                .build();
+    @Test
+    public void testWithTimestampInaccurateClock() {
+        testWithTimestamp(false);
+    }
+
+    private void testWithTimestamp(boolean accurate) {
+        when(clock.isMicrosAccurate()).thenReturn(accurate);
+        when(clock.currentTimeMicros())
+                .thenThrow(new IllegalStateException("currentTimeMicros() called"));
+        when(clock.currentNanoTicks())
+                .thenThrow(new IllegalStateException("currentNanoTicks() called"));
+
+        reporter.clear();
+        Span span = (Span) tracer.buildSpan("test-service-name")
+                .withStartTimestamp(567)
+                .start();
+        span.finish(999);
+
+        assertEquals(1, reporter.getSpans().size());
+        assertEquals(567, span.getStart());
+        assertEquals(999-567, span.getDuration());
+    }
+
+    @Test
+    public void testWithoutTimestampsAccurateClock() {
+        when(clock.isMicrosAccurate()).thenReturn(true);
+        when(clock.currentTimeMicros())
+                .thenReturn(1L)
+                .thenReturn(5L);
+        when(clock.currentNanoTicks())
+                .thenThrow(new IllegalStateException("currentNanoTicks() called"));
 
         Span span = (Span) tracer.buildSpan("test-service-name")
-                .withStartTimestamp(333)
                 .start();
         span.finish();
 
-        assertEquals(reporter.getSpans().size(), 1);
-        assertEquals(span.getDuration(), 666);
+        assertEquals(1, reporter.getSpans().size());
+        assertEquals(1, span.getStart());
+        assertEquals(4, span.getDuration());
+    }
+
+    @Test
+    public void testWithoutTimestampsInaccurateClock() {
+        when(clock.isMicrosAccurate()).thenReturn(false);
+        when(clock.currentTimeMicros())
+                .thenReturn(100L)
+                .thenThrow(new IllegalStateException("currentTimeMicros() called 2nd time"));
+        when(clock.currentNanoTicks())
+                .thenReturn(20000L)
+                .thenReturn(30000L);
+
+        Span span = (Span) tracer.buildSpan("test-service-name")
+                .start();
+        span.finish();
+
+        assertEquals(1, reporter.getSpans().size());
+        assertEquals(100, span.getStart());
+        assertEquals(10, span.getDuration());
+    }
+
+    @Test
+    public void testWithIn() {
+        when(clock.isMicrosAccurate()).thenReturn(false);
+        when(clock.currentTimeMicros()).thenThrow(new RuntimeException("should not be called"));
+        when(clock.currentNanoTicks()).thenThrow(new RuntimeException("should not be called"));
+
+        Span span = (Span) tracer.buildSpan("test-service-name")
+                .withStartTimestamp(567)
+                .start();
+        span.finish(999);
+
+        assertEquals(1, reporter.getSpans().size());
+        assertEquals(567, span.getStart());
+        assertEquals(999-567, span.getDuration());
     }
 
     @Test
@@ -141,7 +214,7 @@ public class SpanTest {
     public void testLog() {
         long expectedTimestamp = 2222;
         String expectedLog = "some-log";
-        Object expectedPayload = this.tracer;
+        Object expectedPayload = new Object();
 
         span.log(expectedTimestamp, expectedLog, expectedPayload);
 
@@ -158,15 +231,7 @@ public class SpanTest {
         final String expectedLog = "some-log";
         final Object expectedPayload = new Object();
 
-        Clock clock = mock(Clock.class);
         when(clock.currentTimeMicros()).thenReturn(expectedTimestamp);
-
-        InMemoryReporter reporter = new InMemoryReporter();
-        Tracer tracer = new Tracer.Builder("testLogWithTimestamp",
-                reporter,
-                new ConstSampler(true))
-                .withClock(clock)
-                .build();
 
         Span span = (Span) tracer.buildSpan("test-service-operation").start();
         span.log(expectedLog, expectedPayload);

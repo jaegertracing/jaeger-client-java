@@ -40,7 +40,7 @@ public class RateLimiter {
     }
 
     public boolean checkCredit(double itemCost) {
-        long currentTime = clock.currentTimeNanos();
+        long currentTime = clock.currentNanoTicks();
         double elapsedTime = currentTime - lastTick;
         lastTick = currentTime;
         balance += elapsedTime * creditsPerNanosecond;

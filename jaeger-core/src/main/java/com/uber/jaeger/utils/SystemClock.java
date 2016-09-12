@@ -37,7 +37,7 @@ public class SystemClock implements Clock {
     }
 
     @Override
-    public long currentTimeNanos() {
+    public long currentNanoTicks() {
         return System.nanoTime();
     }
 

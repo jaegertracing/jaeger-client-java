@@ -153,6 +153,14 @@ public class Tracer implements io.opentracing.Tracer {
         }
 
         @Override
+        public Iterable<Map.Entry<String, String>> baggageItems() {
+            if (parent == null) {
+                return Collections.emptyList();
+            }
+            return parent.baggageItems();
+        }
+
+        @Override
         public io.opentracing.Tracer.SpanBuilder asChildOf(io.opentracing.SpanContext parent) {
             return addReference(References.CHILD_OF, parent);
         }
@@ -241,7 +249,7 @@ public class Tracer implements io.opentracing.Tracer {
             if (startTimeMicroseconds == 0) {
                 startTimeMicroseconds = clock.currentTimeMicros();
                 if (!clock.isMicrosAccurate()) {
-                    startTimeNanoseconds = clock.currentTimeNanos();
+                    startTimeNanoseconds = clock.currentNanoTicks();
                     computeDurationViaNanoseconds = true;
                 }
             }
