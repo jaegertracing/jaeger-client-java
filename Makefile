@@ -6,7 +6,7 @@ clean:
 
 .PHONY: test
 test:
-	./gradlew test
+	./gradlew check
 
 .PHONY: release
 release: clean

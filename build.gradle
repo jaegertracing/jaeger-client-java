@@ -13,6 +13,7 @@ ext.apacheThriftVersion = '0.9.3'
 ext.jerseyVersion = '2.22.2'
 ext.slf4jVersion = '1.7.16'
 ext.jacksonVersion = '2.7.4'
+ext.checkstyleVersion = '7.1.1'
 
 ext.junitVersion = '4.12'
 ext.mockitoVersion = '2.0.2-beta'
@@ -28,6 +29,7 @@ allprojects {
     }
 }
 
+
 subprojects {
     apply plugin: 'com.github.hierynomus.license'
     apply plugin: 'java'
@@ -41,11 +43,19 @@ subprojects {
 
     // Set up checkstyle
     apply plugin: 'checkstyle'
-    def checkstyleConfigDir = new File(rootDir, "config/checkstyle")
+    configurations {
+        checkstyleConfig
+    }
+
+    dependencies {
+        checkstyleConfig("com.puppycrawl.tools:checkstyle:${checkstyleVersion}") {
+          transitive = false
+        }
+    }
+
     checkstyle {
-        configFile = new File(checkstyleConfigDir, "checkstyle.xml")
-        configProperties.checkstyleConfigDir = checkstyleConfigDir
-        toolVersion = '7.1.1'
+        config = resources.text.fromArchiveEntry(configurations.checkstyleConfig, 'google_checks.xml')
+        toolVersion = checkstyleVersion
     }
 
     repositories {
