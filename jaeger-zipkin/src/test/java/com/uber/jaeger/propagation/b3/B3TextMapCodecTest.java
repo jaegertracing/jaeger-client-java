@@ -32,7 +32,10 @@ import java.net.URI;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import zipkin.internal.Util;
 
+import static com.uber.jaeger.propagation.b3.B3TextMapCodec.SPAN_ID_NAME;
+import static com.uber.jaeger.propagation.b3.B3TextMapCodec.TRACE_ID_NAME;
 import static org.junit.Assert.assertEquals;
 
 public class B3TextMapCodecTest {
@@ -51,6 +54,21 @@ public class B3TextMapCodecTest {
         assertEquals(0, context.getParentID()); // parentID==0 means root span
         assertEquals(1, context.getSpanID());
         assertEquals(1, context.getFlags()); // sampled
+    }
+
+    @Test
+    public void downgrades128BitTraceIdToLower64Bits() throws Exception {
+        String hex128Bits = "463ac35c9f6413ad48485a3953bb6124";
+        String lower64Bits = "48485a3953bb6124";
+
+        DelegatingTextMap textMap = new DelegatingTextMap();
+        textMap.put(TRACE_ID_NAME, hex128Bits);
+        textMap.put(SPAN_ID_NAME, lower64Bits);
+
+        SpanContext context = b3Codec.extract(textMap);
+
+        assertEquals(Util.lowerHexToUnsignedLong(lower64Bits), context.getTraceID());
+        assertEquals(Util.lowerHexToUnsignedLong(lower64Bits), context.getSpanID());
     }
 
     @Test
