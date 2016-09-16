@@ -192,5 +192,5 @@ This allows using Jaeger UI to find the trace by this tag.
   [ci]: https://travis-ci.org/uber/jaeger-client-java
   [cov-img]: https://coveralls.io/repos/github/uber/jaeger-client-java/badge.svg?branch=master
   [cov]: https://coveralls.io/github/uber/jaeger-client-java?branch=master
-  [maven-img]: https://img.shields.io/maven-central/v/com.uber.jaeger/jaeger-core.svg?maxAge=2592000
+  [maven-img]: https://img.shields.io/maven-central/v/com.uber.jaeger/jaeger-core.svg?maxAge=2000
   [maven]: http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.uber.jaeger%22

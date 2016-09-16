@@ -1,7 +1,7 @@
 Changes by Version
 ==================
 
-0.10.0 (unreleased)
+0.10.0 (2016-09-16)
 -------------------
 
 - Support debug traces via HTTP header "jaeger-debug-id"
