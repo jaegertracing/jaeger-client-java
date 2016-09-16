@@ -27,20 +27,20 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public class TraceContextTest {
+public class SpanContextTest {
 
     @Test(expected=MalformedTracerStateStringException.class)
-    public void testContextFromStringMalformedException() throws EmptyTracerStateStringException, MalformedTracerStateStringException {
+    public void testContextFromStringMalformedException() throws Exception {
         SpanContext.contextFromString("ff:ff:ff");
     }
 
     @Test(expected=EmptyTracerStateStringException.class)
-    public void testContextFromStringEmptyException() throws EmptyTracerStateStringException, MalformedTracerStateStringException {
+    public void testContextFromStringEmptyException() throws Exception {
         SpanContext.contextFromString("");
     }
 
     @Test
-    public void testContextFromString() throws EmptyTracerStateStringException, MalformedTracerStateStringException {
+    public void testContextFromString() throws Exception {
         SpanContext context = SpanContext.contextFromString("ff:dd:cc:4");
         assertEquals(context.getTraceID(), 255);
         assertEquals(context.getSpanID(), 221);

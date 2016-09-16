@@ -124,18 +124,61 @@ ExecutorService instrumentedExecutorService = TracingUtils.tracedExecutor(wrappe
 
 ## Testing ##
 
-When testing tracing instrumentation it is often useful to make sure that all spans are being captured, which is not the case in production configurations where heavy sampling is applied by default. The following configuration can be provided to affect which sampling is applied to the new traces:
+When testing tracing instrumentation it is often useful to make sure
+that all spans are being captured, which is not the case in production
+configurations where heavy sampling is applied by default.
+The following configuration can be provided to affect which sampling
+is applied to the new traces:
 
 ```yaml
 sampler:
    type: const # can either be const, probabilistic, or ratelimiting
-   param: 1  # can either be an integer, a double, or an integer in the same order as above.
+   param: 1  # can either be an integer, a double, or an integer
 ```
 
 The valid values for `type` are: 
-  * `const`: configures a sampler that always makes the same decision for new traces depending on the `param`: always no for `param=0`, always yes otherwise.
- * `probabilistic`: configures a sampler that samples traces with probability equal to `param` (must be between `0.0` and `1.0`)
- `ratelimiting`: configures a samlper that samples traces with a certain rate per second equal to `param`
+ * `const`: configures a sampler that always makes the same decision
+    for new traces depending on the `param`: always no for `param=0`,
+    always yes otherwise.
+ * `probabilistic`: configures a sampler that samples traces with
+    probability equal to `param` (must be between `0.0` and `1.0`)
+ * `ratelimiting`: configures a samlper that samples traces with a
+    certain rate per second equal to `param`
+
+## Debug Traces (Forced Sampling)
+
+### Programmatically
+
+The OpenTracing API defines a `sampling.priority` standard tag that
+can be used to affect the sampling of a span and its children:
+
+```java
+import io.opentracing.tag.Tags;
+
+Tags.SAMPLING_PRIORITY.set(span, (short) 1);
+```
+
+### Via HTTP Headers
+
+Jaeger Tracer also understands a special HTTP Header `jaeger-debug-id`,
+which can be set in the incoming request, e.g.
+
+```sh
+curl -H "jaeger-debug-id: some-correlation-id" http://myhost.com
+```
+
+When Jaeger sees this header in the request that otherwise has no
+tracing context, it ensures that the new trace started for this
+request will be sampled in the "debug" mode (meaning it should survive
+all downsampling that might happen in the collection pipeline), and
+the root span will have a tag as if this statement was executed:
+
+```java
+span.setTag("jaeger-debug-id", "some-correlation-id")
+```
+
+This allows using Jaeger UI to find the trace by this tag.
+
 
 
 ## Developing
