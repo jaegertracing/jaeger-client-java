@@ -154,7 +154,7 @@ public class SpanContext implements io.opentracing.SpanContext {
      * Create a new dummy SpanContext as a container for debugID string.
      * This is used when "jaeger-debug-id" header is passed in the request
      * headers and forces the trace to be sampled as debug trace, and the
-     * value of header recorded as a span tag to server as searchable
+     * value of header recorded as a span tag to serve as a searchable
      * correlation ID.
      *
      * @param debugID arbitrary string used as correlation ID
