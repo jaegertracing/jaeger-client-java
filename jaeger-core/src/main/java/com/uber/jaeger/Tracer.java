@@ -203,11 +203,15 @@ public class Tracer implements io.opentracing.Tracer {
             return this;
         }
 
-        private SpanContext createNewContext() {
+        private SpanContext createNewContext(String debugID) {
             long id = Utils.uniqueID();
 
             byte flags = 0;
-            if (sampler.isSampled(id)) {
+            if (debugID != null) {
+                flags |= SpanContext.flagSampled | SpanContext.flagDebug;
+                tags.put(Constants.DEBUG_ID_HEADER_KEY, debugID);
+                metrics.traceStartedSampled.inc(1);
+            } else if (sampler.isSampled(id)) {
                 flags |= SpanContext.flagSampled;
                 tags.putAll(sampler.getTags());
                 metrics.traceStartedSampled.inc(1);
@@ -232,7 +236,8 @@ public class Tracer implements io.opentracing.Tracer {
                     Utils.uniqueID(),
                     parent.getSpanID(),
                     parent.getFlags(),
-                    parent.baggage());
+                    parent.baggage(),
+                    null);
         }
 
         private boolean isRPCServer() {
@@ -241,7 +246,14 @@ public class Tracer implements io.opentracing.Tracer {
 
         @Override
         public io.opentracing.Span start() {
-            SpanContext context = parent == null ? createNewContext() : createChildContext();
+            SpanContext context;
+            if (parent == null) {
+                context = createNewContext(null);
+            } else if (parent.isDebugIDContainerOnly()) {
+                context = createNewContext(parent.getDebugID());
+            } else {
+                context = createChildContext();
+            }
 
             long startTimeNanoTicks = 0;
             boolean computeDurationViaNanoTicks = false;

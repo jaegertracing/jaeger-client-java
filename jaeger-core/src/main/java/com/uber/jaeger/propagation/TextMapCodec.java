@@ -21,6 +21,7 @@
  */
 package com.uber.jaeger.propagation;
 
+import com.uber.jaeger.Constants;
 import com.uber.jaeger.SpanContext;
 import io.opentracing.propagation.TextMap;
 
@@ -63,12 +64,15 @@ public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
     public SpanContext extract(TextMap carrier) {
         SpanContext context = null;
         Map<String, String> baggage = null;
+        String debugID = null;
         for (Map.Entry<String, String> entry : carrier) {
             // TODO there should be no lower-case here
             String key = entry.getKey().toLowerCase();
             if (key.equals(contextKey)) {
                 context = SpanContext.contextFromString(
                         decodedValue(entry.getValue()));
+            } else if (key.equals(Constants.DEBUG_ID_HEADER_KEY)) {
+                debugID = decodedValue(entry.getValue());
             } else if (key.startsWith(baggagePrefix)) {
                 if (baggage == null) {
                     baggage = new HashMap<>();
@@ -79,6 +83,9 @@ public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
             }
         }
         if (context == null) {
+            if (debugID != null) {
+                return SpanContext.withDebugID(debugID);
+            }
             return null;
         }
         if (baggage == null) {

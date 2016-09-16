@@ -36,4 +36,13 @@ public class Constants {
      * Span tag key to describe the parameter of the sampler used on the root span.
      */
     public static final String SAMPLER_PARAM_TAG_KEY = "sampler.param";
+
+    /**
+     * The name of HTTP header or a TextMap carrier key which, if found
+     * in the carrier, forces the trace to be sampled as "debug" trace.
+     * The value of the header is recorded as the tag on the root span,
+     * so that the trace can be found in the UI using this value as a
+     * correlation ID.
+     */
+    public static final String DEBUG_ID_HEADER_KEY = "jaeger-debug-id";
 }
