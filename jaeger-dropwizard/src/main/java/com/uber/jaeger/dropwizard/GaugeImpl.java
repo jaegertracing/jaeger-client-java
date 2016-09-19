@@ -28,21 +28,23 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class GaugeImpl implements com.uber.jaeger.metrics.Gauge {
-    private final AtomicLong gaugeValue = new AtomicLong(0);
+  private final AtomicLong gaugeValue = new AtomicLong(0);
 
-    GaugeImpl(String name, Map<String, String> tags, MetricRegistry registry) {
-        String metricName = com.uber.jaeger.metrics.Metrics.addTagsToMetricName(name, tags);
-        registry.register(metricName, new Gauge<Number>() {
+  GaugeImpl(String name, Map<String, String> tags, MetricRegistry registry) {
+    String metricName = com.uber.jaeger.metrics.Metrics.addTagsToMetricName(name, tags);
+    registry.register(
+        metricName,
+        new Gauge<Number>() {
 
-            @Override
-            public Number getValue() {
-                return gaugeValue.get();
-            }
+          @Override
+          public Number getValue() {
+            return gaugeValue.get();
+          }
         });
-    }
+  }
 
-    @Override
-    public void update(long amount) {
-        gaugeValue.set(amount);
-    }
+  @Override
+  public void update(long amount) {
+    gaugeValue.set(amount);
+  }
 }

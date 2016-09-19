@@ -25,5 +25,6 @@ import com.uber.jaeger.exceptions.SamplingStrategyErrorException;
 import com.uber.jaeger.thrift.sampling_manager.SamplingStrategyResponse;
 
 public interface SamplingManager {
-    SamplingStrategyResponse getSamplingStrategy(String serviceName) throws SamplingStrategyErrorException;
+  SamplingStrategyResponse getSamplingStrategy(String serviceName)
+      throws SamplingStrategyErrorException;
 }

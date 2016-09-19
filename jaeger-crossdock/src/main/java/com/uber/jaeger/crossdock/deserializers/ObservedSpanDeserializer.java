@@ -30,14 +30,14 @@ import com.uber.jaeger.crossdock.api.ObservedSpan;
 import java.io.IOException;
 
 public class ObservedSpanDeserializer extends JsonDeserializer<ObservedSpan> {
-    @Override
-    public ObservedSpan deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
-        JsonNode node = jp.getCodec().readTree(jp);
+  @Override
+  public ObservedSpan deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
+    JsonNode node = jp.getCodec().readTree(jp);
 
-        String traceId = node.get("traceId").asText();
-        boolean sampled = node.get("sampled").asBoolean();
-        String baggage = node.get("baggage").asText();
+    String traceId = node.get("traceId").asText();
+    boolean sampled = node.get("sampled").asBoolean();
+    String baggage = node.get("baggage").asText();
 
-        return new ObservedSpan(traceId, sampled, baggage);
-    }
+    return new ObservedSpan(traceId, sampled, baggage);
+  }
 }

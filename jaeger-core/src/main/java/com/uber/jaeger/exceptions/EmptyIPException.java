@@ -22,7 +22,7 @@
 package com.uber.jaeger.exceptions;
 
 public class EmptyIPException extends RuntimeException {
-    public EmptyIPException() {
-        super("Empty string given for ip");
-    }
+  public EmptyIPException() {
+    super("Empty string given for ip");
+  }
 }

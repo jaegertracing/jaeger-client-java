@@ -32,34 +32,32 @@ import com.uber.tchannel.messages.ThriftResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class JoinTraceThriftHandler extends ThriftRequestHandler<TracedService.joinTrace_args, TracedService.joinTrace_result> {
-    private static final Logger logger = LoggerFactory.getLogger(JoinTraceThriftHandler.class);
+class JoinTraceThriftHandler
+    extends ThriftRequestHandler<TracedService.joinTrace_args, TracedService.joinTrace_result> {
+  private static final Logger logger = LoggerFactory.getLogger(JoinTraceThriftHandler.class);
 
-    private final TraceBehavior behavior;
+  private final TraceBehavior behavior;
 
-    JoinTraceThriftHandler(TraceBehavior behavior) {
-        this.behavior = behavior;
+  JoinTraceThriftHandler(TraceBehavior behavior) {
+    this.behavior = behavior;
+  }
+
+  @Override
+  public ThriftResponse<TracedService.joinTrace_result> handleImpl(
+      ThriftRequest<TracedService.joinTrace_args> thriftRequest) {
+    JoinTraceRequest request =
+        thriftRequest.getBody(TracedService.joinTrace_args.class).getRequest();
+    logger.info("thrift:join_trace request: {}", request);
+    TraceResponse response;
+    try {
+      response = behavior.prepareResponse(Downstream.fromThrift(request.getDownstream()));
+    } catch (Exception e) {
+      logger.error("Failed to call downstream", e);
+      response = new TraceResponse(e.getMessage());
     }
-
-    @Override
-    public ThriftResponse<TracedService.joinTrace_result> handleImpl(
-            ThriftRequest<TracedService.joinTrace_args> thriftRequest
-    ) {
-        JoinTraceRequest request = thriftRequest
-                .getBody(TracedService.joinTrace_args.class)
-                .getRequest();
-        logger.info("thrift:join_trace request: {}", request);
-        TraceResponse response;
-        try {
-            response = behavior.prepareResponse(Downstream.fromThrift(request.getDownstream()));
-        } catch (Exception e) {
-            logger.error("Failed to call downstream", e);
-            response = new TraceResponse(e.getMessage());
-        }
-        logger.info("thrift:join_trace response: {}", response);
-        return new ThriftResponse.Builder<TracedService.joinTrace_result>(thriftRequest)
-                .setBody(new TracedService.joinTrace_result(
-                        TraceResponse.toThrift(response)))
-                .build();
-    }
+    logger.info("thrift:join_trace response: {}", response);
+    return new ThriftResponse.Builder<TracedService.joinTrace_result>(thriftRequest)
+        .setBody(new TracedService.joinTrace_result(TraceResponse.toThrift(response)))
+        .build();
+  }
 }

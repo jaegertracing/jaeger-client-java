@@ -46,82 +46,85 @@ import javax.ws.rs.client.ClientBuilder;
 import java.net.URI;
 
 public class JerseyServer {
-    public static final String SERVICE_NAME = "java";
+  public static final String SERVICE_NAME = "java";
 
-    // TODO should not be static
-    public static Client client;
+  // TODO should not be static
+  public static Client client;
 
-    private final HttpServer server;
+  private final HttpServer server;
 
-    private final Configuration config;
+  private final Configuration config;
 
-    public JerseyServer(String hostPort, Class... resourceClasses) {
-        final String samplingType = ConstSampler.TYPE;
-        final Number samplingParam = 0;
-        final boolean disable = false;
-        final boolean logging = true;
+  public JerseyServer(String hostPort, Class... resourceClasses) {
+    final String samplingType = ConstSampler.TYPE;
+    final Number samplingParam = 0;
+    final boolean disable = false;
+    final boolean logging = true;
 
-        config = new Configuration(SERVICE_NAME, disable,
-                new SamplerConfiguration(samplingType, samplingParam),
-                new ReporterConfiguration(logging, null, null, null, null));
+    config =
+        new Configuration(
+            SERVICE_NAME,
+            disable,
+            new SamplerConfiguration(samplingType, samplingParam),
+            new ReporterConfiguration(logging, null, null, null, null));
 
-        // create a resource config that scans for JAX-RS resources and providers
-        final ResourceConfig rc = new ResourceConfig();
+    // create a resource config that scans for JAX-RS resources and providers
+    final ResourceConfig rc = new ResourceConfig();
 
-        for (Class clz : resourceClasses) {
-            rc.packages(clz.getPackage().getName());
-        }
-
-        rc.register(TracingUtils.serverFilter(config))
-                .register(LoggingFilter.class)
-                .register(ExceptionMapper.class)
-                .register(JacksonFeature.class)
-                .register(
-                        new AbstractBinder() {
-                            @Override
-                            protected void configure() {
-                                bind(config).to(Configuration.class);
-                            }
-                        });
-
-        // create and start a new instance of grizzly http server
-        // exposing the Jersey application at BASE_URI
-        String baseURI = String.format("http://%s/", hostPort);
-        server = GrizzlyHttpServerFactory.createHttpServer(URI.create(baseURI), rc);
-        client = initializeClient(config);
+    for (Class clz : resourceClasses) {
+      rc.packages(clz.getPackage().getName());
     }
 
-    private static TraceContext traceContext() {
-        return com.uber.jaeger.context.TracingUtils.getTraceContext();
-    }
+    rc.register(TracingUtils.serverFilter(config))
+        .register(LoggingFilter.class)
+        .register(ExceptionMapper.class)
+        .register(JacksonFeature.class)
+        .register(
+            new AbstractBinder() {
+              @Override
+              protected void configure() {
+                bind(config).to(Configuration.class);
+              }
+            });
 
-    private static Client initializeClient(final Configuration config) {
-        return ClientBuilder.newClient()
-                .register(ExceptionMapper.class)
-                .register(TracingUtils.clientFilter(config))
-                .register(
-                        new AbstractBinder() {
-                            @Override
-                            protected void configure() {
-                                bind(traceContext()).to(TraceContext.class);
-                                }
-                        })
-                .register(JacksonFeature.class);
-    }
+    // create and start a new instance of grizzly http server
+    // exposing the Jersey application at BASE_URI
+    String baseURI = String.format("http://%s/", hostPort);
+    server = GrizzlyHttpServerFactory.createHttpServer(URI.create(baseURI), rc);
+    client = initializeClient(config);
+  }
 
-    public void shutdown() {
-        server.shutdown();
-    }
+  private static TraceContext traceContext() {
+    return com.uber.jaeger.context.TracingUtils.getTraceContext();
+  }
 
-    public Tracer getTracer() {
-        return config.getTracer();
-    }
+  private static Client initializeClient(final Configuration config) {
+    return ClientBuilder.newClient()
+        .register(ExceptionMapper.class)
+        .register(TracingUtils.clientFilter(config))
+        .register(
+            new AbstractBinder() {
+              @Override
+              protected void configure() {
+                bind(traceContext()).to(TraceContext.class);
+              }
+            })
+        .register(JacksonFeature.class);
+  }
 
-    public static void main(String[] args) throws Exception {
-        BasicConfigurator.configure();
-        JerseyServer server = new JerseyServer("0.0.0.0:8081", TraceBehaviorResource.class);
-        TraceBehavior behavior = new TraceBehavior();
-        new TChannelServer(8082, behavior, server.getTracer(), false).start();
-        new JerseyServer("0.0.0.0:8080", HealthResource.class);
-    }
+  public void shutdown() {
+    server.shutdown();
+  }
+
+  public Tracer getTracer() {
+    return config.getTracer();
+  }
+
+  public static void main(String[] args) throws Exception {
+    BasicConfigurator.configure();
+    JerseyServer server = new JerseyServer("0.0.0.0:8081", TraceBehaviorResource.class);
+    TraceBehavior behavior = new TraceBehavior();
+    new TChannelServer(8082, behavior, server.getTracer(), false).start();
+    new JerseyServer("0.0.0.0:8080", HealthResource.class);
+  }
 }

@@ -22,7 +22,7 @@
 package com.uber.jaeger.exceptions;
 
 public class UnknownSamplingStrategyException extends Exception {
-    public  UnknownSamplingStrategyException(String msg) {
-        super(msg);
-    }
+  public UnknownSamplingStrategyException(String msg) {
+    super(msg);
+  }
 }

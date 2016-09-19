@@ -29,24 +29,24 @@ import com.uber.jaeger.metrics.Timer;
 import java.util.Map;
 
 public class StatsFactory implements com.uber.jaeger.metrics.StatsFactory {
-    private final MetricRegistry registry;
+  private final MetricRegistry registry;
 
-    public StatsFactory(MetricRegistry registry) {
-        this.registry = registry;
-    }
+  public StatsFactory(MetricRegistry registry) {
+    this.registry = registry;
+  }
 
-    @Override
-    public Counter createCounter(String name, Map<String, String> tags) {
-        return new CounterImpl(name, tags, registry);
-    }
+  @Override
+  public Counter createCounter(String name, Map<String, String> tags) {
+    return new CounterImpl(name, tags, registry);
+  }
 
-    @Override
-    public Timer createTimer(String name, Map<String, String> tags) {
-        return new TimerImpl(name, tags, registry);
-    }
+  @Override
+  public Timer createTimer(String name, Map<String, String> tags) {
+    return new TimerImpl(name, tags, registry);
+  }
 
-    @Override
-    public Gauge createGauge(String name, Map<String, String> tags) {
-        return new GaugeImpl(name, tags, registry);
-    }
+  @Override
+  public Gauge createGauge(String name, Map<String, String> tags) {
+    return new GaugeImpl(name, tags, registry);
+  }
 }

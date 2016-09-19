@@ -22,37 +22,37 @@
 package com.uber.jaeger.utils;
 
 public class RateLimiter {
-    private final double creditsPerSecond;
-    private final double creditsPerNanosecond;
-    private final Clock clock;
-    private double balance;
-    private long lastTick;
+  private final double creditsPerSecond;
+  private final double creditsPerNanosecond;
+  private final Clock clock;
+  private double balance;
+  private long lastTick;
 
-    public RateLimiter(double creditsPerSecond) {
-        this(creditsPerSecond, new SystemClock());
+  public RateLimiter(double creditsPerSecond) {
+    this(creditsPerSecond, new SystemClock());
+  }
+
+  public RateLimiter(double creditsPerSecond, Clock clock) {
+    this.clock = clock;
+    this.creditsPerSecond = creditsPerSecond;
+    this.balance = creditsPerSecond;
+    this.creditsPerNanosecond = creditsPerSecond / 1.0e9;
+  }
+
+  public boolean checkCredit(double itemCost) {
+    long currentTime = clock.currentNanoTicks();
+    double elapsedTime = currentTime - lastTick;
+    lastTick = currentTime;
+    balance += elapsedTime * creditsPerNanosecond;
+    if (balance > creditsPerSecond) {
+      balance = creditsPerSecond;
     }
 
-    public RateLimiter(double creditsPerSecond, Clock clock) {
-        this.clock = clock;
-        this.creditsPerSecond = creditsPerSecond;
-        this.balance = creditsPerSecond;
-        this.creditsPerNanosecond = creditsPerSecond / 1.0e9;
+    if (balance >= itemCost) {
+      balance -= itemCost;
+      return true;
     }
 
-    public boolean checkCredit(double itemCost) {
-        long currentTime = clock.currentNanoTicks();
-        double elapsedTime = currentTime - lastTick;
-        lastTick = currentTime;
-        balance += elapsedTime * creditsPerNanosecond;
-        if (balance > creditsPerSecond) {
-            balance = creditsPerSecond;
-        }
-
-        if (balance >= itemCost) {
-            balance -= itemCost;
-            return true;
-        }
-
-        return false;
-    }
+    return false;
+  }
 }

@@ -28,16 +28,17 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Configuration extends com.uber.jaeger.filters.jaxrs2.Configuration {
-    @JsonCreator
-    public Configuration(@JsonProperty("serviceName") String serviceName,
-                         @JsonProperty("disable") Boolean disable,
-                         @JsonProperty("sampler") SamplerConfiguration samplerConfig,
-                         @JsonProperty("reporter") ReporterConfiguration reporterConfig) {
-        super(serviceName, disable, samplerConfig, reporterConfig);
-    }
+  @JsonCreator
+  public Configuration(
+      @JsonProperty("serviceName") String serviceName,
+      @JsonProperty("disable") Boolean disable,
+      @JsonProperty("sampler") SamplerConfiguration samplerConfig,
+      @JsonProperty("reporter") ReporterConfiguration reporterConfig) {
+    super(serviceName, disable, samplerConfig, reporterConfig);
+  }
 
-    public Configuration setMetricRegistry(MetricRegistry registry) {
-        super.setStatsFactory(new StatsFactory(registry));
-        return this;
-    }
+  public Configuration setMetricRegistry(MetricRegistry registry) {
+    super.setStatsFactory(new StatsFactory(registry));
+    return this;
+  }
 }

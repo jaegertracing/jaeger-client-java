@@ -43,41 +43,41 @@ import javax.ws.rs.ext.Provider;
 @Path("")
 @Provider
 public class TraceBehaviorResource {
-    private static final Logger logger = LoggerFactory.getLogger(TraceBehaviorResource.class);
+  private static final Logger logger = LoggerFactory.getLogger(TraceBehaviorResource.class);
 
-    private final ObjectMapper mapper = new ObjectMapper();
-    private final TraceBehavior behavior;
+  private final ObjectMapper mapper = new ObjectMapper();
+  private final TraceBehavior behavior;
 
-    public TraceBehaviorResource() {
-        this.behavior = new TraceBehavior();
+  public TraceBehaviorResource() {
+    this.behavior = new TraceBehavior();
+  }
+
+  @POST
+  @Path("start_trace")
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
+  public TraceResponse startTrace(StartTraceRequest startRequest) throws Exception {
+    logger.info("http:start_trace request: {}", mapper.writeValueAsString(startRequest));
+    // TODO should be starting new root span
+    Span span = (Span) TracingUtils.getTraceContext().getCurrentSpan();
+    String baggage = startRequest.getBaggage();
+    span.setBaggageItem(Constants.BAGGAGE_KEY, baggage);
+    if (startRequest.getSampled()) {
+      Tags.SAMPLING_PRIORITY.set(span, (short) 1);
     }
+    TraceResponse response = behavior.prepareResponse(startRequest.getDownstream());
+    logger.info("http:start_trace response: {}", mapper.writeValueAsString(response));
+    return response;
+  }
 
-    @POST
-    @Path("start_trace")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public TraceResponse startTrace(StartTraceRequest startRequest) throws Exception {
-        logger.info("http:start_trace request: {}", mapper.writeValueAsString(startRequest));
-        // TODO should be starting new root span
-        Span span = (Span) TracingUtils.getTraceContext().getCurrentSpan();
-        String baggage = startRequest.getBaggage();
-        span.setBaggageItem(Constants.BAGGAGE_KEY, baggage);
-        if (startRequest.getSampled()) {
-            Tags.SAMPLING_PRIORITY.set(span, (short) 1);
-        }
-        TraceResponse response = behavior.prepareResponse(startRequest.getDownstream());
-        logger.info("http:start_trace response: {}", mapper.writeValueAsString(response));
-        return response;
-    }
-
-    @POST
-    @Path("join_trace")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public TraceResponse joinTrace(JoinTraceRequest joinRequest) throws Exception {
-        logger.info("http:join_trace request: {}", mapper.writeValueAsString(joinRequest));
-        TraceResponse response = behavior.prepareResponse(joinRequest.getDownstream());
-        logger.info("http:join_trace response: {}", mapper.writeValueAsString(response));
-        return response;
-    }
+  @POST
+  @Path("join_trace")
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
+  public TraceResponse joinTrace(JoinTraceRequest joinRequest) throws Exception {
+    logger.info("http:join_trace request: {}", mapper.writeValueAsString(joinRequest));
+    TraceResponse response = behavior.prepareResponse(joinRequest.getDownstream());
+    logger.info("http:join_trace response: {}", mapper.writeValueAsString(response));
+    return response;
+  }
 }

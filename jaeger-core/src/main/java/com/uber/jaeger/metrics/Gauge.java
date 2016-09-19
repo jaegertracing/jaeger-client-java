@@ -22,5 +22,5 @@
 package com.uber.jaeger.metrics;
 
 public interface Gauge {
-    void update(long amount);
+  void update(long amount);
 }

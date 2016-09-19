@@ -37,20 +37,23 @@ import java.util.List;
  * This sends (TBinaryProtocol big-endian) encoded spans to a Zipkin Collector (usually a
  * zipkin-server).
  *
- * <p>Example usage:
+ * <p>
+ * Example usage:
+ *
  * <pre>{@code
  * reporter = new RemoteReporter(ZipkinSender.create("http://localhost:9411/api/v1/spans"));
  * tracer = new Tracer.Builder(serviceName, reporter, sampler)
  *                    ...
  * }</pre>
  *
- * <p>See https://github.com/openzipkin/zipkin/tree/master/zipkin-server
+ * <p>
+ * See https://github.com/openzipkin/zipkin/tree/master/zipkin-server
  */
 public final class ZipkinSender implements Sender {
 
   /**
-   * @param endpoint The POST URL for zipkin's <a href="http://zipkin.io/zipkin-api/#/">v1 api</a>, usually
-   *                 "http://zipkinhost:9411/api/v1/spans"
+   * @param endpoint The POST URL for zipkin's <a href="http://zipkin.io/zipkin-api/#/">v1 api</a>,
+   * usually "http://zipkinhost:9411/api/v1/spans"
    * @return new sender
    */
   public static ZipkinSender create(String endpoint) {
@@ -58,10 +61,12 @@ public final class ZipkinSender implements Sender {
   }
 
   /**
-   * Use this to dispatch to an existing Zipkin sender which is configured for {@link
-   * Encoding#THRIFT thrift encoding}.
+   * Use this to dispatch to an existing Zipkin sender which is configured for
+   * {@link Encoding#THRIFT thrift encoding}.
    *
-   * <p>Ex. for Kafka ("io.zipkin.reporter:zipkin-sender-kafka08")
+   * <p>
+   * Ex. for Kafka ("io.zipkin.reporter:zipkin-sender-kafka08")
+   *
    * <pre>{@code
    * sender = ZipkinSender.create(KafkaSender.create("192.168.99.100:9092"));
    * }</pre>
@@ -83,22 +88,24 @@ public final class ZipkinSender implements Sender {
   }
 
   /*
-  * Adds spans to an internal queue that flushes them as udp packets later.
-  * This function does not need to be synchronized because the reporter creates
-  * a single thread that calls this append function
-  */
+   * Adds spans to an internal queue that flushes them as udp packets later.
+   * This function does not need to be synchronized because the reporter creates
+   * a single thread that calls this append function
+   */
   @Override
   public int append(Span span) throws SenderException {
     byte[] next = encoder.encode(span);
     int messageSizeOfNextSpan = delegate.messageSizeInBytes(Collections.singletonList(next));
     // don't enqueue something larger than we can drain
     if (Integer.compare(messageSizeOfNextSpan, delegate.messageMaxBytes()) > 0) {
-      throw new SenderException(delegate.toString() + " received a span that was too large", null, 1);
+      throw new SenderException(
+          delegate.toString() + " received a span that was too large", null, 1);
     }
 
     spanBuffer.add(next); // speculatively add to the buffer so we can size it
     int nextSizeInBytes = delegate.messageSizeInBytes(spanBuffer);
-    int includingNextVsMaxMessageSize = Integer.compare(nextSizeInBytes, delegate.messageMaxBytes());
+    int includingNextVsMaxMessageSize =
+        Integer.compare(nextSizeInBytes, delegate.messageMaxBytes());
     // If we can fit queued spans and the next into one message...
     if (includingNextVsMaxMessageSize <= 0) {
 

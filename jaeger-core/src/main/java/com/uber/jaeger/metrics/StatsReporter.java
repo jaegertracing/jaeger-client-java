@@ -25,9 +25,9 @@ import java.util.Map;
 
 public interface StatsReporter {
 
-    void incCounter(String name, long delta, Map<String, String> tags);
+  void incCounter(String name, long delta, Map<String, String> tags);
 
-    void recordTimer(String name, long time, Map<String, String> tags);
+  void recordTimer(String name, long time, Map<String, String> tags);
 
-    void updateGauge(String name, long amount, Map<String, String> tags);
+  void updateGauge(String name, long amount, Map<String, String> tags);
 }

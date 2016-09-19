@@ -35,20 +35,20 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class PropagationTest {
-    @Test
-    public void testDebugCorrelationID() {
-        Tracer tracer = new Tracer.Builder("test", new InMemoryReporter(), new ConstSampler(true))
-                .build();
-        Map<String, String> headers = new HashMap<>();
-        headers.put(Constants.DEBUG_ID_HEADER_KEY, "Coraline");
-        TextMap carrier = new TextMapExtractAdapter(headers);
-        SpanContext spanContext = (SpanContext) tracer.extract(Format.Builtin.TEXT_MAP, carrier);
-        assertTrue(spanContext.isDebugIDContainerOnly());
-        assertEquals("Coraline", spanContext.getDebugID());
-        Span span = (Span) tracer.buildSpan("span").asChildOf(spanContext).start();
-        spanContext = (SpanContext) span.context();
-        assertTrue(spanContext.isSampled());
-        assertTrue(spanContext.isDebug());
-        assertEquals("Coraline", span.getTags().get(Constants.DEBUG_ID_HEADER_KEY));
-    }
+  @Test
+  public void testDebugCorrelationID() {
+    Tracer tracer =
+        new Tracer.Builder("test", new InMemoryReporter(), new ConstSampler(true)).build();
+    Map<String, String> headers = new HashMap<>();
+    headers.put(Constants.DEBUG_ID_HEADER_KEY, "Coraline");
+    TextMap carrier = new TextMapExtractAdapter(headers);
+    SpanContext spanContext = (SpanContext) tracer.extract(Format.Builtin.TEXT_MAP, carrier);
+    assertTrue(spanContext.isDebugIDContainerOnly());
+    assertEquals("Coraline", spanContext.getDebugID());
+    Span span = (Span) tracer.buildSpan("span").asChildOf(spanContext).start();
+    spanContext = (SpanContext) span.context();
+    assertTrue(spanContext.isSampled());
+    assertTrue(spanContext.isDebug());
+    assertEquals("Coraline", span.getTags().get(Constants.DEBUG_ID_HEADER_KEY));
+  }
 }

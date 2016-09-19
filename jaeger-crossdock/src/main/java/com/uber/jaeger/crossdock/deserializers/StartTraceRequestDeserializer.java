@@ -34,26 +34,27 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 
 public class StartTraceRequestDeserializer extends JsonDeserializer<StartTraceRequest> {
-    private static final Logger logger = LoggerFactory.getLogger(StartTraceRequestDeserializer.class);
+  private static final Logger logger = LoggerFactory.getLogger(StartTraceRequestDeserializer.class);
 
-    private static final ObjectMapper mapper = new ObjectMapper();
+  private static final ObjectMapper mapper = new ObjectMapper();
 
-    @Override
-    public StartTraceRequest deserialize(JsonParser jp, DeserializationContext deserializationContext) throws IOException {
-        JsonNode node = jp.getCodec().readTree(jp);
+  @Override
+  public StartTraceRequest deserialize(JsonParser jp, DeserializationContext deserializationContext)
+      throws IOException {
+    JsonNode node = jp.getCodec().readTree(jp);
 
-        logger.info("start trace json request: {}", node);
+    logger.info("start trace json request: {}", node);
 
-        String serverRole = node.get("serverRole").asText();
-        boolean sampled = node.get("sampled").asBoolean();
-        String baggage = node.get("baggage").asText();
+    String serverRole = node.get("serverRole").asText();
+    boolean sampled = node.get("sampled").asBoolean();
+    String baggage = node.get("baggage").asText();
 
-        JsonNode downstreamNode = node.get("downstream");
-        Downstream downstream = null;
-        if (downstreamNode != null) {
-            downstream = mapper.readerFor(Downstream.class).readValue(downstreamNode);
-        }
-
-        return new StartTraceRequest(serverRole, sampled, baggage, downstream);
+    JsonNode downstreamNode = node.get("downstream");
+    Downstream downstream = null;
+    if (downstreamNode != null) {
+      downstream = mapper.readerFor(Downstream.class).readValue(downstreamNode);
     }
+
+    return new StartTraceRequest(serverRole, sampled, baggage, downstream);
+  }
 }

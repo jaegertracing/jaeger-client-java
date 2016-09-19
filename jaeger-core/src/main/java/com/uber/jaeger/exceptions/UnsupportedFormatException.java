@@ -24,7 +24,7 @@ package com.uber.jaeger.exceptions;
 import io.opentracing.propagation.Format;
 
 public class UnsupportedFormatException extends RuntimeException {
-    public UnsupportedFormatException(Format<?> format) {
-        super(format.toString());
-    }
+  public UnsupportedFormatException(Format<?> format) {
+    super(format.toString());
+  }
 }

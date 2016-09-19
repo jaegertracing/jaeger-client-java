@@ -29,9 +29,9 @@ import javax.ws.rs.ext.Provider;
 @Path("")
 @Provider
 public class HealthResource {
-    @HEAD
-    @Path("/")
-    public Response heathCheck() {
-        return Response.ok().build();
-    }
+  @HEAD
+  @Path("/")
+  public Response heathCheck() {
+    return Response.ok().build();
+  }
 }

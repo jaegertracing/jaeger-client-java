@@ -29,38 +29,38 @@ import java.net.UnknownHostException;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class Utils {
-    public static String normalizeBaggageKey(String key) {
-        return key.replaceAll("_", "-").toLowerCase();
+  public static String normalizeBaggageKey(String key) {
+    return key.replaceAll("_", "-").toLowerCase();
+  }
+
+  public static int ipToInt(String ip) throws EmptyIPException, NotFourOctetsException {
+    if (ip.equals("")) {
+      throw new EmptyIPException();
     }
 
-    public static int ipToInt(String ip) throws EmptyIPException, NotFourOctetsException {
-        if (ip.equals("")) {
-            throw new EmptyIPException();
-        }
-
-        if (ip.equals("localhost")) {
-            return (127 << 24) | 1;
-        }
-
-        InetAddress octets;
-        try {
-            octets = InetAddress.getByName(ip);
-        } catch(UnknownHostException e)  {
-            throw new NotFourOctetsException();
-        }
-
-        int intIP = 0;
-        for (byte octet: octets.getAddress()) {
-            intIP = (intIP << 8) | (octet);
-        }
-        return intIP;
+    if (ip.equals("localhost")) {
+      return (127 << 24) | 1;
     }
 
-    public static long uniqueID() {
-        long val = 0;
-        while(val == 0) {
-            val = ThreadLocalRandom.current().nextLong();
-        }
-        return val;
+    InetAddress octets;
+    try {
+      octets = InetAddress.getByName(ip);
+    } catch (UnknownHostException e) {
+      throw new NotFourOctetsException();
     }
+
+    int intIP = 0;
+    for (byte octet : octets.getAddress()) {
+      intIP = (intIP << 8) | (octet);
+    }
+    return intIP;
+  }
+
+  public static long uniqueID() {
+    long val = 0;
+    while (val == 0) {
+      val = ThreadLocalRandom.current().nextLong();
+    }
+    return val;
+  }
 }

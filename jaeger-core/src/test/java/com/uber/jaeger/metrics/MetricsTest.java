@@ -28,55 +28,56 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
 public class MetricsTest {
-    InMemoryStatsReporter metricsReporter;
-    Metrics metrics;
-    @Before
-    public void setUp() throws Exception {
-        metricsReporter = new InMemoryStatsReporter();
-        metrics = new Metrics(new StatsFactoryImpl(metricsReporter));
-    }
+  InMemoryStatsReporter metricsReporter;
+  Metrics metrics;
 
-    @After
-    public void tearDown() {
-        metricsReporter.reset();
-    }
+  @Before
+  public void setUp() throws Exception {
+    metricsReporter = new InMemoryStatsReporter();
+    metrics = new Metrics(new StatsFactoryImpl(metricsReporter));
+  }
 
-    @Test
-    public void testCounterWithoutExplicitTags() throws Exception {
-        metrics.tracesJoinedSampled.inc(1);
+  @After
+  public void tearDown() {
+    metricsReporter.reset();
+  }
 
-        Object[] metricNames = metricsReporter.counters.keySet().toArray();
-        String metricName = (String)metricNames[0];
-        long expectedAmount = metricsReporter.counters.get(metricName);
+  @Test
+  public void testCounterWithoutExplicitTags() throws Exception {
+    metrics.tracesJoinedSampled.inc(1);
 
-        assertEquals(metricNames.length, 1);
-        assertEquals(expectedAmount, 1);
-        assertEquals("jaeger.traces.sampled=y.state=joined", metricName);
-    }
+    Object[] metricNames = metricsReporter.counters.keySet().toArray();
+    String metricName = (String) metricNames[0];
+    long expectedAmount = metricsReporter.counters.get(metricName);
 
-    @Test
-    public void testCounterWithExplicitTags() throws Exception {
-        metrics.tracesJoinedSampled.inc(1);
+    assertEquals(metricNames.length, 1);
+    assertEquals(expectedAmount, 1);
+    assertEquals("jaeger.traces.sampled=y.state=joined", metricName);
+  }
 
-        Object[] metricNames = metricsReporter.counters.keySet().toArray();
-        String metricName = (String)metricNames[0];
-        long expectedAmount = metricsReporter.counters.get(metricName);
+  @Test
+  public void testCounterWithExplicitTags() throws Exception {
+    metrics.tracesJoinedSampled.inc(1);
 
-        assertEquals(metricNames.length, 1);
-        assertEquals(expectedAmount, 1);
-        assertEquals("jaeger.traces.sampled=y.state=joined", metricName);
-    }
+    Object[] metricNames = metricsReporter.counters.keySet().toArray();
+    String metricName = (String) metricNames[0];
+    long expectedAmount = metricsReporter.counters.get(metricName);
 
-    @Test
-    public void testGaugeWithoutExplicitTags() {
-        metrics.reporterQueueLength.update(1);
+    assertEquals(metricNames.length, 1);
+    assertEquals(expectedAmount, 1);
+    assertEquals("jaeger.traces.sampled=y.state=joined", metricName);
+  }
 
-        Object[] metricNames = metricsReporter.gauges.keySet().toArray();
-        String metricName = (String)metricNames[0];
-        long expectedAmount = metricsReporter.gauges.get(metricName);
+  @Test
+  public void testGaugeWithoutExplicitTags() {
+    metrics.reporterQueueLength.update(1);
 
-        assertEquals(metricNames.length, 1);
-        assertEquals(1L, expectedAmount, 0.00001);
-        assertEquals("jaeger.reporter-queue", metricName);
-    }
+    Object[] metricNames = metricsReporter.gauges.keySet().toArray();
+    String metricName = (String) metricNames[0];
+    long expectedAmount = metricsReporter.gauges.get(metricName);
+
+    assertEquals(metricNames.length, 1);
+    assertEquals(1L, expectedAmount, 0.00001);
+    assertEquals("jaeger.reporter-queue", metricName);
+  }
 }

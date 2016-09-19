@@ -28,15 +28,15 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class TimerImpl implements com.uber.jaeger.metrics.Timer {
-    private final Timer timer;
+  private final Timer timer;
 
-    TimerImpl(String name, Map<String, String> tags, MetricRegistry registry) {
-        String metricName = com.uber.jaeger.metrics.Metrics.addTagsToMetricName(name, tags);
-        timer = registry.timer(metricName);
-    }
+  TimerImpl(String name, Map<String, String> tags, MetricRegistry registry) {
+    String metricName = com.uber.jaeger.metrics.Metrics.addTagsToMetricName(name, tags);
+    timer = registry.timer(metricName);
+  }
 
-    @Override
-    public void durationMicros(long time) {
-        timer.update(time, TimeUnit.MICROSECONDS);
-    }
+  @Override
+  public void durationMicros(long time) {
+    timer.update(time, TimeUnit.MICROSECONDS);
+  }
 }

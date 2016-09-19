@@ -32,90 +32,84 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
-    /** Key used to store serialized span context representation */
-    private static final String SPAN_CONTEXT_KEY = "uber-trace-id";
+  /** Key used to store serialized span context representation */
+  private static final String SPAN_CONTEXT_KEY = "uber-trace-id";
 
-    /** Key prefix used for baggage items */
-    private static final String BAGGAGE_KEY_PREFIX = "uberctx-";
+  /** Key prefix used for baggage items */
+  private static final String BAGGAGE_KEY_PREFIX = "uberctx-";
 
-    private static final PrefixedKeys keys = new PrefixedKeys();
+  private static final PrefixedKeys keys = new PrefixedKeys();
 
-    private final String contextKey = SPAN_CONTEXT_KEY;
+  private final String contextKey = SPAN_CONTEXT_KEY;
 
-    private final String baggagePrefix = BAGGAGE_KEY_PREFIX;
+  private final String baggagePrefix = BAGGAGE_KEY_PREFIX;
 
-    private final boolean urlEncoding;
+  private final boolean urlEncoding;
 
-    public TextMapCodec(boolean urlEncoding) {
-        this.urlEncoding = urlEncoding;
+  public TextMapCodec(boolean urlEncoding) {
+    this.urlEncoding = urlEncoding;
+  }
+
+  @Override
+  public void inject(SpanContext spanContext, TextMap carrier) {
+    carrier.put(contextKey, encodedValue(spanContext.contextAsString()));
+    for (Map.Entry<String, String> entry : spanContext.baggageItems()) {
+      carrier.put(keys.prefixedKey(entry.getKey(), baggagePrefix), encodedValue(entry.getValue()));
     }
+  }
 
-    @Override
-    public void inject(SpanContext spanContext, TextMap carrier) {
-        carrier.put(contextKey, encodedValue(spanContext.contextAsString()));
-        for (Map.Entry<String, String> entry: spanContext.baggageItems()) {
-            carrier.put(
-                    keys.prefixedKey(entry.getKey(), baggagePrefix),
-                    encodedValue(entry.getValue()));
-        }
-    }
-
-    @Override
-    public SpanContext extract(TextMap carrier) {
-        SpanContext context = null;
-        Map<String, String> baggage = null;
-        String debugID = null;
-        for (Map.Entry<String, String> entry : carrier) {
-            // TODO there should be no lower-case here
-            String key = entry.getKey().toLowerCase();
-            if (key.equals(contextKey)) {
-                context = SpanContext.contextFromString(
-                        decodedValue(entry.getValue()));
-            } else if (key.equals(Constants.DEBUG_ID_HEADER_KEY)) {
-                debugID = decodedValue(entry.getValue());
-            } else if (key.startsWith(baggagePrefix)) {
-                if (baggage == null) {
-                    baggage = new HashMap<>();
-                }
-                baggage.put(
-                        keys.unprefixedKey(key, baggagePrefix),
-                        decodedValue(entry.getValue()));
-            }
-        }
-        if (context == null) {
-            if (debugID != null) {
-                return SpanContext.withDebugID(debugID);
-            }
-            return null;
-        }
+  @Override
+  public SpanContext extract(TextMap carrier) {
+    SpanContext context = null;
+    Map<String, String> baggage = null;
+    String debugID = null;
+    for (Map.Entry<String, String> entry : carrier) {
+      // TODO there should be no lower-case here
+      String key = entry.getKey().toLowerCase();
+      if (key.equals(contextKey)) {
+        context = SpanContext.contextFromString(decodedValue(entry.getValue()));
+      } else if (key.equals(Constants.DEBUG_ID_HEADER_KEY)) {
+        debugID = decodedValue(entry.getValue());
+      } else if (key.startsWith(baggagePrefix)) {
         if (baggage == null) {
-            return context;
+          baggage = new HashMap<>();
         }
-        return context.withBaggage(baggage);
+        baggage.put(keys.unprefixedKey(key, baggagePrefix), decodedValue(entry.getValue()));
+      }
     }
-
-    private String encodedValue(String value) {
-        if (!urlEncoding) {
-            return value;
-        }
-        try {
-            return URLEncoder.encode(value, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            // not much we can do, try raw value
-            return value;
-        }
+    if (context == null) {
+      if (debugID != null) {
+        return SpanContext.withDebugID(debugID);
+      }
+      return null;
     }
-
-    private String decodedValue(String value) {
-        if (!urlEncoding) {
-            return value;
-        }
-        try {
-            return URLDecoder.decode(value, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            // not much we can do, try raw value
-            return value;
-        }
+    if (baggage == null) {
+      return context;
     }
+    return context.withBaggage(baggage);
+  }
 
+  private String encodedValue(String value) {
+    if (!urlEncoding) {
+      return value;
+    }
+    try {
+      return URLEncoder.encode(value, "UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      // not much we can do, try raw value
+      return value;
+    }
+  }
+
+  private String decodedValue(String value) {
+    if (!urlEncoding) {
+      return value;
+    }
+    try {
+      return URLDecoder.decode(value, "UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      // not much we can do, try raw value
+      return value;
+    }
+  }
 }

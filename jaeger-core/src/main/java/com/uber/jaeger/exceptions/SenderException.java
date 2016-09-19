@@ -22,14 +22,14 @@
 package com.uber.jaeger.exceptions;
 
 public class SenderException extends Exception {
-    private int droppedSpans;
+  private int droppedSpans;
 
-    public SenderException(String msg, Throwable cause, int droppedSpans) {
-        super(msg, cause);
-        this.droppedSpans = droppedSpans;
-    }
+  public SenderException(String msg, Throwable cause, int droppedSpans) {
+    super(msg, cause);
+    this.droppedSpans = droppedSpans;
+  }
 
-    public int getDroppedSpanCount() {
-        return droppedSpans;
-    }
+  public int getDroppedSpanCount() {
+    return droppedSpans;
+  }
 }

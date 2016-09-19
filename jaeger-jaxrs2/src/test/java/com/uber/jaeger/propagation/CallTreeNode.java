@@ -28,78 +28,80 @@ import javax.ws.rs.ext.Provider;
 import java.util.ArrayList;
 import java.util.List;
 
-
 /*
-* This class is used for presenting individual spans, and capturing the recursive
-* chain of calls in its "downstream" list.  Additionaly BAGGAGE is also captured in
-* a request, and propagated up the chain of requests.
-*/
+ * This class is used for presenting individual spans, and capturing the recursive
+ * chain of calls in its "downstream" list.  Additionaly BAGGAGE is also captured in
+ * a request, and propagated up the chain of requests.
+ */
 @Provider
 public class CallTreeNode {
-    @JsonProperty("actor")
-    String actor;
+  @JsonProperty("actor")
+  String actor;
 
-    @JsonProperty("span")
-    SpanInfo span;
+  @JsonProperty("span")
+  SpanInfo span;
 
-    @JsonProperty("~leaf")
-    boolean leaf;
+  @JsonProperty("~leaf")
+  boolean leaf;
 
-    @JsonProperty("~downstream")
-    List<CallTreeNode> downstream = new ArrayList<>();
+  @JsonProperty("~downstream")
+  List<CallTreeNode> downstream = new ArrayList<>();
 
-    // Need to provide a dummy constructor to make readEntity, and jackson work properly.
-    public CallTreeNode() {
-        leaf = true;
+  // Need to provide a dummy constructor to make readEntity, and jackson work properly.
+  public CallTreeNode() {
+    leaf = true;
+  }
+
+  @JsonCreator
+  public CallTreeNode(
+      @JsonProperty("actor") String actor, @JsonProperty("span") SpanInfo spanInfo) {
+    this.actor = actor;
+    span = spanInfo;
+    leaf = true;
+  }
+
+  public CallTreeNode(String actor, SpanInfo spanInfo, List<CallTreeNode> downstream) {
+    this(actor, spanInfo);
+    if (downstream == null) {
+      leaf = true;
     }
+  }
 
-    @JsonCreator
-    public CallTreeNode(@JsonProperty("actor") String actor, @JsonProperty("span") SpanInfo spanInfo) {
-        this.actor = actor;
-        span = spanInfo;
-        leaf = true;
-    }
+  public List<CallTreeNode> getDownstream() {
+    return downstream;
+  }
 
-    public CallTreeNode(String actor, SpanInfo spanInfo, List<CallTreeNode> downstream) {
-        this(actor, spanInfo);
-        if (downstream == null) {
-            leaf = true;
+  public String getActor() {
+    return actor;
+  }
+
+  public Boolean isLeaf() {
+    return leaf;
+  }
+
+  public boolean validateTraceIds(String traceID, boolean sampled) {
+    boolean valid =
+        span.getTraceID().equals(traceID)
+            && span.getBaggage().equals(FilterIntegrationTest.BAGGAGE_VALUE)
+            && span.getSampled() == sampled;
+
+    if (!isLeaf()) {
+      List<CallTreeNode> downstream = this.getDownstream();
+
+      if (downstream.size() == 0) {
+        throw new IllegalStateException(
+            "Node %s id is not a leaf, but downstream is Empty".format(this.toString()));
+      }
+
+      for (CallTreeNode downStreamTreeNode : downstream) {
+        valid = valid && downStreamTreeNode.validateTraceIds(traceID, sampled);
+
+        if (!valid) {
+          return false;
         }
+      }
     }
 
-    public List<CallTreeNode> getDownstream() {
-        return downstream;
-    }
-
-    public String getActor() {
-        return actor;
-    }
-
-    public Boolean isLeaf() {
-        return leaf;
-    }
-
-    public boolean validateTraceIds(String traceID, boolean sampled) {
-        boolean valid = span.getTraceID().equals(traceID) &&
-                        span.getBaggage().equals(FilterIntegrationTest.BAGGAGE_VALUE) &&
-                        span.getSampled() == sampled;
-
-        if (!isLeaf()) {
-            List<CallTreeNode> downstream = this.getDownstream();
-
-            if (downstream.size() == 0) {
-                throw new IllegalStateException("Node %s id is not a leaf, but downstream is Empty".format(this.toString()));
-            }
-
-            for (CallTreeNode downStreamTreeNode : downstream) {
-                valid = valid && downStreamTreeNode.validateTraceIds(traceID, sampled);
-
-                if (!valid) {
-                    return false;
-                }
-            }
-        }
-
-        return valid;
-    }
+    return valid;
+  }
 }

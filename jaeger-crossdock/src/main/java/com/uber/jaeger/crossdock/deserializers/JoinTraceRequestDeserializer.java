@@ -34,23 +34,24 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 
 public class JoinTraceRequestDeserializer extends JsonDeserializer<JoinTraceRequest> {
-    private static final Logger logger = LoggerFactory.getLogger(JoinTraceRequestDeserializer.class);
+  private static final Logger logger = LoggerFactory.getLogger(JoinTraceRequestDeserializer.class);
 
-    private static final ObjectMapper mapper = new ObjectMapper();
+  private static final ObjectMapper mapper = new ObjectMapper();
 
-    @Override
-    public JoinTraceRequest deserialize(JsonParser jp, DeserializationContext deserializationContext) throws IOException {
-        JsonNode node = jp.getCodec().readTree(jp);
+  @Override
+  public JoinTraceRequest deserialize(JsonParser jp, DeserializationContext deserializationContext)
+      throws IOException {
+    JsonNode node = jp.getCodec().readTree(jp);
 
-        logger.info("join trace json request: {}", node);
+    logger.info("join trace json request: {}", node);
 
-        String serverRole = node.get("serverRole").asText();
-        JsonNode downstreamNode = node.get("downstream");
-        Downstream downstream = null;
-        if (downstreamNode != null) {
-            downstream = mapper.readerFor(Downstream.class).readValue(downstreamNode);
-        }
-
-        return new JoinTraceRequest(serverRole, downstream);
+    String serverRole = node.get("serverRole").asText();
+    JsonNode downstreamNode = node.get("downstream");
+    Downstream downstream = null;
+    if (downstreamNode != null) {
+      downstream = mapper.readerFor(Downstream.class).readValue(downstreamNode);
     }
+
+    return new JoinTraceRequest(serverRole, downstream);
+  }
 }

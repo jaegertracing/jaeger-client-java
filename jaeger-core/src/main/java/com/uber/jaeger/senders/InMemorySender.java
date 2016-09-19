@@ -28,46 +28,46 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class InMemorySender implements Sender {
-    private List<Span> appended;
-    private List<Span> flushed;
-    private List<Span> received;
+  private List<Span> appended;
+  private List<Span> flushed;
+  private List<Span> received;
 
-    public InMemorySender() {
-        appended = new ArrayList<>();
-        flushed = new ArrayList<>();
-        received  = new ArrayList<>();
-    }
+  public InMemorySender() {
+    appended = new ArrayList<>();
+    flushed = new ArrayList<>();
+    received = new ArrayList<>();
+  }
 
-    public List<Span> getAppended() {
-        return new ArrayList<>(appended);
-    }
+  public List<Span> getAppended() {
+    return new ArrayList<>(appended);
+  }
 
-    public List<Span> getFlushed() {
-        return new ArrayList<>(flushed);
-    }
+  public List<Span> getFlushed() {
+    return new ArrayList<>(flushed);
+  }
 
-    public List<Span> getReceived() {
-        return new ArrayList<>(received);
-    }
+  public List<Span> getReceived() {
+    return new ArrayList<>(received);
+  }
 
-    @Override
-    public int append(Span span) throws SenderException {
-        appended.add(span);
-        received.add(span);
-        return 0;
-    }
+  @Override
+  public int append(Span span) throws SenderException {
+    appended.add(span);
+    received.add(span);
+    return 0;
+  }
 
-    @Override
-    public int flush() throws SenderException {
-        int flushedSpans = appended.size();
-        flushed.addAll(appended);
-        appended.clear();
+  @Override
+  public int flush() throws SenderException {
+    int flushedSpans = appended.size();
+    flushed.addAll(appended);
+    appended.clear();
 
-        return flushedSpans;
-    }
+    return flushedSpans;
+  }
 
-    @Override
-    public int close() throws SenderException {
-        return flush();
-    }
+  @Override
+  public int close() throws SenderException {
+    return flush();
+  }
 }

@@ -35,108 +35,118 @@ import com.uber.jaeger.crossdock.thrift.Transport;
 @JsonSerialize(using = DownstreamSerializer.class)
 @JsonDeserialize(using = DownstreamDeserializer.class)
 public class Downstream {
-    private String serviceName;
-    private String host;
-    private String port;
-    private String transport;
-    private String serverRole;
-    private Downstream downstream;
+  private String serviceName;
+  private String host;
+  private String port;
+  private String transport;
+  private String serverRole;
+  private Downstream downstream;
 
-    @JsonCreator
-    public Downstream(@JsonProperty("serviceName") String serviceName,
-                      @JsonProperty("host") String host,
-                      @JsonProperty("port") String port,
-                      @JsonProperty("transport") String transport,
-                      @JsonProperty("serverRole") String serverRole,
-                      @JsonProperty("downstream") Downstream downstream) {
-        this.serviceName = serviceName;
-        this.host = host;
-        this.port = port;
-        this.transport = transport;
-        this.serverRole = serverRole;
-        this.downstream = downstream;
-    }
+  @JsonCreator
+  public Downstream(
+      @JsonProperty("serviceName") String serviceName,
+      @JsonProperty("host") String host,
+      @JsonProperty("port") String port,
+      @JsonProperty("transport") String transport,
+      @JsonProperty("serverRole") String serverRole,
+      @JsonProperty("downstream") Downstream downstream) {
+    this.serviceName = serviceName;
+    this.host = host;
+    this.port = port;
+    this.transport = transport;
+    this.serverRole = serverRole;
+    this.downstream = downstream;
+  }
 
-    public String getServiceName() {
-        return serviceName;
-    }
+  public String getServiceName() {
+    return serviceName;
+  }
 
-    public String getHost() {
-        return host;
-    }
+  public String getHost() {
+    return host;
+  }
 
-    public String getPort() {
-        return port;
-    }
+  public String getPort() {
+    return port;
+  }
 
-    public String getTransport() {
-        return transport;
-    }
+  public String getTransport() {
+    return transport;
+  }
 
-    public String getServerRole() {
-        return serverRole;
-    }
+  public String getServerRole() {
+    return serverRole;
+  }
 
-    public Downstream getDownstream() {
-        return downstream;
-    }
+  public Downstream getDownstream() {
+    return downstream;
+  }
 
-    @Override
-    public String toString() {
-        return "Downstream{" +
-                "serviceName='" + serviceName + '\'' +
-                ", host='" + host + '\'' +
-                ", port='" + port + '\'' +
-                ", transport='" + transport + '\'' +
-                ", serverRole='" + serverRole + '\'' +
-                ", downstream=" + downstream +
-                '}';
-    }
+  @Override
+  public String toString() {
+    return "Downstream{"
+        + "serviceName='"
+        + serviceName
+        + '\''
+        + ", host='"
+        + host
+        + '\''
+        + ", port='"
+        + port
+        + '\''
+        + ", transport='"
+        + transport
+        + '\''
+        + ", serverRole='"
+        + serverRole
+        + '\''
+        + ", downstream="
+        + downstream
+        + '}';
+  }
 
-    public static Downstream fromThrift(com.uber.jaeger.crossdock.thrift.Downstream downstream) {
-        if (downstream == null) {
-            return null;
-        }
-        return new Downstream(
-                downstream.getServiceName(),
-                downstream.getHost(),
-                downstream.getPort(),
-                fromThrift(downstream.getTransport()),
-                downstream.getServerRole(),
-                fromThrift(downstream.getDownstream())
-        );
+  public static Downstream fromThrift(com.uber.jaeger.crossdock.thrift.Downstream downstream) {
+    if (downstream == null) {
+      return null;
     }
+    return new Downstream(
+        downstream.getServiceName(),
+        downstream.getHost(),
+        downstream.getPort(),
+        fromThrift(downstream.getTransport()),
+        downstream.getServerRole(),
+        fromThrift(downstream.getDownstream()));
+  }
 
-    private static String fromThrift(Transport transport) {
-        switch (transport) {
-            case HTTP:
-                return Constants.TRANSPORT_HTTP;
-            case TCHANNEL:
-                return Constants.TRANSPORT_TCHANNEL;
-        }
-        throw new IllegalArgumentException("Unknown transport " + transport);
+  private static String fromThrift(Transport transport) {
+    switch (transport) {
+      case HTTP:
+        return Constants.TRANSPORT_HTTP;
+      case TCHANNEL:
+        return Constants.TRANSPORT_TCHANNEL;
     }
+    throw new IllegalArgumentException("Unknown transport " + transport);
+  }
 
-    public static com.uber.jaeger.crossdock.thrift.Downstream toThrift(Downstream downstream) {
-        if (downstream == null) {
-            return null;
-        }
-        return new com.uber.jaeger.crossdock.thrift.Downstream(
-                downstream.getServiceName(),
-                downstream.getServerRole(),
-                downstream.getHost(),
-                downstream.getPort(),
-                toThrift(downstream.getTransport())
-        );
+  public static com.uber.jaeger.crossdock.thrift.Downstream toThrift(Downstream downstream) {
+    if (downstream == null) {
+      return null;
     }
+    return new com.uber.jaeger.crossdock.thrift.Downstream(
+        downstream.getServiceName(),
+        downstream.getServerRole(),
+        downstream.getHost(),
+        downstream.getPort(),
+        toThrift(downstream.getTransport()));
+  }
 
-    private static Transport toThrift(String transport) {
-        if (Constants.TRANSPORT_HTTP.equals(transport)) {
-            return Transport.HTTP;
-        }
-        if (Constants.TRANSPORT_TCHANNEL.equals(transport)) {
-            return Transport.TCHANNEL;
-        }
-        throw new IllegalArgumentException("Unknown transport " + transport);
+  private static Transport toThrift(String transport) {
+    if (Constants.TRANSPORT_HTTP.equals(transport)) {
+      return Transport.HTTP;
     }
+    if (Constants.TRANSPORT_TCHANNEL.equals(transport)) {
+      return Transport.TCHANNEL;
+    }
+    throw new IllegalArgumentException("Unknown transport " + transport);
+  }
 }

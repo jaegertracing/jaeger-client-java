@@ -22,5 +22,5 @@
 package com.uber.jaeger.filters.jaxrs2;
 
 public class Constants {
-    public static final String CURRENT_SPAN_CONTEXT_KEY = "io.opentracing.Span";
+  public static final String CURRENT_SPAN_CONTEXT_KEY = "io.opentracing.Span";
 }

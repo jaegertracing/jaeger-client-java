@@ -26,40 +26,42 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.uber.jaeger.Span;
 
 class SpanInfo {
-    @JsonProperty("trace_id")
-    String traceID;
+  @JsonProperty("trace_id")
+  String traceID;
 
-    @JsonProperty("baggage")
-    String baggage;
+  @JsonProperty("baggage")
+  String baggage;
 
-    @JsonProperty("sampled")
-    boolean sampled;
+  @JsonProperty("sampled")
+  boolean sampled;
 
-    @JsonCreator
-    public SpanInfo(@JsonProperty("trace_id") String traceID,
-                    @JsonProperty("baggage") String baggage,
-                    @JsonProperty("sampled") boolean sampled) {
-        this.traceID = traceID;
-        this.baggage = baggage;
-        this.sampled = sampled;
-    }
+  @JsonCreator
+  public SpanInfo(
+      @JsonProperty("trace_id") String traceID,
+      @JsonProperty("baggage") String baggage,
+      @JsonProperty("sampled") boolean sampled) {
+    this.traceID = traceID;
+    this.baggage = baggage;
+    this.sampled = sampled;
+  }
 
-    public SpanInfo(Span span) {
-        String stringContext = span.getContext().contextAsString();
-        traceID = stringContext.substring(0, stringContext.indexOf(':'));
-        baggage = span.getBaggageItem(FilterIntegrationTest.BAGGAGE_KEY);
-        sampled = (stringContext.substring(stringContext.lastIndexOf(':') + 1).getBytes()[0] & (byte)1) == 1;
-    }
+  public SpanInfo(Span span) {
+    String stringContext = span.getContext().contextAsString();
+    traceID = stringContext.substring(0, stringContext.indexOf(':'));
+    baggage = span.getBaggageItem(FilterIntegrationTest.BAGGAGE_KEY);
+    sampled =
+        (stringContext.substring(stringContext.lastIndexOf(':') + 1).getBytes()[0] & (byte) 1) == 1;
+  }
 
-    public String getTraceID() {
-        return traceID;
-    }
+  public String getTraceID() {
+    return traceID;
+  }
 
-    public String getBaggage() {
-        return baggage;
-    }
+  public String getBaggage() {
+    return baggage;
+  }
 
-    public boolean getSampled() {
-        return sampled;
-    }
+  public boolean getSampled() {
+    return sampled;
+  }
 }

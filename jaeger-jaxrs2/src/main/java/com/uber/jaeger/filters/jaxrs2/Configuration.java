@@ -30,50 +30,51 @@ import javax.ws.rs.client.ClientRequestContext;
 import javax.ws.rs.container.ContainerRequestContext;
 
 public class Configuration extends com.uber.jaeger.Configuration {
-    /**
-     * lazy singleton Tracer initialized in getTracer()` method
-     */
-    private Tracer tracer;
+  /**
+   * lazy singleton Tracer initialized in getTracer()` method
+   */
+  private Tracer tracer;
 
-    /**
-     * A flag that sets the tracer to disabled.
-     */
-    private Boolean disable = false;
+  /**
+   * A flag that sets the tracer to disabled.
+   */
+  private Boolean disable = false;
 
-    /**
-     * A interface that wraps an underlying metrics generatior in order to report Jaeger's metrics.
-     */
-    private StatsFactory statsFactory;
+  /**
+   * A interface that wraps an underlying metrics generatior in order to report Jaeger's metrics.
+   */
+  private StatsFactory statsFactory;
 
-    public Configuration(String serviceName,
-                         Boolean disable,
-                         SamplerConfiguration samplerConfig,
-                         ReporterConfiguration reporterConfig) {
-        super(serviceName, samplerConfig, reporterConfig);
+  public Configuration(
+      String serviceName,
+      Boolean disable,
+      SamplerConfiguration samplerConfig,
+      ReporterConfiguration reporterConfig) {
+    super(serviceName, samplerConfig, reporterConfig);
 
-        if (disable != null) {
-            this.disable = disable;
-        }
+    if (disable != null) {
+      this.disable = disable;
+    }
+  }
+
+  protected void setStatsFactory(StatsFactory statsFactory) {
+    this.statsFactory = statsFactory;
+  }
+
+  public io.opentracing.Tracer getTracer() {
+    if (disable) {
+      getNoopTracer();
     }
 
-    protected void setStatsFactory(StatsFactory statsFactory) {
-        this.statsFactory = statsFactory;
+    if (tracer != null) {
+      return tracer;
     }
 
-    public io.opentracing.Tracer getTracer() {
-        if (disable) {
-            getNoopTracer();
-        }
-
-        if (tracer != null) {
-            return tracer;
-        }
-
-        if (statsFactory == null) {
-            statsFactory = new StatsFactoryImpl(new NullStatsReporter());
-        }
-
-        tracer = this.getTracerBuilder(statsFactory).build();
-        return tracer;
+    if (statsFactory == null) {
+      statsFactory = new StatsFactoryImpl(new NullStatsReporter());
     }
+
+    tracer = this.getTracerBuilder(statsFactory).build();
+    return tracer;
+  }
 }

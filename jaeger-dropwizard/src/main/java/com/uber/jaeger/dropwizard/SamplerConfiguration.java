@@ -25,14 +25,13 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.uber.jaeger.Configuration;
 
-public class SamplerConfiguration extends Configuration.SamplerConfiguration{
+public class SamplerConfiguration extends Configuration.SamplerConfiguration {
 
-    @JsonCreator
-    public SamplerConfiguration(
-            @JsonProperty("type") String type,
-            @JsonProperty("param") Number param,
-            @JsonProperty("managerHostPort") String managerHostPort
-    ) {
-        super(type, param, managerHostPort);
-    }
+  @JsonCreator
+  public SamplerConfiguration(
+      @JsonProperty("type") String type,
+      @JsonProperty("param") Number param,
+      @JsonProperty("managerHostPort") String managerHostPort) {
+    super(type, param, managerHostPort);
+  }
 }

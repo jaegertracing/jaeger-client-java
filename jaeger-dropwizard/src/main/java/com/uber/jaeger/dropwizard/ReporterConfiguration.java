@@ -27,14 +27,13 @@ import com.uber.jaeger.Configuration;
 
 public class ReporterConfiguration extends Configuration.ReporterConfiguration {
 
-    @JsonCreator
-    public ReporterConfiguration(
-            @JsonProperty("logSpans") Boolean logSpans,
-            @JsonProperty("agentHost") String agentHost,
-            @JsonProperty("agentPort") Integer agentPort,
-            @JsonProperty("flushIntervalMs") Integer flushIntervalMs,
-            @JsonProperty("maxQueueSize") Integer maxQueueSize
-    ) {
-        super(logSpans, agentHost, agentPort, flushIntervalMs, maxQueueSize);
-    }
+  @JsonCreator
+  public ReporterConfiguration(
+      @JsonProperty("logSpans") Boolean logSpans,
+      @JsonProperty("agentHost") String agentHost,
+      @JsonProperty("agentPort") Integer agentPort,
+      @JsonProperty("flushIntervalMs") Integer flushIntervalMs,
+      @JsonProperty("maxQueueSize") Integer maxQueueSize) {
+    super(logSpans, agentHost, agentPort, flushIntervalMs, maxQueueSize);
+  }
 }

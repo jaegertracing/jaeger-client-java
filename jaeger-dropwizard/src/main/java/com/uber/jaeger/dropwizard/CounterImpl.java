@@ -28,15 +28,15 @@ import com.uber.jaeger.metrics.Counter;
 import java.util.Map;
 
 public class CounterImpl implements Counter {
-    private final Meter meter;
+  private final Meter meter;
 
-    CounterImpl(String name, Map<String, String> tags, MetricRegistry registry) {
-        String metricName = com.uber.jaeger.metrics.Metrics.addTagsToMetricName(name, tags);
-        meter = registry.meter(metricName);
-    }
+  CounterImpl(String name, Map<String, String> tags, MetricRegistry registry) {
+    String metricName = com.uber.jaeger.metrics.Metrics.addTagsToMetricName(name, tags);
+    meter = registry.meter(metricName);
+  }
 
-    @Override
-    public void inc(long delta) {
-        meter.mark(delta);
-    }
+  @Override
+  public void inc(long delta) {
+    meter.mark(delta);
+  }
 }

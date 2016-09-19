@@ -34,29 +34,29 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 
 public class TraceResponseDeserializer extends JsonDeserializer<TraceResponse> {
-    private static final Logger logger = LoggerFactory.getLogger(TraceResponseDeserializer.class);
+  private static final Logger logger = LoggerFactory.getLogger(TraceResponseDeserializer.class);
 
-    private static final ObjectMapper mapper = new ObjectMapper();
+  private static final ObjectMapper mapper = new ObjectMapper();
 
-    @Override
-    public TraceResponse deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
-        JsonNode node = jp.getCodec().readTree(jp);
+  @Override
+  public TraceResponse deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
+    JsonNode node = jp.getCodec().readTree(jp);
 
-        logger.info("Trace JSON Response: {}", node);
+    logger.info("Trace JSON Response: {}", node);
 
-        String notImplementedError = node.get("notImplementedError").asText();
+    String notImplementedError = node.get("notImplementedError").asText();
 
-        ObservedSpan span = null;
-        if (notImplementedError.equals("")) {
-            span = mapper.readerFor(ObservedSpan.class).readValue(node.get("span"));
-        }
-
-        TraceResponse downstream = null;
-        JsonNode downstreamNode = node.get("downstream");
-        if (downstreamNode != null) {
-            downstream = mapper.readerFor(TraceResponse.class).readValue(downstreamNode);
-        }
-
-        return new TraceResponse(notImplementedError, span, downstream);
+    ObservedSpan span = null;
+    if (notImplementedError.equals("")) {
+      span = mapper.readerFor(ObservedSpan.class).readValue(node.get("span"));
     }
+
+    TraceResponse downstream = null;
+    JsonNode downstreamNode = node.get("downstream");
+    if (downstreamNode != null) {
+      downstream = mapper.readerFor(TraceResponse.class).readValue(downstreamNode);
+    }
+
+    return new TraceResponse(notImplementedError, span, downstream);
+  }
 }

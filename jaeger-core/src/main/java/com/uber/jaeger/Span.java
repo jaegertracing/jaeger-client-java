@@ -31,262 +31,261 @@ import java.util.List;
 import java.util.Map;
 
 public class Span implements io.opentracing.Span {
-    private final Tracer tracer;
-    private final long startTimeMicroseconds;
-    private final long startTimeNanoTicks;
-    private final boolean computeDurationViaNanoTicks;
-    private long durationMicroseconds; // span durationMicroseconds
-    private String operationName;
-    private SpanContext context;
-    private Endpoint peer;
-    private Map<String, Object> tags;
-    private List<LogData> logs;
-    private String localComponent;
-    private boolean isClient;
-    private boolean isRPC;
+  private final Tracer tracer;
+  private final long startTimeMicroseconds;
+  private final long startTimeNanoTicks;
+  private final boolean computeDurationViaNanoTicks;
+  private long durationMicroseconds; // span durationMicroseconds
+  private String operationName;
+  private SpanContext context;
+  private Endpoint peer;
+  private Map<String, Object> tags;
+  private List<LogData> logs;
+  private String localComponent;
+  private boolean isClient;
+  private boolean isRPC;
 
-    Span(Tracer tracer,
-         String operationName,
-         SpanContext context,
-         long startTimeMicroseconds,
-         long startTimeNanoTicks,
-         boolean computeDurationViaNanoTicks,
-         Map<String, Object> tags
-    ) {
-        this.tracer = tracer;
-        this.operationName = operationName;
-        this.context = context;
-        this.startTimeMicroseconds = startTimeMicroseconds;
-        this.startTimeNanoTicks = startTimeNanoTicks;
-        this.computeDurationViaNanoTicks = computeDurationViaNanoTicks;
-        this.tags = tags;
+  Span(
+      Tracer tracer,
+      String operationName,
+      SpanContext context,
+      long startTimeMicroseconds,
+      long startTimeNanoTicks,
+      boolean computeDurationViaNanoTicks,
+      Map<String, Object> tags) {
+    this.tracer = tracer;
+    this.operationName = operationName;
+    this.context = context;
+    this.startTimeMicroseconds = startTimeMicroseconds;
+    this.startTimeNanoTicks = startTimeNanoTicks;
+    this.computeDurationViaNanoTicks = computeDurationViaNanoTicks;
+    this.tags = tags;
+  }
+
+  public String getLocalComponent() {
+    return localComponent;
+  }
+
+  public long getStart() {
+    return startTimeMicroseconds;
+  }
+
+  public long getDuration() {
+    synchronized (this) {
+      return durationMicroseconds;
+    }
+  }
+
+  public Tracer getTracer() {
+    return tracer;
+  }
+
+  public Endpoint getPeer() {
+    synchronized (this) {
+      return peer;
+    }
+  }
+
+  private Endpoint getOrMakePeer() {
+    synchronized (this) {
+      if (peer == null) {
+        peer = new Endpoint(0, (short) 0, "");
+      }
+      return peer;
+    }
+  }
+
+  public Map<String, Object> getTags() {
+    synchronized (this) {
+      return Collections.unmodifiableMap(tags);
+    }
+  }
+
+  @Override
+  public Span setOperationName(String operationName) {
+    synchronized (this) {
+      this.operationName = operationName;
+    }
+    return this;
+  }
+
+  public String getOperationName() {
+    synchronized (this) {
+      return operationName;
+    }
+  }
+
+  public List<LogData> getLogs() {
+    synchronized (this) {
+      if (logs == null) {
+        return null;
+      }
+      return Collections.unmodifiableList(logs);
+    }
+  }
+
+  // This is public since extractors, and injectors will need access to a span's context.
+  public SpanContext getContext() {
+    // doesn't need to be a copy since all fields are final
+    return this.context;
+  }
+
+  @Override
+  public io.opentracing.Span setBaggageItem(String key, String value) {
+    synchronized (this) {
+      this.context = this.context.withBaggageItem(key, value);
+    }
+    return this;
+  }
+
+  @Override
+  public String getBaggageItem(String key) {
+    synchronized (this) {
+      return this.context.getBaggageItem(key);
+    }
+  }
+
+  public String toString() {
+    synchronized (this) {
+      return context.contextAsString() + " - " + operationName;
+    }
+  }
+
+  @Override
+  public io.opentracing.SpanContext context() {
+    synchronized (this) {
+      return context;
+    }
+  }
+
+  @Override
+  public void finish() {
+    if (computeDurationViaNanoTicks) {
+      long nanoDuration = tracer.clock().currentNanoTicks() - startTimeNanoTicks;
+      finishWithDuration(nanoDuration / 1000);
+    } else {
+      finish(tracer.clock().currentTimeMicros());
+    }
+  }
+
+  @Override
+  public void finish(long finishMicros) {
+    finishWithDuration(finishMicros - startTimeMicroseconds);
+  }
+
+  private void finishWithDuration(long durationMicros) {
+    synchronized (this) {
+      this.durationMicroseconds = durationMicros;
     }
 
-    public String getLocalComponent() {
-        return localComponent;
+    if (context.isSampled()) {
+      tracer.reportSpan(this);
+    }
+  }
+
+  @Override
+  public void close() {
+    finish();
+  }
+
+  @Override
+  public Span setTag(String key, String value) {
+    return setTagAsObject(key, value);
+  }
+
+  @Override
+  public Span setTag(String key, boolean value) {
+    return setTagAsObject(key, value);
+  }
+
+  @Override
+  public Span setTag(String key, Number value) {
+    return setTagAsObject(key, value);
+  }
+
+  private boolean handleSpecialTag(String key, Object value) {
+    // TODO use a map of handlers for special tags, instead of if/then
+    if (key.equals(Tags.COMPONENT.getKey()) && value instanceof String) {
+      localComponent = (String) value;
+      return true;
     }
 
-    public long getStart() {
-        return startTimeMicroseconds;
+    if (key.equals(Tags.PEER_HOST_IPV4.getKey()) && value instanceof Integer) {
+      getOrMakePeer().setIpv4((Integer) value);
+      return true;
     }
 
-    public long getDuration() {
-        synchronized (this) {
-            return durationMicroseconds;
-        }
+    if (key.equals(Tags.PEER_PORT.getKey()) && value instanceof Number) {
+      getOrMakePeer().setPort(((Number) value).shortValue());
+      return true;
     }
 
-    public Tracer getTracer() {
-        return tracer;
+    if (key.equals(Tags.PEER_SERVICE.getKey()) && value instanceof String) {
+      getOrMakePeer().setService_name((String) value);
+      return true;
     }
 
-    public Endpoint getPeer() {
-        synchronized (this) {
-            return peer;
-        }
-
+    if (key.equals(Tags.SPAN_KIND.getKey()) && value instanceof String) {
+      isClient = Tags.SPAN_KIND_CLIENT.equals(value);
+      isRPC = true;
+      return true;
     }
 
-    private Endpoint getOrMakePeer() {
-        synchronized (this) {
-            if (peer == null) {
-                peer = new Endpoint(0, (short) 0, "");
-            }
-            return peer;
-        }
-    }
+    return false;
+  }
 
-    public Map<String, Object> getTags() {
-        synchronized (this) {
-            return Collections.unmodifiableMap(tags);
-        }
-    }
-
-    @Override
-    public Span setOperationName(String operationName) {
-        synchronized (this) {
-            this.operationName = operationName;
-        }
-        return this;
-    }
-
-    public String getOperationName() {
-        synchronized (this) {
-            return operationName;
-        }
-    }
-
-    public List<LogData> getLogs() {
-        synchronized (this) {
-            if (logs == null) {
-                return null;
-            }
-            return Collections.unmodifiableList(logs);
-        }
-    }
-
-    // This is public since extractors, and injectors will need access to a span's context.
-    public SpanContext getContext() {
-        // doesn't need to be a copy since all fields are final
-        return this.context;
-    }
-
-    @Override
-    public io.opentracing.Span setBaggageItem(String key, String value) {
-        synchronized (this) {
-            this.context = this.context.withBaggageItem(key, value);
-        }
-        return this;
-    }
-
-    @Override
-    public String getBaggageItem(String key) {
-        synchronized (this) {
-            return this.context.getBaggageItem(key);
-        }
-    }
-
-    public String toString() {
-        synchronized (this) {
-            return context.contextAsString() + " - " + operationName;
-        }
-    }
-
-    @Override
-    public io.opentracing.SpanContext context() {
-        synchronized (this) {
-            return context;
-        }
-    }
-
-    @Override
-    public void finish() {
-        if (computeDurationViaNanoTicks) {
-            long nanoDuration = tracer.clock().currentNanoTicks() - startTimeNanoTicks;
-            finishWithDuration(nanoDuration / 1000);
+  private Span setTagAsObject(String key, Object value) {
+    synchronized (this) {
+      if (key.equals(Tags.SAMPLING_PRIORITY.getKey()) && (value instanceof Number)) {
+        int priority = ((Number) value).intValue();
+        byte newFlags;
+        if (priority > 0) {
+          newFlags = (byte) (context.getFlags() | SpanContext.flagSampled | SpanContext.flagDebug);
         } else {
-            finish(tracer.clock().currentTimeMicros());
-        }
-    }
-
-    @Override
-    public void finish(long finishMicros) {
-        finishWithDuration(finishMicros - startTimeMicroseconds);
-    }
-
-    private void finishWithDuration(long durationMicros) {
-        synchronized(this) {
-            this.durationMicroseconds = durationMicros;
+          newFlags = (byte) (context.getFlags() & (~SpanContext.flagSampled));
         }
 
-        if (context.isSampled()) {
-            tracer.reportSpan(this);
+        context = context.withFlags(newFlags);
+      }
+
+      if (context.isSampled()) {
+        if (!handleSpecialTag(key, value)) {
+          if (this.tags == null) {
+            this.tags = new HashMap<>();
+          }
+
+          tags.put(key, value);
         }
+      }
     }
 
-    @Override
-    public void close() {
-        finish();
-    }
+    return this;
+  }
 
-    @Override
-    public Span setTag(String key, String value) {
-        return setTagAsObject(key, value);
-    }
+  @Override
+  public Span log(String message, /* @Nullable */ Object payload) {
+    return log(tracer.clock().currentTimeMicros(), message, payload);
+  }
 
-    @Override
-    public Span setTag(String key, boolean value) {
-        return setTagAsObject(key, value);
-    }
-
-    @Override
-    public Span setTag(String key, Number value) {
-        return setTagAsObject(key, value);
-    }
-
-    private boolean handleSpecialTag(String key, Object value) {
-        // TODO use a map of handlers for special tags, instead of if/then
-        if (key.equals(Tags.COMPONENT.getKey()) && value instanceof String) {
-            localComponent = (String) value;
-            return true;
+  @Override
+  public Span log(long instantMicroseconds, String message, /* @Nullable */ Object payload) {
+    synchronized (this) {
+      if (context.isSampled()) {
+        if (logs == null) {
+          this.logs = new ArrayList<>();
         }
 
-        if (key.equals(Tags.PEER_HOST_IPV4.getKey()) && value instanceof Integer) {
-            getOrMakePeer().setIpv4((Integer) value);
-            return true;
-        }
-
-        if (key.equals(Tags.PEER_PORT.getKey()) && value instanceof Number) {
-            getOrMakePeer().setPort(((Number) value).shortValue());
-            return true;
-        }
-
-        if (key.equals(Tags.PEER_SERVICE.getKey()) && value instanceof String) {
-            getOrMakePeer().setService_name((String) value);
-            return true;
-        }
-
-        if (key.equals(Tags.SPAN_KIND.getKey()) && value instanceof String) {
-            isClient = Tags.SPAN_KIND_CLIENT.equals(value);
-            isRPC = true;
-            return true;
-        }
-
-        return false;
+        logs.add(new LogData(instantMicroseconds, message, payload));
+      }
+      return this;
     }
+  }
 
-    private Span setTagAsObject(String key, Object value) {
-        synchronized (this) {
-            if (key.equals(Tags.SAMPLING_PRIORITY.getKey()) && (value instanceof Number)) {
-                int priority = ((Number) value).intValue();
-                byte newFlags;
-                if (priority > 0) {
-                    newFlags = (byte) (context.getFlags() | SpanContext.flagSampled | SpanContext.flagDebug);
-                } else {
-                    newFlags = (byte) (context.getFlags() & (~SpanContext.flagSampled));
-                }
+  public boolean isRPC() {
+    return isRPC;
+  }
 
-                context = context.withFlags(newFlags);
-            }
-
-            if (context.isSampled()) {
-                if (!handleSpecialTag(key, value)) {
-                    if (this.tags == null) {
-                        this.tags = new HashMap<>();
-                    }
-
-                    tags.put(key, value);
-                }
-            }
-        }
-
-        return this;
-    }
-
-    @Override
-    public Span log(String message, /* @Nullable */ Object payload) {
-        return log(tracer.clock().currentTimeMicros(), message, payload);
-    }
-
-    @Override
-    public Span log(long instantMicroseconds, String message, /* @Nullable */ Object payload) {
-        synchronized (this) {
-            if (context.isSampled()) {
-                if (logs == null) {
-                    this.logs = new ArrayList<>();
-                }
-
-                logs.add(new LogData(instantMicroseconds, message, payload));
-            }
-            return this;
-        }
-    }
-
-    public boolean isRPC() {
-        return isRPC;
-    }
-
-    public boolean isRPCClient() {
-        return isClient;
-    }
+  public boolean isRPCClient() {
+    return isClient;
+  }
 }

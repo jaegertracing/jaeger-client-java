@@ -24,5 +24,5 @@ package com.uber.jaeger.propagation;
 import com.uber.jaeger.SpanContext;
 
 public interface Injector<T> {
-    void inject(SpanContext spanContext, T carrier);
+  void inject(SpanContext spanContext, T carrier);
 }

@@ -44,100 +44,104 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 
 public class ZipkinSenderTest {
-    final int messageMaxBytes = 1000;
+  final int messageMaxBytes = 1000;
 
-    @Rule
-    public ZipkinRule zipkinRule = new ZipkinRule();
+  @Rule public ZipkinRule zipkinRule = new ZipkinRule();
 
-    ZipkinSender sender;
-    Reporter reporter;
-    ThriftSpanConverter converter;
-    Tracer tracer;
+  ZipkinSender sender;
+  Reporter reporter;
+  ThriftSpanConverter converter;
+  Tracer tracer;
 
-    @Before
-    public void setUp() throws Exception {
-        reporter = new InMemoryReporter();
-        tracer = new Tracer.Builder("test-sender", reporter, new ConstSampler(true))
-                .withStatsReporter(new InMemoryStatsReporter())
-                .build();
-        sender = newSender(messageMaxBytes);
-        converter = new ThriftSpanConverter();
+  @Before
+  public void setUp() throws Exception {
+    reporter = new InMemoryReporter();
+    tracer =
+        new Tracer.Builder("test-sender", reporter, new ConstSampler(true))
+            .withStatsReporter(new InMemoryStatsReporter())
+            .build();
+    sender = newSender(messageMaxBytes);
+    converter = new ThriftSpanConverter();
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    sender.close();
+    reporter.close();
+  }
+
+  @Test
+  public void testAppendSpanTooLarge() throws Exception {
+    Span jaegerSpan = (Span) tracer.buildSpan("raza").start();
+    String msg = "";
+    for (int i = 0; i < 1001; i++) {
+      msg += ".";
     }
 
-    @After
-    public void tearDown() throws Exception {
-        sender.close();
-        reporter.close();
+    jaegerSpan.log(msg, new Object());
+    com.twitter.zipkin.thriftjava.Span span = ThriftSpanConverter.convertSpan(jaegerSpan);
+    try {
+      sender.append(span);
+    } catch (SenderException e) {
+      assertEquals(e.getDroppedSpanCount(), 1);
+    }
+  }
+
+  @Test
+  public void testAppend() throws Exception {
+    // find size of the initial span
+    AutoExpandingBufferWriteTransport memoryTransport =
+        new AutoExpandingBufferWriteTransport(messageMaxBytes, 2);
+    com.twitter.zipkin.thriftjava.Span span =
+        ThriftSpanConverter.convertSpan((Span) tracer.buildSpan("raza").start());
+
+    int expectedNumSpans = 11;
+    List<byte[]> spansToSend = new ArrayList(expectedNumSpans);
+    for (int i = 0; i < expectedNumSpans; i++)
+      spansToSend.add(new ThriftSpanEncoder().encode(span));
+
+    // create a sender thats a multiple of the span size (accounting for span overhead)
+    // this allows us to test the boundary conditions of writing spans.
+    int messageMaxBytes = sender.delegate.messageSizeInBytes(spansToSend);
+    sender.close();
+    sender = newSender(messageMaxBytes);
+
+    // add enough spans to be under buffer limit
+    for (int i = 0; i < expectedNumSpans - 1; i++) {
+      assertEquals(0, sender.append(span));
     }
 
-    @Test
-    public void testAppendSpanTooLarge() throws Exception {
-        Span jaegerSpan = (Span) tracer.buildSpan("raza").start();
-        String msg = "";
-        for (int i = 0 ; i < 1001; i++) {
-            msg += ".";
-        }
+    // add a span that overflows the limit to hit the last branch
+    int result = sender.append(span);
+    assertEquals(expectedNumSpans, result);
+  }
 
-        jaegerSpan.log(msg, new Object());
-        com.twitter.zipkin.thriftjava.Span span = ThriftSpanConverter.convertSpan(jaegerSpan);
-        try {
-            sender.append(span);
-        } catch (SenderException e) {
-            assertEquals(e.getDroppedSpanCount(), 1);
-        }
-    }
+  @Test
+  public void testFlushSendsSpan() throws Exception {
+    Span expectedSpan = (Span) tracer.buildSpan("raza").start();
+    com.twitter.zipkin.thriftjava.Span span = ThriftSpanConverter.convertSpan(expectedSpan);
 
-    @Test
-    public void testAppend() throws Exception {
-        // find size of the initial span
-        AutoExpandingBufferWriteTransport memoryTransport =  new AutoExpandingBufferWriteTransport(messageMaxBytes, 2);
-        com.twitter.zipkin.thriftjava.Span span = ThriftSpanConverter.convertSpan((Span) tracer.buildSpan("raza").start());
+    assertEquals(0, sender.append(span));
+    assertEquals(1, sender.flush());
 
-        int expectedNumSpans = 11;
-        List<byte[]> spansToSend = new ArrayList(expectedNumSpans);
-        for (int i = 0; i < expectedNumSpans; i++) spansToSend.add(new ThriftSpanEncoder().encode(span));
+    List<List<zipkin.Span>> traces = zipkinRule.getTraces();
+    assertEquals(traces.size(), 1);
+    assertEquals(traces.get(0).size(), 1);
 
-        // create a sender thats a multiple of the span size (accounting for span overhead)
-        // this allows us to test the boundary conditions of writing spans.
-        int messageMaxBytes = sender.delegate.messageSizeInBytes(spansToSend);
-        sender.close();
-        sender = newSender(messageMaxBytes);
+    zipkin.Span actualSpan = traces.get(0).get(0);
+    SpanContext context = expectedSpan.getContext();
 
-        // add enough spans to be under buffer limit
-        for (int i = 0; i < expectedNumSpans -1 ; i++) {
-            assertEquals(0, sender.append(span));
-        }
+    assertEquals(context.getTraceID(), actualSpan.traceId);
+    assertEquals(context.getSpanID(), actualSpan.id);
+    assertEquals(context.getParentID(), (long) actualSpan.parentId);
+    assertEquals(expectedSpan.getOperationName(), actualSpan.name);
+  }
 
-        // add a span that overflows the limit to hit the last branch
-        int result = sender.append(span);
-        assertEquals(expectedNumSpans, result);
-    }
-
-    @Test
-    public void testFlushSendsSpan() throws Exception {
-        Span expectedSpan = (Span)tracer.buildSpan("raza").start();
-        com.twitter.zipkin.thriftjava.Span span = ThriftSpanConverter.convertSpan(expectedSpan);
-
-        assertEquals(0, sender.append(span));
-        assertEquals(1, sender.flush());
-
-        List<List<zipkin.Span>> traces = zipkinRule.getTraces();
-        assertEquals(traces.size(), 1);
-        assertEquals(traces.get(0).size(), 1);
-
-        zipkin.Span actualSpan = traces.get(0).get(0);
-        SpanContext context = expectedSpan.getContext();
-
-        assertEquals(context.getTraceID(), actualSpan.traceId);
-        assertEquals(context.getSpanID(), actualSpan.id);
-        assertEquals(context.getParentID(), (long) actualSpan.parentId);
-        assertEquals(expectedSpan.getOperationName(), actualSpan.name);
-    }
-
-    private ZipkinSender newSender(int messageMaxBytes) {
-        return ZipkinSender.create(URLConnectionSender.builder()
+  private ZipkinSender newSender(int messageMaxBytes) {
+    return ZipkinSender.create(
+        URLConnectionSender.builder()
             .messageMaxBytes(messageMaxBytes)
             .endpoint(zipkinRule.httpUrl() + "/api/v1/spans")
             .build());
-    }
+  }
 }

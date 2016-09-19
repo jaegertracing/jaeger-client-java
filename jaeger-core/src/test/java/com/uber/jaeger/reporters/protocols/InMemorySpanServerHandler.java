@@ -21,7 +21,6 @@
  */
 package com.uber.jaeger.reporters.protocols;
 
-
 import com.twitter.zipkin.thriftjava.Span;
 import com.uber.jaeger.agent.thrift.Agent;
 import org.apache.thrift.TException;
@@ -30,21 +29,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 class InMemorySpanServerHandler implements Agent.Iface {
-    private List<Span> spans;
+  private List<Span> spans;
 
-    @Override
-    public void emitZipkinBatch(List<Span> spans) throws TException {
-        synchronized (this) {
-            this.spans = spans;
-        }
+  @Override
+  public void emitZipkinBatch(List<Span> spans) throws TException {
+    synchronized (this) {
+      this.spans = spans;
     }
+  }
 
-    public List<Span> getSpans() {
-        synchronized (this) {
-            if (spans != null) {
-                return new ArrayList<>(spans);
-            }
-            return new ArrayList<>();
-        }
+  public List<Span> getSpans() {
+    synchronized (this) {
+      if (spans != null) {
+        return new ArrayList<>(spans);
+      }
+      return new ArrayList<>();
     }
+  }
 }

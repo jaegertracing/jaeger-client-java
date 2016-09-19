@@ -22,27 +22,25 @@
 package com.uber.jaeger;
 
 public class Constants {
-    // TODO these should be configurable
-    public static final String X_UBER_SOURCE = "x-uber-source";
+  // TODO these should be configurable
+  public static final String X_UBER_SOURCE = "x-uber-source";
 
-    public static final int MAX_ANNOTATION_LENGTH = 256;
+  public static final int MAX_ANNOTATION_LENGTH = 256;
 
-    /**
-     * Span tag key to describe the type of sampler used on the root span.
-     */
-    public static final String SAMPLER_TYPE_TAG_KEY = "sampler.type";
+  /**
+   * Span tag key to describe the type of sampler used on the root span.
+   */
+  public static final String SAMPLER_TYPE_TAG_KEY = "sampler.type";
 
-    /**
-     * Span tag key to describe the parameter of the sampler used on the root span.
-     */
-    public static final String SAMPLER_PARAM_TAG_KEY = "sampler.param";
+  /**
+   * Span tag key to describe the parameter of the sampler used on the root span.
+   */
+  public static final String SAMPLER_PARAM_TAG_KEY = "sampler.param";
 
-    /**
-     * The name of HTTP header or a TextMap carrier key which, if found
-     * in the carrier, forces the trace to be sampled as "debug" trace.
-     * The value of the header is recorded as the tag on the root span,
-     * so that the trace can be found in the UI using this value as a
-     * correlation ID.
-     */
-    public static final String DEBUG_ID_HEADER_KEY = "jaeger-debug-id";
+  /**
+   * The name of HTTP header or a TextMap carrier key which, if found in the carrier, forces the
+   * trace to be sampled as "debug" trace. The value of the header is recorded as the tag on the
+   * root span, so that the trace can be found in the UI using this value as a correlation ID.
+   */
+  public static final String DEBUG_ID_HEADER_KEY = "jaeger-debug-id";
 }

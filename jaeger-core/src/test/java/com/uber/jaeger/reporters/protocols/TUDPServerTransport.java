@@ -29,34 +29,33 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 
 public class TUDPServerTransport extends TServerTransport {
-    private TUDPTransport transport;
+  private TUDPTransport transport;
 
-    public TUDPServerTransport(int localPort) throws SocketException, UnknownHostException {
-        transport = TUDPTransport.NewTUDPServer("localhost", localPort);
-    }
+  public TUDPServerTransport(int localPort) throws SocketException, UnknownHostException {
+    transport = TUDPTransport.NewTUDPServer("localhost", localPort);
+  }
 
-    int getPort() {
-        return transport.getPort();
-    }
+  int getPort() {
+    return transport.getPort();
+  }
 
-    @Override
-    public void listen() throws TTransportException {
-    }
+  @Override
+  public void listen() throws TTransportException {}
 
-    @Override
-    public void close() {
-        if (transport.isOpen()) {
-            transport.close();
-        }
+  @Override
+  public void close() {
+    if (transport.isOpen()) {
+      transport.close();
     }
+  }
 
-    @Override
-    protected TTransport acceptImpl() throws TTransportException {
-        return transport;
-    }
+  @Override
+  protected TTransport acceptImpl() throws TTransportException {
+    return transport;
+  }
 
-    @Override
-    public void interrupt() {
-        this.close();
-    }
+  @Override
+  public void interrupt() {
+    this.close();
+  }
 }

@@ -37,69 +37,71 @@ import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 
 public class ThriftSpanConverterTest {
-    Tracer tracer;
+  Tracer tracer;
 
-    @Before
-    public void setUp() {
-        tracer = new Tracer.Builder("test-service-name", new InMemoryReporter(), new ConstSampler(true)).build();
+  @Before
+  public void setUp() {
+    tracer =
+        new Tracer.Builder("test-service-name", new InMemoryReporter(), new ConstSampler(true))
+            .build();
+  }
+
+  @Test
+  public void testSpanKindServerCreatesAnnotations() {
+    Span span = (com.uber.jaeger.Span) tracer.buildSpan("operation-name").start();
+    Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_SERVER);
+
+    com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan(span);
+
+    List<Annotation> annotations = zipkinSpan.getAnnotations();
+    boolean serverReceiveFound = false;
+    boolean serverSendFound = false;
+    for (Annotation anno : annotations) {
+      if (anno.getValue().equals(zipkincoreConstants.SERVER_RECV)) {
+        serverReceiveFound = true;
+      }
+
+      if (anno.getValue().equals(zipkincoreConstants.SERVER_SEND)) {
+        serverSendFound = true;
+      }
     }
 
-    @Test
-    public void testSpanKindServerCreatesAnnotations() {
-        Span span = (com.uber.jaeger.Span) tracer.buildSpan("operation-name").start();
-        Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_SERVER);
+    assertTrue(serverReceiveFound);
+    assertTrue(serverSendFound);
+  }
 
-        com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan(span);
+  @Test
+  public void testSpanKindClientCreatesAnnotations() {
+    Span span = (com.uber.jaeger.Span) tracer.buildSpan("operation-name").start();
+    Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
 
-        List<Annotation> annotations =  zipkinSpan.getAnnotations();
-        boolean serverReceiveFound = false;
-        boolean serverSendFound = false;
-        for (Annotation anno: annotations) {
-            if (anno.getValue().equals(zipkincoreConstants.SERVER_RECV)) {
-                serverReceiveFound = true;
-            }
+    com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan(span);
 
-            if (anno.getValue().equals(zipkincoreConstants.SERVER_SEND)){
-                serverSendFound = true;
-            }
-        }
+    List<Annotation> annotations = zipkinSpan.getAnnotations();
+    boolean clientReceiveFound = false;
+    boolean clientSendFound = false;
+    for (Annotation anno : annotations) {
+      if (anno.getValue().equals(zipkincoreConstants.CLIENT_RECV)) {
+        clientReceiveFound = true;
+      }
 
-        assertTrue(serverReceiveFound);
-        assertTrue(serverSendFound);
+      if (anno.getValue().equals(zipkincoreConstants.CLIENT_SEND)) {
+        clientSendFound = true;
+      }
     }
 
-    @Test
-    public void testSpanKindClientCreatesAnnotations() {
-        Span span = (com.uber.jaeger.Span) tracer.buildSpan("operation-name").start();
-        Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
+    assertTrue(clientReceiveFound);
+    assertTrue(clientSendFound);
+  }
 
-        com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan(span);
+  @Test
+  public void testExpectdLocalComponentNameUsed() {
+    String expectedCompnentName = "local-name";
+    Span span = (com.uber.jaeger.Span) tracer.buildSpan("operation-name").start();
+    Tags.COMPONENT.set(span, expectedCompnentName);
 
-        List<Annotation> annotations =  zipkinSpan.getAnnotations();
-        boolean clientReceiveFound = false;
-        boolean clientSendFound = false;
-        for (Annotation anno: annotations) {
-            if (anno.getValue().equals(zipkincoreConstants.CLIENT_RECV)) {
-                clientReceiveFound = true;
-            }
-
-            if (anno.getValue().equals(zipkincoreConstants.CLIENT_SEND)){
-                clientSendFound = true;
-            }
-        }
-
-        assertTrue(clientReceiveFound);
-        assertTrue(clientSendFound);
-    }
-
-    @Test
-    public void testExpectdLocalComponentNameUsed() {
-        String expectedCompnentName = "local-name";
-        Span span = (com.uber.jaeger.Span) tracer.buildSpan("operation-name").start();
-        Tags.COMPONENT.set(span, expectedCompnentName);
-
-        com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan(span);
-        String actualComponent = new String(zipkinSpan.getBinary_annotations().get(0).getValue());
-        assertEquals(expectedCompnentName, actualComponent);
-    }
+    com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan(span);
+    String actualComponent = new String(zipkinSpan.getBinary_annotations().get(0).getValue());
+    assertEquals(expectedCompnentName, actualComponent);
+  }
 }

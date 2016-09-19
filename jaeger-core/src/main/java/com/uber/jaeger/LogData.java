@@ -22,25 +22,25 @@
 package com.uber.jaeger;
 
 public final class LogData {
-    private final long time; // time in microseconds
-    private final String message;
-    private final Object payload;
+  private final long time; // time in microseconds
+  private final String message;
+  private final Object payload;
 
-    LogData(long time, String message, Object payload) {
-        this.time = time;
-        this.message = message;
-        this.payload = payload;
-    }
+  LogData(long time, String message, Object payload) {
+    this.time = time;
+    this.message = message;
+    this.payload = payload;
+  }
 
-    public long getTime() {
-        return time;
-    }
+  public long getTime() {
+    return time;
+  }
 
-    public String getMessage() {
-        return message;
-    }
+  public String getMessage() {
+    return message;
+  }
 
-    public Object getPayload() {
-        return payload;
-    }
+  public Object getPayload() {
+    return payload;
+  }
 }

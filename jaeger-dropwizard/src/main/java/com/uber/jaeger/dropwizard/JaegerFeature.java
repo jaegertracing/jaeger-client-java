@@ -27,27 +27,27 @@ import javax.ws.rs.core.Feature;
 import javax.ws.rs.core.FeatureContext;
 
 public class JaegerFeature implements Feature {
-    private final Configuration jaegerConfig;
+  private final Configuration jaegerConfig;
 
-    public JaegerFeature(Configuration jaegerConfig) {
-        this.jaegerConfig = jaegerConfig;
+  public JaegerFeature(Configuration jaegerConfig) {
+    this.jaegerConfig = jaegerConfig;
+  }
+
+  @Override
+  public boolean configure(FeatureContext featureContext) {
+    if (featureContext.getConfiguration().isEnabled(this.getClass())) {
+      return false;
     }
 
-    @Override
-    public boolean configure(FeatureContext featureContext) {
-        if (featureContext.getConfiguration().isEnabled(this.getClass())) {
-            return false;
-        }
-
-        switch (featureContext.getConfiguration().getRuntimeType()) {
-            case SERVER:
-                featureContext.register(TracingUtils.serverFilter(jaegerConfig));
-                break;
-            case CLIENT:
-                featureContext.register(TracingUtils.clientFilter(jaegerConfig));
-                break;
-        }
-
-        return true;
+    switch (featureContext.getConfiguration().getRuntimeType()) {
+      case SERVER:
+        featureContext.register(TracingUtils.serverFilter(jaegerConfig));
+        break;
+      case CLIENT:
+        featureContext.register(TracingUtils.clientFilter(jaegerConfig));
+        break;
     }
+
+    return true;
+  }
 }

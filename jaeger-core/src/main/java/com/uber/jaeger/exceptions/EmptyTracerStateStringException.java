@@ -22,7 +22,7 @@
 package com.uber.jaeger.exceptions;
 
 public class EmptyTracerStateStringException extends RuntimeException {
-    public EmptyTracerStateStringException() {
-        super("Cannot convert empty string to tracer state");
-    }
+  public EmptyTracerStateStringException() {
+    super("Cannot convert empty string to tracer state");
+  }
 }

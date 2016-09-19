@@ -32,28 +32,28 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 public class RunnableTest {
-    TraceContext traceContext;
-    Span span;
+  TraceContext traceContext;
+  Span span;
 
-    @Before
-    public void setUp() {
-        span = mock(Span.class);
-        traceContext = mock(TraceContext.class);
-        when(traceContext.getCurrentSpan()).thenReturn(span);
-        when(traceContext.pop()).thenReturn(span);
-    }
+  @Before
+  public void setUp() {
+    span = mock(Span.class);
+    traceContext = mock(TraceContext.class);
+    when(traceContext.getCurrentSpan()).thenReturn(span);
+    when(traceContext.pop()).thenReturn(span);
+  }
 
-    @Test
-    public void testIntrumentedRunnable() {
-        Runnable wrappedRunnable = mock(Runnable.class);
-        Runnable runnable = new Runnable(wrappedRunnable, traceContext);
+  @Test
+  public void testIntrumentedRunnable() {
+    Runnable wrappedRunnable = mock(Runnable.class);
+    Runnable runnable = new Runnable(wrappedRunnable, traceContext);
 
-        runnable.run();
+    runnable.run();
 
-        verify(traceContext, times(1)).push(span);
-        verify(traceContext, times(1)).pop();
-        verify(traceContext, times(1)).getCurrentSpan();
-        verify(wrappedRunnable, times(1)).run();
-        verifyNoMoreInteractions(traceContext, wrappedRunnable);
-    }
+    verify(traceContext, times(1)).push(span);
+    verify(traceContext, times(1)).pop();
+    verify(traceContext, times(1)).getCurrentSpan();
+    verify(wrappedRunnable, times(1)).run();
+    verifyNoMoreInteractions(traceContext, wrappedRunnable);
+  }
 }

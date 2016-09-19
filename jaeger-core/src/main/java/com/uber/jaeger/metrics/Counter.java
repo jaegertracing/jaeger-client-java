@@ -22,5 +22,5 @@
 package com.uber.jaeger.metrics;
 
 public interface Counter {
-    void inc(long delta);
+  void inc(long delta);
 }

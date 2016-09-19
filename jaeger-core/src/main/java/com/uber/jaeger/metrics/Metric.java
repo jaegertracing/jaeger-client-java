@@ -29,6 +29,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface Metric {
-    String name() default "";
-    Tag[] tags() default {};
+  String name() default "";
+
+  Tag[] tags() default {};
 }

@@ -30,66 +30,65 @@ import java.util.List;
 import java.util.Map;
 
 public class ServerRequestCarrier implements TextMap {
-    private final ContainerRequestContext requestContext;
+  private final ContainerRequestContext requestContext;
 
-    public ServerRequestCarrier(ContainerRequestContext requestContext) {
-        this.requestContext = requestContext;
-    }
+  public ServerRequestCarrier(ContainerRequestContext requestContext) {
+    this.requestContext = requestContext;
+  }
 
-    @Override
-    public Iterator<Map.Entry<String, String>> iterator() {
-        MultivaluedMap<String, String> headers = requestContext.getHeaders();
-        final Iterator<Map.Entry<String, List<String>>> iterator = headers.entrySet().iterator();
+  @Override
+  public Iterator<Map.Entry<String, String>> iterator() {
+    MultivaluedMap<String, String> headers = requestContext.getHeaders();
+    final Iterator<Map.Entry<String, List<String>>> iterator = headers.entrySet().iterator();
 
-        return new Iterator<Map.Entry<String, String>>(){
-            @Override
-            public boolean hasNext() {
-                return iterator.hasNext();
-            }
+    return new Iterator<Map.Entry<String, String>>() {
+      @Override
+      public boolean hasNext() {
+        return iterator.hasNext();
+      }
 
-            @Override
-            public Map.Entry<String, String> next() {
-                Map.Entry<String, List<String>> next = iterator.next();
-                String key = next.getKey();
-                String value = next.getValue().get(0);
-                return new ImmutableMapEntry(key, value);
-            }
+      @Override
+      public Map.Entry<String, String> next() {
+        Map.Entry<String, List<String>> next = iterator.next();
+        String key = next.getKey();
+        String value = next.getValue().get(0);
+        return new ImmutableMapEntry(key, value);
+      }
 
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
-        };
-    }
-
-    @Override
-    public void put(String key, String value) {
+      @Override
+      public void remove() {
         throw new UnsupportedOperationException();
+      }
+    };
+  }
+
+  @Override
+  public void put(String key, String value) {
+    throw new UnsupportedOperationException();
+  }
+
+  public static final class ImmutableMapEntry implements Map.Entry<String, String> {
+    private final String key;
+    private final String value;
+
+    public ImmutableMapEntry(String key, String value) {
+      this.key = key;
+      this.value = value;
     }
 
-    public static final class ImmutableMapEntry implements Map.Entry<String, String> {
-        private final String key;
-        private final String value;
-
-        public ImmutableMapEntry(String key, String value) {
-            this.key = key;
-            this.value = value;
-        }
-
-        @Override
-        public String getKey() {
-            return key;
-        }
-
-        @Override
-        public String getValue() {
-            return value;
-        }
-
-        @Override
-        public String setValue(String value) {
-            throw new UnsupportedOperationException();
-        }
+    @Override
+    public String getKey() {
+      return key;
     }
 
+    @Override
+    public String getValue() {
+      return value;
+    }
+
+    @Override
+    public String setValue(String value) {
+      throw new UnsupportedOperationException();
+    }
+  }
 }

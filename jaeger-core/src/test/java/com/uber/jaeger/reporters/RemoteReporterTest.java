@@ -36,51 +36,57 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 
 public class RemoteReporterTest {
-    private Reporter reporter;
-    private Tracer tracer;
-    private InMemorySender sender;
-    private final int flushInterval = 1000; // in milliseconds
-    private final int maxQueueSize = 500;
-    private Metrics metrics;
-    InMemoryStatsReporter metricsReporter;
+  private Reporter reporter;
+  private Tracer tracer;
+  private InMemorySender sender;
+  private final int flushInterval = 1000; // in milliseconds
+  private final int maxQueueSize = 500;
+  private Metrics metrics;
+  InMemoryStatsReporter metricsReporter;
 
-    @Before
-    public void setUp() throws Exception {
-        metricsReporter = new InMemoryStatsReporter();
-        metrics = new Metrics(new StatsFactoryImpl(metricsReporter));
+  @Before
+  public void setUp() throws Exception {
+    metricsReporter = new InMemoryStatsReporter();
+    metrics = new Metrics(new StatsFactoryImpl(metricsReporter));
 
-        sender = new InMemorySender();
-        reporter = new RemoteReporter(sender, flushInterval, maxQueueSize, metrics);
-        tracer = new Tracer.Builder("test-remote-reporter", reporter, new ConstSampler(true))
-                .withStatsReporter(metricsReporter)
-                .build();
+    sender = new InMemorySender();
+    reporter = new RemoteReporter(sender, flushInterval, maxQueueSize, metrics);
+    tracer =
+        new Tracer.Builder("test-remote-reporter", reporter, new ConstSampler(true))
+            .withStatsReporter(metricsReporter)
+            .build();
+  }
+
+  @Test
+  public void testRemoteReporterReport() throws Exception {
+    Span span = (Span) tracer.buildSpan("raza").start();
+    reporter.report(span);
+    Thread.sleep(5);
+    List<com.twitter.zipkin.thriftjava.Span> received = sender.getReceived();
+
+    assertEquals(received.size(), 1);
+  }
+
+  @Test
+  public void testRemoteReporterFlushesOnClose() throws Exception {
+    int numberOfSpans = 100;
+    for (int i = 0; i < numberOfSpans; i++) {
+      Span span = (Span) tracer.buildSpan("raza").start();
+      reporter.report(span);
     }
+    reporter.close();
 
-    @Test
-    public void testRemoteReporterReport() throws Exception {
-        Span span = (Span) tracer.buildSpan("raza").start();
-        reporter.report(span);
-        Thread.sleep(5);
-        List<com.twitter.zipkin.thriftjava.Span> received = sender.getReceived();
+    assertEquals(sender.getAppended().size(), 0);
+    assertEquals(sender.getFlushed().size(), numberOfSpans);
 
-        assertEquals(received.size(), 1);
-    }
-
-    @Test
-    public void testRemoteReporterFlushesOnClose() throws Exception {
-        int numberOfSpans = 100;
-        for (int i = 0; i < numberOfSpans; i++) {
-            Span span = (Span) tracer.buildSpan("raza").start();
-            reporter.report(span);
-        }
-        reporter.close();
-
-        assertEquals(sender.getAppended().size(), 0);
-        assertEquals(sender.getFlushed().size(), numberOfSpans);
-
-        assertEquals(100L, metricsReporter.counters.get("jaeger.spans.group=sampling.sampled=y").longValue());
-        assertEquals(100L, metricsReporter.counters.get("jaeger.spans.group=lifecycle.state=started").longValue());
-        assertEquals(100L, metricsReporter.counters.get("jaeger.reporter-spans.state=success").longValue());
-        assertEquals(100L, metricsReporter.counters.get("jaeger.traces.sampled=y.state=started").longValue());
-    }
+    assertEquals(
+        100L, metricsReporter.counters.get("jaeger.spans.group=sampling.sampled=y").longValue());
+    assertEquals(
+        100L,
+        metricsReporter.counters.get("jaeger.spans.group=lifecycle.state=started").longValue());
+    assertEquals(
+        100L, metricsReporter.counters.get("jaeger.reporter-spans.state=success").longValue());
+    assertEquals(
+        100L, metricsReporter.counters.get("jaeger.traces.sampled=y.state=started").longValue());
+  }
 }

@@ -33,62 +33,62 @@ import java.net.InetAddress;
 import java.util.EmptyStackException;
 
 public class TChannelServer {
-    // TODO should not be static
-    public static TChannel server;
+  // TODO should not be static
+  public static TChannel server;
 
-    public TChannelServer(int port, TraceBehavior behavior, Tracer tracer, boolean useLoopback) {
-        TChannel.Builder builder = new TChannel.Builder(JerseyServer.SERVICE_NAME);
-        if (useLoopback) {
-            builder.setServerHost(InetAddress.getLoopbackAddress());
-        }
-        server = builder
-                .setServerPort(port)
-                .setTracer(tracer)
-                .setTracingContext(new TracingContextAdapter())
-                .build();
+  public TChannelServer(int port, TraceBehavior behavior, Tracer tracer, boolean useLoopback) {
+    TChannel.Builder builder = new TChannel.Builder(JerseyServer.SERVICE_NAME);
+    if (useLoopback) {
+      builder.setServerHost(InetAddress.getLoopbackAddress());
+    }
+    server =
+        builder
+            .setServerPort(port)
+            .setTracer(tracer)
+            .setTracingContext(new TracingContextAdapter())
+            .build();
 
-        server.makeSubChannel(JerseyServer.SERVICE_NAME)
-                .registerHealthHandler()
-                .register("TracedService::joinTrace", new JoinTraceThriftHandler(behavior));
+    server
+        .makeSubChannel(JerseyServer.SERVICE_NAME)
+        .registerHealthHandler()
+        .register("TracedService::joinTrace", new JoinTraceThriftHandler(behavior));
+  }
+
+  public TChannel getChannel() {
+    return server;
+  }
+
+  public void start() throws InterruptedException {
+    // listen for incoming connections
+    server.listen().channel().closeFuture();
+  }
+
+  public void shutdown() {
+    server.shutdown(true);
+  }
+
+  private class TracingContextAdapter implements TracingContext {
+    @Override
+    public void pushSpan(Span span) {
+      TracingUtils.getTraceContext().push(span);
     }
 
-    public TChannel getChannel() {
-        return server;
+    @Override
+    public boolean hasSpan() {
+      return !TracingUtils.getTraceContext().isEmpty();
     }
 
-    public void start() throws InterruptedException {
-        // listen for incoming connections
-        server.listen().channel().closeFuture();
+    @Override
+    public Span currentSpan() throws EmptyStackException {
+      return TracingUtils.getTraceContext().getCurrentSpan();
     }
 
-    public void shutdown() {
-        server.shutdown(true);
+    @Override
+    public Span popSpan() throws EmptyStackException {
+      return TracingUtils.getTraceContext().pop();
     }
 
-    private class TracingContextAdapter implements TracingContext {
-        @Override
-        public void pushSpan(Span span) {
-            TracingUtils.getTraceContext().push(span);
-        }
-
-        @Override
-        public boolean hasSpan() {
-            return !TracingUtils.getTraceContext().isEmpty();
-        }
-
-        @Override
-        public Span currentSpan() throws EmptyStackException {
-            return TracingUtils.getTraceContext().getCurrentSpan();
-        }
-
-        @Override
-        public Span popSpan() throws EmptyStackException {
-            return TracingUtils.getTraceContext().pop();
-        }
-
-        @Override
-        public void clear() {
-
-        }
-    }
+    @Override
+    public void clear() {}
+  }
 }

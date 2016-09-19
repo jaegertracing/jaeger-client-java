@@ -30,41 +30,43 @@ import java.io.IOException;
 import java.net.URI;
 
 public class MockAgent {
-    // Base URI the Grizzly HTTP server will listen on
-    public static final String BASE_URI = "http://localhost:0/";
-    private HttpServer server;
+  // Base URI the Grizzly HTTP server will listen on
+  public static final String BASE_URI = "http://localhost:0/";
+  private HttpServer server;
 
-    public MockAgent() throws IOException {
-        server = getServer();
-    }
+  public MockAgent() throws IOException {
+    server = getServer();
+  }
 
-    /**
-     * Starts Grizzly HTTP server exposing JAX-RS resources defined in this application.
-     * @return Grizzly HTTP server.
-     */
-    public HttpServer getServer() {
-        // create a resource config that scans for JAX-RS resources and providers
-       final ResourceConfig rc = new ResourceConfig()
+  /**
+   * Starts Grizzly HTTP server exposing JAX-RS resources defined in this application.
+   *
+   * @return Grizzly HTTP server.
+   */
+  public HttpServer getServer() {
+    // create a resource config that scans for JAX-RS resources and providers
+    final ResourceConfig rc =
+        new ResourceConfig()
             .packages(MockAgentResource.class.getPackage().toString())
-               .register(JacksonFeature.class);
+            .register(JacksonFeature.class);
 
-        // create and start a new instance of grizzly http server
-        return GrizzlyHttpServerFactory.createHttpServer(URI.create(BASE_URI), rc);
-    }
+    // create and start a new instance of grizzly http server
+    return GrizzlyHttpServerFactory.createHttpServer(URI.create(BASE_URI), rc);
+  }
 
-    public void start() {
-        try {
-            server.start();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+  public void start() {
+    try {
+      server.start();
+    } catch (IOException e) {
+      e.printStackTrace();
     }
+  }
 
-    public int getPort() {
-        return server.getListener("grizzly").getPort();
-    }
+  public int getPort() {
+    return server.getListener("grizzly").getPort();
+  }
 
-    public void stop() {
-        server.shutdown();
-    }
+  public void stop() {
+    server.shutdown();
+  }
 }

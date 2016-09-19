@@ -31,21 +31,19 @@ import com.uber.jaeger.crossdock.api.TraceResponse;
 
 public class TraceResponseSerializer extends JsonSerializer<TraceResponse> {
 
-    @Override
-    public void serialize(TraceResponse response,
-                          JsonGenerator jgen,
-                          SerializerProvider sp) throws IOException {
-        ObservedSpan span = response.getObservedSpan();
-        TraceResponse downstream = response.getDownstream();
+  @Override
+  public void serialize(TraceResponse response, JsonGenerator jgen, SerializerProvider sp)
+      throws IOException {
+    ObservedSpan span = response.getObservedSpan();
+    TraceResponse downstream = response.getDownstream();
 
+    jgen.writeStartObject();
+    jgen.writeStringField("notImplementedError", response.getNotImplementedError());
+    jgen.writeObjectField("span", span);
 
-        jgen.writeStartObject();
-        jgen.writeStringField("notImplementedError", response.getNotImplementedError());
-        jgen.writeObjectField("span", span);
-
-        if (downstream != null) {
-            jgen.writeObjectField("downstream", downstream);
-        }
-        jgen.writeEndObject();
+    if (downstream != null) {
+      jgen.writeObjectField("downstream", downstream);
     }
+    jgen.writeEndObject();
+  }
 }

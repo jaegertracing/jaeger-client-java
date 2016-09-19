@@ -25,9 +25,9 @@ import com.twitter.zipkin.thriftjava.Span;
 import com.uber.jaeger.exceptions.SenderException;
 
 public interface Sender {
-    int append(Span span) throws SenderException;
+  int append(Span span) throws SenderException;
 
-    int flush() throws SenderException;
+  int flush() throws SenderException;
 
-    int close() throws SenderException;
+  int close() throws SenderException;
 }

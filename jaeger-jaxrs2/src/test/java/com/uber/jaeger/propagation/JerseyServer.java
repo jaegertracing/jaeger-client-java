@@ -33,51 +33,51 @@ import org.glassfish.jersey.server.ResourceConfig;
 import java.io.IOException;
 import java.net.URI;
 
-
 public class JerseyServer {
-    // Base URI the Grizzly HTTP server will listen on
-    public static final String BASE_URI = "http://localhost:8080/";
-    private final Tracer tracer;
-    private final TraceContext traceContext;
-    private HttpServer server;
+  // Base URI the Grizzly HTTP server will listen on
+  public static final String BASE_URI = "http://localhost:8080/";
+  private final Tracer tracer;
+  private final TraceContext traceContext;
+  private HttpServer server;
 
-    public JerseyServer(Tracer tracer, TraceContext traceContext) throws IOException {
-        this.tracer = tracer;
-        this.traceContext = traceContext;
-        server = getServer();
-        server.start();
-    }
+  public JerseyServer(Tracer tracer, TraceContext traceContext) throws IOException {
+    this.tracer = tracer;
+    this.traceContext = traceContext;
+    server = getServer();
+    server.start();
+  }
 
-    /**
-     * Starts Grizzly HTTP server exposing JAX-RS resources defined in this application.
-     *
-     * @return Grizzly HTTP server.
-     */
-    public HttpServer getServer() {
-        // create a resource config that scans for JAX-RS resources and providers
-        final ResourceConfig rc = new ResourceConfig()
-                .register(new ServerFilter(tracer, traceContext))
-                .register(
-                        new AbstractBinder() {
-                            @Override
-                            protected void configure() {
-                                bind(tracer).to(Tracer.class);
-                                bind(traceContext).to(TraceContext.class);
-                            }
-                        })
-                .packages(JerseyHandler.class.getPackage().toString())
-                .register(JacksonFeature.class);
+  /**
+   * Starts Grizzly HTTP server exposing JAX-RS resources defined in this application.
+   *
+   * @return Grizzly HTTP server.
+   */
+  public HttpServer getServer() {
+    // create a resource config that scans for JAX-RS resources and providers
+    final ResourceConfig rc =
+        new ResourceConfig()
+            .register(new ServerFilter(tracer, traceContext))
+            .register(
+                new AbstractBinder() {
+                  @Override
+                  protected void configure() {
+                    bind(tracer).to(Tracer.class);
+                    bind(traceContext).to(TraceContext.class);
+                  }
+                })
+            .packages(JerseyHandler.class.getPackage().toString())
+            .register(JacksonFeature.class);
 
-        // create and start a new instance of grizzly http server
-        // exposing the Jersey application at BASE_URI
-        return GrizzlyHttpServerFactory.createHttpServer(URI.create(BASE_URI), rc);
-    }
+    // create and start a new instance of grizzly http server
+    // exposing the Jersey application at BASE_URI
+    return GrizzlyHttpServerFactory.createHttpServer(URI.create(BASE_URI), rc);
+  }
 
-    public void start() throws IOException {
-        server.start();
-    }
+  public void start() throws IOException {
+    server.start();
+  }
 
-    public void stop() {
-        server.shutdownNow();
-    }
+  public void stop() {
+    server.shutdownNow();
+  }
 }

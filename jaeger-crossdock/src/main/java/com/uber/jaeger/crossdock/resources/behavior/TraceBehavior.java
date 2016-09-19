@@ -48,114 +48,113 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 public class TraceBehavior {
-    private static final Logger logger = LoggerFactory.getLogger(TraceBehavior.class);
+  private static final Logger logger = LoggerFactory.getLogger(TraceBehavior.class);
 
-    private static final ObjectMapper mapper = new ObjectMapper();
+  private static final ObjectMapper mapper = new ObjectMapper();
 
-    public TraceResponse prepareResponse(Downstream downstream) throws Exception {
-        TraceResponse response = new TraceResponse(observeSpan());
+  public TraceResponse prepareResponse(Downstream downstream) throws Exception {
+    TraceResponse response = new TraceResponse(observeSpan());
 
-        if (downstream != null) {
-            TraceResponse downstreamResponse = callDownstream(downstream);
-            response.setDownstream(downstreamResponse);
-        }
-
-        return response;
+    if (downstream != null) {
+      TraceResponse downstreamResponse = callDownstream(downstream);
+      response.setDownstream(downstreamResponse);
     }
 
-    private TraceResponse callDownstream(Downstream downstream) throws Exception {
-        logger.info("Calling downstream {}", downstream);
-        logger.info("Downstream service {} -> {}:{}",
-                downstream.getServiceName(),
-                InetAddress.getByName(downstream.getHost()),
-                downstream.getPort());
-        String transport = downstream.getTransport();
-        switch (transport) {
-            case Constants.TRANSPORT_HTTP:
-                return callDownstreamHTTP(downstream);
-            case Constants.TRANSPORT_TCHANNEL:
-                return callDownstreamTChannel(downstream);
-            default:
-                return new TraceResponse("Unrecognized transport received: %s" + transport);
-        }
+    return response;
+  }
+
+  private TraceResponse callDownstream(Downstream downstream) throws Exception {
+    logger.info("Calling downstream {}", downstream);
+    logger.info(
+        "Downstream service {} -> {}:{}",
+        downstream.getServiceName(),
+        InetAddress.getByName(downstream.getHost()),
+        downstream.getPort());
+    String transport = downstream.getTransport();
+    switch (transport) {
+      case Constants.TRANSPORT_HTTP:
+        return callDownstreamHTTP(downstream);
+      case Constants.TRANSPORT_TCHANNEL:
+        return callDownstreamTChannel(downstream);
+      default:
+        return new TraceResponse("Unrecognized transport received: %s" + transport);
+    }
+  }
+
+  private TraceResponse callDownstreamHTTP(Downstream downstream) throws IOException {
+    String downstreamURL =
+        String.format("http://%s:%s/join_trace", downstream.getHost(), downstream.getPort());
+    logger.info("Calling downstream http {} at {}", downstream.getServiceName(), downstreamURL);
+
+    Response resp =
+        JerseyServer.client
+            .target(downstreamURL)
+            .request(MediaType.APPLICATION_JSON)
+            .post(
+                Entity.json(
+                    new JoinTraceRequest(downstream.getServerRole(), downstream.getDownstream())));
+
+    String respStr = resp.readEntity(String.class);
+    TraceResponse response = mapper.readValue(respStr, TraceResponse.class);
+    logger.info("Received response {}", response);
+    return response;
+  }
+
+  public TraceResponse callDownstreamTChannel(Downstream downstream) throws Exception {
+    com.uber.jaeger.crossdock.thrift.JoinTraceRequest joinTraceRequest =
+        new com.uber.jaeger.crossdock.thrift.JoinTraceRequest(downstream.getServerRole());
+    joinTraceRequest.setDownstream(Downstream.toThrift(downstream.getDownstream()));
+
+    SubChannel subChannel = TChannelServer.server.makeSubChannel(downstream.getServiceName());
+
+    logger.info("Calling downstream tchannel {}", joinTraceRequest);
+    ThriftRequest<TracedService.joinTrace_args> thriftRequest =
+        new ThriftRequest.Builder<TracedService.joinTrace_args>(
+                downstream.getServiceName(), "TracedService::joinTrace")
+            .setTimeout(2000)
+            .setBody(new TracedService.joinTrace_args(joinTraceRequest))
+            .build();
+    TFuture<ThriftResponse<TracedService.joinTrace_result>> future =
+        subChannel.send(thriftRequest, host(downstream), port(downstream));
+
+    try (ThriftResponse<TracedService.joinTrace_result> thriftResponse = future.get()) {
+      logger.info("Received tchannel response {}", thriftResponse);
+      if (thriftResponse.isError()) {
+        throw new Exception(thriftResponse.getError().getMessage());
+      }
+      return TraceResponse.fromThrift(
+          thriftResponse.getBody(TracedService.joinTrace_result.class).getSuccess());
+    }
+  }
+
+  private ObservedSpan observeSpan() {
+    com.uber.jaeger.context.TraceContext traceContext = TracingUtils.getTraceContext();
+    if (traceContext.isEmpty()) {
+      logger.error("No span found");
+      return new ObservedSpan("no span found", false, "no span found");
+    }
+    Span span = (Span) traceContext.getCurrentSpan();
+    if (span == null) {
+      logger.error("No span found");
+      return new ObservedSpan("no span found", false, "no span found");
     }
 
-    private TraceResponse callDownstreamHTTP(Downstream downstream) throws IOException {
-        String downstreamURL = String.format(
-                "http://%s:%s/join_trace", downstream.getHost(), downstream.getPort()
-        );
-        logger.info("Calling downstream http {} at {}", downstream.getServiceName(), downstreamURL);
+    SpanContext context = span.getContext();
+    String traceID = String.format("%x", context.getTraceID());
+    boolean sampled = context.isSampled();
+    String baggage = span.getBaggageItem(Constants.BAGGAGE_KEY);
+    return new ObservedSpan(traceID, sampled, baggage);
+  }
 
-        Response resp = JerseyServer.client.target(downstreamURL)
-                .request(MediaType.APPLICATION_JSON)
-                .post(Entity.json(new JoinTraceRequest(downstream.getServerRole(), downstream.getDownstream())));
-
-        String respStr = resp.readEntity(String.class);
-        TraceResponse response = mapper.readValue(respStr, TraceResponse.class);
-        logger.info("Received response {}", response);
-        return response;
+  private InetAddress host(Downstream downstream) {
+    try {
+      return InetAddress.getByName(downstream.getHost());
+    } catch (UnknownHostException e) {
+      throw new RuntimeException("Cannot resolve host address for " + downstream.getHost(), e);
     }
+  }
 
-    public TraceResponse callDownstreamTChannel(Downstream downstream) throws Exception {
-        com.uber.jaeger.crossdock.thrift.JoinTraceRequest joinTraceRequest =
-                new com.uber.jaeger.crossdock.thrift.JoinTraceRequest(downstream.getServerRole());
-        joinTraceRequest.setDownstream(Downstream.toThrift(downstream.getDownstream()));
-
-        SubChannel subChannel = TChannelServer.server.makeSubChannel(downstream.getServiceName());
-
-        logger.info("Calling downstream tchannel {}", joinTraceRequest);
-        ThriftRequest<TracedService.joinTrace_args> thriftRequest = new ThriftRequest.Builder<TracedService.joinTrace_args>(
-                downstream.getServiceName(),
-                "TracedService::joinTrace"
-        )
-                    .setTimeout(2000)
-                .setBody(new TracedService.joinTrace_args(joinTraceRequest))
-                .build();
-        TFuture<ThriftResponse<TracedService.joinTrace_result>> future = subChannel.send(
-                thriftRequest,
-                host(downstream),
-                port(downstream)
-        );
-
-        try (ThriftResponse<TracedService.joinTrace_result> thriftResponse = future.get()) {
-            logger.info("Received tchannel response {}", thriftResponse);
-            if (thriftResponse.isError()) {
-                throw new Exception(thriftResponse.getError().getMessage());
-            }
-            return TraceResponse.fromThrift(
-                    thriftResponse.getBody(TracedService.joinTrace_result.class).getSuccess());
-        }
-    }
-
-    private ObservedSpan observeSpan() {
-        com.uber.jaeger.context.TraceContext traceContext = TracingUtils.getTraceContext();
-        if (traceContext.isEmpty()) {
-            logger.error("No span found");
-            return new ObservedSpan("no span found", false, "no span found");
-        }
-        Span span = (Span) traceContext.getCurrentSpan();
-        if (span == null) {
-            logger.error("No span found");
-            return new ObservedSpan("no span found", false, "no span found");
-        }
-
-        SpanContext context = span.getContext();
-        String traceID = String.format("%x", context.getTraceID());
-        boolean sampled = context.isSampled();
-        String baggage = span.getBaggageItem(Constants.BAGGAGE_KEY);
-        return new ObservedSpan(traceID, sampled, baggage);
-    }
-
-    private InetAddress host(Downstream downstream) {
-        try {
-            return InetAddress.getByName(downstream.getHost());
-        } catch (UnknownHostException e) {
-            throw new RuntimeException(
-                    "Cannot resolve host address for " + downstream.getHost(), e);
-        }
-    }
-
-    private int port(Downstream downstream) {
-        return Integer.parseInt(downstream.getPort());
-    }
+  private int port(Downstream downstream) {
+    return Integer.parseInt(downstream.getPort());
+  }
 }

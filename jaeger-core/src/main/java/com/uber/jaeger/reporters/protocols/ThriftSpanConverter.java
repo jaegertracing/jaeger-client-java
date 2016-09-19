@@ -32,23 +32,18 @@ import com.uber.jaeger.Span;
 import com.uber.jaeger.SpanContext;
 import com.uber.jaeger.Tracer;
 
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-
 public class ThriftSpanConverter {
 
-    public static com.twitter.zipkin.thriftjava.Span convertSpan(Span span) {
-        Tracer tracer = span.getTracer();
-        Endpoint host = new Endpoint(
-            tracer.getIP(),
-            (short)0,
-            tracer.getServiceName());
+  public static com.twitter.zipkin.thriftjava.Span convertSpan(Span span) {
+    Tracer tracer = span.getTracer();
+    Endpoint host = new Endpoint(tracer.getIP(), (short) 0, tracer.getServiceName());
 
-        SpanContext context = span.getContext();
-        return new com.twitter.zipkin.thriftjava.Span(
+    SpanContext context = span.getContext();
+    return new com.twitter.zipkin.thriftjava.Span(
             context.getTraceID(),
             span.getOperationName(),
             context.getSpanID(),
@@ -58,84 +53,87 @@ public class ThriftSpanConverter {
         .setDebug(context.isDebug())
         .setTimestamp(span.getStart())
         .setDuration(span.getDuration());
+  }
+
+  private static List<Annotation> buildAnnotations(Span span, Endpoint host) {
+    List<Annotation> annotations = new ArrayList<>();
+
+    if (span.isRPC()) {
+      String startLabel = zipkincoreConstants.SERVER_RECV;
+      String endLabel = zipkincoreConstants.SERVER_SEND;
+      if (span.isRPCClient()) {
+        startLabel = zipkincoreConstants.CLIENT_SEND;
+        endLabel = zipkincoreConstants.CLIENT_RECV;
+      }
+
+      annotations.add(new Annotation(span.getStart(), startLabel).setHost(host));
+      annotations.add(new Annotation(span.getStart() + span.getDuration(), endLabel).setHost(host));
     }
 
-    private static List<Annotation> buildAnnotations(Span span, Endpoint host) {
-        List<Annotation> annotations = new ArrayList<>();
-
-        if (span.isRPC()) {
-            String startLabel = zipkincoreConstants.SERVER_RECV;
-            String endLabel = zipkincoreConstants.SERVER_SEND;
-            if (span.isRPCClient()) {
-                startLabel = zipkincoreConstants.CLIENT_SEND;
-                endLabel = zipkincoreConstants.CLIENT_RECV;
-            }
-
-            annotations.add(new Annotation(span.getStart(), startLabel).setHost(host));
-            annotations.add(new Annotation(span.getStart() + span.getDuration(), endLabel).setHost(host));
-        }
-
-        List<LogData> logs = span.getLogs();
-        if (logs != null) {
-            for (LogData logData : logs) {
-                annotations.add(new Annotation(logData.getTime(), logData.getMessage()));
-            }
-        }
-
-        return annotations;
+    List<LogData> logs = span.getLogs();
+    if (logs != null) {
+      for (LogData logData : logs) {
+        annotations.add(new Annotation(logData.getTime(), logData.getMessage()));
+      }
     }
 
-    private static List<BinaryAnnotation> buildBinaryAnnotations(Span span, Endpoint host) {
-        List<BinaryAnnotation> binaryAnnotations = new ArrayList<BinaryAnnotation>();
+    return annotations;
+  }
 
-        if (span.getPeer() != null && span.isRPC()) {
-            String label = span.isRPCClient() ? zipkincoreConstants.SERVER_ADDR : zipkincoreConstants.CLIENT_ADDR;
+  private static List<BinaryAnnotation> buildBinaryAnnotations(Span span, Endpoint host) {
+    List<BinaryAnnotation> binaryAnnotations = new ArrayList<BinaryAnnotation>();
 
-            binaryAnnotations.add(new BinaryAnnotation()
-                .setKey(label)
-                .setValue(new byte[]{1})
-                .setAnnotation_type(AnnotationType.BOOL)
-                .setHost(span.getPeer()));
-        }
+    if (span.getPeer() != null && span.isRPC()) {
+      String label =
+          span.isRPCClient() ? zipkincoreConstants.SERVER_ADDR : zipkincoreConstants.CLIENT_ADDR;
 
-        if (!span.isRPC()) {
-            byte[] componentName;
-            if(span.getLocalComponent() != null) {
-                componentName = span.getLocalComponent().getBytes();
-            } else {
-                // spans always have associated tracers, and service names
-                componentName = span.getTracer().getServiceName().getBytes();
-            }
-
-            binaryAnnotations.add(new BinaryAnnotation().setKey(zipkincoreConstants.LOCAL_COMPONENT)
-                .setValue(componentName)
-                .setAnnotation_type(AnnotationType.STRING)
-                .setHost(host));
-        }
-
-        Map<String, Object> tags = span.getTags();
-        if (tags != null) {
-            for (String tagKey : tags.keySet()) {
-                // Every value is converted to string because zipkin search doesn't
-                // work well with ints, and bytes.
-                Object tagValue = tags.get(tagKey);
-                binaryAnnotations.add(buildBinaryAnnotation(tagKey, tagValue));
-            }
-        }
-        return binaryAnnotations;
+      binaryAnnotations.add(
+          new BinaryAnnotation()
+              .setKey(label)
+              .setValue(new byte[] {1})
+              .setAnnotation_type(AnnotationType.BOOL)
+              .setHost(span.getPeer()));
     }
 
-    private static BinaryAnnotation buildBinaryAnnotation(String tagKey, Object tagValue) {
-        BinaryAnnotation banno = new BinaryAnnotation()
-            .setKey(tagKey);
+    if (!span.isRPC()) {
+      byte[] componentName;
+      if (span.getLocalComponent() != null) {
+        componentName = span.getLocalComponent().getBytes();
+      } else {
+        // spans always have associated tracers, and service names
+        componentName = span.getTracer().getServiceName().getBytes();
+      }
 
-        String stringTagValue = tagValue.toString();
-        if (stringTagValue.length() > Constants.MAX_ANNOTATION_LENGTH) {
-            tagValue = stringTagValue.substring(0, Constants.MAX_ANNOTATION_LENGTH);
-        }
-
-        banno.setValue(stringTagValue.getBytes()).setAnnotation_type(AnnotationType.STRING);
-
-        return banno;
+      binaryAnnotations.add(
+          new BinaryAnnotation()
+              .setKey(zipkincoreConstants.LOCAL_COMPONENT)
+              .setValue(componentName)
+              .setAnnotation_type(AnnotationType.STRING)
+              .setHost(host));
     }
+
+    Map<String, Object> tags = span.getTags();
+    if (tags != null) {
+      for (String tagKey : tags.keySet()) {
+        // Every value is converted to string because zipkin search doesn't
+        // work well with ints, and bytes.
+        Object tagValue = tags.get(tagKey);
+        binaryAnnotations.add(buildBinaryAnnotation(tagKey, tagValue));
+      }
+    }
+    return binaryAnnotations;
+  }
+
+  private static BinaryAnnotation buildBinaryAnnotation(String tagKey, Object tagValue) {
+    BinaryAnnotation banno = new BinaryAnnotation().setKey(tagKey);
+
+    String stringTagValue = tagValue.toString();
+    if (stringTagValue.length() > Constants.MAX_ANNOTATION_LENGTH) {
+      tagValue = stringTagValue.substring(0, Constants.MAX_ANNOTATION_LENGTH);
+    }
+
+    banno.setValue(stringTagValue.getBytes()).setAnnotation_type(AnnotationType.STRING);
+
+    return banno;
+  }
 }

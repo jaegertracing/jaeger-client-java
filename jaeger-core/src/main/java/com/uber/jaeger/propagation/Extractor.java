@@ -24,5 +24,5 @@ package com.uber.jaeger.propagation;
 import com.uber.jaeger.SpanContext;
 
 public interface Extractor<T> {
-    SpanContext extract(T carrier);
+  SpanContext extract(T carrier);
 }
