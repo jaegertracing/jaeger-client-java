@@ -33,48 +33,50 @@ import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TSimpleServer;
 
 public class TestTServer implements Runnable {
-    TServer server;
-    InMemorySpanServerHandler handler;
-    TUDPServerTransport transport;
+  TServer server;
+  InMemorySpanServerHandler handler;
+  TUDPServerTransport transport;
 
-    public TestTServer(int port) throws SocketException, UnknownHostException {
-        handler = new InMemorySpanServerHandler();
-        transport = new TUDPServerTransport(port);
-        server = new TSimpleServer(new TServer.Args(transport)
+  public TestTServer(int port) throws SocketException, UnknownHostException {
+    handler = new InMemorySpanServerHandler();
+    transport = new TUDPServerTransport(port);
+    server =
+        new TSimpleServer(
+            new TServer.Args(transport)
                 .protocolFactory(new TCompactProtocol.Factory())
                 .processor(new Agent.Processor<>(handler)));
-    }
+  }
 
-    public int getPort() {
-        return transport.getPort();
-    }
+  public int getPort() {
+    return transport.getPort();
+  }
 
-    @Override
-    public void run() {
-        server.serve();
-    }
+  @Override
+  public void run() {
+    server.serve();
+  }
 
-    public void close() {
-        server.stop();
-    }
+  public void close() {
+    server.stop();
+  }
 
-    public List<Span> getSpans(int expectedSpans, int timeout) throws Exception{
+  public List<Span> getSpans(int expectedSpans, int timeout) throws Exception {
 
-        List<Span> spans = new ArrayList<>();
-        long expire = timeout + System.currentTimeMillis();
-        while (System.currentTimeMillis() < expire) {
-            List<Span> receivedSpans = handler.getSpans();
-            if (receivedSpans != null) {
-                spans.addAll(receivedSpans);
-            }
+    List<Span> spans = new ArrayList<>();
+    long expire = timeout + System.currentTimeMillis();
+    while (System.currentTimeMillis() < expire) {
+      List<Span> receivedSpans = handler.getSpans();
+      if (receivedSpans != null) {
+        spans.addAll(receivedSpans);
+      }
 
-            if (spans.size() >= expectedSpans) {
-                return spans;
-            }
-
-            Thread.sleep(1);
-        }
-
+      if (spans.size() >= expectedSpans) {
         return spans;
+      }
+
+      Thread.sleep(1);
     }
+
+    return spans;
+  }
 }

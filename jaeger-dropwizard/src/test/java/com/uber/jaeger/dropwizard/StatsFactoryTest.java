@@ -39,85 +39,100 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class StatsFactoryTest {
-    MetricRegistry registry;
-    StatsFactory statsFactory;
+  MetricRegistry registry;
+  StatsFactory statsFactory;
 
-    @Before
-    public void setUp() {
-        registry = mock(MetricRegistry.class);
-        statsFactory = new StatsFactory(registry);
-    }
+  @Before
+  public void setUp() {
+    registry = mock(MetricRegistry.class);
+    statsFactory = new StatsFactory(registry);
+  }
 
-    @Test
-    public void testCounterCallsMark() {
-        Meter mockCounter = mock(Meter.class);
-        when(registry.meter(any(String.class))).thenReturn(mockCounter);
-        String name = "traces";
-        Map<String, String> tags = new HashMap<String, String>() {{
+  @Test
+  public void testCounterCallsMark() {
+    Meter mockCounter = mock(Meter.class);
+    when(registry.meter(any(String.class))).thenReturn(mockCounter);
+    String name = "traces";
+    Map<String, String> tags =
+        new HashMap<String, String>() {
+          {
             put("state", "started");
             put("sampled", "y");
-        }};
-        long expectedValue = 1000;
+          }
+        };
+    long expectedValue = 1000;
 
-        com.uber.jaeger.metrics.Counter cntr = statsFactory.createCounter(name, tags);
-        cntr.inc(expectedValue);
+    com.uber.jaeger.metrics.Counter cntr = statsFactory.createCounter(name, tags);
+    cntr.inc(expectedValue);
 
-        verify(mockCounter).mark(expectedValue);
-    }
+    verify(mockCounter).mark(expectedValue);
+  }
 
-    @Test
-    public void testStatsFactoryCreatesCounter() {
-        String name = "traces";
-        Map<String, String> tags = new HashMap<String, String>() {{
+  @Test
+  public void testStatsFactoryCreatesCounter() {
+    String name = "traces";
+    Map<String, String> tags =
+        new HashMap<String, String>() {
+          {
             put("state", "started");
             put("sampled", "y");
-        }};
+          }
+        };
 
-        statsFactory.createCounter(name, tags);
+    statsFactory.createCounter(name, tags);
 
-        verify(registry, times(1)).meter(any(String.class));
-    }
+    verify(registry, times(1)).meter(any(String.class));
+  }
 
-    @Test
-    public void testTimerCallsRecord() {
-        Timer mockTimer = mock(Timer.class);
-        when(registry.timer(any(String.class))).thenReturn(mockTimer);
-        String name = "traces";
-        Map<String, String> tags = new HashMap<String, String>() {{
+  @Test
+  public void testTimerCallsRecord() {
+    Timer mockTimer = mock(Timer.class);
+    when(registry.timer(any(String.class))).thenReturn(mockTimer);
+    String name = "traces";
+    Map<String, String> tags =
+        new HashMap<String, String>() {
+          {
             put("state", "started");
             put("sampled", "y");
-        }};
-        long expectedValue = 1000;
+          }
+        };
+    long expectedValue = 1000;
 
-        com.uber.jaeger.metrics.Timer timer = statsFactory.createTimer(name, tags);
-        timer.durationMicros(expectedValue);
+    com.uber.jaeger.metrics.Timer timer = statsFactory.createTimer(name, tags);
+    timer.durationMicros(expectedValue);
 
-        verify(mockTimer).update(expectedValue, TimeUnit.MICROSECONDS);
-    }
+    verify(mockTimer).update(expectedValue, TimeUnit.MICROSECONDS);
+  }
 
-    @Test
-    public void testStatsFactoryCreatesTimer() {
-        String name = "reporting";
-        Map<String, String> tags = new HashMap<String, String>() {{
+  @Test
+  public void testStatsFactoryCreatesTimer() {
+    String name = "reporting";
+    Map<String, String> tags =
+        new HashMap<String, String>() {
+          {
             put("state", "finished");
             put("unit", "seconds");
-        }};
+          }
+        };
 
-        statsFactory.createTimer(name, tags);
+    statsFactory.createTimer(name, tags);
 
-        verify(registry, times(1)).timer(any(String.class));
-    }
+    verify(registry, times(1)).timer(any(String.class));
+  }
 
-    @Test
-    public void testStatsFactoryCreatesGauge() {
-        String name = "reporting";
-        Map<String, String> tags = new HashMap<String, String>() {{
+  @Test
+  public void testStatsFactoryCreatesGauge() {
+    String name = "reporting";
+    Map<String, String> tags =
+        new HashMap<String, String>() {
+          {
             put("state", "started");
             put("type", "queue");
-        }};
+          }
+        };
 
-        statsFactory.createGauge(name, tags);
+    statsFactory.createGauge(name, tags);
 
-        verify(registry, times(1)).register(any(String.class), any(Gauge.class));
-    }
+    verify(registry, times(1)).register(any(String.class), any(Gauge.class));
+  }
 }

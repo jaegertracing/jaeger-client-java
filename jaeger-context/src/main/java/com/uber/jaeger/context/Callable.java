@@ -24,24 +24,24 @@ package com.uber.jaeger.context;
 import io.opentracing.Span;
 
 public class Callable<T> implements java.util.concurrent.Callable<T> {
-    private final java.util.concurrent.Callable<T> wrappedCallable;
-    private final TraceContext traceContext;
-    private final Span currentSpan;
+  private final java.util.concurrent.Callable<T> wrappedCallable;
+  private final TraceContext traceContext;
+  private final Span currentSpan;
 
-    public Callable(java.util.concurrent.Callable<T> wrappedCallable, TraceContext traceContext) {
-        this.wrappedCallable = wrappedCallable;
-        this.traceContext = traceContext;
-        currentSpan = traceContext.getCurrentSpan();
+  public Callable(java.util.concurrent.Callable<T> wrappedCallable, TraceContext traceContext) {
+    this.wrappedCallable = wrappedCallable;
+    this.traceContext = traceContext;
+    currentSpan = traceContext.getCurrentSpan();
+  }
+
+  @Override
+  public T call() throws Exception {
+    traceContext.push(currentSpan);
+
+    try {
+      return wrappedCallable.call();
+    } finally {
+      traceContext.pop();
     }
-
-    @Override
-    public T call() throws Exception {
-        traceContext.push(currentSpan);
-
-        try {
-            return wrappedCallable.call();
-        } finally {
-            traceContext.pop();
-        }
-    }
+  }
 }

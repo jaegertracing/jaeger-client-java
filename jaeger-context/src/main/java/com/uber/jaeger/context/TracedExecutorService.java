@@ -31,84 +31,92 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public class TracedExecutorService implements ExecutorService {
-    private final ExecutorService delegate;
-    private final TraceContext traceContext;
+  private final ExecutorService delegate;
+  private final TraceContext traceContext;
 
-    public TracedExecutorService(ExecutorService delegate, TraceContext traceContext) {
-        this.delegate = delegate;
-        this.traceContext = traceContext;
-    }
+  public TracedExecutorService(ExecutorService delegate, TraceContext traceContext) {
+    this.delegate = delegate;
+    this.traceContext = traceContext;
+  }
 
-    @Override
-    public void shutdown() {
-        delegate.shutdown();
-    }
+  @Override
+  public void shutdown() {
+    delegate.shutdown();
+  }
 
-    @Override
-    public List<java.lang.Runnable> shutdownNow() {
-        return delegate.shutdownNow();
-    }
+  @Override
+  public List<java.lang.Runnable> shutdownNow() {
+    return delegate.shutdownNow();
+  }
 
-    @Override
-    public boolean isShutdown() {
-        return delegate.isShutdown();
-    }
+  @Override
+  public boolean isShutdown() {
+    return delegate.isShutdown();
+  }
 
-    @Override
-    public boolean isTerminated() {
-        return delegate.isTerminated();
-    }
+  @Override
+  public boolean isTerminated() {
+    return delegate.isTerminated();
+  }
 
-    @Override
-    public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
-        return delegate.awaitTermination(timeout, unit);
-    }
+  @Override
+  public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+    return delegate.awaitTermination(timeout, unit);
+  }
 
-    @Override
-    public <T> Future<T> submit(java.util.concurrent.Callable<T> task) {
-        return delegate.submit(new Callable<>(task, traceContext));
-    }
+  @Override
+  public <T> Future<T> submit(java.util.concurrent.Callable<T> task) {
+    return delegate.submit(new Callable<>(task, traceContext));
+  }
 
-    @Override
-    public <T> Future<T> submit(java.lang.Runnable task, T result) {
-        return delegate.submit(new Runnable(task, traceContext), result);
-    }
+  @Override
+  public <T> Future<T> submit(java.lang.Runnable task, T result) {
+    return delegate.submit(new Runnable(task, traceContext), result);
+  }
 
-    @Override
-    public Future<?> submit(java.lang.Runnable task) {
-        return delegate.submit(new Runnable(task, traceContext));
-    }
+  @Override
+  public Future<?> submit(java.lang.Runnable task) {
+    return delegate.submit(new Runnable(task, traceContext));
+  }
 
-    @Override
-    public <T> List<Future<T>> invokeAll(Collection<? extends java.util.concurrent.Callable<T>> tasks) throws InterruptedException {
-        return delegate.invokeAll(wrapJaegerCallableCollection(tasks));
-    }
+  @Override
+  public <T> List<Future<T>> invokeAll(Collection<? extends java.util.concurrent.Callable<T>> tasks)
+      throws InterruptedException {
+    return delegate.invokeAll(wrapJaegerCallableCollection(tasks));
+  }
 
-    @Override
-    public <T> List<Future<T>> invokeAll(Collection<? extends java.util.concurrent.Callable<T>> tasks, long timeout, TimeUnit unit) throws InterruptedException {
-        return delegate.invokeAll(wrapJaegerCallableCollection(tasks), timeout, unit);
-    }
+  @Override
+  public <T> List<Future<T>> invokeAll(
+      Collection<? extends java.util.concurrent.Callable<T>> tasks, long timeout, TimeUnit unit)
+      throws InterruptedException {
+    return delegate.invokeAll(wrapJaegerCallableCollection(tasks), timeout, unit);
+  }
 
-    @Override
-    public <T> T invokeAny(Collection<? extends java.util.concurrent.Callable<T>> tasks) throws InterruptedException, ExecutionException {
-        return delegate.invokeAny(wrapJaegerCallableCollection(tasks));
-    }
+  @Override
+  public <T> T invokeAny(Collection<? extends java.util.concurrent.Callable<T>> tasks)
+      throws InterruptedException, ExecutionException {
+    return delegate.invokeAny(wrapJaegerCallableCollection(tasks));
+  }
 
-    @Override
-    public <T> T invokeAny(Collection<? extends java.util.concurrent.Callable<T>> tasks, long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-        return delegate.invokeAny(wrapJaegerCallableCollection(tasks), timeout, unit);
-    }
+  @Override
+  public <T> T invokeAny(
+      Collection<? extends java.util.concurrent.Callable<T>> tasks, long timeout, TimeUnit unit)
+      throws InterruptedException, ExecutionException, TimeoutException {
+    return delegate.invokeAny(wrapJaegerCallableCollection(tasks), timeout, unit);
+  }
 
-    @Override
-    public void execute(final java.lang.Runnable command) {
-        delegate.execute(new Runnable(command, traceContext));
-    }
+  @Override
+  public void execute(final java.lang.Runnable command) {
+    delegate.execute(new Runnable(command, traceContext));
+  }
 
-    private <T> Collection<? extends java.util.concurrent.Callable<T>> wrapJaegerCallableCollection(Collection<? extends java.util.concurrent.Callable<T>> originalCollection) {
-        Collection<java.util.concurrent.Callable<T>> collection = new ArrayList<>(originalCollection.size());
-        for (java.util.concurrent.Callable<T> c : originalCollection) {
-            collection.add(new Callable<>(c, traceContext));
-        }
-        return collection;
+  private <T> Collection<? extends java.util.concurrent.Callable<T>> wrapJaegerCallableCollection(
+      Collection<? extends java.util.concurrent.Callable<T>> originalCollection) {
+    Collection<java.util.concurrent.Callable<T>> collection =
+        new ArrayList<>(originalCollection.size());
+    for (java.util.concurrent.Callable<T> c : originalCollection) {
+      collection.add(new Callable<>(c, traceContext));
     }
+    return collection;
+  }
 }

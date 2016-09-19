@@ -24,12 +24,11 @@ package com.uber.jaeger.reporters;
 import com.uber.jaeger.Span;
 
 /**
- * Reporter is the interface Tracer uses to report finished span to something
- * that collects those spans. Default implementation is remote reporter that
- * sends spans out of process.
+ * Reporter is the interface Tracer uses to report finished span to something that collects those
+ * spans. Default implementation is remote reporter that sends spans out of process.
  */
 public interface Reporter {
-    void report(Span span);
+  void report(Span span);
 
-    void close();
+  void close();
 }

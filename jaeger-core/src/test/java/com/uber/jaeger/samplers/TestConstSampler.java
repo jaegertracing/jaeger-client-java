@@ -25,14 +25,14 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
 public class TestConstSampler {
-    @Test
-    public void testTags() {
-        Sampler sampler = new ConstSampler(true);
-        assertEquals("const", sampler.getTags().get("sampler.type"));
-        assertEquals(true, sampler.getTags().get("sampler.param"));
+  @Test
+  public void testTags() {
+    Sampler sampler = new ConstSampler(true);
+    assertEquals("const", sampler.getTags().get("sampler.type"));
+    assertEquals(true, sampler.getTags().get("sampler.param"));
 
-        sampler = new ConstSampler(false);
-        assertEquals("const", sampler.getTags().get("sampler.type"));
-        assertEquals(false, sampler.getTags().get("sampler.param"));
-    }
+    sampler = new ConstSampler(false);
+    assertEquals("const", sampler.getTags().get("sampler.type"));
+    assertEquals(false, sampler.getTags().get("sampler.param"));
+  }
 }

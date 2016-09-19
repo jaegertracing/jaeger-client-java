@@ -29,44 +29,42 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class RateLimitingSampler implements Sampler {
-    public static final String TYPE = "ratelimiting";
+  public static final String TYPE = "ratelimiting";
 
-    private final RateLimiter rateLimiter;
-    private final int maxTracesPerSecond;
-    private final Map<String, Object> tags;
+  private final RateLimiter rateLimiter;
+  private final int maxTracesPerSecond;
+  private final Map<String, Object> tags;
 
-    public RateLimitingSampler(int maxTracesPerSecond) {
-        this.maxTracesPerSecond = maxTracesPerSecond;
-        this.rateLimiter = new RateLimiter(maxTracesPerSecond);
+  public RateLimitingSampler(int maxTracesPerSecond) {
+    this.maxTracesPerSecond = maxTracesPerSecond;
+    this.rateLimiter = new RateLimiter(maxTracesPerSecond);
 
-        Map<String, Object> tags = new HashMap<>();
-        tags.put(Constants.SAMPLER_TYPE_TAG_KEY, TYPE);
-        tags.put(Constants.SAMPLER_PARAM_TAG_KEY, maxTracesPerSecond);
-        this.tags = Collections.unmodifiableMap(tags);
+    Map<String, Object> tags = new HashMap<>();
+    tags.put(Constants.SAMPLER_TYPE_TAG_KEY, TYPE);
+    tags.put(Constants.SAMPLER_PARAM_TAG_KEY, maxTracesPerSecond);
+    this.tags = Collections.unmodifiableMap(tags);
+  }
+
+  public boolean isSampled(long id) {
+    return this.rateLimiter.checkCredit(1.0);
+  }
+
+  @Override
+  public Map<String, Object> getTags() {
+    return tags;
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (this == other) return true;
+    if (other instanceof RateLimitingSampler) {
+      return this.maxTracesPerSecond == ((RateLimitingSampler) other).maxTracesPerSecond;
     }
+    return false;
+  }
 
-    public boolean isSampled(long id) {
-        return this.rateLimiter.checkCredit(1.0);
-    }
-
-    @Override
-    public Map<String, Object> getTags() {
-        return tags;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (this == other) return true;
-        if (other instanceof  RateLimitingSampler) {
-            return this.maxTracesPerSecond == ((RateLimitingSampler) other).maxTracesPerSecond;
-        }
-        return false;
-    }
-
-    /**
-     * Only implemented to maintain compatibility with sampling interface.
-     */
-    public void close() {
-
-    }
+  /**
+   * Only implemented to maintain compatibility with sampling interface.
+   */
+  public void close() {}
 }

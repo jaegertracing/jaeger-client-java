@@ -42,86 +42,83 @@ import static org.junit.Assert.assertNull;
 @RunWith(Parameterized.class)
 public class TracerTagsTest {
 
-    private enum SpanType {
-        ROOT, CHILD, RPC_SERVER
+  private enum SpanType {
+    ROOT,
+    CHILD,
+    RPC_SERVER
+  }
+
+  // sentinel value is used to mark tags that should *not* be present
+  private static final Object SENTINEL = new Object();
+
+  private final SpanType spanType;
+  private final Map<String, Object> expectedTags;
+
+  public TracerTagsTest(SpanType spanType, Map<String, Object> expectedTags) {
+    this.spanType = spanType;
+    this.expectedTags = expectedTags;
+  }
+
+  @Parameterized.Parameters(name = "{index}: {0}")
+  public static Collection<Object[]> data() {
+    Tracer tracer = new Tracer.Builder("x", null, null).build();
+    String hostname = tracer.getHostName();
+
+    Map<String, Object> rootTags = new HashMap<>();
+    rootTags.put("jaeger.version", Tracer.VERSION);
+    rootTags.put("jaeger.hostname", hostname);
+    rootTags.put("sampler.type", "const");
+    rootTags.put("sampler.param", true);
+
+    Map<String, Object> childTags = new HashMap<>();
+    childTags.put("jaeger.version", SENTINEL);
+    childTags.put("jaeger.hostname", SENTINEL);
+    childTags.put("sampler.type", SENTINEL);
+    childTags.put("sampler.param", SENTINEL);
+
+    Map<String, Object> rpcTags = new HashMap<>();
+    rpcTags.put("jaeger.version", Tracer.VERSION);
+    rpcTags.put("jaeger.hostname", hostname);
+    rpcTags.put("sampler.type", SENTINEL);
+    rpcTags.put("sampler.param", SENTINEL);
+
+    List<Object[]> data = new ArrayList<>();
+    data.add(new Object[] {SpanType.ROOT, rootTags});
+    data.add(new Object[] {SpanType.CHILD, childTags});
+    data.add(new Object[] {SpanType.RPC_SERVER, rpcTags});
+    return data;
+  }
+
+  @Before
+  public void setUp() throws Exception {}
+
+  @Test
+  public void testTracerTags() throws Exception {
+    InMemoryReporter spanReporter = new InMemoryReporter();
+    Tracer tracer = new Tracer.Builder("x", spanReporter, new ConstSampler(true)).build();
+
+    Span span = (Span) tracer.buildSpan("root").start();
+    if (spanType == SpanType.CHILD) {
+      span = (Span) tracer.buildSpan("child").asChildOf(span).start();
     }
-
-    // sentinel value is used to mark tags that should *not* be present
-    private static final Object SENTINEL = new Object();
-
-    private final SpanType spanType;
-    private final Map<String, Object> expectedTags;
-
-    public TracerTagsTest(SpanType spanType, Map<String, Object> expectedTags) {
-        this.spanType = spanType;
-        this.expectedTags = expectedTags;
+    if (spanType == SpanType.RPC_SERVER) {
+      span =
+          (Span)
+              tracer
+                  .buildSpan("rpc-server")
+                  .asChildOf(span)
+                  .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
+                  .start();
     }
-
-    @Parameterized.Parameters(name = "{index}: {0}")
-    public static Collection<Object[]> data() {
-        Tracer tracer = new Tracer.Builder("x", null, null).build();
-        String hostname = tracer.getHostName();
-
-        Map<String, Object> rootTags = new HashMap<>();
-        rootTags.put("jaeger.version", Tracer.VERSION);
-        rootTags.put("jaeger.hostname", hostname);
-        rootTags.put("sampler.type", "const");
-        rootTags.put("sampler.param", true);
-
-        Map<String, Object> childTags = new HashMap<>();
-        childTags.put("jaeger.version", SENTINEL);
-        childTags.put("jaeger.hostname", SENTINEL);
-        childTags.put("sampler.type", SENTINEL);
-        childTags.put("sampler.param", SENTINEL);
-
-        Map<String, Object> rpcTags = new HashMap<>();
-        rpcTags.put("jaeger.version", Tracer.VERSION);
-        rpcTags.put("jaeger.hostname", hostname);
-        rpcTags.put("sampler.type", SENTINEL);
-        rpcTags.put("sampler.param", SENTINEL);
-
-        List<Object[]> data = new ArrayList<>();
-        data.add(new Object[] {SpanType.ROOT, rootTags});
-        data.add(new Object[] {SpanType.CHILD, childTags});
-        data.add(new Object[] {SpanType.RPC_SERVER, rpcTags});
-        return data;
+    Map<String, Object> tags = span.getTags();
+    for (String key : expectedTags.keySet()) {
+      Object expectedValue = expectedTags.get(key);
+      Object actualValue = tags.get(key);
+      if (expectedValue == SENTINEL) {
+        assertNull("Not expecting " + key + " for " + spanType, actualValue);
+      } else {
+        assertEquals("Expecting " + key + " for " + spanType, expectedValue, actualValue);
+      }
     }
-
-    @Before
-    public void setUp() throws Exception {
-    }
-
-    @Test
-    public void testTracerTags() throws Exception {
-        InMemoryReporter spanReporter = new InMemoryReporter();
-        Tracer tracer = new Tracer
-                .Builder("x", spanReporter, new ConstSampler(true))
-                .build();
-
-        Span span = (Span) tracer.buildSpan("root").start();
-        if (spanType == SpanType.CHILD) {
-            span = (Span) tracer.buildSpan("child").asChildOf(span).start();
-        }
-        if (spanType == SpanType.RPC_SERVER) {
-            span = (Span) tracer.buildSpan("rpc-server")
-                    .asChildOf(span)
-                    .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
-                    .start();
-        }
-        Map<String, Object> tags = span.getTags();
-        for (String key : expectedTags.keySet()) {
-            Object expectedValue = expectedTags.get(key);
-            Object actualValue = tags.get(key);
-            if (expectedValue == SENTINEL) {
-                assertNull(
-                        "Not expecting " + key + " for " + spanType,
-                        actualValue);
-            } else {
-                assertEquals(
-                        "Expecting " + key + " for " + spanType,
-                        expectedValue,
-                        actualValue);
-            }
-        }
-    }
+  }
 }

@@ -24,13 +24,9 @@ package com.uber.jaeger.reporters;
 import com.uber.jaeger.Span;
 
 public class NoopReporter implements Reporter {
-    @Override
-    public void report(Span span) {
+  @Override
+  public void report(Span span) {}
 
-    }
-
-    @Override
-    public void close() {
-
-    }
+  @Override
+  public void close() {}
 }

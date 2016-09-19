@@ -29,46 +29,44 @@ import static org.junit.Assert.assertEquals;
 
 public class SpanContextTest {
 
-    @Test(expected=MalformedTracerStateStringException.class)
-    public void testContextFromStringMalformedException() throws Exception {
-        SpanContext.contextFromString("ff:ff:ff");
-    }
+  @Test(expected = MalformedTracerStateStringException.class)
+  public void testContextFromStringMalformedException() throws Exception {
+    SpanContext.contextFromString("ff:ff:ff");
+  }
 
-    @Test(expected=EmptyTracerStateStringException.class)
-    public void testContextFromStringEmptyException() throws Exception {
-        SpanContext.contextFromString("");
-    }
+  @Test(expected = EmptyTracerStateStringException.class)
+  public void testContextFromStringEmptyException() throws Exception {
+    SpanContext.contextFromString("");
+  }
 
-    @Test
-    public void testContextFromString() throws Exception {
-        SpanContext context = SpanContext.contextFromString("ff:dd:cc:4");
-        assertEquals(context.getTraceID(), 255);
-        assertEquals(context.getSpanID(), 221);
-        assertEquals(context.getParentID(), 204);
-        assertEquals(context.getFlags(), 4);
+  @Test
+  public void testContextFromString() throws Exception {
+    SpanContext context = SpanContext.contextFromString("ff:dd:cc:4");
+    assertEquals(context.getTraceID(), 255);
+    assertEquals(context.getSpanID(), 221);
+    assertEquals(context.getParentID(), 204);
+    assertEquals(context.getFlags(), 4);
+  }
 
-    }
+  @Test
+  public void testToStringFormatsPostitiveFields() {
+    long traceID = (1 << 64) - 10L;
+    long spanID = (1 << 64) - 10L;
+    long parentID = (1 << 64) - 10L;
+    byte flags = (byte) 129;
 
-    @Test
-    public void testToStringFormatsPostitiveFields() {
-        long traceID = (1<< 64) - 10L;
-        long spanID = (1 << 64) - 10L;
-        long parentID = (1 << 64) - 10L;
-        byte flags = (byte)129;
+    // I use MIN_VALUE because the most significant bit, and thats when
+    // we want to make sure the hex number is positive.
+    SpanContext context = new SpanContext(traceID, spanID, parentID, flags);
 
-        // I use MIN_VALUE because the most significant bit, and thats when
-        // we want to make sure the hex number is positive.
-        SpanContext context = new SpanContext(traceID, spanID, parentID, flags);
+    context.contextAsString().split(":");
 
-        context.contextAsString().split(":");
-
-        assertEquals("fffffffffffffff7:fffffffffffffff7:fffffffffffffff7:81", context.contextAsString());
-        SpanContext contextFromStr = SpanContext.contextFromString(context.contextAsString());
-        assertEquals(traceID, contextFromStr.getTraceID());
-        assertEquals(spanID, contextFromStr.getSpanID());
-        assertEquals(parentID, contextFromStr.getParentID());
-        assertEquals(flags, contextFromStr.getFlags());
-
-
-    }
+    assertEquals(
+        "fffffffffffffff7:fffffffffffffff7:fffffffffffffff7:81", context.contextAsString());
+    SpanContext contextFromStr = SpanContext.contextFromString(context.contextAsString());
+    assertEquals(traceID, contextFromStr.getTraceID());
+    assertEquals(spanID, contextFromStr.getSpanID());
+    assertEquals(parentID, contextFromStr.getParentID());
+    assertEquals(flags, contextFromStr.getFlags());
+  }
 }

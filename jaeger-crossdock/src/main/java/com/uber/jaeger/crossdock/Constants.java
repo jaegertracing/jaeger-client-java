@@ -22,7 +22,7 @@
 package com.uber.jaeger.crossdock;
 
 public class Constants {
-    public final static String BAGGAGE_KEY = "crossdock-baggage-key";
-    public final static String TRANSPORT_HTTP = "HTTP";
-    public final static String TRANSPORT_TCHANNEL = "TCHANNEL";
+  public final static String BAGGAGE_KEY = "crossdock-baggage-key";
+  public final static String TRANSPORT_HTTP = "HTTP";
+  public final static String TRANSPORT_TCHANNEL = "TCHANNEL";
 }

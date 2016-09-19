@@ -22,11 +22,11 @@
 package com.uber.jaeger.exceptions;
 
 public class SamplingStrategyErrorException extends RuntimeException {
-    public SamplingStrategyErrorException(String msg) {
-        super(msg);
-    }
+  public SamplingStrategyErrorException(String msg) {
+    super(msg);
+  }
 
-    public SamplingStrategyErrorException(String msg, Throwable cause) {
-        super(msg, cause);
-    }
+  public SamplingStrategyErrorException(String msg, Throwable cause) {
+    super(msg, cause);
+  }
 }

@@ -22,27 +22,27 @@
 package com.uber.jaeger.utils;
 
 /**
- * Default implementation of a clock that delegates its calls to the system clock.
- * The microsecond-precision time is simulated by (millis * 1000), therefore
- * the {@link #isMicrosAccurate()} is false.
+ * Default implementation of a clock that delegates its calls to the system clock. The
+ * microsecond-precision time is simulated by (millis * 1000), therefore the
+ * {@link #isMicrosAccurate()} is false.
  *
  * @see System#currentTimeMillis()
  * @see System#nanoTime()
  */
 public class SystemClock implements Clock {
 
-    @Override
-    public long currentTimeMicros() {
-        return System.currentTimeMillis() * 1000;
-    }
+  @Override
+  public long currentTimeMicros() {
+    return System.currentTimeMillis() * 1000;
+  }
 
-    @Override
-    public long currentNanoTicks() {
-        return System.nanoTime();
-    }
+  @Override
+  public long currentNanoTicks() {
+    return System.nanoTime();
+  }
 
-    @Override
-    public boolean isMicrosAccurate() {
-        return false;
-    }
+  @Override
+  public boolean isMicrosAccurate() {
+    return false;
+  }
 }

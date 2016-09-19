@@ -32,30 +32,30 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 public class CallableTest {
-    TraceContext traceContext;
-    Span span;
+  TraceContext traceContext;
+  Span span;
 
-    @Before
-    public void setUp() {
-        span = mock(Span.class);
-        traceContext = mock(TraceContext.class);
-        when(traceContext.getCurrentSpan()).thenReturn(span);
-        when(traceContext.pop()).thenReturn(span);
-    }
+  @Before
+  public void setUp() {
+    span = mock(Span.class);
+    traceContext = mock(TraceContext.class);
+    when(traceContext.getCurrentSpan()).thenReturn(span);
+    when(traceContext.pop()).thenReturn(span);
+  }
 
-    @Test
-    public void testInstrumentedCallable() throws Exception {
-        Callable wrappedCallable = mock(Callable.class);
-        when(wrappedCallable.call()).thenReturn(span);
+  @Test
+  public void testInstrumentedCallable() throws Exception {
+    Callable wrappedCallable = mock(Callable.class);
+    when(wrappedCallable.call()).thenReturn(span);
 
-        Callable<Span> jaegerCallable = new Callable<>(wrappedCallable, traceContext);
+    Callable<Span> jaegerCallable = new Callable<>(wrappedCallable, traceContext);
 
-        jaegerCallable.call();
+    jaegerCallable.call();
 
-        verify(traceContext, times(1)).push(span);
-        verify(traceContext, times(1)).getCurrentSpan();
-        verify(traceContext, times(1)).pop();
-        verify(wrappedCallable, times(1)).call();
-        verifyNoMoreInteractions(traceContext, wrappedCallable);
-    }
+    verify(traceContext, times(1)).push(span);
+    verify(traceContext, times(1)).getCurrentSpan();
+    verify(traceContext, times(1)).pop();
+    verify(wrappedCallable, times(1)).call();
+    verifyNoMoreInteractions(traceContext, wrappedCallable);
+  }
 }

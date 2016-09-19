@@ -23,11 +23,11 @@ package com.uber.jaeger.propagation;
 
 // TODO profile and cache prefixed and unprefixed keys if necessary
 public final class PrefixedKeys {
-    public String prefixedKey(String key, String prefix) {
-        return prefix + key;
-    }
+  public String prefixedKey(String key, String prefix) {
+    return prefix + key;
+  }
 
-    public String unprefixedKey(String key, String prefix) {
-        return key.substring(prefix.length());
-    }
+  public String unprefixedKey(String key, String prefix) {
+    return key.substring(prefix.length());
+  }
 }

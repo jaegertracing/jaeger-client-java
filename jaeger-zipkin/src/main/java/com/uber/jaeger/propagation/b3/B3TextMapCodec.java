@@ -32,7 +32,9 @@ import java.util.Map;
 /**
  * This format is compatible with other trace libraries such as Brave, Wingtips, zipkin-js, etc.
  *
- * <p>Example usage:
+ * <p>
+ * Example usage:
+ *
  * <pre>{@code
  * b3Codec = new B3TextMapCodec();
  * tracer = new Tracer.Builder(serviceName, reporter, sampler)
@@ -41,7 +43,8 @@ import java.util.Map;
  *                    ...
  * }</pre>
  *
- * <p>See <a href="http://zipkin.io/pages/instrumenting.html">Instrumenting a Library</a>
+ * <p>
+ * See <a href="http://zipkin.io/pages/instrumenting.html">Instrumenting a Library</a>
  */
 public final class B3TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
   static final String TRACE_ID_NAME = "X-B3-TraceId";

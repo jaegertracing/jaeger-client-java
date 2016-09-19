@@ -25,43 +25,43 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class InMemoryStatsReporter implements StatsReporter {
-    public Map<String, Long> counters = new HashMap<>();
-    public Map<String, Long> gauges = new HashMap<>();
-    public Map<String, Long> timers = new HashMap<>();
+  public Map<String, Long> counters = new HashMap<>();
+  public Map<String, Long> gauges = new HashMap<>();
+  public Map<String, Long> timers = new HashMap<>();
 
-    void reset() {
-        counters = new HashMap<>();
-        gauges = new HashMap<>();
-        timers = new HashMap<>();
-    }
+  void reset() {
+    counters = new HashMap<>();
+    gauges = new HashMap<>();
+    timers = new HashMap<>();
+  }
 
-    @Override
-    public void incCounter(String name, long delta, Map<String, String> tags) {
-        String metricName = Metrics.addTagsToMetricName(name, tags);
-        long initialValue = 0;
-        if (counters.containsKey(metricName)) {
-            initialValue = counters.get(metricName);
-        }
-        counters.put(metricName, initialValue + delta);
+  @Override
+  public void incCounter(String name, long delta, Map<String, String> tags) {
+    String metricName = Metrics.addTagsToMetricName(name, tags);
+    long initialValue = 0;
+    if (counters.containsKey(metricName)) {
+      initialValue = counters.get(metricName);
     }
+    counters.put(metricName, initialValue + delta);
+  }
 
-    @Override
-    public void recordTimer(String name, long time, Map<String, String> tags) {
-        String metricName = Metrics.addTagsToMetricName(name, tags);
-        long initialValue = 0;
-        if (counters.containsKey(metricName)) {
-            initialValue = counters.get(metricName);
-        }
-        timers.put(metricName, initialValue + time);
+  @Override
+  public void recordTimer(String name, long time, Map<String, String> tags) {
+    String metricName = Metrics.addTagsToMetricName(name, tags);
+    long initialValue = 0;
+    if (counters.containsKey(metricName)) {
+      initialValue = counters.get(metricName);
     }
+    timers.put(metricName, initialValue + time);
+  }
 
-    @Override
-    public void updateGauge(String name, long amount, Map<String, String> tags) {
-        String metricName = Metrics.addTagsToMetricName(name, tags);
-        long initialValue = 0;
-        if (counters.containsKey(metricName)) {
-            initialValue = counters.get(metricName);
-        }
-        gauges.put(metricName, initialValue + amount);
+  @Override
+  public void updateGauge(String name, long amount, Map<String, String> tags) {
+    String metricName = Metrics.addTagsToMetricName(name, tags);
+    long initialValue = 0;
+    if (counters.containsKey(metricName)) {
+      initialValue = counters.get(metricName);
     }
+    gauges.put(metricName, initialValue + amount);
+  }
 }

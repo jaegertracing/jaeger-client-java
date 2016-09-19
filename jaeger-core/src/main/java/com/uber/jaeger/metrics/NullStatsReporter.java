@@ -24,18 +24,12 @@ package com.uber.jaeger.metrics;
 import java.util.Map;
 
 public class NullStatsReporter implements StatsReporter {
-    @Override
-    public void incCounter(String name, long delta, Map<String, String> tags) {
+  @Override
+  public void incCounter(String name, long delta, Map<String, String> tags) {}
 
-    }
+  @Override
+  public void recordTimer(String name, long time, Map<String, String> tags) {}
 
-    @Override
-    public void recordTimer(String name, long time, Map<String, String> tags) {
-
-    }
-
-    @Override
-    public void updateGauge(String name, long amount, Map<String, String> tags) {
-
-    }
+  @Override
+  public void updateGauge(String name, long amount, Map<String, String> tags) {}
 }

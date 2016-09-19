@@ -29,29 +29,33 @@ import com.uber.jaeger.crossdock.deserializers.JoinTraceRequestDeserializer;
 @JsonDeserialize(using = JoinTraceRequestDeserializer.class)
 public class JoinTraceRequest {
 
-    private String serverRole;
-    private Downstream downstream;
+  private String serverRole;
+  private Downstream downstream;
 
-    @JsonCreator
-    public JoinTraceRequest(@JsonProperty("serverRole") String serverRole,
-                            @JsonProperty("downstream") Downstream downstream) {
-        this.serverRole = serverRole;
-        this.downstream = downstream;
-    }
+  @JsonCreator
+  public JoinTraceRequest(
+      @JsonProperty("serverRole") String serverRole,
+      @JsonProperty("downstream") Downstream downstream) {
+    this.serverRole = serverRole;
+    this.downstream = downstream;
+  }
 
-    public String getServerRole() {
-        return serverRole;
-    }
+  public String getServerRole() {
+    return serverRole;
+  }
 
-    public Downstream getDownstream() {
-        return downstream;
-    }
+  public Downstream getDownstream() {
+    return downstream;
+  }
 
-    @Override
-    public String toString() {
-        return "JoinTraceRequest{" +
-                "serverRole='" + serverRole + '\'' +
-                ", downstream=" + downstream +
-                '}';
-    }
+  @Override
+  public String toString() {
+    return "JoinTraceRequest{"
+        + "serverRole='"
+        + serverRole
+        + '\''
+        + ", downstream="
+        + downstream
+        + '}';
+  }
 }

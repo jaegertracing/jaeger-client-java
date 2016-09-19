@@ -37,78 +37,93 @@ import java.net.URLEncoder;
 import java.util.HashMap;
 
 public class HTTPSamplingManager implements SamplingManager {
-    private static final String defaultSamplingServerHostPort = "localhost:5778";
-    private String hostPort = defaultSamplingServerHostPort;
+  private static final String defaultSamplingServerHostPort = "localhost:5778";
+  private String hostPort = defaultSamplingServerHostPort;
 
-    public HTTPSamplingManager(String hostPort) {
-        if (hostPort != null) {
-            this.hostPort = hostPort;
+  public HTTPSamplingManager(String hostPort) {
+    if (hostPort != null) {
+      this.hostPort = hostPort;
+    }
+  }
+
+  private String makeGetRequest(String urlToRead) throws IOException {
+    URL url = new URL(urlToRead);
+    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+    StringBuilder result = new StringBuilder();
+    try {
+      conn.setRequestMethod("GET");
+      try (BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
+        String line;
+        while ((line = rd.readLine()) != null) {
+          result.append(line);
         }
+      }
+    } finally {
+      conn.disconnect();
+    }
+    return result.toString();
+  }
+
+  private SamplingStrategyResponse jsonStringToSamplingStrategy(String jsonString) {
+    HashMap<String, Object> result;
+    try {
+      result = new ObjectMapper().readValue(jsonString, HashMap.class);
+    } catch (IOException e) {
+      throw new SamplingStrategyErrorException(
+          "Invalid json received when fetching sampling strategy from local agent.", e);
     }
 
-    private String makeGetRequest(String urlToRead) throws IOException {
-        URL url = new URL(urlToRead);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        StringBuilder result = new StringBuilder();
-        try {
-            conn.setRequestMethod("GET");
-            try (BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
-                String line;
-                while ((line = rd.readLine()) != null) {
-                    result.append(line);
-                }
-            }
-        } finally {
-            conn.disconnect();
-        }
-        return result.toString();
+    SamplingStrategyType samplingType =
+        SamplingStrategyType.findByValue((Integer) result.get("strategyType"));
+    if (samplingType == SamplingStrategyType.PROBABILISTIC) {
+      Double samplingRate;
+      try {
+        samplingRate =
+            (Double)
+                ((HashMap<String, Object>) result.get("probabilisticSampling")).get("samplingRate");
+      } catch (Exception e) {
+        throw new SamplingStrategyErrorException(
+            String.format(
+                "Unexpected format %s for parsing probabilistic sampling strategy", jsonString));
+      }
+
+      return new SamplingStrategyResponse(samplingType)
+          .setProbabilisticSampling(new ProbabilisticSamplingStrategy(samplingRate));
     }
 
-    private SamplingStrategyResponse jsonStringToSamplingStrategy(String jsonString) {
-        HashMap<String, Object> result;
-        try {
-            result = new ObjectMapper().readValue(jsonString, HashMap.class);
-        } catch (IOException e) {
-            throw new SamplingStrategyErrorException("Invalid json received when fetching sampling strategy from local agent.", e);
-        }
+    if (samplingType == SamplingStrategyType.RATE_LIMITING) {
+      int maxTracesPerSecond;
+      try {
+        maxTracesPerSecond =
+            (Integer)
+                ((HashMap<String, Object>) result.get("rateLimitingSampling"))
+                    .get("maxTracesPerSecond");
+      } catch (Exception e) {
+        throw new SamplingStrategyErrorException(
+            String.format(
+                "Unexpected format %s for parsing rateLimiting sampling strategy", jsonString));
+      }
 
-        SamplingStrategyType samplingType = SamplingStrategyType.findByValue((Integer) result.get("strategyType"));
-        if (samplingType == SamplingStrategyType.PROBABILISTIC) {
-            Double samplingRate;
-            try {
-                samplingRate = (Double) ((HashMap<String, Object>) result.get("probabilisticSampling")).get("samplingRate");
-            } catch (Exception e) {
-                throw new SamplingStrategyErrorException(String.format("Unexpected format %s for parsing probabilistic sampling strategy", jsonString));
-            }
-
-            return new SamplingStrategyResponse(samplingType)
-                    .setProbabilisticSampling(new ProbabilisticSamplingStrategy(samplingRate));
-        }
-
-        if (samplingType == SamplingStrategyType.RATE_LIMITING) {
-            int maxTracesPerSecond;
-            try {
-                maxTracesPerSecond = (Integer) ((HashMap<String, Object>) result.get("rateLimitingSampling")).get("maxTracesPerSecond");
-            } catch (Exception e) {
-                throw new SamplingStrategyErrorException(String.format("Unexpected format %s for parsing rateLimiting sampling strategy", jsonString));
-            }
-
-            return new SamplingStrategyResponse(samplingType)
-                    .setRateLimitingSampling(new RateLimitingSamplingStrategy((short)maxTracesPerSecond));
-        }
-
-        throw new SamplingStrategyErrorException("Unrecognized sampling strategy type.");
+      return new SamplingStrategyResponse(samplingType)
+          .setRateLimitingSampling(new RateLimitingSamplingStrategy((short) maxTracesPerSecond));
     }
 
-    @Override
-    public SamplingStrategyResponse getSamplingStrategy(String serviceName) throws SamplingStrategyErrorException {
-        String jsonString;
-        try {
-            jsonString = makeGetRequest("http://" + hostPort + "/?service=" + URLEncoder.encode(serviceName, "UTF-8"));
-        } catch (IOException e) {
-            throw new SamplingStrategyErrorException("http call to get sampling strategy from local agent failed.", e);
-        }
+    throw new SamplingStrategyErrorException("Unrecognized sampling strategy type.");
+  }
 
-        return jsonStringToSamplingStrategy(jsonString);
+  @Override
+  public SamplingStrategyResponse getSamplingStrategy(String serviceName)
+      throws SamplingStrategyErrorException {
+    String jsonString;
+    try {
+      jsonString =
+          makeGetRequest(
+              "http://" + hostPort + "/?service=" + URLEncoder.encode(serviceName, "UTF-8"));
+    } catch (IOException e) {
+      throw new SamplingStrategyErrorException(
+          "http call to get sampling strategy from local agent failed.", e);
     }
+
+    return jsonStringToSamplingStrategy(jsonString);
+  }
 }

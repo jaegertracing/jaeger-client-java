@@ -53,83 +53,86 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
 public class FilterIntegrationTest {
-    private JerseyServer server;
-    private Client client;
-    private Tracer tracer;
-    private InMemoryReporter reporter;
-    private InMemoryStatsReporter metricsReporter;
-    private TraceContext traceContext;
-    public static final String BAGGAGE_KEY = "a-big-metal-door";
-    private ObjectMapper mapper = new ObjectMapper();
+  private JerseyServer server;
+  private Client client;
+  private Tracer tracer;
+  private InMemoryReporter reporter;
+  private InMemoryStatsReporter metricsReporter;
+  private TraceContext traceContext;
+  public static final String BAGGAGE_KEY = "a-big-metal-door";
+  private ObjectMapper mapper = new ObjectMapper();
 
-    // http://www.syfy.com/darkmatter/videos/a-big-metal-door
-    public static final String BAGGAGE_VALUE = "I-Keep-It-Locked-Always";
+  // http://www.syfy.com/darkmatter/videos/a-big-metal-door
+  public static final String BAGGAGE_VALUE = "I-Keep-It-Locked-Always";
 
-    @Before
-    public void setUp() throws Exception {
-        metricsReporter = new InMemoryStatsReporter();
-        reporter = new InMemoryReporter();
-        tracer = new com.uber.jaeger.Tracer.Builder("some-op-name", reporter, new ConstSampler(true))
+  @Before
+  public void setUp() throws Exception {
+    metricsReporter = new InMemoryStatsReporter();
+    reporter = new InMemoryReporter();
+    tracer =
+        new com.uber.jaeger.Tracer.Builder("some-op-name", reporter, new ConstSampler(true))
             .withStatsReporter(metricsReporter)
             .build();
 
-        traceContext = new ThreadLocalTraceContext();
+    traceContext = new ThreadLocalTraceContext();
 
-        // start the server
-        server = new JerseyServer(tracer, traceContext);
-        server.start();
-        // create the client
-        client = ClientBuilder.newClient()
-                .register(new ClientFilter(tracer, traceContext))
-                .register(JacksonFeature.class);
-    }
+    // start the server
+    server = new JerseyServer(tracer, traceContext);
+    server.start();
+    // create the client
+    client =
+        ClientBuilder.newClient()
+            .register(new ClientFilter(tracer, traceContext))
+            .register(JacksonFeature.class);
+  }
 
-    @After
-    public void tearDown() throws Exception {
-        server.stop();
-    }
+  @After
+  public void tearDown() throws Exception {
+    server.stop();
+  }
 
-    @Test
-    public void testJerseyClientReceivesSpan() throws Exception {
-        WebTarget target = client.target(server.BASE_URI)
-                .path("jersey")
-                .path("hop1");
+  @Test
+  public void testJerseyClientReceivesSpan() throws Exception {
+    WebTarget target = client.target(server.BASE_URI).path("jersey").path("hop1");
 
-        Span span = (Span) tracer.buildSpan("root-span").start();
-        span.setBaggageItem(BAGGAGE_KEY, BAGGAGE_VALUE);
-        traceContext.push(span);
+    Span span = (Span) tracer.buildSpan("root-span").start();
+    span.setBaggageItem(BAGGAGE_KEY, BAGGAGE_VALUE);
+    traceContext.push(span);
 
-        Response resp = target
-                .request(MediaType.APPLICATION_JSON_TYPE)
-                .get();
+    Response resp = target.request(MediaType.APPLICATION_JSON_TYPE).get();
 
-        String responseStr = resp.readEntity(String.class);
-        CallTreeNode callTree = mapper.readValue(responseStr, CallTreeNode.class);
+    String responseStr = resp.readEntity(String.class);
+    CallTreeNode callTree = mapper.readValue(responseStr, CallTreeNode.class);
 
-        String strContext = span.getContext().contextAsString();
-        String traceID = strContext.substring(0, strContext.indexOf(':'));
-        boolean isSampled = true;
+    String strContext = span.getContext().contextAsString();
+    String traceID = strContext.substring(0, strContext.indexOf(':'));
+    boolean isSampled = true;
 
-        assertEquals(6, reporter.getSpans().size());
-        assertTrue(callTree.validateTraceIds(traceID, isSampled));
+    assertEquals(6, reporter.getSpans().size());
+    assertTrue(callTree.validateTraceIds(traceID, isSampled));
 
-        assertEquals(3L, metricsReporter.counters.get("jaeger.traces.sampled=y.state=joined").longValue());
-        assertEquals(6L, metricsReporter.counters.get("jaeger.spans.group=lifecycle.state=finished").longValue());
-        assertEquals(1L, metricsReporter.counters.get("jaeger.traces.sampled=y.state=started").longValue());
-        assertEquals(7L, metricsReporter.counters.get("jaeger.spans.group=lifecycle.state=started").longValue());
-    }
+    assertEquals(
+        3L, metricsReporter.counters.get("jaeger.traces.sampled=y.state=joined").longValue());
+    assertEquals(
+        6L,
+        metricsReporter.counters.get("jaeger.spans.group=lifecycle.state=finished").longValue());
+    assertEquals(
+        1L, metricsReporter.counters.get("jaeger.traces.sampled=y.state=started").longValue());
+    assertEquals(
+        7L, metricsReporter.counters.get("jaeger.spans.group=lifecycle.state=started").longValue());
+  }
 
-    /*
-    * This test exists because opentracing's convention around missing tracer
-    * state headers may change to stop supporting the automatic creation of
-    * building a span.
-    */
-    @Test
-    public void testExtractorReturnsNullWhenTracerStateHeaderIsMissing() {
-        ContainerRequestContext reqContext = mock(ContainerRequestContext.class);
-        given(reqContext.getHeaders()).willReturn(new MultivaluedHashMap<String, String>());
-        ServerRequestCarrier carrier = new ServerRequestCarrier(reqContext);
-        SpanContext spanCtx = tracer.extract(Format.Builtin.HTTP_HEADERS, carrier);
-        assertNull(spanCtx);
-    }
+  /*
+   * This test exists because opentracing's convention around missing tracer
+   * state headers may change to stop supporting the automatic creation of
+   * building a span.
+   */
+  @Test
+  public void testExtractorReturnsNullWhenTracerStateHeaderIsMissing() {
+    ContainerRequestContext reqContext = mock(ContainerRequestContext.class);
+    given(reqContext.getHeaders()).willReturn(new MultivaluedHashMap<String, String>());
+    ServerRequestCarrier carrier = new ServerRequestCarrier(reqContext);
+    SpanContext spanCtx = tracer.extract(Format.Builtin.HTTP_HEADERS, carrier);
+    assertNull(spanCtx);
+  }
 }

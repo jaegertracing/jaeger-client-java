@@ -31,23 +31,23 @@ import com.uber.jaeger.crossdock.api.Downstream;
 import java.io.IOException;
 
 public class DownstreamDeserializer extends JsonDeserializer<Downstream> {
-    private static final ObjectMapper mapper = new ObjectMapper();
+  private static final ObjectMapper mapper = new ObjectMapper();
 
-    @Override
-    public Downstream deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
-        JsonNode node = jp.getCodec().readTree(jp);
-        String serviceName = node.get("serviceName").asText();
-        String host = node.get("host").asText();
-        String port = node.get("port").asText();
-        String transport = node.get("transport").asText();
-        String serverRole = node.get("serverRole").asText();
+  @Override
+  public Downstream deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
+    JsonNode node = jp.getCodec().readTree(jp);
+    String serviceName = node.get("serviceName").asText();
+    String host = node.get("host").asText();
+    String port = node.get("port").asText();
+    String transport = node.get("transport").asText();
+    String serverRole = node.get("serverRole").asText();
 
-        JsonNode downstreamNode = node.get("downstream");
-        Downstream downstream = null;
-        if (downstreamNode != null) {
-            downstream = mapper.readerFor(Downstream.class).readValue(downstreamNode);
-        }
-
-        return new Downstream(serviceName, host, port, transport, serverRole, downstream);
+    JsonNode downstreamNode = node.get("downstream");
+    Downstream downstream = null;
+    if (downstreamNode != null) {
+      downstream = mapper.readerFor(Downstream.class).readValue(downstreamNode);
     }
+
+    return new Downstream(serviceName, host, port, transport, serverRole, downstream);
+  }
 }

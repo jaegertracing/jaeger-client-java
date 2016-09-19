@@ -34,121 +34,123 @@ import java.util.TimerTask;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class RemoteControlledSampler implements Sampler {
-    public static final String TYPE = "remote";
+  public static final String TYPE = "remote";
 
-    private final String serviceName;
-    private final SamplingManager manager;
-    private final Timer pollTimer;
-    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-    private Sampler sampler;
-    private Metrics metrics;
+  private final String serviceName;
+  private final SamplingManager manager;
+  private final Timer pollTimer;
+  private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+  private Sampler sampler;
+  private Metrics metrics;
 
-    public RemoteControlledSampler(String serviceName, SamplingManager manager, Sampler initial, Metrics metrics) {
-        final int pollingIntervalMs = 60000;
-        this.serviceName = serviceName;
-        this.manager = manager;
-        this.metrics = metrics;
+  public RemoteControlledSampler(
+      String serviceName, SamplingManager manager, Sampler initial, Metrics metrics) {
+    final int pollingIntervalMs = 60000;
+    this.serviceName = serviceName;
+    this.manager = manager;
+    this.metrics = metrics;
 
-
-        if (initial != null) {
-            this.sampler = initial;
-        } else {
-            this.sampler = new ProbabilisticSampler(0.001);
-        }
-
-        pollTimer = new Timer(true); // true makes this a daemon thread
-        pollTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                updateSampler();
-            }
-        }, 0, pollingIntervalMs);
+    if (initial != null) {
+      this.sampler = initial;
+    } else {
+      this.sampler = new ProbabilisticSampler(0.001);
     }
 
-    public ReentrantReadWriteLock getLock() {
-        return lock;
+    pollTimer = new Timer(true); // true makes this a daemon thread
+    pollTimer.schedule(
+        new TimerTask() {
+          @Override
+          public void run() {
+            updateSampler();
+          }
+        },
+        0,
+        pollingIntervalMs);
+  }
+
+  public ReentrantReadWriteLock getLock() {
+    return lock;
+  }
+
+  private void updateSampler() {
+    SamplingStrategyResponse response;
+    try {
+      response = manager.getSamplingStrategy(serviceName);
+      metrics.samplerRetrieved.inc(1);
+    } catch (SamplingStrategyErrorException e) {
+      metrics.samplerQueryFailure.inc(1);
+
+      return;
     }
 
-    private void updateSampler() {
-        SamplingStrategyResponse response;
+    Sampler newSampler;
+    try {
+      newSampler = extractSampler(response);
+    } catch (UnknownSamplingStrategyException e) {
+      metrics.samplerParsingFailure.inc(1);
+      return; // sampler updateGauge without a new sampler
+    }
+
+    if (!this.sampler.equals(newSampler)) {
+      synchronized (this) {
+        this.sampler = newSampler;
+        metrics.samplerUpdated.inc(1);
+      }
+    }
+  }
+
+  private Sampler extractSampler(SamplingStrategyResponse response)
+      throws UnknownSamplingStrategyException {
+    if (response.isSetProbabilisticSampling()) {
+      ProbabilisticSamplingStrategy strategy = response.getProbabilisticSampling();
+      return new ProbabilisticSampler(strategy.getSamplingRate());
+    }
+
+    if (response.isSetRateLimitingSampling()) {
+      RateLimitingSamplingStrategy strategy = response.getRateLimitingSampling();
+      return new RateLimitingSampler(strategy.getMaxTracesPerSecond());
+    }
+
+    throw new UnknownSamplingStrategyException(
+        String.format("Unsupported sampling strategy type %s", response.getStrategyType()));
+  }
+
+  @Override
+  public boolean isSampled(long id) {
+    synchronized (this) {
+      return sampler.isSampled(id);
+    }
+  }
+
+  @Override
+  public Map<String, Object> getTags() {
+    synchronized (this) {
+      return sampler.getTags();
+    }
+  }
+
+  @Override
+  public boolean equals(Object sampler) {
+    if (this == sampler) return true;
+    if (sampler instanceof RemoteControlledSampler) {
+      RemoteControlledSampler remoteSampler = ((RemoteControlledSampler) sampler);
+      synchronized (this) {
+        ReentrantReadWriteLock.ReadLock readLock = remoteSampler.getLock().readLock();
+        readLock.lock();
         try {
-            response = manager.getSamplingStrategy(serviceName);
-            metrics.samplerRetrieved.inc(1);
-        } catch (SamplingStrategyErrorException e) {
-            metrics.samplerQueryFailure.inc(1);
-
-            return;
+          return this.sampler.equals(remoteSampler.sampler);
+        } finally {
+          readLock.unlock();
         }
-
-        Sampler newSampler;
-        try {
-            newSampler = extractSampler(response);
-        } catch (UnknownSamplingStrategyException e) {
-            metrics.samplerParsingFailure.inc(1);
-            return;  // sampler updateGauge without a new sampler
-        }
-
-        if (!this.sampler.equals(newSampler)) {
-            synchronized (this) {
-                this.sampler = newSampler;
-                metrics.samplerUpdated.inc(1);
-
-            }
-        }
+      }
     }
+    return false;
+  }
 
-    private Sampler extractSampler(SamplingStrategyResponse response) throws UnknownSamplingStrategyException {
-        if (response.isSetProbabilisticSampling()) {
-            ProbabilisticSamplingStrategy strategy = response.getProbabilisticSampling();
-            return new ProbabilisticSampler(strategy.getSamplingRate());
-        }
-
-        if (response.isSetRateLimitingSampling()) {
-            RateLimitingSamplingStrategy strategy = response.getRateLimitingSampling();
-            return new RateLimitingSampler(strategy.getMaxTracesPerSecond());
-        }
-
-        throw new UnknownSamplingStrategyException(String.format("Unsupported sampling strategy type %s", response.getStrategyType()));
+  @Override
+  public void close() {
+    synchronized (this) {
+      pollTimer.cancel();
     }
-
-
-    @Override
-    public boolean isSampled(long id) {
-        synchronized (this) {
-            return sampler.isSampled(id);
-        }
-    }
-
-    @Override
-    public Map<String, Object> getTags() {
-        synchronized (this) {
-            return sampler.getTags();
-        }
-    }
-
-    @Override
-    public boolean equals(Object sampler) {
-        if (this == sampler) return true;
-        if (sampler instanceof RemoteControlledSampler) {
-            RemoteControlledSampler remoteSampler = ((RemoteControlledSampler) sampler);
-            synchronized (this) {
-                ReentrantReadWriteLock.ReadLock readLock = remoteSampler.getLock().readLock();
-                readLock.lock();
-                try {
-                    return this.sampler.equals(remoteSampler.sampler);
-                } finally {
-                    readLock.unlock();
-                }
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public void close() {
-        synchronized (this) {
-            pollTimer.cancel();
-        }
-
-    }
+  }
 }

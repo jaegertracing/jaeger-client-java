@@ -24,9 +24,9 @@ package com.uber.jaeger.metrics;
 import java.util.Map;
 
 public interface StatsFactory {
-    Counter createCounter(String name, Map<String, String> tags);
+  Counter createCounter(String name, Map<String, String> tags);
 
-    Timer createTimer(String name, Map<String, String> tags);
+  Timer createTimer(String name, Map<String, String> tags);
 
-    Gauge createGauge(String name, Map<String, String> tags);
+  Gauge createGauge(String name, Map<String, String> tags);
 }

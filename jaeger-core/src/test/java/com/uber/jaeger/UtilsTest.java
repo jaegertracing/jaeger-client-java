@@ -30,27 +30,27 @@ import static org.junit.Assert.assertEquals;
 
 public class UtilsTest {
 
-    @Test
-    public void testNormalizeBaggageKey() {
-        String expectedKey = "test-key";
-        String actualKey = Utils.normalizeBaggageKey("TEST_KEY");
-        assertEquals(expectedKey, actualKey);
-    }
+  @Test
+  public void testNormalizeBaggageKey() {
+    String expectedKey = "test-key";
+    String actualKey = Utils.normalizeBaggageKey("TEST_KEY");
+    assertEquals(expectedKey, actualKey);
+  }
 
-    @Test(expected = NotFourOctetsException.class)
-    public void testIPToInt32NotFourOctets() {
-        Utils.ipToInt(":19");
-    }
+  @Test(expected = NotFourOctetsException.class)
+  public void testIPToInt32NotFourOctets() {
+    Utils.ipToInt(":19");
+  }
 
-    @Test(expected = EmptyIPException.class)
-    public void testIPToInt32EmptyIPException() {
-        Utils.ipToInt("");
-    }
+  @Test(expected = EmptyIPException.class)
+  public void testIPToInt32EmptyIPException() {
+    Utils.ipToInt("");
+  }
 
-    @Test
-    public void testIPToInt32() {
-        int expectedIP = (127 << 24) | 1;
-        int actualIP = Utils.ipToInt("127.0.0.1");
-        assertEquals(expectedIP, actualIP);
-    }
+  @Test
+  public void testIPToInt32() {
+    int expectedIP = (127 << 24) | 1;
+    int actualIP = Utils.ipToInt("127.0.0.1");
+    assertEquals(expectedIP, actualIP);
+  }
 }

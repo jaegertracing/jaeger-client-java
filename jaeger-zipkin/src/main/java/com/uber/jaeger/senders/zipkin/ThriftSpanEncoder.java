@@ -32,11 +32,13 @@ import java.io.ByteArrayOutputStream;
 
 final class ThriftSpanEncoder implements Encoder<Span> {
 
-  @Override public Encoding encoding() {
+  @Override
+  public Encoding encoding() {
     return Encoding.THRIFT;
   }
 
-  @Override public byte[] encode(Span thriftSpan) {
+  @Override
+  public byte[] encode(Span thriftSpan) {
     // Clear any old data.
     protocol.get().baos.reset();
     try {
@@ -56,9 +58,10 @@ final class ThriftSpanEncoder implements Encoder<Span> {
     }
   }
 
-  final ThreadLocal<ReusableTBinaryProtocol> protocol = new ThreadLocal<ReusableTBinaryProtocol>() {
-    protected ReusableTBinaryProtocol initialValue() {
-      return new ReusableTBinaryProtocol(new ByteArrayOutputStream());
-    }
-  };
+  final ThreadLocal<ReusableTBinaryProtocol> protocol =
+      new ThreadLocal<ReusableTBinaryProtocol>() {
+        protected ReusableTBinaryProtocol initialValue() {
+          return new ReusableTBinaryProtocol(new ByteArrayOutputStream());
+        }
+      };
 }

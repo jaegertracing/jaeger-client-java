@@ -30,21 +30,20 @@ import com.uber.jaeger.crossdock.api.Downstream;
 
 public class DownstreamSerializer extends JsonSerializer<Downstream> {
 
-    @Override
-    public void serialize(Downstream downstream,
-                          JsonGenerator jgen,
-                          SerializerProvider sp) throws IOException {
-        jgen.writeStartObject();
-        jgen.writeStringField("serviceName", downstream.getServiceName());
-        jgen.writeStringField("host", downstream.getHost());
-        jgen.writeStringField("port", downstream.getPort());
-        jgen.writeStringField("transport", downstream.getTransport());
-        jgen.writeStringField("serverRole", downstream.getServerRole());
+  @Override
+  public void serialize(Downstream downstream, JsonGenerator jgen, SerializerProvider sp)
+      throws IOException {
+    jgen.writeStartObject();
+    jgen.writeStringField("serviceName", downstream.getServiceName());
+    jgen.writeStringField("host", downstream.getHost());
+    jgen.writeStringField("port", downstream.getPort());
+    jgen.writeStringField("transport", downstream.getTransport());
+    jgen.writeStringField("serverRole", downstream.getServerRole());
 
-        Downstream level2Downstream = downstream.getDownstream();
-        if (level2Downstream != null) {
-            jgen.writeObjectField("downstream", downstream.getDownstream());
-        }
-        jgen.writeEndObject();
+    Downstream level2Downstream = downstream.getDownstream();
+    if (level2Downstream != null) {
+      jgen.writeObjectField("downstream", downstream.getDownstream());
     }
+    jgen.writeEndObject();
+  }
 }

@@ -31,45 +31,47 @@ import com.uber.jaeger.crossdock.serializers.ObservedSpanSerializer;
 @JsonSerialize(using = ObservedSpanSerializer.class)
 @JsonDeserialize(using = ObservedSpanDeserializer.class)
 public class ObservedSpan {
-    private String traceID;
-    private boolean sampled;
-    private String baggage;
+  private String traceID;
+  private boolean sampled;
+  private String baggage;
 
-    @JsonCreator
-    public ObservedSpan(@JsonProperty("traceId") String traceID,
-                        @JsonProperty("sampled") boolean sampled,
-                        @JsonProperty("baggage") String baggage) {
-        this.traceID = traceID;
-        this.sampled = sampled;
-        this.baggage = baggage;
-    }
+  @JsonCreator
+  public ObservedSpan(
+      @JsonProperty("traceId") String traceID,
+      @JsonProperty("sampled") boolean sampled,
+      @JsonProperty("baggage") String baggage) {
+    this.traceID = traceID;
+    this.sampled = sampled;
+    this.baggage = baggage;
+  }
 
-    public String getTraceID() {
-        return traceID;
-    }
+  public String getTraceID() {
+    return traceID;
+  }
 
-    public boolean getSampled() {
-        return sampled;
-    }
+  public boolean getSampled() {
+    return sampled;
+  }
 
-    public String getBaggage() {
-        return baggage;
-    }
+  public String getBaggage() {
+    return baggage;
+  }
 
-    static ObservedSpan fromThrift(com.uber.jaeger.crossdock.thrift.ObservedSpan span) {
-        return new ObservedSpan(
-                span.getTraceId(),
-                span.isSampled(),
-                span.getBaggage()
-        );
-    }
+  static ObservedSpan fromThrift(com.uber.jaeger.crossdock.thrift.ObservedSpan span) {
+    return new ObservedSpan(span.getTraceId(), span.isSampled(), span.getBaggage());
+  }
 
-    @Override
-    public String toString() {
-        return "ObservedSpan{" +
-                "traceID='" + traceID + '\'' +
-                ", sampled=" + sampled +
-                ", baggage='" + baggage + '\'' +
-                '}';
-    }
+  @Override
+  public String toString() {
+    return "ObservedSpan{"
+        + "traceID='"
+        + traceID
+        + '\''
+        + ", sampled="
+        + sampled
+        + ", baggage='"
+        + baggage
+        + '\''
+        + '}';
+  }
 }

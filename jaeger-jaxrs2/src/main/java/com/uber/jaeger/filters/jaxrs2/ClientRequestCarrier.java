@@ -30,19 +30,19 @@ import java.util.List;
 import java.util.Map;
 
 public class ClientRequestCarrier implements TextMap {
-    private final ClientRequestContext requestContext;
+  private final ClientRequestContext requestContext;
 
-    public ClientRequestCarrier(ClientRequestContext requestContext) {
-        this.requestContext = requestContext;
-    }
+  public ClientRequestCarrier(ClientRequestContext requestContext) {
+    this.requestContext = requestContext;
+  }
 
-    @Override
-    public Iterator<Map.Entry<String, String>> iterator() {
-        throw new UnsupportedOperationException();
-    }
+  @Override
+  public Iterator<Map.Entry<String, String>> iterator() {
+    throw new UnsupportedOperationException();
+  }
 
-    @Override
-    public void put(String key, String value) {
-        requestContext.getHeaders().putSingle(key, value);
-    }
+  @Override
+  public void put(String key, String value) {
+    requestContext.getHeaders().putSingle(key, value);
+  }
 }

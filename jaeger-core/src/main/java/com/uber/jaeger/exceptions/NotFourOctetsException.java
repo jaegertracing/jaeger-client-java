@@ -22,7 +22,7 @@
 package com.uber.jaeger.exceptions;
 
 public class NotFourOctetsException extends RuntimeException {
-    public NotFourOctetsException() {
-        super("Wrong number of octets");
-    }
+  public NotFourOctetsException() {
+    super("Wrong number of octets");
+  }
 }

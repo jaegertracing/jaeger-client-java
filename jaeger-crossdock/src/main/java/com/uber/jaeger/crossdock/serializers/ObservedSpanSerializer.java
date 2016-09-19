@@ -30,14 +30,13 @@ import com.uber.jaeger.crossdock.api.ObservedSpan;
 
 public class ObservedSpanSerializer extends JsonSerializer<ObservedSpan> {
 
-    @Override
-    public void serialize(ObservedSpan span,
-                          JsonGenerator jgen,
-                          SerializerProvider sp) throws IOException {
-        jgen.writeStartObject();
-        jgen.writeStringField("traceId", span.getTraceID());
-        jgen.writeBooleanField("sampled", span.getSampled());
-        jgen.writeStringField("baggage", span.getBaggage());
-        jgen.writeEndObject();
-    }
+  @Override
+  public void serialize(ObservedSpan span, JsonGenerator jgen, SerializerProvider sp)
+      throws IOException {
+    jgen.writeStartObject();
+    jgen.writeStringField("traceId", span.getTraceID());
+    jgen.writeBooleanField("sampled", span.getSampled());
+    jgen.writeStringField("baggage", span.getBaggage());
+    jgen.writeEndObject();
+  }
 }

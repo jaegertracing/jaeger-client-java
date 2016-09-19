@@ -29,43 +29,42 @@ import static org.junit.Assert.assertTrue;
 
 public class ProbabilisticSamplerTest {
 
-    @Test
-    public void testSamplingBoundariesPositive() {
-        double samplingRate = 0.5;
+  @Test
+  public void testSamplingBoundariesPositive() {
+    double samplingRate = 0.5;
 
-        long halfwayBoundary = 0x3fffffffffffffffL;
-        Sampler sampler = new ProbabilisticSampler(samplingRate);
-        assertTrue(sampler.isSampled(halfwayBoundary));
+    long halfwayBoundary = 0x3fffffffffffffffL;
+    Sampler sampler = new ProbabilisticSampler(samplingRate);
+    assertTrue(sampler.isSampled(halfwayBoundary));
 
+    assertFalse(sampler.isSampled(halfwayBoundary + 2));
+  }
 
-        assertFalse(sampler.isSampled(halfwayBoundary + 2));
-    }
+  @Test
+  public void testSamplingBoundariesNegative() {
+    double samplingRate = 0.5;
 
-    @Test
-    public void testSamplingBoundariesNegative() {
-        double samplingRate = 0.5;
+    long halfwayBoundary = -0x4000000000000000L;
+    Sampler sampler = new ProbabilisticSampler(samplingRate);
+    assertTrue(sampler.isSampled(halfwayBoundary));
 
-        long halfwayBoundary = -0x4000000000000000L;
-        Sampler sampler = new ProbabilisticSampler(samplingRate);
-        assertTrue(sampler.isSampled(halfwayBoundary));
+    assertFalse(sampler.isSampled(halfwayBoundary - 1));
+  }
 
-        assertFalse(sampler.isSampled(halfwayBoundary - 1));
-    }
+  @Test(expected = IllegalArgumentException.class)
+  public void testSamplerThrowsInvalidSamplingRangeExceptionUnder() {
+    Sampler sampler = new ProbabilisticSampler(-0.1);
+  }
 
-    @Test(expected=IllegalArgumentException.class)
-    public void testSamplerThrowsInvalidSamplingRangeExceptionUnder() {
-        Sampler sampler = new ProbabilisticSampler(-0.1);
-    }
+  @Test(expected = IllegalArgumentException.class)
+  public void testSamplerThrowsInvalidSamplingRangeExceptionOver() {
+    Sampler sampler = new ProbabilisticSampler(1.1);
+  }
 
-    @Test(expected=IllegalArgumentException.class)
-    public void testSamplerThrowsInvalidSamplingRangeExceptionOver() {
-        Sampler sampler = new ProbabilisticSampler(1.1);
-    }
-
-    @Test
-    public void testTags() {
-        Sampler sampler = new ProbabilisticSampler(0.1);
-        assertEquals("probabilistic", sampler.getTags().get("sampler.type"));
-        assertEquals(0.1, sampler.getTags().get("sampler.param"));
-    }
+  @Test
+  public void testTags() {
+    Sampler sampler = new ProbabilisticSampler(0.1);
+    assertEquals("probabilistic", sampler.getTags().get("sampler.type"));
+    assertEquals(0.1, sampler.getTags().get("sampler.param"));
+  }
 }

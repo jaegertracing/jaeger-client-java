@@ -22,5 +22,5 @@
 package com.uber.jaeger.metrics;
 
 public interface Timer {
-    void durationMicros(long time);
+  void durationMicros(long time);
 }

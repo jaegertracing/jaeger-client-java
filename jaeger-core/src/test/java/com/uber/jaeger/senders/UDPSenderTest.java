@@ -44,145 +44,149 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
 public class UDPSenderTest {
-    final String destHost = "localhost";
-    int destPort;
-    int localPort = 0;
-    final int maxPacketSize = 1000;
+  final String destHost = "localhost";
+  int destPort;
+  int localPort = 0;
+  final int maxPacketSize = 1000;
 
-    Tracer tracer;
-    Reporter reporter;
-    UDPSender sender;
-    TestTServer server;
-    ThriftSpanConverter converter;
+  Tracer tracer;
+  Reporter reporter;
+  UDPSender sender;
+  TestTServer server;
+  ThriftSpanConverter converter;
 
-    private TestTServer startServer() throws Exception {
-        TestTServer server = new TestTServer(localPort);
-        destPort = server.getPort();
+  private TestTServer startServer() throws Exception {
+    TestTServer server = new TestTServer(localPort);
+    destPort = server.getPort();
 
-        Thread t = new Thread(server);
-        t.start();
+    Thread t = new Thread(server);
+    t.start();
 
-        Thread.sleep(5);
-        return server;
+    Thread.sleep(5);
+    return server;
+  }
+
+  @Before
+  public void setUp() throws Exception {
+    server = startServer();
+    reporter = new InMemoryReporter();
+    tracer =
+        new Tracer.Builder("test-sender", reporter, new ConstSampler(true))
+            .withStatsReporter(new InMemoryStatsReporter())
+            .build();
+    sender = new UDPSender(destHost, destPort, maxPacketSize);
+    converter = new ThriftSpanConverter();
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    server.close();
+    sender.close();
+    reporter.close();
+  }
+
+  @Test(expected = SenderException.class)
+  public void testAppendSpanTooLarge() throws Exception {
+    Span jaegerSpan = (Span) tracer.buildSpan("raza").start();
+    String msg = "";
+    for (int i = 0; i < 1001; i++) {
+      msg += ".";
     }
 
-    @Before
-    public void setUp() throws Exception {
-        server = startServer();
-        reporter = new InMemoryReporter();
-        tracer = new Tracer.Builder("test-sender", reporter, new ConstSampler(true))
-                .withStatsReporter(new InMemoryStatsReporter())
-                .build();
-        sender = new UDPSender(destHost, destPort, maxPacketSize);
-        converter = new ThriftSpanConverter();
+    jaegerSpan.log(msg, new Object());
+    com.twitter.zipkin.thriftjava.Span span = ThriftSpanConverter.convertSpan(jaegerSpan);
+    try {
+      sender.append(span);
+    } catch (SenderException e) {
+      assertEquals(e.getDroppedSpanCount(), 1);
+      throw e;
+    }
+  }
+
+  @Test
+  public void testAppend() throws Exception {
+    // find size of the initial span
+    AutoExpandingBufferWriteTransport memoryTransport =
+        new AutoExpandingBufferWriteTransport(maxPacketSize, 2);
+    com.twitter.zipkin.thriftjava.Span span =
+        ThriftSpanConverter.convertSpan((Span) tracer.buildSpan("raza").start());
+    span.write(new TCompactProtocol(memoryTransport));
+    int spanSize = memoryTransport.getPos();
+
+    // create a sender thats a multiple of the span size (accounting for span overhead)
+    // this allows us to test the boundary conditions of writing spans.
+    int expectedNumSpans = 11;
+    int maxPacketSize = (spanSize * expectedNumSpans) + sender.emitZipkinBatchOverhead;
+    sender = new UDPSender(destHost, destPort, maxPacketSize);
+
+    int maxPacketSizeLeft = maxPacketSize - sender.emitZipkinBatchOverhead;
+    // add enough spans to be under buffer limit
+    while (spanSize < maxPacketSizeLeft) {
+      sender.append(span);
+      maxPacketSizeLeft -= spanSize;
     }
 
-    @After
-    public void tearDown() throws Exception {
-        server.close();
-        sender.close();
-        reporter.close();
+    // add a span that overflows the limit to hit the last branch
+    int result = sender.append(span);
+
+    assertEquals(expectedNumSpans, result);
+  }
+
+  @Test
+  public void testFlushSendsSpan() throws Exception {
+    int timeout = 50; // in milliseconds
+    int expectedNumSpans = 1;
+    Span expectedSpan = (Span) tracer.buildSpan("raza").start();
+    com.twitter.zipkin.thriftjava.Span span = ThriftSpanConverter.convertSpan(expectedSpan);
+    int appendNum = sender.append(span);
+    int flushNum = sender.flush();
+    assertEquals(appendNum, 0);
+    assertEquals(flushNum, 1);
+
+    List<com.twitter.zipkin.thriftjava.Span> spans = server.getSpans(expectedNumSpans, timeout);
+    assertEquals(spans.size(), expectedNumSpans);
+
+    com.twitter.zipkin.thriftjava.Span actualSpan = spans.get(0);
+    SpanContext context = expectedSpan.getContext();
+
+    assertEquals(context.getTraceID(), actualSpan.getTrace_id());
+    assertEquals(context.getSpanID(), actualSpan.getId());
+    assertEquals(context.getParentID(), actualSpan.getParent_id());
+    assertEquals(expectedSpan.getOperationName(), actualSpan.getName());
+  }
+
+  @Test
+  public void testEmitZipkinBatchOverhead() throws Exception {
+    int a = calculateZipkinBatchOverheadDifference(1);
+    int b = calculateZipkinBatchOverheadDifference(2);
+
+    // This value has been empirically observed to be 22.
+    // If this test breaks it means we have changed our protocol, or
+    // the protocol information has changed (likely due to a new version of thrift).
+    assertEquals(a, b);
+    assertEquals(b, UDPSender.emitZipkinBatchOverhead);
+  }
+
+  private int calculateZipkinBatchOverheadDifference(int numberOfSpans) throws Exception {
+    AutoExpandingBufferWriteTransport memoryTransport =
+        new AutoExpandingBufferWriteTransport(maxPacketSize, 2);
+    Agent.Client memoryClient = new Agent.Client(new TCompactProtocol(memoryTransport));
+    Span jaegerSpan = (Span) tracer.buildSpan("raza").start();
+    com.twitter.zipkin.thriftjava.Span span = ThriftSpanConverter.convertSpan(jaegerSpan);
+    List<com.twitter.zipkin.thriftjava.Span> spans = new ArrayList<>();
+    for (int i = 0; i < numberOfSpans; i++) {
+      spans.add(span);
     }
 
-    @Test(expected=SenderException.class)
-    public void testAppendSpanTooLarge() throws Exception {
-        Span jaegerSpan = (Span) tracer.buildSpan("raza").start();
-        String msg = "";
-        for (int i = 0 ; i < 1001; i++) {
-            msg += ".";
-        }
+    memoryClient.emitZipkinBatch(spans);
+    int emitZipkinBatchOverheadMultipleSpans = memoryTransport.getPos();
 
-        jaegerSpan.log(msg, new Object());
-        com.twitter.zipkin.thriftjava.Span span = ThriftSpanConverter.convertSpan(jaegerSpan);
-        try {
-            sender.append(span);
-        } catch (SenderException e) {
-            assertEquals(e.getDroppedSpanCount(), 1);
-            throw e;
-        }
+    memoryTransport.reset();
+    for (int j = 0; j < numberOfSpans; j++) {
+      span.write(new TCompactProtocol(memoryTransport));
     }
+    int writeZipkinBatchOverheadMultipleSpans = memoryTransport.getPos();
 
-    @Test
-    public void testAppend() throws Exception {
-        // find size of the initial span
-        AutoExpandingBufferWriteTransport memoryTransport =  new AutoExpandingBufferWriteTransport(maxPacketSize, 2);
-        com.twitter.zipkin.thriftjava.Span span = ThriftSpanConverter.convertSpan((Span) tracer.buildSpan("raza").start());
-        span.write(new TCompactProtocol(memoryTransport));
-        int spanSize = memoryTransport.getPos();
-
-        // create a sender thats a multiple of the span size (accounting for span overhead)
-        // this allows us to test the boundary conditions of writing spans.
-        int expectedNumSpans = 11;
-        int maxPacketSize = (spanSize * expectedNumSpans) + sender.emitZipkinBatchOverhead;
-        sender = new UDPSender(destHost, destPort, maxPacketSize);
-
-        int maxPacketSizeLeft = maxPacketSize - sender.emitZipkinBatchOverhead;
-        // add enough spans to be under buffer limit
-        while (spanSize < maxPacketSizeLeft) {
-            sender.append(span);
-            maxPacketSizeLeft -= spanSize;
-        }
-
-        // add a span that overflows the limit to hit the last branch
-        int result = sender.append(span);
-
-        assertEquals(expectedNumSpans, result);
-    }
-
-    @Test
-    public void testFlushSendsSpan() throws Exception {
-        int timeout = 50; // in milliseconds
-        int expectedNumSpans = 1;
-        Span expectedSpan = (Span)tracer.buildSpan("raza").start();
-        com.twitter.zipkin.thriftjava.Span span = ThriftSpanConverter.convertSpan(expectedSpan);
-        int appendNum = sender.append(span);
-        int flushNum = sender.flush();
-        assertEquals(appendNum, 0);
-        assertEquals(flushNum, 1);
-
-        List<com.twitter.zipkin.thriftjava.Span> spans = server.getSpans(expectedNumSpans, timeout);
-        assertEquals(spans.size(), expectedNumSpans);
-
-        com.twitter.zipkin.thriftjava.Span actualSpan = spans.get(0);
-        SpanContext context = expectedSpan.getContext();
-
-        assertEquals(context.getTraceID(), actualSpan.getTrace_id());
-        assertEquals(context.getSpanID(), actualSpan.getId());
-        assertEquals(context.getParentID(), actualSpan.getParent_id());
-        assertEquals(expectedSpan.getOperationName(), actualSpan.getName());
-    }
-
-    @Test
-    public void testEmitZipkinBatchOverhead() throws Exception {
-        int a = calculateZipkinBatchOverheadDifference(1);
-        int b = calculateZipkinBatchOverheadDifference(2);
-
-        // This value has been empirically observed to be 22.
-        // If this test breaks it means we have changed our protocol, or
-        // the protocol information has changed (likely due to a new version of thrift).
-        assertEquals(a, b);
-        assertEquals(b, UDPSender.emitZipkinBatchOverhead);
-    }
-
-    private int calculateZipkinBatchOverheadDifference(int numberOfSpans) throws Exception {
-        AutoExpandingBufferWriteTransport memoryTransport = new AutoExpandingBufferWriteTransport(maxPacketSize, 2);
-        Agent.Client memoryClient = new Agent.Client(new TCompactProtocol(memoryTransport));
-        Span jaegerSpan = (Span)tracer.buildSpan("raza").start();
-        com.twitter.zipkin.thriftjava.Span span = ThriftSpanConverter.convertSpan(jaegerSpan);
-        List<com.twitter.zipkin.thriftjava.Span> spans = new ArrayList<>();
-        for (int i = 0; i < numberOfSpans; i++) {
-            spans.add(span);
-        }
-
-        memoryClient.emitZipkinBatch(spans);
-        int emitZipkinBatchOverheadMultipleSpans = memoryTransport.getPos();
-
-        memoryTransport.reset();
-        for (int j = 0; j < numberOfSpans; j++) {
-            span.write(new TCompactProtocol(memoryTransport));
-        }
-        int writeZipkinBatchOverheadMultipleSpans = memoryTransport.getPos();
-
-        return emitZipkinBatchOverheadMultipleSpans - writeZipkinBatchOverheadMultipleSpans;
-    }
+    return emitZipkinBatchOverheadMultipleSpans - writeZipkinBatchOverheadMultipleSpans;
+  }
 }

@@ -46,79 +46,81 @@ import java.util.List;
 
 @Path("jersey")
 public class JerseyHandler {
-    @Inject
-    Tracer tracer;
+  @Inject Tracer tracer;
 
-    @Inject
-    TraceContext traceContext;
+  @Inject TraceContext traceContext;
 
-    private Client client;
-    private ObjectMapper mapper = new ObjectMapper();
+  private Client client;
+  private ObjectMapper mapper = new ObjectMapper();
 
-    private Client getClient() {
-        if (client == null) {
-            client = ClientBuilder.newClient()
-                .register(new ClientFilter(tracer, traceContext))
-                .register(
-                        new AbstractBinder() {
-                            @Override
-                            protected void configure() {
-                                bind(traceContext).to(TraceContext.class);
-                            }
-                        })
-                .register(JacksonFeature.class);
-        }
-        return client;
+  private Client getClient() {
+    if (client == null) {
+      client =
+          ClientBuilder.newClient()
+              .register(new ClientFilter(tracer, traceContext))
+              .register(
+                  new AbstractBinder() {
+                    @Override
+                    protected void configure() {
+                      bind(traceContext).to(TraceContext.class);
+                    }
+                  })
+              .register(JacksonFeature.class);
     }
+    return client;
+  }
 
-    private CallTreeNode makeRequest(String endpoint) throws IOException {
-        client = getClient();
+  private CallTreeNode makeRequest(String endpoint) throws IOException {
+    client = getClient();
 
-        WebTarget target = client.target(JerseyServer.BASE_URI).path(endpoint);
-        Invocation.Builder builder = target.request(MediaType.APPLICATION_JSON_TYPE);
+    WebTarget target = client.target(JerseyServer.BASE_URI).path(endpoint);
+    Invocation.Builder builder = target.request(MediaType.APPLICATION_JSON_TYPE);
 
-        Response resp = builder.get();
-        String callTreeNodeAsString = resp.readEntity(String.class);
-        return mapper.readValue(callTreeNodeAsString, CallTreeNode.class);
-    }
+    Response resp = builder.get();
+    String callTreeNodeAsString = resp.readEntity(String.class);
+    return mapper.readValue(callTreeNodeAsString, CallTreeNode.class);
+  }
 
-    @GET
-    @Path("hop1")
-    @Produces(MediaType.APPLICATION_JSON)
-    public CallTreeNode clientEndpoint(@Context UriInfo uriInfo) throws IOException {
-        final CallTreeNode endpointOneResponse = makeRequest("jersey/hop2");
-        final CallTreeNode endpointTwoResponse = makeRequest("jersey/hop3");
+  @GET
+  @Path("hop1")
+  @Produces(MediaType.APPLICATION_JSON)
+  public CallTreeNode clientEndpoint(@Context UriInfo uriInfo) throws IOException {
+    final CallTreeNode endpointOneResponse = makeRequest("jersey/hop2");
+    final CallTreeNode endpointTwoResponse = makeRequest("jersey/hop3");
 
-        List<CallTreeNode> callTreeNodeList = new ArrayList<CallTreeNode>(){{
+    List<CallTreeNode> callTreeNodeList =
+        new ArrayList<CallTreeNode>() {
+          {
             add(endpointOneResponse);
             add(endpointTwoResponse);
-        }};
+          }
+        };
 
-        SpanInfo spanInfo = new SpanInfo((com.uber.jaeger.Span) traceContext.getCurrentSpan());
-        return new CallTreeNode(uriInfo.getPath(), spanInfo, callTreeNodeList);
-    }
+    SpanInfo spanInfo = new SpanInfo((com.uber.jaeger.Span) traceContext.getCurrentSpan());
+    return new CallTreeNode(uriInfo.getPath(), spanInfo, callTreeNodeList);
+  }
 
-    @GET
-    @Path("hop2")
-    @Produces(MediaType.APPLICATION_JSON)
-    public CallTreeNode endpointOne(@Context UriInfo uriInfo) throws IOException {
-        SpanInfo spanInfo = new SpanInfo((com.uber.jaeger.Span) traceContext.getCurrentSpan());
-        return new CallTreeNode(uriInfo.getPath(), spanInfo);
-    }
+  @GET
+  @Path("hop2")
+  @Produces(MediaType.APPLICATION_JSON)
+  public CallTreeNode endpointOne(@Context UriInfo uriInfo) throws IOException {
+    SpanInfo spanInfo = new SpanInfo((com.uber.jaeger.Span) traceContext.getCurrentSpan());
+    return new CallTreeNode(uriInfo.getPath(), spanInfo);
+  }
 
-    @GET
-    @Path("hop3")
-    @Produces(MediaType.APPLICATION_JSON)
-    public CallTreeNode endpointTwo(@Context UriInfo uriInfo) {
-        // TODO(oibe) turn this into a tchannel server
-        SpanInfo spanInfo = new SpanInfo((com.uber.jaeger.Span) traceContext.getCurrentSpan());
-        return new CallTreeNode(uriInfo.getPath(), spanInfo);
-    }
+  @GET
+  @Path("hop3")
+  @Produces(MediaType.APPLICATION_JSON)
+  public CallTreeNode endpointTwo(@Context UriInfo uriInfo) {
+    // TODO(oibe) turn this into a tchannel server
+    SpanInfo spanInfo = new SpanInfo((com.uber.jaeger.Span) traceContext.getCurrentSpan());
+    return new CallTreeNode(uriInfo.getPath(), spanInfo);
+  }
 
-    @GET
-    @Path("exception")
-    @Produces(MediaType.APPLICATION_JSON)
-    public CallTreeNode exception() {
-        throw new RuntimeException("TestExceptionMapper");
-    }
+  @GET
+  @Path("exception")
+  @Produces(MediaType.APPLICATION_JSON)
+  public CallTreeNode exception() {
+    throw new RuntimeException("TestExceptionMapper");
+  }
 }

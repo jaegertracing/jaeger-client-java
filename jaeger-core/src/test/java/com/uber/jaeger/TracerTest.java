@@ -21,7 +21,6 @@
  */
 package com.uber.jaeger;
 
-
 import com.uber.jaeger.metrics.InMemoryStatsReporter;
 import com.uber.jaeger.propagation.Injector;
 import com.uber.jaeger.reporters.InMemoryReporter;
@@ -38,59 +37,63 @@ import static org.mockito.Mockito.verify;
 
 public class TracerTest {
 
-    Tracer tracer;
-    InMemoryStatsReporter metricsReporter;
+  Tracer tracer;
+  InMemoryStatsReporter metricsReporter;
 
-    @Before
-    public void setUp() throws Exception {
-        metricsReporter = new InMemoryStatsReporter();
-        tracer = new Tracer.Builder("TracerTestService", new InMemoryReporter(), new ConstSampler(true))
+  @Before
+  public void setUp() throws Exception {
+    metricsReporter = new InMemoryStatsReporter();
+    tracer =
+        new Tracer.Builder("TracerTestService", new InMemoryReporter(), new ConstSampler(true))
             .withStatsReporter(metricsReporter)
             .build();
-    }
+  }
 
-    @Test
-    public void testBuildSpan() {
-        String expectedOperation = "fry";
-        Span span = (com.uber.jaeger.Span) tracer.buildSpan(expectedOperation).start();
+  @Test
+  public void testBuildSpan() {
+    String expectedOperation = "fry";
+    Span span = (com.uber.jaeger.Span) tracer.buildSpan(expectedOperation).start();
 
-        assertEquals(expectedOperation, span.getOperationName());
-    }
+    assertEquals(expectedOperation, span.getOperationName());
+  }
 
-    @Test
-    public void testTracerMetrics() {
-        String expectedOperation = "fry";
-        tracer.buildSpan(expectedOperation).start();
-        assertEquals(1L, metricsReporter.counters.get("jaeger.spans.group=sampling.sampled=y").longValue());
-        assertEquals(1L, metricsReporter.counters.get("jaeger.spans.group=lifecycle.state=started").longValue());
-        assertEquals(1L, metricsReporter.counters.get("jaeger.traces.sampled=y.state=started").longValue());
-    }
+  @Test
+  public void testTracerMetrics() {
+    String expectedOperation = "fry";
+    tracer.buildSpan(expectedOperation).start();
+    assertEquals(
+        1L, metricsReporter.counters.get("jaeger.spans.group=sampling.sampled=y").longValue());
+    assertEquals(
+        1L, metricsReporter.counters.get("jaeger.spans.group=lifecycle.state=started").longValue());
+    assertEquals(
+        1L, metricsReporter.counters.get("jaeger.traces.sampled=y.state=started").longValue());
+  }
 
-    @Test
-    public void testRegisterInjector() {
-        @SuppressWarnings("unchecked") Injector<TextMap> injector = mock(Injector.class);
+  @Test
+  public void testRegisterInjector() {
+    @SuppressWarnings("unchecked")
+    Injector<TextMap> injector = mock(Injector.class);
 
-        Tracer tracer = new Tracer.Builder(
-                "TracerTestService",
-                new InMemoryReporter(),
-                new ConstSampler(true))
-                .withStatsReporter(metricsReporter)
-                .registerInjector(Format.Builtin.TEXT_MAP, injector).build();
-        Span span = (com.uber.jaeger.Span) tracer.buildSpan("leela").start();
+    Tracer tracer =
+        new Tracer.Builder("TracerTestService", new InMemoryReporter(), new ConstSampler(true))
+            .withStatsReporter(metricsReporter)
+            .registerInjector(Format.Builtin.TEXT_MAP, injector)
+            .build();
+    Span span = (com.uber.jaeger.Span) tracer.buildSpan("leela").start();
 
-        TextMap carrier = mock(TextMap.class);
-        tracer.inject(span.context(), Format.Builtin.TEXT_MAP, carrier);
+    TextMap carrier = mock(TextMap.class);
+    tracer.inject(span.context(), Format.Builtin.TEXT_MAP, carrier);
 
-        verify(injector).inject(any(SpanContext.class), any(TextMap.class));
-    }
+    verify(injector).inject(any(SpanContext.class), any(TextMap.class));
+  }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testServiceNameNotNull() {
-        new Tracer.Builder(null, new InMemoryReporter(), new ConstSampler(true));
-    }
+  @Test(expected = IllegalArgumentException.class)
+  public void testServiceNameNotNull() {
+    new Tracer.Builder(null, new InMemoryReporter(), new ConstSampler(true));
+  }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testServiceNameNotEmptyNull() {
-        new Tracer.Builder("  ", new InMemoryReporter(), new ConstSampler(true));
-    }
+  @Test(expected = IllegalArgumentException.class)
+  public void testServiceNameNotEmptyNull() {
+    new Tracer.Builder("  ", new InMemoryReporter(), new ConstSampler(true));
+  }
 }

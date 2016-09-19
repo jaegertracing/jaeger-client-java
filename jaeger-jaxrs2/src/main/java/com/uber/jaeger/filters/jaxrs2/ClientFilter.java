@@ -41,49 +41,53 @@ import java.io.IOException;
 @Provider
 @ConstrainedTo(RuntimeType.CLIENT)
 public class ClientFilter implements ClientRequestFilter, ClientResponseFilter {
-    private final Tracer tracer;
-    private final TraceContext traceContext;
-    private final Logger logger = LoggerFactory.getLogger(ClientFilter.class);
+  private final Tracer tracer;
+  private final TraceContext traceContext;
+  private final Logger logger = LoggerFactory.getLogger(ClientFilter.class);
 
-    public ClientFilter(Tracer tracer, TraceContext traceContext) {
-        this.tracer = tracer;
-        this.traceContext = traceContext;
+  public ClientFilter(Tracer tracer, TraceContext traceContext) {
+    this.tracer = tracer;
+    this.traceContext = traceContext;
+  }
+
+  @Override
+  public void filter(ClientRequestContext clientRequestContext) throws IOException {
+    try {
+      Tracer.SpanBuilder clientSpanBuilder = tracer.buildSpan(clientRequestContext.getMethod());
+      if (!traceContext.isEmpty()) {
+        clientSpanBuilder.asChildOf(traceContext.getCurrentSpan());
+      }
+      Span clientSpan = clientSpanBuilder.start();
+
+      Tags.SPAN_KIND.set(clientSpan, Tags.SPAN_KIND_CLIENT);
+      Tags.HTTP_URL.set(clientSpan, clientRequestContext.getUri().toString());
+      Tags.PEER_HOSTNAME.set(clientSpan, clientRequestContext.getUri().getHost());
+
+      tracer.inject(
+          clientSpan.context(),
+          Format.Builtin.HTTP_HEADERS,
+          new ClientRequestCarrier(clientRequestContext));
+
+      clientRequestContext.setProperty(Constants.CURRENT_SPAN_CONTEXT_KEY, clientSpan);
+    } catch (Exception e) {
+      logger.error("Client Filter Request:", e);
     }
+  }
 
-    @Override
-    public void filter(ClientRequestContext clientRequestContext) throws IOException {
-        try {
-            Tracer.SpanBuilder clientSpanBuilder = tracer.buildSpan(clientRequestContext.getMethod());
-            if (!traceContext.isEmpty()) {
-                clientSpanBuilder.asChildOf(traceContext.getCurrentSpan());
-            }
-            Span clientSpan = clientSpanBuilder.start();
-
-            Tags.SPAN_KIND.set(clientSpan, Tags.SPAN_KIND_CLIENT);
-            Tags.HTTP_URL.set(clientSpan, clientRequestContext.getUri().toString());
-            Tags.PEER_HOSTNAME.set(clientSpan, clientRequestContext.getUri().getHost());
-
-            tracer.inject(
-                    clientSpan.context(),
-                    Format.Builtin.HTTP_HEADERS,
-                    new ClientRequestCarrier(clientRequestContext));
-
-            clientRequestContext.setProperty(Constants.CURRENT_SPAN_CONTEXT_KEY, clientSpan);
-        } catch (Exception e) {
-            logger.error("Client Filter Request:", e);
-        }
+  @Override
+  public void filter(
+      ClientRequestContext clientRequestContext, ClientResponseContext clientResponseContext)
+      throws IOException {
+    try {
+      Span clientSpan =
+          (io.opentracing.Span)
+              clientRequestContext.getProperty(Constants.CURRENT_SPAN_CONTEXT_KEY);
+      if (clientSpan != null) {
+        Tags.HTTP_STATUS.set(clientSpan, clientResponseContext.getStatus());
+        clientSpan.finish();
+      }
+    } catch (Exception e) {
+      logger.error("Client Filter Response:", e);
     }
-
-    @Override
-    public void filter(ClientRequestContext clientRequestContext, ClientResponseContext clientResponseContext) throws IOException {
-        try {
-            Span clientSpan = (io.opentracing.Span) clientRequestContext.getProperty(Constants.CURRENT_SPAN_CONTEXT_KEY);
-            if (clientSpan != null) {
-                Tags.HTTP_STATUS.set(clientSpan, clientResponseContext.getStatus());
-                clientSpan.finish();
-            }
-        } catch (Exception e) {
-            logger.error("Client Filter Response:", e);
-        }
-    }
+  }
 }

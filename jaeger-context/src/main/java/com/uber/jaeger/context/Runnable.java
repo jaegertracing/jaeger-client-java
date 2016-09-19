@@ -24,23 +24,23 @@ package com.uber.jaeger.context;
 import io.opentracing.Span;
 
 public class Runnable implements java.lang.Runnable {
-    private final java.lang.Runnable wrappedRunnable;
-    private final TraceContext traceContext;
-    private final Span currentSpan;
+  private final java.lang.Runnable wrappedRunnable;
+  private final TraceContext traceContext;
+  private final Span currentSpan;
 
-    public Runnable(java.lang.Runnable wrappedRunnable, TraceContext traceContext) {
-        this.wrappedRunnable = wrappedRunnable;
-        this.traceContext = traceContext;
-        this.currentSpan = traceContext.getCurrentSpan();
-    }
+  public Runnable(java.lang.Runnable wrappedRunnable, TraceContext traceContext) {
+    this.wrappedRunnable = wrappedRunnable;
+    this.traceContext = traceContext;
+    this.currentSpan = traceContext.getCurrentSpan();
+  }
 
-    @Override
-    public void run() {
-        traceContext.push(currentSpan);
-        try {
-            wrappedRunnable.run();
-        } finally {
-            traceContext.pop();
-        }
+  @Override
+  public void run() {
+    traceContext.push(currentSpan);
+    try {
+      wrappedRunnable.run();
+    } finally {
+      traceContext.pop();
     }
+  }
 }

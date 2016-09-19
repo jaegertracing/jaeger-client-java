@@ -24,40 +24,40 @@ package com.uber.jaeger.metrics;
 import java.util.Map;
 
 public class StatsFactoryImpl implements StatsFactory {
-    private final StatsReporter reporter;
+  private final StatsReporter reporter;
 
-    public StatsFactoryImpl(StatsReporter reporter) {
-        this.reporter = reporter;
-    }
+  public StatsFactoryImpl(StatsReporter reporter) {
+    this.reporter = reporter;
+  }
 
-    @Override
-    public Counter createCounter(final String name, final Map<String, String> tags) {
-        return new Counter() {
-            @Override
-            public void inc(long delta) {
-                reporter.incCounter(name, delta, tags);
-            }
-        };
-    }
+  @Override
+  public Counter createCounter(final String name, final Map<String, String> tags) {
+    return new Counter() {
+      @Override
+      public void inc(long delta) {
+        reporter.incCounter(name, delta, tags);
+      }
+    };
+  }
 
-    @Override
-    public Timer createTimer(final String name, final Map<String, String> tags) {
-        return new Timer() {
-            @Override
-            public void durationMicros(long time) {
-                reporter.recordTimer(name, time, tags);
-            }
-        };
-    }
+  @Override
+  public Timer createTimer(final String name, final Map<String, String> tags) {
+    return new Timer() {
+      @Override
+      public void durationMicros(long time) {
+        reporter.recordTimer(name, time, tags);
+      }
+    };
+  }
 
-    @Override
-    public Gauge createGauge(final String name, final Map<String, String> tags) {
-        return new Gauge() {
+  @Override
+  public Gauge createGauge(final String name, final Map<String, String> tags) {
+    return new Gauge() {
 
-            @Override
-            public void update(long amount) {
-                reporter.updateGauge(name, amount, tags);
-            }
-        };
-    }
+      @Override
+      public void update(long amount) {
+        reporter.updateGauge(name, amount, tags);
+      }
+    };
+  }
 }

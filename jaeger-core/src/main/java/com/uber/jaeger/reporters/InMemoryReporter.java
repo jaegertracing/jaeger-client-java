@@ -27,33 +27,31 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class InMemoryReporter implements Reporter {
-    private final List<Span> spans;
+  private final List<Span> spans;
 
-    public InMemoryReporter() {
-        this.spans = new ArrayList<Span>();
+  public InMemoryReporter() {
+    this.spans = new ArrayList<Span>();
+  }
+
+  @Override
+  public void report(Span span) {
+    synchronized (this) {
+      spans.add(span);
     }
+  }
 
-    @Override
-    public void report(Span span) {
-        synchronized (this) {
-            spans.add(span);
-        }
+  @Override
+  public void close() {}
+
+  public List<Span> getSpans() {
+    synchronized (this) {
+      return spans;
     }
+  }
 
-    @Override
-    public void close() {
-
+  public void clear() {
+    synchronized (this) {
+      spans.clear();
     }
-
-    public List<Span> getSpans() {
-        synchronized (this) {
-            return spans;
-        }
-    }
-
-    public void clear() {
-        synchronized (this) {
-            spans.clear();
-        }
-    }
+  }
 }

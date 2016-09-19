@@ -29,26 +29,26 @@ import org.slf4j.LoggerFactory;
  * LoggingReporter logs every span it's given.
  */
 public class LoggingReporter implements Reporter {
-    private final Logger logger;
+  private final Logger logger;
 
-    public LoggingReporter() {
-        this(null);
-    }
+  public LoggingReporter() {
+    this(null);
+  }
 
-    public LoggingReporter(Logger logger) {
-        if (logger == null) {
-            logger = LoggerFactory.getLogger(this.getClass());
-        }
-        this.logger = logger;
+  public LoggingReporter(Logger logger) {
+    if (logger == null) {
+      logger = LoggerFactory.getLogger(this.getClass());
     }
+    this.logger = logger;
+  }
 
-    @Override
-    public void report(Span span) {
-        logger.info("Span reported: {}", span);
-    }
+  @Override
+  public void report(Span span) {
+    logger.info("Span reported: {}", span);
+  }
 
-    @Override
-    public void close() {
-        // nothing to do
-    }
+  @Override
+  public void close() {
+    // nothing to do
+  }
 }

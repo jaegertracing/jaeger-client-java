@@ -25,21 +25,21 @@ import com.uber.jaeger.context.TraceContext;
 import java.util.concurrent.ExecutorService;
 
 public class TracingUtils {
-    @Deprecated
-    public static TraceContext getTraceContext() {
-        return com.uber.jaeger.context.TracingUtils.getTraceContext();
-    }
+  @Deprecated
+  public static TraceContext getTraceContext() {
+    return com.uber.jaeger.context.TracingUtils.getTraceContext();
+  }
 
-    @Deprecated
-    public static ExecutorService tracedExecutor(ExecutorService wrappedExecutorService) {
-        return com.uber.jaeger.context.TracingUtils.tracedExecutor(wrappedExecutorService);
-    }
+  @Deprecated
+  public static ExecutorService tracedExecutor(ExecutorService wrappedExecutorService) {
+    return com.uber.jaeger.context.TracingUtils.tracedExecutor(wrappedExecutorService);
+  }
 
-    public static ClientFilter clientFilter(Configuration configuration) {
-        return new ClientFilter(configuration.getTracer(), getTraceContext());
-    }
+  public static ClientFilter clientFilter(Configuration configuration) {
+    return new ClientFilter(configuration.getTracer(), getTraceContext());
+  }
 
-    public static ServerFilter serverFilter(Configuration configuration) {
-        return new ServerFilter(configuration.getTracer(), getTraceContext());
-    }
+  public static ServerFilter serverFilter(Configuration configuration) {
+    return new ServerFilter(configuration.getTracer(), getTraceContext());
+  }
 }

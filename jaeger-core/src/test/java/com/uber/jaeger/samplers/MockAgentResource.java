@@ -26,19 +26,19 @@ import javax.ws.rs.core.MediaType;
 
 @Path("")
 public class MockAgentResource {
-    @GET
-    @Path("")
-    @Produces(MediaType.APPLICATION_JSON)
-    public String getServiceSamplingStrategy(@QueryParam("service") String serviceName) {
+  @GET
+  @Path("")
+  @Produces(MediaType.APPLICATION_JSON)
+  public String getServiceSamplingStrategy(@QueryParam("service") String serviceName) {
 
-        if (serviceName.equals("clairvoyant")) {
-            return "{\"strategyType\":0,\"probabilisticSampling\":{\"samplingRate\":0.001},\"rateLimitingSampling\":null}";
-        }
-
-        if (serviceName.equals("jaeger")) {
-            return "{\"strategyType\":1,\"probabilisticSampling\":null,\"rateLimitingSampling\":{\"maxTracesPerSecond\":8}}";
-        }
-
-        return "{\"strategyType\":0,\"probabilisticSampling\":{\"samplingRate\":0.001},\"rateLimitingSampling\":null}";
+    if (serviceName.equals("clairvoyant")) {
+      return "{\"strategyType\":0,\"probabilisticSampling\":{\"samplingRate\":0.001},\"rateLimitingSampling\":null}";
     }
+
+    if (serviceName.equals("jaeger")) {
+      return "{\"strategyType\":1,\"probabilisticSampling\":null,\"rateLimitingSampling\":{\"maxTracesPerSecond\":8}}";
+    }
+
+    return "{\"strategyType\":0,\"probabilisticSampling\":{\"samplingRate\":0.001},\"rateLimitingSampling\":null}";
+  }
 }

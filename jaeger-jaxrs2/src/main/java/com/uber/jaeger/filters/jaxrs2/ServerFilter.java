@@ -40,62 +40,64 @@ import java.io.IOException;
 
 @Provider
 public class ServerFilter implements ContainerRequestFilter, ContainerResponseFilter {
-    private final Tracer tracer;
-    private final TraceContext traceContext;
-    private final Logger logger = LoggerFactory.getLogger(ServerFilter.class);
+  private final Tracer tracer;
+  private final TraceContext traceContext;
+  private final Logger logger = LoggerFactory.getLogger(ServerFilter.class);
 
-    public ServerFilter(Tracer tracer, TraceContext traceContext) {
-        this.tracer = tracer;
-        this.traceContext = traceContext;
+  public ServerFilter(Tracer tracer, TraceContext traceContext) {
+    this.tracer = tracer;
+    this.traceContext = traceContext;
+  }
+
+  @Override
+  public void filter(ContainerRequestContext containerRequestContext) throws IOException {
+    try {
+      Tracer.SpanBuilder builder =
+          tracer
+              .buildSpan(containerRequestContext.getMethod())
+              .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
+              //TODO(oibe) figure out how to get remote addr from grizzly HttpServletRequest
+              .withTag(Tags.HTTP_URL.getKey(), containerRequestContext.getUriInfo().toString());
+
+      // TODO(oibe) make X_UBER_SOURCE configurable for open source projects
+      MultivaluedMap<String, String> headers = containerRequestContext.getHeaders();
+      if (headers.containsKey(com.uber.jaeger.Constants.X_UBER_SOURCE)) {
+        builder =
+            builder.withTag(
+                Tags.PEER_SERVICE.getKey(),
+                headers.getFirst(com.uber.jaeger.Constants.X_UBER_SOURCE));
+      }
+
+      ServerRequestCarrier carrier = new ServerRequestCarrier(containerRequestContext);
+      SpanContext spanContext = tracer.extract(Format.Builtin.HTTP_HEADERS, carrier);
+      if (spanContext != null) {
+        builder = builder.asChildOf(spanContext);
+      }
+      Span serverSpan = builder.start();
+
+      traceContext.push(serverSpan);
+    } catch (Exception e) {
+      logger.error("Server Filter Request:", e);
     }
+  }
 
-    @Override
-    public void filter(ContainerRequestContext containerRequestContext) throws IOException {
-        try {
-            Tracer.SpanBuilder builder = tracer.buildSpan(containerRequestContext.getMethod())
-                    .withTag(
-                            Tags.SPAN_KIND.getKey(),
-                            Tags.SPAN_KIND_SERVER)
-                    //TODO(oibe) figure out how to get remote addr from grizzly HttpServletRequest
-                    .withTag(
-                            Tags.HTTP_URL.getKey(),
-                            containerRequestContext.getUriInfo().toString());
+  @Override
+  public void filter(
+      ContainerRequestContext containerRequestContext,
+      ContainerResponseContext containerResponseContext)
+      throws IOException {
+    try {
+      Span serverSpan;
+      if (traceContext.isEmpty()) {
+        // hitting this case means previous filter was not called
+        return;
+      }
+      serverSpan = traceContext.pop();
 
-            // TODO(oibe) make X_UBER_SOURCE configurable for open source projects
-            MultivaluedMap<String, String> headers = containerRequestContext.getHeaders();
-            if (headers.containsKey(com.uber.jaeger.Constants.X_UBER_SOURCE)) {
-                builder = builder.withTag(
-                        Tags.PEER_SERVICE.getKey(),
-                        headers.getFirst(com.uber.jaeger.Constants.X_UBER_SOURCE));
-            }
-
-            ServerRequestCarrier carrier = new ServerRequestCarrier(containerRequestContext);
-            SpanContext spanContext = tracer.extract(Format.Builtin.HTTP_HEADERS, carrier);
-            if (spanContext != null) {
-                builder = builder.asChildOf(spanContext);
-            }
-            Span serverSpan = builder.start();
-
-            traceContext.push(serverSpan);
-        } catch (Exception e) {
-            logger.error("Server Filter Request:", e);
-        }
+      Tags.HTTP_STATUS.set(serverSpan, containerResponseContext.getStatus());
+      serverSpan.finish();
+    } catch (Exception e) {
+      logger.error("Server Filter Response:", e);
     }
-
-    @Override
-    public void filter(ContainerRequestContext containerRequestContext, ContainerResponseContext containerResponseContext) throws IOException {
-        try {
-            Span serverSpan;
-            if (traceContext.isEmpty()) {
-                // hitting this case means previous filter was not called
-                return;
-            }
-            serverSpan = traceContext.pop();
-
-            Tags.HTTP_STATUS.set(serverSpan, containerResponseContext.getStatus());
-            serverSpan.finish();
-        } catch (Exception e) {
-            logger.error("Server Filter Response:", e);
-        }
-    }
+  }
 }
