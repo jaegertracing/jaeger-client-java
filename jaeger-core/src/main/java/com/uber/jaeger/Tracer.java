@@ -29,7 +29,9 @@ import com.uber.jaeger.metrics.StatsReporter;
 import com.uber.jaeger.propagation.Extractor;
 import com.uber.jaeger.propagation.Injector;
 import com.uber.jaeger.propagation.TextMapCodec;
+import com.uber.jaeger.reporters.NoopReporter;
 import com.uber.jaeger.reporters.Reporter;
+import com.uber.jaeger.samplers.ConstSampler;
 import com.uber.jaeger.samplers.Sampler;
 import com.uber.jaeger.utils.Clock;
 import com.uber.jaeger.utils.SystemClock;
@@ -289,6 +291,12 @@ public class Tracer implements io.opentracing.Tracer {
       metrics.spansStarted.inc(1);
       return span;
     }
+  }
+
+  public static Tracer getNoopTracer(String serviceName) {
+    Reporter reporter = new NoopReporter();
+    Sampler sampler = new ConstSampler(false);
+    return new Builder(serviceName, reporter, sampler).build();
   }
 
   /**

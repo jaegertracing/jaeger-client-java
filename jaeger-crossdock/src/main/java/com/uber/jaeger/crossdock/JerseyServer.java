@@ -21,6 +21,7 @@
  */
 package com.uber.jaeger.crossdock;
 
+import com.uber.jaeger.Configuration;
 import com.uber.jaeger.Configuration.ReporterConfiguration;
 import com.uber.jaeger.Configuration.SamplerConfiguration;
 import com.uber.jaeger.context.TraceContext;
@@ -29,7 +30,6 @@ import com.uber.jaeger.crossdock.resources.behavior.TraceBehavior;
 import com.uber.jaeger.crossdock.resources.behavior.http.TraceBehaviorResource;
 import com.uber.jaeger.crossdock.resources.behavior.tchannel.TChannelServer;
 import com.uber.jaeger.crossdock.resources.health.HealthResource;
-import com.uber.jaeger.filters.jaxrs2.Configuration;
 import com.uber.jaeger.filters.jaxrs2.TracingUtils;
 import com.uber.jaeger.samplers.ConstSampler;
 import io.opentracing.Tracer;
@@ -58,13 +58,11 @@ public class JerseyServer {
   public JerseyServer(String hostPort, Class... resourceClasses) {
     final String samplingType = ConstSampler.TYPE;
     final Number samplingParam = 0;
-    final boolean disable = false;
     final boolean logging = true;
 
     config =
         new Configuration(
             SERVICE_NAME,
-            disable,
             new SamplerConfiguration(samplingType, samplingParam),
             new ReporterConfiguration(logging, null, null, null, null));
 
@@ -75,7 +73,7 @@ public class JerseyServer {
       rc.packages(clz.getPackage().getName());
     }
 
-    rc.register(TracingUtils.serverFilter(config))
+    rc.register(TracingUtils.serverFilter(config.getTracer()))
         .register(LoggingFilter.class)
         .register(ExceptionMapper.class)
         .register(JacksonFeature.class)
@@ -101,7 +99,7 @@ public class JerseyServer {
   private static Client initializeClient(final Configuration config) {
     return ClientBuilder.newClient()
         .register(ExceptionMapper.class)
-        .register(TracingUtils.clientFilter(config))
+        .register(TracingUtils.clientFilter(config.getTracer()))
         .register(
             new AbstractBinder() {
               @Override

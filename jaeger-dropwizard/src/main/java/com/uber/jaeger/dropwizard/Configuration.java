@@ -21,24 +21,33 @@
  */
 package com.uber.jaeger.dropwizard;
 
-import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.uber.jaeger.Tracer;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Configuration extends com.uber.jaeger.filters.jaxrs2.Configuration {
+public class Configuration extends com.uber.jaeger.Configuration {
+  /**
+   * When set, getTracer returns a Noop tracer
+   */
+  private final boolean disable;
+
   @JsonCreator
   public Configuration(
       @JsonProperty("serviceName") String serviceName,
       @JsonProperty("disable") Boolean disable,
       @JsonProperty("sampler") SamplerConfiguration samplerConfig,
       @JsonProperty("reporter") ReporterConfiguration reporterConfig) {
-    super(serviceName, disable, samplerConfig, reporterConfig);
+    super(serviceName, samplerConfig, reporterConfig);
+    this.disable = disable;
   }
 
-  public Configuration setMetricRegistry(MetricRegistry registry) {
-    super.setStatsFactory(new StatsFactory(registry));
-    return this;
+  @Override
+  public Tracer getTracer() {
+    if (disable) {
+      return super.getNoopTracer();
+    }
+    return super.getTracer();
   }
 }

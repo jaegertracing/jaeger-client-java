@@ -21,16 +21,17 @@
  */
 package com.uber.jaeger.dropwizard;
 
+import com.uber.jaeger.Tracer;
 import com.uber.jaeger.filters.jaxrs2.TracingUtils;
 
 import javax.ws.rs.core.Feature;
 import javax.ws.rs.core.FeatureContext;
 
 public class JaegerFeature implements Feature {
-  private final Configuration jaegerConfig;
+  private final Tracer tracer;
 
   public JaegerFeature(Configuration jaegerConfig) {
-    this.jaegerConfig = jaegerConfig;
+    this.tracer = jaegerConfig.getTracer();
   }
 
   @Override
@@ -41,10 +42,10 @@ public class JaegerFeature implements Feature {
 
     switch (featureContext.getConfiguration().getRuntimeType()) {
       case SERVER:
-        featureContext.register(TracingUtils.serverFilter(jaegerConfig));
+        featureContext.register(TracingUtils.serverFilter(tracer));
         break;
       case CLIENT:
-        featureContext.register(TracingUtils.clientFilter(jaegerConfig));
+        featureContext.register(TracingUtils.clientFilter(tracer));
         break;
     }
 
