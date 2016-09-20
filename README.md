@@ -207,6 +207,10 @@ chmod a+x .git/hooks/pre-commit
 You can also setup the [IntelliJ plugin](https://plugins.jetbrains.com/plugin/8527)
 to reformat code from within your IDE
 
+## License
+  
+  [The MIT License](LICENSE).
+
 
 
   [ci-img]: https://travis-ci.org/uber/jaeger-client-java.svg?branch=master
