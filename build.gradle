@@ -14,7 +14,6 @@ ext.apacheThriftVersion = '0.9.3'
 ext.jerseyVersion = '2.22.2'
 ext.slf4jVersion = '1.7.16'
 ext.jacksonVersion = '2.7.4'
-ext.checkstyleVersion = '7.1.1'
 
 ext.junitVersion = '4.12'
 ext.mockitoVersion = '2.0.2-beta'
@@ -42,29 +41,16 @@ subprojects {
 
     [compileJava, compileTestJava, javadoc]*.options*.encoding = 'UTF-8'
 
-    // Set up checkstyle
-    apply plugin: 'checkstyle'
-    configurations {
-        checkstyleConfig
-    }
-
-    dependencies {
-        checkstyleConfig("com.puppycrawl.tools:checkstyle:${checkstyleVersion}") {
-          transitive = false
-        }
-    }
-
-    checkstyle {
-        config = resources.text.fromArchiveEntry(configurations.checkstyleConfig, 'google_checks.xml')
-        toolVersion = checkstyleVersion
-    }
-
     repositories {
         mavenCentral()
     }
 
     task listJars(description: 'Display all compile jars.') << {
         configurations.compile.each { File file -> println file.name }
+    }
+    
+    task verifyFormatting(type: com.github.sherter.googlejavaformatgradleplugin.VerifyGoogleJavaFormat) {
+        exclude '**/gen-java/**'
     }
 
     license {
@@ -81,6 +67,7 @@ subprojects {
     }
 
     classes.dependsOn tasks.licenseFormat
+    classes.dependsOn tasks.verifyFormatting
 
     apply from: '../gradle/publish.gradle'
 }
