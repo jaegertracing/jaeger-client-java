@@ -18,4 +18,4 @@ set -e
 ${THRIFT} $args
 
 # docker command runs as root, but we need normal permissions
-sudo chmod -R 0777 ${pwd}/jaeger-core/src/main/gen-java
+sudo chmod -R 0777 ${pwd}/jaeger-generated/src/main/gen-java
