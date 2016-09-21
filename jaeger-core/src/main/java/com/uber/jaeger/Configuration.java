@@ -22,10 +22,11 @@
 package com.uber.jaeger;
 
 import com.uber.jaeger.metrics.Metrics;
+import com.uber.jaeger.metrics.NullStatsReporter;
 import com.uber.jaeger.metrics.StatsFactory;
+import com.uber.jaeger.metrics.StatsFactoryImpl;
 import com.uber.jaeger.reporters.CompositeReporter;
 import com.uber.jaeger.reporters.LoggingReporter;
-import com.uber.jaeger.reporters.NoopReporter;
 import com.uber.jaeger.reporters.RemoteReporter;
 import com.uber.jaeger.reporters.Reporter;
 import com.uber.jaeger.samplers.ConstSampler;
@@ -48,6 +49,16 @@ public class Configuration {
 
   private final ReporterConfiguration reporterConfig;
 
+  /**
+   * A interface that wraps an underlying metrics generator in order to report Jaeger's metrics.
+   */
+  private StatsFactory statsFactory;
+
+  /**
+   * lazy singleton Tracer initialized in getTracer() method
+   */
+  private Tracer tracer;
+
   public Configuration(
       String serviceName,
       SamplerConfiguration samplerConfig,
@@ -67,19 +78,28 @@ public class Configuration {
       reporterConfig = new ReporterConfiguration(null, null, null, null, null);
     }
     this.reporterConfig = reporterConfig;
+
+    statsFactory = new StatsFactoryImpl(new NullStatsReporter());
   }
 
-  public Tracer.Builder getTracerBuilder(StatsFactory statsFactory) {
+  public Tracer.Builder getTracerBuilder() {
     Metrics metrics = new Metrics(statsFactory);
     Reporter reporter = reporterConfig.getReporter(metrics);
     Sampler sampler = samplerConfig.createSampler(serviceName, metrics);
     return new Tracer.Builder(serviceName, reporter, sampler).withMetrics(metrics);
   }
 
-  public Tracer getNoopTracer() {
-    Reporter reporter = new NoopReporter();
-    Sampler sampler = new ConstSampler(false);
-    return new Tracer.Builder(serviceName, reporter, sampler).build();
+  synchronized public io.opentracing.Tracer getTracer() {
+    if (tracer != null) {
+      return tracer;
+    }
+
+    tracer = getTracerBuilder().build();
+    return tracer;
+  }
+
+  public void setStatsFactor(StatsFactory statsFactory) {
+    this.statsFactory = statsFactory;
   }
 
   /**
