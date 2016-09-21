@@ -1,12 +1,11 @@
-apply plugin: 'org.jruyi.thrift'
 apply plugin: 'jacoco'
 apply plugin: 'com.github.kt3k.coveralls'
 
 description = 'Core library for jaeger-client'
 
 dependencies {
+    compile project(':jaeger-generated')
     compile group: 'io.opentracing', name: 'opentracing-api', version: opentracingVersion
-    compile group: 'org.apache.thrift', name: 'libthrift', version: apacheThriftVersion
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
     compile group: 'org.slf4j', name: 'slf4j-api', version: slf4jVersion
 
@@ -20,21 +19,6 @@ dependencies {
 
     testCompile group: 'junit', name: 'junit', version: junitVersion
     testCompile group: 'org.mockito', name: 'mockito-all', version: mockitoVersion
-}
-
-compileThrift {
-    sourceDir "${projectDir}/../idl/thrift"
-    outputDir 'src/main/gen-java'
-    generator 'java', 'private-members'
-    createGenFolder false
-}
-
-javadoc {
-    exclude '**/gen-java/**'
-    exclude '**/com/twitter/zipkin/thriftjava/**'
-    exclude '**/com/uber/jaeger/agent/thrift/**'
-    exclude '**/com/uber/jaeger/thrift/sampling_manager/**'
-    exclude '**/com/uber/jaeger/crossdock/thrift/**'
 }
 
 jacocoTestReport {
@@ -64,10 +48,8 @@ sourceSets {
     main {
         java {
             srcDir 'src/main/java'
-            srcDir 'src/main/gen-java'
         }
         resources {
-            srcDirs = ['src/main/gen-java']
             includes = ["**/jaeger.properties"]
         }
     }
@@ -75,7 +57,6 @@ sourceSets {
     test {
         java {
             srcDir 'src/test/java'
-            srcDir 'src/test/gen-java'
         }
     }
 }
@@ -86,12 +67,3 @@ jar {
         attributes('Implementation-Title': 'jaeger-core', 'Implementation-Version': project.version)
     }
 }
-
-task jaegerVersion << {
-    def propFile = new File(projectDir,
-            'src/main/gen-java/com/uber/jaeger/jaeger.properties'
-    ).getAbsolutePath()
-    new File(propFile).write("jaeger.version=${project.version}")
-}
-
-compileJava.dependsOn jaegerVersion
