@@ -151,6 +151,7 @@ public class RemoteReporter implements Reporter {
   class QueueProcessor implements Runnable {
     private boolean open = true;
 
+    @Override
     public void run() {
       while (open) {
         try {

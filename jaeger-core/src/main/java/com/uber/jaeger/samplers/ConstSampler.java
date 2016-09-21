@@ -47,6 +47,7 @@ public class ConstSampler implements Sampler {
    * arguments.
    * @return A boolean that says whether to sample.
    */
+  @Override
   public boolean isSampled(long id) {
     return decision;
   }
@@ -65,9 +66,17 @@ public class ConstSampler implements Sampler {
     return false;
   }
 
+  @Override
+  public int hashCode() {
+    int result = (decision ? 1 : 0);
+    result = 31 * result + (tags != null ? tags.hashCode() : 0);
+    return result;
+  }
+
   /**
    * Only implemented to satisfy the sampler interface
    */
+  @Override
   public void close() {
     // nothing to do
   }

@@ -57,6 +57,7 @@ public class ProbabilisticSampler implements Sampler {
    * @param id A long that represents the traceid used to make a sampling decision
    * @return A boolean that says wheter or not to sample.
    */
+  @Override
   public boolean isSampled(long id) {
     if (id > 0) {
       return id <= this.positiveSamplingBoundary;
@@ -78,9 +79,22 @@ public class ProbabilisticSampler implements Sampler {
     return false;
   }
 
+  @Override
+  public int hashCode() {
+    int result;
+    long temp;
+    result = (int) (positiveSamplingBoundary ^ (positiveSamplingBoundary >>> 32));
+    result = 31 * result + (int) (negativeSamplingBoundary ^ (negativeSamplingBoundary >>> 32));
+    temp = Double.doubleToLongBits(samplingRate);
+    result = 31 * result + (int) (temp ^ (temp >>> 32));
+    result = 31 * result + (tags != null ? tags.hashCode() : 0);
+    return result;
+  }
+
   /**
    * Only implemented to satisfy the sampler interface
    */
+  @Override
   public void close() {
     // nothing to do
   }

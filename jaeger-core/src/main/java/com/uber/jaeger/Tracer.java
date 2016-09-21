@@ -47,6 +47,7 @@ import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 
 public class Tracer implements io.opentracing.Tracer {
@@ -174,7 +175,8 @@ public class Tracer implements io.opentracing.Tracer {
     public io.opentracing.Tracer.SpanBuilder addReference(
         String referenceType, io.opentracing.SpanContext referencedContext) {
       if (parent == null
-          && (referenceType == References.CHILD_OF || referenceType == References.FOLLOWS_FROM)) {
+          && (Objects.equals(referenceType, References.CHILD_OF)
+              || Objects.equals(referenceType, References.FOLLOWS_FROM))) {
         this.parent = (SpanContext) referencedContext;
       }
       return this;

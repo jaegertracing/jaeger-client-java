@@ -45,6 +45,7 @@ public class RateLimitingSampler implements Sampler {
     this.tags = Collections.unmodifiableMap(tags);
   }
 
+  @Override
   public boolean isSampled(long id) {
     return this.rateLimiter.checkCredit(1.0);
   }
@@ -63,8 +64,17 @@ public class RateLimitingSampler implements Sampler {
     return false;
   }
 
+  @Override
+  public int hashCode() {
+    int result = rateLimiter != null ? rateLimiter.hashCode() : 0;
+    result = 31 * result + maxTracesPerSecond;
+    result = 31 * result + (tags != null ? tags.hashCode() : 0);
+    return result;
+  }
+
   /**
    * Only implemented to maintain compatibility with sampling interface.
    */
+  @Override
   public void close() {}
 }

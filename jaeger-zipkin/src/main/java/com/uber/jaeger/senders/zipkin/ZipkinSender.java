@@ -24,14 +24,14 @@ package com.uber.jaeger.senders.zipkin;
 import com.twitter.zipkin.thriftjava.Span;
 import com.uber.jaeger.exceptions.SenderException;
 import com.uber.jaeger.senders.Sender;
-import zipkin.reporter.Encoding;
-import zipkin.reporter.internal.AwaitableCallback;
-import zipkin.reporter.urlconnection.URLConnectionSender;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import zipkin.reporter.Encoding;
+import zipkin.reporter.internal.AwaitableCallback;
+import zipkin.reporter.urlconnection.URLConnectionSender;
 
 /**
  * This sends (TBinaryProtocol big-endian) encoded spans to a Zipkin Collector (usually a
@@ -147,8 +147,8 @@ public final class ZipkinSender implements Sender {
       throw new SenderException("Failed to flush spans.", e, n);
     } finally {
       spanBuffer.clear();
-      return n;
     }
+    return n;
   }
 
   @Override

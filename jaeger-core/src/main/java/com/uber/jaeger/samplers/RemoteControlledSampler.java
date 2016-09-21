@@ -148,6 +148,17 @@ public class RemoteControlledSampler implements Sampler {
   }
 
   @Override
+  public int hashCode() {
+    int result = serviceName != null ? serviceName.hashCode() : 0;
+    result = 31 * result + (manager != null ? manager.hashCode() : 0);
+    result = 31 * result + (pollTimer != null ? pollTimer.hashCode() : 0);
+    result = 31 * result + (lock != null ? lock.hashCode() : 0);
+    result = 31 * result + (sampler != null ? sampler.hashCode() : 0);
+    result = 31 * result + (metrics != null ? metrics.hashCode() : 0);
+    return result;
+  }
+
+  @Override
   public void close() {
     synchronized (this) {
       pollTimer.cancel();

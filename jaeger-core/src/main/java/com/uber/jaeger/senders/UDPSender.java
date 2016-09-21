@@ -21,9 +21,6 @@
  */
 package com.uber.jaeger.senders;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.twitter.zipkin.thriftjava.Span;
 import com.uber.jaeger.agent.thrift.Agent;
 import com.uber.jaeger.exceptions.SenderException;
@@ -31,6 +28,9 @@ import com.uber.jaeger.reporters.protocols.TUDPTransport;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.transport.AutoExpandingBufferWriteTransport;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class UDPSender implements Sender {
   final static int emitZipkinBatchOverhead = 22;
@@ -124,8 +124,8 @@ public class UDPSender implements Sender {
     } finally {
       spanBuffer.clear();
       byteBufferSize = 0;
-      return n;
     }
+    return n;
   }
 
   @Override

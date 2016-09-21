@@ -21,11 +21,11 @@
  */
 package com.uber.jaeger;
 
+import static org.junit.Assert.assertEquals;
+
 import com.uber.jaeger.exceptions.EmptyTracerStateStringException;
 import com.uber.jaeger.exceptions.MalformedTracerStateStringException;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 public class SpanContextTest {
 
@@ -49,10 +49,10 @@ public class SpanContextTest {
   }
 
   @Test
-  public void testToStringFormatsPostitiveFields() {
-    long traceID = (1 << 64) - 10L;
-    long spanID = (1 << 64) - 10L;
-    long parentID = (1 << 64) - 10L;
+  public void testToStringFormatsPositiveFields() {
+    long traceID = -10L;
+    long spanID = -10L;
+    long parentID = -10L;
     byte flags = (byte) 129;
 
     // I use MIN_VALUE because the most significant bit, and thats when
@@ -62,7 +62,7 @@ public class SpanContextTest {
     context.contextAsString().split(":");
 
     assertEquals(
-        "fffffffffffffff7:fffffffffffffff7:fffffffffffffff7:81", context.contextAsString());
+        "fffffffffffffff6:fffffffffffffff6:fffffffffffffff6:81", context.contextAsString());
     SpanContext contextFromStr = SpanContext.contextFromString(context.contextAsString());
     assertEquals(traceID, contextFromStr.getTraceID());
     assertEquals(spanID, contextFromStr.getSpanID());
