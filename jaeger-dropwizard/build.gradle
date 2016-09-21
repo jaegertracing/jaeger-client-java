@@ -6,6 +6,7 @@ description = 'Instrumentation library for jaeger-dropwizard'
 dependencies {
     compile project(':jaeger-jaxrs2')
 
+    compile group: 'io.opentracing', name: 'opentracing-impl', version: opentracingVersion
     compile group: 'io.dropwizard.metrics', name: 'metrics-core', version: '3.1.0'
     compile group: 'io.dropwizard', name: 'dropwizard-hibernate', version: '0.9.1'
 

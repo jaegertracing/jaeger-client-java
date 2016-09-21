@@ -21,8 +21,9 @@
  */
 package com.uber.jaeger.dropwizard;
 
-import com.uber.jaeger.Tracer;
 import com.uber.jaeger.filters.jaxrs2.TracingUtils;
+
+import io.opentracing.Tracer;
 
 import javax.ws.rs.core.Feature;
 import javax.ws.rs.core.FeatureContext;

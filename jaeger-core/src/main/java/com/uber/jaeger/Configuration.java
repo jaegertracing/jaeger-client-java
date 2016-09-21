@@ -90,13 +90,7 @@ public class Configuration {
     return new Tracer.Builder(serviceName, reporter, sampler).withMetrics(metrics);
   }
 
-  public Tracer getNoopTracer() {
-    Reporter reporter = new NoopReporter();
-    Sampler sampler = new ConstSampler(false);
-    return new Tracer.Builder(serviceName, reporter, sampler).build();
-  }
-
-  synchronized public Tracer getTracer() {
+  synchronized public io.opentracing.Tracer getTracer() {
     if (tracer != null) {
       return tracer;
     }
