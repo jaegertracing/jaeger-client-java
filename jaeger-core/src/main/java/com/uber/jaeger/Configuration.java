@@ -27,6 +27,7 @@ import com.uber.jaeger.metrics.StatsFactory;
 import com.uber.jaeger.metrics.StatsFactoryImpl;
 import com.uber.jaeger.reporters.CompositeReporter;
 import com.uber.jaeger.reporters.LoggingReporter;
+import com.uber.jaeger.reporters.NoopReporter;
 import com.uber.jaeger.reporters.RemoteReporter;
 import com.uber.jaeger.reporters.Reporter;
 import com.uber.jaeger.samplers.ConstSampler;
@@ -90,7 +91,9 @@ public class Configuration {
   }
 
   public Tracer getNoopTracer() {
-    return Tracer.getNoopTracer(serviceName);
+    Reporter reporter = new NoopReporter();
+    Sampler sampler = new ConstSampler(false);
+    return new Tracer.Builder(serviceName, reporter, sampler).build();
   }
 
   synchronized public Tracer getTracer() {
@@ -98,7 +101,8 @@ public class Configuration {
       return tracer;
     }
 
-    return getTracerBuilder().build();
+    tracer = getTracerBuilder().build();
+    return tracer;
   }
 
   public void setStatsFactor(StatsFactory statsFactory) {

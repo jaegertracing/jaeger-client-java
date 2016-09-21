@@ -293,12 +293,6 @@ public class Tracer implements io.opentracing.Tracer {
     }
   }
 
-  public static Tracer getNoopTracer(String serviceName) {
-    Reporter reporter = new NoopReporter();
-    Sampler sampler = new ConstSampler(false);
-    return new Builder(serviceName, reporter, sampler).build();
-  }
-
   /**
    * Builds Jaeger Tracer with options.
    */
