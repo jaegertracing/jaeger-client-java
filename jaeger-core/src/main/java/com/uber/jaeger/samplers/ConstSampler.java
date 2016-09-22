@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+@SuppressWarnings("EqualsHashCode")
 public class ConstSampler implements Sampler {
   public static final String TYPE = "const";
 
@@ -64,13 +65,6 @@ public class ConstSampler implements Sampler {
       return this.decision == ((ConstSampler) other).decision;
     }
     return false;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = (decision ? 1 : 0);
-    result = 31 * result + (tags != null ? tags.hashCode() : 0);
-    return result;
   }
 
   /**

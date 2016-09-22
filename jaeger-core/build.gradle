@@ -4,7 +4,7 @@ apply plugin: 'com.github.kt3k.coveralls'
 description = 'Core library for jaeger-client'
 
 dependencies {
-    compile project(':jaeger-generated')
+    compile project(':jaeger-thrift')
     compile group: 'io.opentracing', name: 'opentracing-api', version: opentracingVersion
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
     compile group: 'org.slf4j', name: 'slf4j-api', version: slf4jVersion
@@ -67,3 +67,12 @@ jar {
         attributes('Implementation-Title': 'jaeger-core', 'Implementation-Version': project.version)
     }
 }
+
+task jaegerVersion << {
+    def dirPath = 'src/main/resources/com/uber/jaeger/'
+    new File(projectDir, dirPath).mkdirs()
+    def propFile = new File(projectDir, "${dirPath}jaeger.properties").getAbsolutePath()
+    new File(propFile).write("jaeger.version=${project.version}")
+}
+
+compileJava.dependsOn jaegerVersion

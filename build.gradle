@@ -73,6 +73,6 @@ subprojects {
     apply from: '../gradle/publish.gradle'
 }
 
-configure(subprojects.findAll {it.name != 'jaeger-generated'}) {
+configure(subprojects.findAll {it.name != 'jaeger-thrift'}) {
    apply plugin: 'net.ltgt.errorprone'
 }

@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+@SuppressWarnings("EqualsHashCode")
 public class ProbabilisticSampler implements Sampler {
   public static final String TYPE = "probabilistic";
 
@@ -77,18 +78,6 @@ public class ProbabilisticSampler implements Sampler {
       return this.samplingRate == ((ProbabilisticSampler) other).samplingRate;
     }
     return false;
-  }
-
-  @Override
-  public int hashCode() {
-    int result;
-    long temp;
-    result = (int) (positiveSamplingBoundary ^ (positiveSamplingBoundary >>> 32));
-    result = 31 * result + (int) (negativeSamplingBoundary ^ (negativeSamplingBoundary >>> 32));
-    temp = Double.doubleToLongBits(samplingRate);
-    result = 31 * result + (int) (temp ^ (temp >>> 32));
-    result = 31 * result + (tags != null ? tags.hashCode() : 0);
-    return result;
   }
 
   /**

@@ -33,6 +33,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+@SuppressWarnings("EqualsHashCode")
 public class RemoteControlledSampler implements Sampler {
   public static final String TYPE = "remote";
 
@@ -145,17 +146,6 @@ public class RemoteControlledSampler implements Sampler {
       }
     }
     return false;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = serviceName != null ? serviceName.hashCode() : 0;
-    result = 31 * result + (manager != null ? manager.hashCode() : 0);
-    result = 31 * result + (pollTimer != null ? pollTimer.hashCode() : 0);
-    result = 31 * result + (lock != null ? lock.hashCode() : 0);
-    result = 31 * result + (sampler != null ? sampler.hashCode() : 0);
-    result = 31 * result + (metrics != null ? metrics.hashCode() : 0);
-    return result;
   }
 
   @Override

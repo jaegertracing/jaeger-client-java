@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+@SuppressWarnings("EqualsHashCode")
 public class RateLimitingSampler implements Sampler {
   public static final String TYPE = "ratelimiting";
 
@@ -62,14 +63,6 @@ public class RateLimitingSampler implements Sampler {
       return this.maxTracesPerSecond == ((RateLimitingSampler) other).maxTracesPerSecond;
     }
     return false;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = rateLimiter != null ? rateLimiter.hashCode() : 0;
-    result = 31 * result + maxTracesPerSecond;
-    result = 31 * result + (tags != null ? tags.hashCode() : 0);
-    return result;
   }
 
   /**
