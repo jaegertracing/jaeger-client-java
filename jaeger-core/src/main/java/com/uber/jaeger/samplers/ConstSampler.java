@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+@SuppressWarnings("EqualsHashCode")
 public class ConstSampler implements Sampler {
   public static final String TYPE = "const";
 
@@ -47,6 +48,7 @@ public class ConstSampler implements Sampler {
    * arguments.
    * @return A boolean that says whether to sample.
    */
+  @Override
   public boolean isSampled(long id) {
     return decision;
   }
@@ -68,6 +70,7 @@ public class ConstSampler implements Sampler {
   /**
    * Only implemented to satisfy the sampler interface
    */
+  @Override
   public void close() {
     // nothing to do
   }

@@ -145,6 +145,7 @@ public class Span implements io.opentracing.Span {
     }
   }
 
+  @Override
   public String toString() {
     synchronized (this) {
       return context.contextAsString() + " - " + operationName;

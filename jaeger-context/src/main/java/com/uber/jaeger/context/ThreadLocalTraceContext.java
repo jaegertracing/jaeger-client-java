@@ -35,6 +35,7 @@ public class ThreadLocalTraceContext implements TraceContext {
         }
       };
 
+  @Override
   public void push(Span span) {
     if (span == null) {
       throw new NullPointerException();
@@ -44,14 +45,17 @@ public class ThreadLocalTraceContext implements TraceContext {
     spanStack.push(span);
   }
 
+  @Override
   public boolean isEmpty() {
     return threadLocal.get().isEmpty();
   }
 
+  @Override
   public Span pop() throws EmptyStackException {
     return threadLocal.get().pop();
   }
 
+  @Override
   public Span getCurrentSpan() throws EmptyStackException {
     return threadLocal.get().peek();
   }

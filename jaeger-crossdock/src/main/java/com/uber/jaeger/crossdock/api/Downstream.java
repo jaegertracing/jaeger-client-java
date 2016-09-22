@@ -124,8 +124,9 @@ public class Downstream {
         return Constants.TRANSPORT_HTTP;
       case TCHANNEL:
         return Constants.TRANSPORT_TCHANNEL;
+      default:
+        throw new IllegalArgumentException("Unknown transport " + transport);
     }
-    throw new IllegalArgumentException("Unknown transport " + transport);
   }
 
   public static com.uber.jaeger.crossdock.thrift.Downstream toThrift(Downstream downstream) {

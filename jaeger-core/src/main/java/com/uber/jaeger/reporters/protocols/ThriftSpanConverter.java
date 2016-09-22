@@ -32,6 +32,7 @@ import com.uber.jaeger.Span;
 import com.uber.jaeger.SpanContext;
 import com.uber.jaeger.Tracer;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -98,10 +99,10 @@ public class ThriftSpanConverter {
     if (!span.isRPC()) {
       byte[] componentName;
       if (span.getLocalComponent() != null) {
-        componentName = span.getLocalComponent().getBytes();
+        componentName = span.getLocalComponent().getBytes(StandardCharsets.UTF_8);
       } else {
         // spans always have associated tracers, and service names
-        componentName = span.getTracer().getServiceName().getBytes();
+        componentName = span.getTracer().getServiceName().getBytes(StandardCharsets.UTF_8);
       }
 
       binaryAnnotations.add(
@@ -132,7 +133,9 @@ public class ThriftSpanConverter {
       tagValue = stringTagValue.substring(0, Constants.MAX_ANNOTATION_LENGTH);
     }
 
-    banno.setValue(stringTagValue.getBytes()).setAnnotation_type(AnnotationType.STRING);
+    banno
+        .setValue(stringTagValue.getBytes(StandardCharsets.UTF_8))
+        .setAnnotation_type(AnnotationType.STRING);
 
     return banno;
   }

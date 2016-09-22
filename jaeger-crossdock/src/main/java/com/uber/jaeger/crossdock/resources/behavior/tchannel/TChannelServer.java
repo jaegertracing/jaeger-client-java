@@ -67,7 +67,7 @@ public class TChannelServer {
     server.shutdown(true);
   }
 
-  private class TracingContextAdapter implements TracingContext {
+  private static class TracingContextAdapter implements TracingContext {
     @Override
     public void pushSpan(Span span) {
       TracingUtils.getTraceContext().push(span);

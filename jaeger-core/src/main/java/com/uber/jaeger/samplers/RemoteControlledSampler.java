@@ -33,6 +33,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+@SuppressWarnings("EqualsHashCode")
 public class RemoteControlledSampler implements Sampler {
   public static final String TYPE = "remote";
 

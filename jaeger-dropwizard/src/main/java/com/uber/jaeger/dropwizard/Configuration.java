@@ -45,7 +45,7 @@ public class Configuration extends com.uber.jaeger.Configuration {
   }
 
   @Override
-  public Tracer getTracer() {
+  synchronized public Tracer getTracer() {
     if (disable) {
       return NoopTracer.INSTANCE;
     }

@@ -1,4 +1,5 @@
 gen-java/
+jaeger-core/src/main/resources/jaeger.properties
 
 ### Eclipse ###
 

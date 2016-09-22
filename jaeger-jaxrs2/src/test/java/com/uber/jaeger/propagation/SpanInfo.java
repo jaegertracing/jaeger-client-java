@@ -24,6 +24,7 @@ package com.uber.jaeger.propagation;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.uber.jaeger.Span;
+import com.uber.jaeger.SpanContext;
 
 class SpanInfo {
   @JsonProperty("trace_id")
@@ -46,11 +47,10 @@ class SpanInfo {
   }
 
   public SpanInfo(Span span) {
-    String stringContext = span.getContext().contextAsString();
-    traceID = stringContext.substring(0, stringContext.indexOf(':'));
+    SpanContext spanContext = span.getContext();
+    traceID = Long.toHexString(spanContext.getTraceID());
     baggage = span.getBaggageItem(FilterIntegrationTest.BAGGAGE_KEY);
-    sampled =
-        (stringContext.substring(stringContext.lastIndexOf(':') + 1).getBytes()[0] & (byte) 1) == 1;
+    sampled = spanContext.isSampled();
   }
 
   public String getTraceID() {

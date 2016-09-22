@@ -25,10 +25,10 @@ import com.twitter.zipkin.thriftjava.Span;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TIOStreamTransport;
-import zipkin.reporter.Encoder;
-import zipkin.reporter.Encoding;
 
 import java.io.ByteArrayOutputStream;
+import zipkin.reporter.Encoder;
+import zipkin.reporter.Encoding;
 
 final class ThriftSpanEncoder implements Encoder<Span> {
 
@@ -60,6 +60,7 @@ final class ThriftSpanEncoder implements Encoder<Span> {
 
   final ThreadLocal<ReusableTBinaryProtocol> protocol =
       new ThreadLocal<ReusableTBinaryProtocol>() {
+        @Override
         protected ReusableTBinaryProtocol initialValue() {
           return new ReusableTBinaryProtocol(new ByteArrayOutputStream());
         }

@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+@SuppressWarnings("EqualsHashCode")
 public class RateLimitingSampler implements Sampler {
   public static final String TYPE = "ratelimiting";
 
@@ -45,6 +46,7 @@ public class RateLimitingSampler implements Sampler {
     this.tags = Collections.unmodifiableMap(tags);
   }
 
+  @Override
   public boolean isSampled(long id) {
     return this.rateLimiter.checkCredit(1.0);
   }
@@ -66,5 +68,6 @@ public class RateLimitingSampler implements Sampler {
   /**
    * Only implemented to maintain compatibility with sampling interface.
    */
+  @Override
   public void close() {}
 }

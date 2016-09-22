@@ -21,7 +21,8 @@
  */
 package com.uber.jaeger.reporters.protocols;
 
-import java.util.List;
+import static junit.framework.TestCase.assertTrue;
+import static org.junit.Assert.assertEquals;
 
 import com.twitter.zipkin.thriftjava.Annotation;
 import com.twitter.zipkin.thriftjava.zipkincoreConstants;
@@ -33,8 +34,8 @@ import io.opentracing.tag.Tags;
 import org.junit.Before;
 import org.junit.Test;
 
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertEquals;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 public class ThriftSpanConverterTest {
   Tracer tracer;
@@ -101,7 +102,8 @@ public class ThriftSpanConverterTest {
     Tags.COMPONENT.set(span, expectedCompnentName);
 
     com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan(span);
-    String actualComponent = new String(zipkinSpan.getBinary_annotations().get(0).getValue());
+    String actualComponent =
+        new String(zipkinSpan.getBinary_annotations().get(0).getValue(), StandardCharsets.UTF_8);
     assertEquals(expectedCompnentName, actualComponent);
   }
 }

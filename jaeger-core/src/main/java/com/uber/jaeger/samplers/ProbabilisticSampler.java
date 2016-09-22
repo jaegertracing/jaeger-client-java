@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+@SuppressWarnings("EqualsHashCode")
 public class ProbabilisticSampler implements Sampler {
   public static final String TYPE = "probabilistic";
 
@@ -57,6 +58,7 @@ public class ProbabilisticSampler implements Sampler {
    * @param id A long that represents the traceid used to make a sampling decision
    * @return A boolean that says wheter or not to sample.
    */
+  @Override
   public boolean isSampled(long id) {
     if (id > 0) {
       return id <= this.positiveSamplingBoundary;
@@ -81,6 +83,7 @@ public class ProbabilisticSampler implements Sampler {
   /**
    * Only implemented to satisfy the sampler interface
    */
+  @Override
   public void close() {
     // nothing to do
   }

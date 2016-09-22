@@ -5,6 +5,7 @@ plugins {
     id "com.github.hierynomus.license" version "0.12.1"
     id 'com.github.sherter.google-java-format' version '0.3.2'
     id "com.github.johnrengelman.shadow" version "1.2.3"
+    id "net.ltgt.errorprone" version "0.0.8"
 }
 
 
@@ -70,4 +71,8 @@ subprojects {
     classes.dependsOn tasks.verifyFormatting
 
     apply from: '../gradle/publish.gradle'
+}
+
+configure(subprojects.findAll {it.name != 'jaeger-thrift'}) {
+   apply plugin: 'net.ltgt.errorprone'
 }
