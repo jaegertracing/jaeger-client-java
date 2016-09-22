@@ -1,10 +1,12 @@
 Changes by Version
 ==================
 
-0.10.1 (unreleased)
+0.11.0 (2016-09-22)
 -------------------
 
-- no changes yet
+- fixed crossdock notImplementedError propagation
+- refactored configuration
+- added google-formatter
 
 
 0.10.0 (2016-09-16)
