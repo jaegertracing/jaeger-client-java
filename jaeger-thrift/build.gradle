@@ -1,6 +1,8 @@
 apply plugin: 'org.jruyi.thrift'
 
-description = 'Core library for jaeger-client'
+//This is in a separate subproject so that we can use 
+//standard javac instead of the error prone compiler
+description = 'Generated thrift code'
 
 dependencies {
     compile group: 'org.apache.thrift', name: 'libthrift', version: apacheThriftVersion
