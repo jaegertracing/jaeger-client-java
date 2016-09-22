@@ -91,7 +91,7 @@ public class TraceResponse {
         new com.uber.jaeger.crossdock.thrift.TraceResponse();
     response.setSpan(toThrift(resp.getObservedSpan()));
     response.setDownstream(toThrift(resp.getDownstream()));
-    response.setNotImplementedError("");
+    response.setNotImplementedError(resp.getNotImplementedError());
     return response;
   }
 
