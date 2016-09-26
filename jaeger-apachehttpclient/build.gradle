@@ -1,0 +1,53 @@
+apply plugin: 'jacoco'
+apply plugin: 'com.github.kt3k.coveralls'
+
+description = 'Instrumentation library for apache http client'
+
+dependencies {
+    compile project(':jaeger-core')
+    compile project(':jaeger-context')
+    compile group: 'org.apache.httpcomponents', name: 'httpcore', version: apacheHttpComponentsVersion
+
+    testCompile group: 'org.apache.httpcomponents', name: 'httpasyncclient', version: apacheHttpComponentsVersion
+    testCompile group: 'org.mock-server', name: 'mockserver-netty', version: '3.10.4'
+    testCompile group: 'junit', name: 'junit', version: junitVersion
+    testCompile group: 'org.mockito', name: 'mockito-all', version: mockitoVersion
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled = true // coveralls plugin depends on xml format report
+        html.enabled = true
+        html.destination "${buildDir}/jacocoHtml"
+    }
+
+    afterEvaluate {
+        classDirectories = files(classDirectories.files.collect {
+            fileTree(dir: it,
+                exclude: [
+                    '**/*Test*',
+                ])
+        })
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main/java'
+        }
+    }
+
+    test {
+        java {
+            srcDir 'src/test/java'
+        }
+    }
+}
+
+jar {
+    from sourceSets.main.output
+    manifest {
+        attributes('Implementation-Title': 'jaeger-apachehttpclient', 'Implementation-Version': project.version)
+    }
+}
