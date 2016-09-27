@@ -44,7 +44,7 @@ import java.io.IOException;
  * {@link TracingResponseInterceptor} to report tracing information.
  *
  * In most cases you shouldn't be using this directly. Use the appropriate client builder from
- * {@link TracingHttpClients}
+ * {@link TracingInterceptors}
  *
  */
 public class TracingRequestInterceptor implements HttpRequestInterceptor {

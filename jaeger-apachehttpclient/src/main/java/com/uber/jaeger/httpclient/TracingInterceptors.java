@@ -2,22 +2,20 @@ package com.uber.jaeger.httpclient;
 
 import com.uber.jaeger.Tracer;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
-import org.apache.http.impl.nio.client.HttpAsyncClients;
 
 /**
  * Returns tracing enabled client builders for apache http clients.
  */
-public class TracingHttpClients {
-  public static HttpAsyncClientBuilder asyncBuilder(Tracer tracer) {
-    return HttpAsyncClients.custom()
+public class TracingInterceptors {
+  public static HttpAsyncClientBuilder addTo(HttpAsyncClientBuilder clientBuilder, Tracer tracer) {
+    return clientBuilder
         .addInterceptorFirst(new TracingRequestInterceptor(tracer))
         .addInterceptorFirst(new TracingResponseInterceptor());
   }
 
-  public static HttpClientBuilder builder(Tracer tracer) {
-    return HttpClients.custom()
+  public static HttpClientBuilder addTo(HttpClientBuilder clientBuilder, Tracer tracer) {
+    return clientBuilder
         .addInterceptorFirst(new TracingRequestInterceptor(tracer))
         .addInterceptorFirst(new TracingResponseInterceptor());
   }

@@ -33,7 +33,11 @@ import com.uber.jaeger.samplers.Sampler;
 import org.apache.http.HttpHost;
 import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
+import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
+import org.apache.http.impl.nio.client.HttpAsyncClients;
 import org.apache.http.message.BasicHttpRequest;
 import org.junit.Before;
 import org.junit.Rule;
@@ -80,7 +84,8 @@ public class JaegerRequestAndResponseInterceptorIntegrationTest {
 
   @Test
   public void testAsyncHttpClientTracing() throws Exception {
-    CloseableHttpAsyncClient client = TracingHttpClients.asyncBuilder(tracer).build();
+    HttpAsyncClientBuilder clientBuilder = HttpAsyncClients.custom();
+    CloseableHttpAsyncClient client = TracingInterceptors.addTo(clientBuilder, tracer).build();
 
     client.start();
 
@@ -106,7 +111,8 @@ public class JaegerRequestAndResponseInterceptorIntegrationTest {
 
   @Test
   public void testHttpClientTracing() throws Exception {
-    CloseableHttpClient client = TracingHttpClients.builder(tracer).build();
+    HttpClientBuilder clientBuilder = HttpClients.custom();
+    CloseableHttpClient client = TracingInterceptors.addTo(clientBuilder, tracer).build();
 
     //Make a request to the async client and wait for response
     client.execute(
