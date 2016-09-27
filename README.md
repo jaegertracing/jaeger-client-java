@@ -11,6 +11,7 @@ with Zipkin-compatible data model.
  * [jaeger-core](https://github.com/uber/jaeger-client-java/tree/master/jaeger-core): the core implementation of the OpenTracing API
  * [jaeger-context](https://github.com/uber/jaeger-client-java/tree/master/jaeger-context): in-process context propagation
  * [jaeger-jaxrs2](https://github.com/uber/jaeger-client-java/tree/master/jaeger-jaxrs2): instrumentation for JAXRS2 filters
+ * [jaeger-apachehttpclient](https://github.com/uber/jaeger-client-java/tree/master/jaeger-apachehttpclient): instrumentation for apache http clients
  * [jaeger-dropwizard](https://github.com/uber/jaeger-client-java/tree/master/jaeger-dropwizard): a feature to initialize Jaeger from [Dropwizard](http://www.dropwizard.io/) apps (including binding to stats/metrics) 
  * [jaeger-zipkin](https://github.com/uber/jaeger-client-java/tree/master/jaeger-zipkin): compatibility layer for using Jaeger tracer as Zipkin-compatible implementation
 

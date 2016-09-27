@@ -7,7 +7,7 @@ to instrument the client.
 On a high level, the RequestInterceptor starts a span and puts it into a HttpContext, and the ResponseInterceptor
 requests completes the span and reports it.
 
-To obtain an apache http client that already has the interceptors set, simply use `TracingHttpClients`
+To obtain an apache http client that already has the interceptors set, simply use `TracingInterceptors`
 
 # Example 
 ```
