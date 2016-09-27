@@ -12,6 +12,7 @@ To obtain an apache http client that already has the interceptors set, simply us
 # Example 
 ```
 Tracer tracer = jaegerConfig.getTracer();
-CloseableHttpAsyncClient client = TracingHttpClients.asyncBuilder(tracer).build();
+HttpClientBuilder clientBuilder = HttpClients.custom();
+CloseableHttpClient client = TracingInterceptors.addTo(clientBuilder, tracer).build();
 ```
 

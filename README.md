@@ -97,6 +97,10 @@ Final ResourceConfig rc = new ResourceConfig()
 return GrizzlyHttpServerFactory.createHttpServer(URI.create(BASE_URI), rc);
 ```
 
+## Apache http client instrumentation ##
+See Apache http client's [README.md](./jaeger-apachehttpclient/README.md)
+
+
 ### Metrics ###
 In order for Jaeger to set metrics properly it needs to be configured with a metric registry.  
 ```java
