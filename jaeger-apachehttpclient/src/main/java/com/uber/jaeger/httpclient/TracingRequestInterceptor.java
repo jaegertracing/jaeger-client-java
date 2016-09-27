@@ -41,19 +41,17 @@ import java.io.IOException;
 
 /**
  * Apache http client request interceptor This is designed to be used along with
- * {@link JaegerResponseInterceptor} to report tracing information.
+ * {@link TracingResponseInterceptor} to report tracing information.
  *
- * Use this as follows
- *
- * CloseableHttpAsyncClient client = HttpAsyncClients.custom() .addInterceptorFirst(new
- * JaegerRequestInterceptor(tracer)) .addInterceptorFirst(new JaegerResponseInterceptor()) .build();
+ * In most cases you shouldn't be using this directly. Use the appropriate client builder from
+ * {@link TracingHttpClients}
  *
  */
-public class JaegerRequestInterceptor implements HttpRequestInterceptor {
+public class TracingRequestInterceptor implements HttpRequestInterceptor {
   private final Tracer tracer;
-  private final Logger logger = LoggerFactory.getLogger(JaegerRequestInterceptor.class);
+  private final Logger logger = LoggerFactory.getLogger(TracingRequestInterceptor.class);
 
-  public JaegerRequestInterceptor(Tracer tracer) {
+  public TracingRequestInterceptor(Tracer tracer) {
     this.tracer = tracer;
   }
 
@@ -84,7 +82,7 @@ public class JaegerRequestInterceptor implements HttpRequestInterceptor {
 
       httpContext.setAttribute(Constants.CURRENT_SPAN_CONTEXT_KEY, clientSpan);
     } catch (Exception e) {
-      logger.error("Could not compute span", e);
+      logger.error("Could not start client tracing span.", e);
     }
   }
 }

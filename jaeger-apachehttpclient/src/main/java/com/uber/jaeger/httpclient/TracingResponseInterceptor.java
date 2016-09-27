@@ -34,10 +34,10 @@ import java.io.IOException;
 
 /**
  * Apache http client response interceptor that works in conjunction with
- * {@link JaegerRequestInterceptor} to report spans
+ * {@link TracingRequestInterceptor} to report spans
  */
-public class JaegerResponseInterceptor implements HttpResponseInterceptor {
-  private final Logger logger = LoggerFactory.getLogger(JaegerResponseInterceptor.class);
+public class TracingResponseInterceptor implements HttpResponseInterceptor {
+  private final Logger logger = LoggerFactory.getLogger(TracingResponseInterceptor.class);
 
   @Override
   public void process(HttpResponse httpResponse, HttpContext httpContext)
@@ -53,7 +53,7 @@ public class JaegerResponseInterceptor implements HttpResponseInterceptor {
                 + "Verify that the RequestInterceptor is correctly set up.");
       }
     } catch (Exception e) {
-      logger.error("Could not compute Span", e);
+      logger.error("Could not finish client tracing span.", e);
     }
   }
 }

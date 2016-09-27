@@ -32,8 +32,8 @@ import com.uber.jaeger.samplers.ConstSampler;
 import com.uber.jaeger.samplers.Sampler;
 import org.apache.http.HttpHost;
 import org.apache.http.concurrent.FutureCallback;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
-import org.apache.http.impl.nio.client.HttpAsyncClients;
 import org.apache.http.message.BasicHttpRequest;
 import org.junit.Before;
 import org.junit.Rule;
@@ -53,6 +53,7 @@ public class JaegerRequestAndResponseInterceptorIntegrationTest {
   @Rule public MockServerRule mockServerRule = new MockServerRule(this);
   private InMemoryReporter reporter;
   private Tracer tracer;
+  private Span parentSpan;
 
   @SuppressWarnings("unused")
   private MockServerClient mockServerClient;
@@ -68,22 +69,18 @@ public class JaegerRequestAndResponseInterceptorIntegrationTest {
     reporter = new InMemoryReporter();
     Sampler sampler = new ConstSampler(true);
     tracer = new Tracer.Builder("test_service", reporter, sampler).build();
-  }
 
-  @Test
-  public void testRequestAndResponseInterceptor() throws Exception {
     //Set up a parent span context
     TraceContext parentTraceContext = TracingUtils.getTraceContext();
-    Span parentSpan = (Span) tracer.buildSpan("parent_operation").start();
+    parentSpan = (Span) tracer.buildSpan("parent_operation").start();
     parentSpan.setBaggageItem(BAGGAGE_KEY, BAGGAGE_VALUE);
     parentSpan.finish();
     parentTraceContext.push(parentSpan);
+  }
 
-    CloseableHttpAsyncClient client =
-        HttpAsyncClients.custom()
-            .addInterceptorFirst(new JaegerRequestInterceptor(tracer))
-            .addInterceptorFirst(new JaegerResponseInterceptor())
-            .build();
+  @Test
+  public void testAsyncHttpClientTracing() throws Exception {
+    CloseableHttpAsyncClient client = TracingHttpClients.asyncBuilder(tracer).build();
 
     client.start();
 
@@ -104,6 +101,22 @@ public class JaegerRequestAndResponseInterceptorIntegrationTest {
             })
         .get();
 
+    verifyTracing(parentSpan);
+  }
+
+  @Test
+  public void testHttpClientTracing() throws Exception {
+    CloseableHttpClient client = TracingHttpClients.builder(tracer).build();
+
+    //Make a request to the async client and wait for response
+    client.execute(
+        new HttpHost("localhost", mockServerRule.getPort()),
+        new BasicHttpRequest("GET", "/testing"));
+
+    verifyTracing(parentSpan);
+  }
+
+  private void verifyTracing(Span parentSpan) {
     //Assert that traces are correctly emitted by the client
     List<Span> spans = reporter.getSpans();
     assertEquals(2, spans.size());
