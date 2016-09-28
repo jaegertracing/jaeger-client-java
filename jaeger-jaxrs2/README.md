@@ -12,8 +12,8 @@ This module provides  general JAX-RS 2.0 instrumentation for a framework such as
 ```
 
 ## Instrumentation
-This project includes instrumentation for everything that implements the JAX-RS 2.0
-standard. Implementations such as Jersey and Dropwizard allow you to specify client
+This project includes instrumentation compatible with the JAX-RS 2.0 standard.
+Implementations such as Jersey and Dropwizard allow you to specify client
 and server filters to do some computational work before every request or response. These filters
 can then be combined into a JAX-RS [Feature](https://jersey.java.net/apidocs/2.9/jersey/javax/ws/rs/core/Feature.html)
 

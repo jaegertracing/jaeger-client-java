@@ -11,12 +11,10 @@ If you are using dropwizard then you can add the following:
 ```
 
 ## Instrumentation
-This project includes instrumentation compatible with the JAX-RS standard. Implementations such as 
-Jersey and Dropwizard allow you to specify client and server filters to do some computational work 
-before every request or response. These filters are combined into a 
-JAX-RS [Feature](https://jersey.java.net/apidocs/2.9/jersey/javax/ws/rs/core/Feature.html).
+As dropwizard is a JAX-RS implementation, we build upon [jaeger-jaxrs2](../jaeger-jaxrs2/README.md)
+and add some convenience configuration files and support for dropwizard metrics. 
 
-You will need to add a `JaegerFeature` to both the server and all JAX-RS clients that you use.
+Simply add a `JaegerFeature` to the dropwizard server and client.
 If you use other clients, like an Apache Http Client, make sure to instrument them as well.
 
 Jaeger’s dropwizard jar exposes a configuration object `com.uber.jaeger.dropwizard.Configuration`.
