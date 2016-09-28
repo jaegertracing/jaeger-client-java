@@ -1,8 +1,8 @@
-# JAX-RS Instrumentation #
-## JAX-RS ##
+# JAX-RS #
 
-If you just want general JAX-RS 2.0 instrumentation for a framework such as Jersey then add the
-following:
+This module provides  general JAX-RS 2.0 instrumentation for a framework such as Jersey 
+
+## Maven Coordinates ##
 ```xml
 <dependency>
     <groupId>com.uber.jaeger</groupId>

@@ -11,10 +11,10 @@ If you are using dropwizard then you can add the following:
 ```
 
 ## Instrumentation ##
-This project includes instrumentation for everything that implements the JAX-RS 2.0
-standard. Implementations such as Jersey and Dropwizard allow you to specify client
-and server filters to do some computational work before every request or response. These filters
-can then be combined into a JAX-RS [Feature](https://jersey.java.net/apidocs/2.9/jersey/javax/ws/rs/core/Feature.html)
+This project includes instrumentation compatible with the JAX-RS standard. Implementations such as 
+Jersey and Dropwizard allow you to specify client and server filters to do some computational work 
+before every request or response. These filters are combined into a 
+JAX-RS [Feature](https://jersey.java.net/apidocs/2.9/jersey/javax/ws/rs/core/Feature.html).
 
 You will need to add a `JaegerFeature` to both the server and all JAX-RS clients that you use.
 If you use other clients, like an Apache Http Client, make sure to instrument them as well.
@@ -65,7 +65,7 @@ public void run(T configuration, Environment environment) throws Exception {
 The minimal configuration in base.yaml should look like this:
 ```yaml
 jaeger:
-  serviceName: geocache
+  serviceName: my-service-name 
 ```
 In a yaml configuration file you must specify a `serviceName`. It is also possible to specify
 a ‘disable’ flag set to true, or false.  Jaeger should ALWAYS be ENABLED except in case of

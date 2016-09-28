@@ -1,6 +1,7 @@
 # Core #
-If you only want to do custom instrumentation using the core tracing functionality then add the
-following:
+This module provides core tracing functionality for custom instrumentation. 
+
+## Maven coordinates ##
 ```xml
 <dependency>
     <groupId>com.uber.jaeger</groupId>
@@ -9,3 +10,13 @@ following:
 </dependency>
 ```
 
+## Example ##
+The simplest way to get a Tracer for development is to use the following snippet. 
+Fpr production usage, the recommended path is to instantiate a `com.uber.jaeger.Configuration` 
+object, and use `getTracer()`.
+
+```java
+Reporter reporter = new InMemoryReporter();
+Sampler sampler = new ConstSampler(true);
+Tracer tracer = new Tracer.Builder(serviceName, reporter, sampler).build();
+```

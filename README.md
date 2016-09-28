@@ -6,15 +6,18 @@ This is a client side library that implements
 [Java OpenTracing API](https://github.com/opentracing/opentracing-java),
 with Zipkin-compatible data model.
 
-## Modules ##
+## Core Modules ##
 
 Click through for more detailed docs on specific modules.
+
+ * [jaeger-core](./jaeger-core): the core implementation of the OpenTracing API
+ * [jaeger-context](./jaeger-context): in-process context propagation
+ 
+## Add-on Modules ##
 
  * [jaeger-dropwizard](./jaeger-dropwizard): a feature to initialize Jaeger from [Dropwizard](http://www.dropwizard.io/) apps (including binding to stats/metrics) 
  * [jaeger-apachehttpclient](./jaeger-apachehttpclient): instrumentation for apache http clients
  * [jaeger-jaxrs2](./jaeger-jaxrs2): instrumentation for JAXRS2 filters
- * [jaeger-core](./jaeger-core): the core implementation of the OpenTracing API
- * [jaeger-context](./jaeger-context): in-process context propagation
  * [jaeger-zipkin](./jaeger-zipkin): compatibility layer for using Jaeger tracer as Zipkin-compatible implementation
 
 ## Importing Dependencies ##
@@ -24,12 +27,19 @@ Snapshot artifacts are also published to
 Follow these [instructions](http://stackoverflow.com/questions/7715321/how-to-download-snapshot-version-from-maven-snapshot-repository)
 to add the snapshot repository to your build system. 
 
-Add the required dependencies to your project. Usually, this would only be a single dependency.
+Add the required dependencies to your project. Usually, this would only be the add-ons you require.
 **Please use the latest version:** [![Released Version][maven-img]][maven]
 
-## Common concerns ##
+For e.g, to depend on the core jaeger library, you'd include the following
+```xml
+<dependency>
+    <groupId>com.uber.jaeger</groupId>
+    <artifactId>jaeger-core</artifactId>
+    <version>$jaegerVersion</version>
+</dependency>
+```
 
-### Thread Pooling: ###
+## In-process Context Propagation ##
 `jaeger-context` defines
 [ThreadLocalTraceContext](./jaeger-context/src/main/java/com/uber/jaeger/context)
 implementation of `TraceContext` that can be used for propagating the current tracing `Span`
@@ -43,7 +53,7 @@ onto the new threads.
 ExecutorService instrumentedExecutorService = TracingUtils.tracedExecutor(wrappedExecutorService);
 ```
 
-### Testing ###
+## Testing ##
 
 When testing tracing instrumentation it is often useful to make sure
 that all spans are being captured, which is not the case in production
@@ -66,9 +76,9 @@ The valid values for `type` are:
  * `ratelimiting`: configures a samlper that samples traces with a
     certain rate per second equal to `param`
 
-#### Debug Traces (Forced Sampling) ####
+### Debug Traces (Forced Sampling) ###
 
-##### Programmatically #####
+#### Programmatically ####
 
 The OpenTracing API defines a `sampling.priority` standard tag that
 can be used to affect the sampling of a span and its children:
@@ -79,7 +89,7 @@ import io.opentracing.tag.Tags;
 Tags.SAMPLING_PRIORITY.set(span, (short) 1);
 ```
 
-##### Via HTTP Headers #####
+#### Via HTTP Headers ####
 
 Jaeger Tracer also understands a special HTTP Header `jaeger-debug-id`,
 which can be set in the incoming request, e.g.
