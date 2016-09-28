@@ -8,18 +8,20 @@ with Zipkin-compatible data model.
 
 # Modules #
 
- * [jaeger-core](https://github.com/uber/jaeger-client-java/tree/master/jaeger-core): the core implementation of the OpenTracing API
- * [jaeger-context](https://github.com/uber/jaeger-client-java/tree/master/jaeger-context): in-process context propagation
- * [jaeger-jaxrs2](https://github.com/uber/jaeger-client-java/tree/master/jaeger-jaxrs2): instrumentation for JAXRS2 filters
- * [jaeger-apachehttpclient](https://github.com/uber/jaeger-client-java/tree/master/jaeger-apachehttpclient): instrumentation for apache http clients
- * [jaeger-dropwizard](https://github.com/uber/jaeger-client-java/tree/master/jaeger-dropwizard): a feature to initialize Jaeger from [Dropwizard](http://www.dropwizard.io/) apps (including binding to stats/metrics) 
- * [jaeger-zipkin](https://github.com/uber/jaeger-client-java/tree/master/jaeger-zipkin): compatibility layer for using Jaeger tracer as Zipkin-compatible implementation
+ * [jaeger-core](./jaeger-core): the core implementation of the OpenTracing API
+ * [jaeger-context](./jaeger-context): in-process context propagation
+ * [jaeger-jaxrs2](./jaeger-jaxrs2): instrumentation for JAXRS2 filters
+ * [jaeger-apachehttpclient](.jaeger-apachehttpclient): instrumentation for apache http clients
+ * [jaeger-dropwizard](./jaeger-dropwizard): a feature to initialize Jaeger from [Dropwizard](http://www.dropwizard.io/) apps (including binding to stats/metrics) 
+ * [jaeger-zipkin](./jaeger-zipkin): compatibility layer for using Jaeger tracer as Zipkin-compatible implementation
 
 
 # Usage #
 
 ## Importing Dependencies ##
-All artifacts are published to Maven Central. The snapshot artifacts are also published to [Sonatype](https://oss.sonatype.org/content/repositories/snapshots/com/uber/jaeger/) (you would need to add Sonatype as a maven repository, [like this](http://stackoverflow.com/questions/7715321/how-to-download-snapshot-version-from-maven-snapshot-repository)).
+All artifacts are published to Maven Central. The snapshot artifacts are also published to
+[Sonatype](https://oss.sonatype.org/content/repositories/snapshots/com/uber/jaeger/) 
+(you would need to add Sonatype as a maven repository, [like this](http://stackoverflow.com/questions/7715321/how-to-download-snapshot-version-from-maven-snapshot-repository)).
 
 
 Add only one of the following dependencies to your pom.xml file.
@@ -37,7 +39,8 @@ If you are using dropwizard then you can add the following:
 
 ### JAX-RS ###
 
-If you just want general JAX-RS 2.0 instrumentation for a framework such as Jersey then add the following:
+If you just want general JAX-RS 2.0 instrumentation for a framework such as Jersey then add the
+following:
 ```xml
 <dependency>
     <groupId>com.uber.jaeger</groupId>
@@ -57,7 +60,8 @@ If you just want general JAX-RS 2.0 instrumentation for a framework such as Jers
 
 ### Core ###
 
-If you only want to do custom instrumentation using the core tracing functionality then add the following:
+If you only want to do custom instrumentation using the core tracing functionality then add the
+following:
 ```xml
 <dependency>
     <groupId>com.uber.jaeger</groupId>
@@ -73,7 +77,10 @@ The minimal configuration in base.yaml should look like this:
 jaeger:
   serviceName: geocache
 ```
-In a yaml configuration file you must specify a `serviceName`.  It is also possible to specify a ‘disable’ flag set to true, or false.  Jaeger should ALWAYS be ENABLED except in case of emergencies where you are sure there is a problem with Jaeger.  If the `disable` field is left out then Jaeger will be enabled by default.
+In a yaml configuration file you must specify a `serviceName`.  It is also possible to specify
+a ‘disable’ flag set to true, or false.  Jaeger should ALWAYS be ENABLED except in case of
+emergencies where you are sure there is a problem with Jaeger.  If the `disable` field is left out
+then Jaeger will be enabled by default.
 
 
 ## JAX-RS Instrumentation ##
@@ -82,7 +89,10 @@ As of right now we have provided instrumentation for everything that follows the
 
 ### Dropwizard ###
 
-Jaeger’s dropwizard jar exposes a configuration object `com.uber.jaeger.dropwizard.Configuration`  If your service reads in its configuration through a pojo object then you can use this Configuration class to read the yaml format specified above.
+Jaeger’s dropwizard jar exposes a configuration object `com.uber.jaeger.dropwizard.Configuration`.
+If your service reads in its configuration through a pojo object then you can use this Configuration
+class to read the yaml format specified above.
+
 The following is an example of adding a client filter to a JAX-RS based framework that creates a dropwizard/jersey client.
 
 Client instrumentation example:
@@ -97,7 +107,10 @@ final Client client = new JerseyClientBuilder(env)
     .register(TracingUtils.clientFilter(jaegerConfig);
 ```
 
-Your server configuration will probably not look exactly like the one below.  However JAX-RS server configurations always expose a `register` function that can be used to register a server filter like below.
+Your server configuration will probably not look exactly like the one below.
+However JAX-RS server configurations always expose a `register` function that can be used to
+register a server filter like below.
+
 Server instrumentation example:
 ```java
 Final ResourceConfig rc = new ResourceConfig()
@@ -130,7 +143,14 @@ final Client client = new JerseyClientBuilder(env)
 ```
 
 ## Thread Pooling: ##
-`jaeger-context` defines [ThreadLocalTraceContext](https://github.com/uber/jaeger-client-java/tree/master/jaeger-context/src/main/java/com/uber/jaeger/context) implementation of `TraceContext` that can be used for propagating the current tracing `Span` throughout the application without changing the application's code. However, if the application is starting new threads or is using thread pools, the thread-local context is not going to be carried over into the execution in the next thread. To maintain context propagation, a wrapper `TracedExecutorService` is provided that automatically transfers the context onto the new threads.
+`jaeger-context` defines
+[ThreadLocalTraceContext](./jaeger-context/src/main/java/com/uber/jaeger/context)
+implementation of `TraceContext` that can be used for propagating the current tracing `Span`
+throughout the application without changing the application's code. However, if the application
+is starting new threads or is using thread pools, the thread-local context is not going to be
+carried over into the execution in the next thread. To maintain context propagation,
+a wrapper `TracedExecutorService` is provided that automatically transfers the context
+onto the new threads.
 
 ```java
 ExecutorService instrumentedExecutorService = TracingUtils.tracedExecutor(wrappedExecutorService);
