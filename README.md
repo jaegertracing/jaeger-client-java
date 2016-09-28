@@ -10,11 +10,11 @@ with Zipkin-compatible data model.
 
 Click through for more detailed docs on specific modules.
 
+ * [jaeger-dropwizard](./jaeger-dropwizard): a feature to initialize Jaeger from [Dropwizard](http://www.dropwizard.io/) apps (including binding to stats/metrics) 
+ * [jaeger-apachehttpclient](./jaeger-apachehttpclient): instrumentation for apache http clients
+ * [jaeger-jaxrs2](./jaeger-jaxrs2): instrumentation for JAXRS2 filters
  * [jaeger-core](./jaeger-core): the core implementation of the OpenTracing API
  * [jaeger-context](./jaeger-context): in-process context propagation
- * [jaeger-jaxrs2](./jaeger-jaxrs2): instrumentation for JAXRS2 filters
- * [jaeger-apachehttpclient](.jaeger-apachehttpclient): instrumentation for apache http clients
- * [jaeger-dropwizard](./jaeger-dropwizard): a feature to initialize Jaeger from [Dropwizard](http://www.dropwizard.io/) apps (including binding to stats/metrics) 
  * [jaeger-zipkin](./jaeger-zipkin): compatibility layer for using Jaeger tracer as Zipkin-compatible implementation
 
 ## Importing Dependencies ##
