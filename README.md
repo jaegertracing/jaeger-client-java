@@ -15,19 +15,20 @@ with Zipkin-compatible data model.
  * [jaeger-dropwizard](./jaeger-dropwizard): a feature to initialize Jaeger from [Dropwizard](http://www.dropwizard.io/) apps (including binding to stats/metrics) 
  * [jaeger-zipkin](./jaeger-zipkin): compatibility layer for using Jaeger tracer as Zipkin-compatible implementation
 
-
 # Usage #
 
 ## Importing Dependencies ##
-All artifacts are published to Maven Central. The snapshot artifacts are also published to
-[Sonatype](https://oss.sonatype.org/content/repositories/snapshots/com/uber/jaeger/) 
-(you would need to add Sonatype as a maven repository, [like this](http://stackoverflow.com/questions/7715321/how-to-download-snapshot-version-from-maven-snapshot-repository)).
+All artifacts are published to Maven Central. 
+Snapshot artifacts are also published to
+[Sonatype](https://oss.sonatype.org/content/repositories/snapshots/com/uber/jaeger/).
+Follow these [instructions](http://stackoverflow.com/questions/7715321/how-to-download-snapshot-version-from-maven-snapshot-repository)
+to add the snapshot repository to your build system. 
 
+Add the required dependencies to your project. Usually, this would only be a single dependency.
+**Please use the latest version:** [![Released Version][maven-img]][maven].
 
-Add only one of the following dependencies to your pom.xml file.
-Please use the latest version: [![Released Version][maven-img]][maven].
-
-### Dropwizard ###
+### Maven Coordinates ###
+#### Dropwizard ####
 If you are using dropwizard then you can add the following:
 ```xml
 <dependency>
@@ -37,7 +38,7 @@ If you are using dropwizard then you can add the following:
 </dependency>
 ```
 
-### JAX-RS ###
+#### JAX-RS ####
 
 If you just want general JAX-RS 2.0 instrumentation for a framework such as Jersey then add the
 following:
@@ -49,7 +50,7 @@ following:
 </dependency>
 ```
 
-### Apache Http Client ###
+#### Apache Http Client ####
 ```xml
 <dependency>
     <groupId>com.uber.jaeger</groupId>
@@ -58,7 +59,7 @@ following:
 </dependency>
 ```
 
-### Core ###
+#### Core ####
 
 If you only want to do custom instrumentation using the core tracing functionality then add the
 following:
@@ -70,22 +71,17 @@ following:
 </dependency>
 ```
 
-## Configuration ##
-
-The minimal configuration in base.yaml should look like this:
-```yaml
-jaeger:
-  serviceName: geocache
-```
-In a yaml configuration file you must specify a `serviceName`.  It is also possible to specify
-a ‘disable’ flag set to true, or false.  Jaeger should ALWAYS be ENABLED except in case of
-emergencies where you are sure there is a problem with Jaeger.  If the `disable` field is left out
-then Jaeger will be enabled by default.
 
 
 ## JAX-RS Instrumentation ##
 
-As of right now we have provided instrumentation for everything that follows the JAX-RS 2.0 standard.  JAX-RS based implementations such as Jersey and Dropwizard allow you to specify client and server filters to do some computational work before every request or response.  Thus to add Jaeger to your service you just need to have a server filter set on your server, and a client filter set on you outbound client requests.  Note it is important for all Java services to have a central place to configure Clients, for outgoing requests, as well as a central place for servers.
+This project includes instrumentation for everything that implements the JAX-RS 2.0
+standard. Implementations such as Jersey and Dropwizard allow you to specify client
+and server filters to do some computational work before every request or response. These filters
+can then be combined into a JAX-RS [Feature](https://jersey.java.net/apidocs/2.9/jersey/javax/ws/rs/core/Feature.html)
+
+You will need to add a `JaegerFeature` to both the server and all JAX-RS clients that you use.
+If you use other clients, like an Apache Http Client, make sure to instrument them as well.
 
 ### Dropwizard ###
 
@@ -93,39 +89,57 @@ Jaeger’s dropwizard jar exposes a configuration object `com.uber.jaeger.dropwi
 If your service reads in its configuration through a pojo object then you can use this Configuration
 class to read the yaml format specified above.
 
-The following is an example of adding a client filter to a JAX-RS based framework that creates a dropwizard/jersey client.
+The following is an example of adding the Jaeger Feature to a JAX-RS based framework that creates 
+a dropwizard/jersey client.
 
 Client instrumentation example:
 ```java
-import com.uber.jaeger.dropwizard.TracingUtils;
+import com.uber.jaeger.context.TracingUtils;
 
 // JaegerConfig gets initialized by whichever dropwizard configuration reader you are using.
 com.uber.jaeger.dropwizard.Configuration jaegerConfig;
 
-final Client client = new JerseyClientBuilder(env)
-    /* Arbitrary configuration code … */
-    .register(TracingUtils.clientFilter(jaegerConfig);
-```
+// For context propagation across threads
+ExecutorService tracedExecutor = TracingUtils.tracedExecutor(Executors.newCachedThreadPool());
 
-Your server configuration will probably not look exactly like the one below.
-However JAX-RS server configurations always expose a `register` function that can be used to
-register a server filter like below.
+// Enable tracing for inbound requests
+JaegerFeature jaegerFeature = new JaegerFeature(configuration.getJaegerConfig());
+
+
+RxClient<RxListenableFutureInvoker> reactiveClient = 
+    Rx.from(
+        ClientBuilder.newClient().register(jaegerFeature),
+        RxListenableFutureInvoker.class,
+        tracedExecutor);
+
+Client inertClient = ClientBuilder.newClient()
+    /* Arbitrary configuration code … */
+    .register(jaegerFeature);
+```
 
 Server instrumentation example:
 ```java
-Final ResourceConfig rc = new ResourceConfig()
-    /* Arbitrary configuration code… */
-    .register(TracingUtils.serverFilter(jaegerConfig));
-
-return GrizzlyHttpServerFactory.createHttpServer(URI.create(BASE_URI), rc);
+@Override
+public void run(T configuration, Environment environment) throws Exception {
+    JaegerFeature jaegerFeature = new JaegerFeature(configuration.getJaegerConfig());
+    environment.jersey().register(jaegerFeature);
+}
 ```
 
-## Apache http client instrumentation ##
-See Apache http client's [README.md](./jaeger-apachehttpclient/README.md)
+#### Configuration ####
 
+The minimal configuration in base.yaml should look like this:
+```yaml
+jaeger:
+  serviceName: geocache
+```
+In a yaml configuration file you must specify a `serviceName`. It is also possible to specify
+a ‘disable’ flag set to true, or false.  Jaeger should ALWAYS be ENABLED except in case of
+emergencies where you are sure there is a problem with Jaeger.  If the `disable` field is left out
+then Jaeger will be enabled by default.
 
-### Metrics ###
-In order for Jaeger to set metrics properly it needs to be configured with a metric registry.  
+#### Metrics ####
+In order for Jaeger to report metrics properly it needs to be configured with a metric registry.  
 ```java
 import com.uber.jaeger.dropwizard.TracingUtils;
 
@@ -141,6 +155,9 @@ final Client client = new JerseyClientBuilder(env)
     /* Arbitrary configuration code … */
     .register(TracingUtils.clientFilter(jaegerConfig);
 ```
+
+## Apache http client instrumentation ##
+See Apache http client's [README.md](./jaeger-apachehttpclient/README.md)
 
 ## Thread Pooling: ##
 `jaeger-context` defines
@@ -179,9 +196,9 @@ The valid values for `type` are:
  * `ratelimiting`: configures a samlper that samples traces with a
     certain rate per second equal to `param`
 
-## Debug Traces (Forced Sampling)
+### Debug Traces (Forced Sampling)
 
-### Programmatically
+#### Programmatically
 
 The OpenTracing API defines a `sampling.priority` standard tag that
 can be used to affect the sampling of a span and its children:
@@ -192,7 +209,7 @@ import io.opentracing.tag.Tags;
 Tags.SAMPLING_PRIORITY.set(span, (short) 1);
 ```
 
-### Via HTTP Headers
+#### Via HTTP Headers
 
 Jaeger Tracer also understands a special HTTP Header `jaeger-debug-id`,
 which can be set in the incoming request, e.g.
@@ -220,7 +237,7 @@ This allows using Jaeger UI to find the trace by this tag.
  1. `git submodule init update`
  2. `./gradlew googleJavaFormat clean test`
  
-## Code Style
+### Code Style
 
 This project uses [google java style](https://google.github.io/styleguide/javaguide.html).
 It is recommended to set up a git precommit hook as follows.
