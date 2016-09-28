@@ -10,7 +10,7 @@ requests completes the span and reports it.
 To obtain an apache http client that already has the interceptors set, simply use `TracingInterceptors`
 
 # Example 
-```
+```java
 Tracer tracer = jaegerConfig.getTracer();
 HttpClientBuilder clientBuilder = HttpClients.custom();
 CloseableHttpClient client = TracingInterceptors.addTo(clientBuilder, tracer).build();

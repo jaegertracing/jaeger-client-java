@@ -1,6 +1,6 @@
 package com.uber.jaeger.httpclient;
 
-import com.uber.jaeger.Tracer;
+import io.opentracing.Tracer;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 

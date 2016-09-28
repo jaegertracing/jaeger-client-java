@@ -46,6 +46,15 @@ If you just want general JAX-RS 2.0 instrumentation for a framework such as Jers
 </dependency>
 ```
 
+### Apache Http Client ###
+```xml
+<dependency>
+    <groupId>com.uber.jaeger</groupId>
+    <artifactId>jaeger-apachehttpclient</artifactId>
+    <version>$jaegerVersion</version>
+</dependency>
+```
+
 ### Core ###
 
 If you only want to do custom instrumentation using the core tracing functionality then add the following:
