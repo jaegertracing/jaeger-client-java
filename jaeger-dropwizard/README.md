@@ -1,6 +1,6 @@
-# Dropwizard #
+# Dropwizard
 
-## Maven Dependency ##
+## Maven Dependency
 If you are using dropwizard then you can add the following:
 ```xml
 <dependency>
@@ -10,7 +10,7 @@ If you are using dropwizard then you can add the following:
 </dependency>
 ```
 
-## Instrumentation ##
+## Instrumentation
 This project includes instrumentation compatible with the JAX-RS standard. Implementations such as 
 Jersey and Dropwizard allow you to specify client and server filters to do some computational work 
 before every request or response. These filters are combined into a 
@@ -26,7 +26,7 @@ class to read the yaml format specified above.
 The following is an example of adding the Jaeger Feature to a JAX-RS based framework that creates 
 a dropwizard/jersey client.
 
-### Client ###
+### Client
 ```java
 import com.uber.jaeger.context.TracingUtils;
 
@@ -51,7 +51,7 @@ Client inertClient = ClientBuilder.newClient()
     .register(jaegerFeature);
 ```
 
-### Server ###
+### Server
 ```java
 @Override
 public void run(T configuration, Environment environment) throws Exception {
@@ -60,7 +60,7 @@ public void run(T configuration, Environment environment) throws Exception {
 }
 ```
 
-## Configuration ## 
+## Configuration
 
 The minimal configuration in base.yaml should look like this:
 ```yaml
@@ -72,7 +72,7 @@ a ‘disable’ flag set to true, or false.  Jaeger should ALWAYS be ENABLED exc
 emergencies where you are sure there is a problem with Jaeger.  If the `disable` field is left out
 then Jaeger will be enabled by default.
 
-### Metrics ###
+### Metrics
 In order for Jaeger to report metrics properly it needs to be configured with a metric registry.  
 ```java
 import com.uber.jaeger.dropwizard.TracingUtils;

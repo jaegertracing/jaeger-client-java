@@ -1,7 +1,7 @@
-# Core #
+# Core
 This module provides core tracing functionality for custom instrumentation. 
 
-## Maven coordinates ##
+## Maven coordinates
 ```xml
 <dependency>
     <groupId>com.uber.jaeger</groupId>
@@ -10,7 +10,7 @@ This module provides core tracing functionality for custom instrumentation.
 </dependency>
 ```
 
-## Example ##
+## Example
 The simplest way to get a Tracer for development is to use the following snippet. 
 Fpr production usage, the recommended path is to instantiate a `com.uber.jaeger.Configuration` 
 object, and use `getTracer()`.

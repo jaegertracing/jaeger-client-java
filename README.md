@@ -6,21 +6,21 @@ This is a client side library that implements
 [Java OpenTracing API](https://github.com/opentracing/opentracing-java),
 with Zipkin-compatible data model.
 
-## Core Modules ##
+## Core Modules
 
 Click through for more detailed docs on specific modules.
 
  * [jaeger-core](./jaeger-core): the core implementation of the OpenTracing API
  * [jaeger-context](./jaeger-context): in-process context propagation
  
-## Add-on Modules ##
+## Add-on Modules
 
  * [jaeger-dropwizard](./jaeger-dropwizard): a feature to initialize Jaeger from [Dropwizard](http://www.dropwizard.io/) apps (including binding to stats/metrics) 
  * [jaeger-apachehttpclient](./jaeger-apachehttpclient): instrumentation for apache http clients
  * [jaeger-jaxrs2](./jaeger-jaxrs2): instrumentation for JAXRS2 filters
  * [jaeger-zipkin](./jaeger-zipkin): compatibility layer for using Jaeger tracer as Zipkin-compatible implementation
 
-## Importing Dependencies ##
+## Importing Dependencies
 All artifacts are published to Maven Central. 
 Snapshot artifacts are also published to
 [Sonatype](https://oss.sonatype.org/content/repositories/snapshots/com/uber/jaeger/).
@@ -39,7 +39,7 @@ For e.g, to depend on the core jaeger library, you'd include the following
 </dependency>
 ```
 
-## In-process Context Propagation ##
+## In-process Context Propagation
 `jaeger-context` defines
 [ThreadLocalTraceContext](./jaeger-context/src/main/java/com/uber/jaeger/context)
 implementation of `TraceContext` that can be used for propagating the current tracing `Span`
@@ -53,7 +53,7 @@ onto the new threads.
 ExecutorService instrumentedExecutorService = TracingUtils.tracedExecutor(wrappedExecutorService);
 ```
 
-## Testing ##
+## Testing
 
 When testing tracing instrumentation it is often useful to make sure
 that all spans are being captured, which is not the case in production
@@ -76,9 +76,9 @@ The valid values for `type` are:
  * `ratelimiting`: configures a samlper that samples traces with a
     certain rate per second equal to `param`
 
-### Debug Traces (Forced Sampling) ###
+### Debug Traces (Forced Sampling)
 
-#### Programmatically ####
+#### Programmatically
 
 The OpenTracing API defines a `sampling.priority` standard tag that
 can be used to affect the sampling of a span and its children:
@@ -89,7 +89,7 @@ import io.opentracing.tag.Tags;
 Tags.SAMPLING_PRIORITY.set(span, (short) 1);
 ```
 
-#### Via HTTP Headers ####
+#### Via HTTP Headers
 
 Jaeger Tracer also understands a special HTTP Header `jaeger-debug-id`,
 which can be set in the incoming request, e.g.
@@ -110,7 +110,7 @@ span.setTag("jaeger-debug-id", "some-correlation-id")
 
 This allows using Jaeger UI to find the trace by this tag.
 
-## Developing ##
+## Developing
 
  1. `git submodule init update`
  2. `./gradlew googleJavaFormat clean test`
@@ -136,7 +136,7 @@ chmod a+x .git/hooks/pre-commit
 You can also setup the [IntelliJ plugin](https://plugins.jetbrains.com/plugin/8527)
 to reformat code from within your IDE
 
-## License ##
+## License
   
   [The MIT License](LICENSE).
 
