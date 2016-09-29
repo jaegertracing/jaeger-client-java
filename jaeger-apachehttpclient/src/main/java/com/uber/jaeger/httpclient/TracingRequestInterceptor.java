@@ -77,7 +77,7 @@ public class TracingRequestInterceptor implements HttpRequestInterceptor {
         Tags.PEER_PORT.set(clientSpan, (short) host.getPort());
       }
 
-      addBaggage(clientSpan, httpRequest);
+      onSpanStart(clientSpan, httpRequest);
 
       tracer.inject(
           clientSpan.context(), Format.Builtin.HTTP_HEADERS, new ClientRequestCarrier(httpRequest));
@@ -88,7 +88,7 @@ public class TracingRequestInterceptor implements HttpRequestInterceptor {
     }
   }
 
-  protected void addBaggage(Span clientSpan, HttpRequest httpRequest) {
+  protected void onSpanStart(Span clientSpan, HttpRequest httpRequest) {
 
   }
 
