@@ -41,7 +41,7 @@ public class Configuration extends com.uber.jaeger.Configuration {
       @JsonProperty("sampler") SamplerConfiguration samplerConfig,
       @JsonProperty("reporter") ReporterConfiguration reporterConfig) {
     super(serviceName, samplerConfig, reporterConfig);
-    this.disable = disable;
+    this.disable = disable == null ? false : disable;
   }
 
   @Override
