@@ -1,6 +1,11 @@
 Changes by Version
 ==================
 
+0.13.0 (2016-09-29)
+-------------------
+
+- Fix bug with dropwizard config parsing
+
 0.12.0 (2016-09-27)
 -------------------
 
