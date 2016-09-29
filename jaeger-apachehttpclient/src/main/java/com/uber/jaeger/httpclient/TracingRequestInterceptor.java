@@ -62,7 +62,7 @@ public class TracingRequestInterceptor implements HttpRequestInterceptor {
       TraceContext parentContext = TracingUtils.getTraceContext();
 
       RequestLine requestLine = httpRequest.getRequestLine();
-      Tracer.SpanBuilder clientSpanBuilder = tracer.buildSpan(requestLine.getMethod());
+      Tracer.SpanBuilder clientSpanBuilder = tracer.buildSpan(getOperationName(httpRequest));
       if (!parentContext.isEmpty()) {
         clientSpanBuilder.asChildOf(parentContext.getCurrentSpan());
       }
@@ -77,6 +77,8 @@ public class TracingRequestInterceptor implements HttpRequestInterceptor {
         Tags.PEER_PORT.set(clientSpan, (short) host.getPort());
       }
 
+      addBaggage(clientSpan, httpRequest);
+
       tracer.inject(
           clientSpan.context(), Format.Builtin.HTTP_HEADERS, new ClientRequestCarrier(httpRequest));
 
@@ -85,4 +87,14 @@ public class TracingRequestInterceptor implements HttpRequestInterceptor {
       logger.error("Could not start client tracing span.", e);
     }
   }
+
+  protected void addBaggage(Span clientSpan, HttpRequest httpRequest) {
+
+  }
+
+  protected String getOperationName(HttpRequest httpRequest) {
+    return httpRequest.getRequestLine().getMethod();
+  }
+
+
 }
