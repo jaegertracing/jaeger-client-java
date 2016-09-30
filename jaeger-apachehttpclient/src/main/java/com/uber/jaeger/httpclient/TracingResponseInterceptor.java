@@ -46,6 +46,7 @@ public class TracingResponseInterceptor implements HttpResponseInterceptor {
       Span clientSpan = (Span) httpContext.getAttribute(Constants.CURRENT_SPAN_CONTEXT_KEY);
       if (clientSpan != null) {
         Tags.HTTP_STATUS.set(clientSpan, httpResponse.getStatusLine().getStatusCode());
+        beforeSpanFinish(clientSpan, httpResponse, httpContext);
         clientSpan.finish();
       } else {
         logger.warn(
@@ -55,5 +56,9 @@ public class TracingResponseInterceptor implements HttpResponseInterceptor {
     } catch (Exception e) {
       logger.error("Could not finish client tracing span.", e);
     }
+  }
+
+  protected void beforeSpanFinish(Span clientSpan, HttpResponse httpResponse, HttpContext httpContext) {
+
   }
 }
