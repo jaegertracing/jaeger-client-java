@@ -27,8 +27,14 @@ import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
+import io.opentracing.propagation.TextMapExtractAdapter;
+import io.opentracing.propagation.TextMapInjectAdapter;
+import io.opentracing.tag.Tags;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
@@ -58,6 +64,36 @@ public class TracerTest {
   }
 
   @Test
+  public void testRPCChildSpanHasTheSameID() {
+    String expectedOperation = "parent";
+    Span client =
+        (Span)
+            tracer
+                .buildSpan(expectedOperation)
+                .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT)
+                .start();
+
+    Map<String, String> map = new HashMap<>();
+    TextMap carrier = new TextMapInjectAdapter(map);
+    tracer.inject(client.context(), Format.Builtin.TEXT_MAP, carrier);
+
+    carrier = new TextMapExtractAdapter(map);
+    SpanContext ctx = (SpanContext) tracer.extract(Format.Builtin.TEXT_MAP, carrier);
+    assertEquals(client.context().getSpanID(), ctx.getSpanID());
+
+    Span server =
+        (Span)
+            tracer
+                .buildSpan("child")
+                .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
+                .asChildOf(ctx)
+                .start();
+
+    assertEquals("client and server must have the same span ID",
+        client.context().getSpanID(), server.context().getSpanID());
+  }
+
+  @Test
   public void testTracerMetrics() {
     String expectedOperation = "fry";
     tracer.buildSpan(expectedOperation).start();
@@ -79,7 +115,7 @@ public class TracerTest {
             .withStatsReporter(metricsReporter)
             .registerInjector(Format.Builtin.TEXT_MAP, injector)
             .build();
-    Span span = (com.uber.jaeger.Span) tracer.buildSpan("leela").start();
+    Span span = (Span) tracer.buildSpan("leela").start();
 
     TextMap carrier = mock(TextMap.class);
     tracer.inject(span.context(), Format.Builtin.TEXT_MAP, carrier);

@@ -21,9 +21,6 @@
  */
 package com.uber.jaeger.senders;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.uber.jaeger.Span;
 import com.uber.jaeger.SpanContext;
 import com.uber.jaeger.Tracer;
@@ -40,6 +37,9 @@ import org.apache.thrift.transport.AutoExpandingBufferWriteTransport;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
@@ -147,7 +147,7 @@ public class UDPSenderTest {
     assertEquals(spans.size(), expectedNumSpans);
 
     com.twitter.zipkin.thriftjava.Span actualSpan = spans.get(0);
-    SpanContext context = expectedSpan.getContext();
+    SpanContext context = expectedSpan.context();
 
     assertEquals(context.getTraceID(), actualSpan.getTrace_id());
     assertEquals(context.getSpanID(), actualSpan.getId());
