@@ -24,3 +24,45 @@ Tracer tracer = jaegerConfig.getTracer();
 HttpClientBuilder clientBuilder = HttpClients.custom();
 CloseableHttpClient client = TracingInterceptors.addTo(clientBuilder, tracer).build();
 ```
+
+## Custom extensions
+First, declare the interceptors in the http client builder
+```java
+HttpClientBuilder builder;
+builder.addInterceptorFirst(new CustomRequestInterceptor(tracer))
+       .addInterceptorFirst(new CustomResponseInterceptor());
+```
+
+Then customize the request or the response interceptor
+
+```java
+public class CustomRequestInterceptor extends TracingRequestInterceptor {
+
+protected void onSpanStarted(Span clientSpan, HttpRequest httpRequest, HttpContext httpContext) {
+    clientSpan.setTag(DEBUG_ID_HEADER_KEY, "debug-me");
+    Tags.SAMPLING_PRIORITY.set(clientSpan, (short) 1);
+    ...
+  }
+
+  /**
+   * Get the http operation name to log into jaeger. Defaults to the HTTP verb
+   * @param httpRequest the request for the http operation being executed
+   * @return the operation name
+   */
+  protected String getOperationName(HttpRequest httpRequest) {
+    ...
+    return httpRequest.getFirstHeader("operation-name").getValue();
+  }
+}
+
+...
+
+public class CustomResponseInterceptor extends TracingRequestInterceptor {
+
+  protected void beforeSpanFinish(Span clientSpan, HttpResponse httpResponse, HttpContext httpContext) {
+    Tags.COMPONENT.set(clientSpan, httpResponse.getFirstHeader("component").getValue());
+    ...
+  }
+}
+
+```

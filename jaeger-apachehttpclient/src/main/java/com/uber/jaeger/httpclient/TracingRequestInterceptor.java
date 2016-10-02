@@ -88,10 +88,22 @@ public class TracingRequestInterceptor implements HttpRequestInterceptor {
     }
   }
 
+  /**
+   * onSpanStarted will be called right after the span is created. Giving any extension the possibility to read or
+   * overwrite any tag of the span or update it at will.
+   * @param clientSpan - the span that's being created
+   * @param httpRequest - the http request for the operation
+   * @param httpContext - the context on which the operation is being executed
+   */
   protected void onSpanStarted(Span clientSpan, HttpRequest httpRequest, HttpContext httpContext) {
 
   }
 
+  /**
+   * Get the http operation name to log into jaeger. Defaults to the HTTP verb
+   * @param httpRequest the request for the http operation being executed
+   * @return the operation name
+   */
   protected String getOperationName(HttpRequest httpRequest) {
     return httpRequest.getRequestLine().getMethod();
   }

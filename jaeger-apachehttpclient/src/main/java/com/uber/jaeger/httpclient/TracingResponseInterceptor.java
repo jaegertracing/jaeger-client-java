@@ -58,6 +58,13 @@ public class TracingResponseInterceptor implements HttpResponseInterceptor {
     }
   }
 
+  /**
+   * beforeSpanFinish will be called just before the span is closed. Giving any extensions the possibility to read,
+   * or overwrite the return code or any http header at will.
+   * @param clientSpan the span that's going to be closed
+   * @param httpResponse the http response returned from the http operation
+   * @param httpContext the http context that the operation run on
+   */
   protected void beforeSpanFinish(Span clientSpan, HttpResponse httpResponse, HttpContext httpContext) {
 
   }
