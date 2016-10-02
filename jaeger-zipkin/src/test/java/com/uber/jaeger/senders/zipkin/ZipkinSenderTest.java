@@ -129,7 +129,7 @@ public class ZipkinSenderTest {
     assertEquals(traces.get(0).size(), 1);
 
     zipkin.Span actualSpan = traces.get(0).get(0);
-    SpanContext context = expectedSpan.getContext();
+    SpanContext context = expectedSpan.context();
 
     assertEquals(context.getTraceID(), actualSpan.traceId);
     assertEquals(context.getSpanID(), actualSpan.id);

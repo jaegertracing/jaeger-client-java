@@ -101,7 +101,7 @@ public class TraceBehaviorResourceTest {
     Span span = (Span) server.getTracer().buildSpan("root").start();
     TracingUtils.getTraceContext().push(span);
 
-    String expectedTraceId = String.format("%x", span.getContext().getTraceID());
+    String expectedTraceId = String.format("%x", span.context().getTraceID());
     String expectedBaggage = "baggage-example";
 
     Downstream downstream =
@@ -126,7 +126,7 @@ public class TraceBehaviorResourceTest {
     Span span = (Span) server.getTracer().buildSpan("root").start();
     TracingUtils.getTraceContext().push(span);
 
-    String expectedTraceId = String.format("%x", span.getContext().getTraceID());
+    String expectedTraceId = String.format("%x", span.context().getTraceID());
     String expectedBaggage = "baggage-example";
     span.setBaggageItem(Constants.BAGGAGE_KEY, expectedBaggage);
     if (expectedSampled) {
@@ -161,7 +161,7 @@ public class TraceBehaviorResourceTest {
     Span span = (Span) server.getTracer().buildSpan("root").start();
     TracingUtils.getTraceContext().push(span);
 
-    String expectedTraceId = String.format("%x", span.getContext().getTraceID());
+    String expectedTraceId = String.format("%x", span.context().getTraceID());
     String expectedBaggage = "baggage-example";
     span.setBaggageItem(Constants.BAGGAGE_KEY, expectedBaggage);
     if (expectedSampled) {

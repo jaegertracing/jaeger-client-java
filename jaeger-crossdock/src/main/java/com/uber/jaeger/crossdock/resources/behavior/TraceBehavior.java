@@ -139,7 +139,7 @@ public class TraceBehavior {
       return new ObservedSpan("no span found", false, "no span found");
     }
 
-    SpanContext context = span.getContext();
+    SpanContext context = span.context();
     String traceID = String.format("%x", context.getTraceID());
     boolean sampled = context.isSampled();
     String baggage = span.getBaggageItem(Constants.BAGGAGE_KEY);
