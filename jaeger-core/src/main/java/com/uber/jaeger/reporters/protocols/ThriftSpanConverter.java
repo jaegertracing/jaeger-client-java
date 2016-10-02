@@ -43,7 +43,7 @@ public class ThriftSpanConverter {
     Tracer tracer = span.getTracer();
     Endpoint host = new Endpoint(tracer.getIP(), (short) 0, tracer.getServiceName());
 
-    SpanContext context = span.getContext();
+    SpanContext context = span.context();
     return new com.twitter.zipkin.thriftjava.Span(
             context.getTraceID(),
             span.getOperationName(),

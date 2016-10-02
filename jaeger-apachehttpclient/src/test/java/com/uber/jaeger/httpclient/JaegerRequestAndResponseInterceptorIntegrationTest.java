@@ -128,15 +128,15 @@ public class JaegerRequestAndResponseInterceptorIntegrationTest {
     assertEquals(2, spans.size());
     Span span = spans.get(1);
     assertEquals("GET", span.getOperationName());
-    assertEquals(parentSpan.getContext().getSpanID(), span.getContext().getParentID());
+    assertEquals(parentSpan.context().getSpanID(), span.context().getParentID());
 
     //Assert traces and baggage are propagated correctly to server
     HttpRequest[] httpRequests = mockServerClient.retrieveRecordedRequests(null);
     assertEquals(1, httpRequests.length);
     String traceData = httpRequests[0].getFirstHeader("uber-trace-id");
     String[] split = traceData.split("%3A");
-    assertEquals(Long.toHexString(span.getContext().getTraceID()), split[0]);
-    assertEquals(Long.toHexString(span.getContext().getSpanID()), split[1]);
+    assertEquals(Long.toHexString(span.context().getTraceID()), split[0]);
+    assertEquals(Long.toHexString(span.context().getSpanID()), split[1]);
     String baggage = httpRequests[0].getFirstHeader("uberctx-" + BAGGAGE_KEY);
     assertEquals(BAGGAGE_VALUE, baggage);
   }

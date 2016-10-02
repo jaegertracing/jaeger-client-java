@@ -173,8 +173,8 @@ public class SpanTest {
   @Test
   public void testSpanToString() {
     Span span = (Span) tracer.buildSpan("test-operation").start();
-    SpanContext expectedContext = span.getContext();
-    SpanContext actualContext = SpanContext.contextFromString(span.getContext().contextAsString());
+    SpanContext expectedContext = span.context();
+    SpanContext actualContext = SpanContext.contextFromString(span.context().contextAsString());
 
     assertEquals(expectedContext.getTraceID(), actualContext.getTraceID());
     assertEquals(expectedContext.getSpanID(), actualContext.getSpanID());
@@ -259,16 +259,16 @@ public class SpanTest {
     Span span = (Span) tracer.buildSpan("test-service-operation").start();
     Tags.SAMPLING_PRIORITY.set(span, (short) 1);
 
-    assertEquals(span.getContext().getFlags() & SpanContext.flagSampled, SpanContext.flagSampled);
-    assertEquals(span.getContext().getFlags() & SpanContext.flagDebug, SpanContext.flagDebug);
+    assertEquals(span.context().getFlags() & SpanContext.flagSampled, SpanContext.flagSampled);
+    assertEquals(span.context().getFlags() & SpanContext.flagDebug, SpanContext.flagDebug);
   }
 
   @Test
   public void testSpanDetectsSamplingPriorityLessThanZero() {
     Span span = (Span) tracer.buildSpan("test-service-operation").start();
 
-    assertEquals(span.getContext().getFlags() & SpanContext.flagSampled, SpanContext.flagSampled);
+    assertEquals(span.context().getFlags() & SpanContext.flagSampled, SpanContext.flagSampled);
     Tags.SAMPLING_PRIORITY.set(span, (short) -1);
-    assertEquals(span.getContext().getFlags() & SpanContext.flagSampled, 0);
+    assertEquals(span.context().getFlags() & SpanContext.flagSampled, 0);
   }
 }

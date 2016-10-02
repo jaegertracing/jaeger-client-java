@@ -124,14 +124,8 @@ public class Span implements io.opentracing.Span {
     }
   }
 
-  // This is public since extractors, and injectors will need access to a span's context.
-  public SpanContext getContext() {
-    // doesn't need to be a copy since all fields are final
-    return this.context;
-  }
-
   @Override
-  public io.opentracing.Span setBaggageItem(String key, String value) {
+  public Span setBaggageItem(String key, String value) {
     synchronized (this) {
       this.context = this.context.withBaggageItem(key, value);
     }
@@ -153,8 +147,9 @@ public class Span implements io.opentracing.Span {
   }
 
   @Override
-  public io.opentracing.SpanContext context() {
+  public SpanContext context() {
     synchronized (this) {
+      // doesn't need to be a copy since all fields are final
       return context;
     }
   }
