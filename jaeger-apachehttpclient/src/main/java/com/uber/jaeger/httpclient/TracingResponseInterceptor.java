@@ -46,6 +46,7 @@ public class TracingResponseInterceptor implements HttpResponseInterceptor {
       Span clientSpan = (Span) httpContext.getAttribute(Constants.CURRENT_SPAN_CONTEXT_KEY);
       if (clientSpan != null) {
         Tags.HTTP_STATUS.set(clientSpan, httpResponse.getStatusLine().getStatusCode());
+        beforeSpanFinish(clientSpan, httpResponse, httpContext);
         clientSpan.finish();
       } else {
         logger.warn(
@@ -55,5 +56,16 @@ public class TracingResponseInterceptor implements HttpResponseInterceptor {
     } catch (Exception e) {
       logger.error("Could not finish client tracing span.", e);
     }
+  }
+
+  /**
+   * beforeSpanFinish will be called just before the span is closed. Giving any extensions the possibility to read,
+   * or overwrite the return code or any http header at will.
+   * @param clientSpan the span that's going to be closed
+   * @param httpResponse the http response returned from the http operation
+   * @param httpContext the http context that the operation run on
+   */
+  protected void beforeSpanFinish(Span clientSpan, HttpResponse httpResponse, HttpContext httpContext) {
+
   }
 }
