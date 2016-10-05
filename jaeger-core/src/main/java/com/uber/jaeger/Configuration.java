@@ -98,7 +98,15 @@ public class Configuration {
     return tracer;
   }
 
+  /**
+   * @deprecated Use {@link #setStatsFactory(StatsFactory)} instead
+   */
+  @Deprecated
   public void setStatsFactor(StatsFactory statsFactory) {
+    this.statsFactory = statsFactory;
+  }
+
+  public void setStatsFactory(StatsFactory statsFactory) {
     this.statsFactory = statsFactory;
   }
 
