@@ -98,7 +98,12 @@ public class Configuration {
     return tracer;
   }
 
+  @Deprecated
   public void setStatsFactor(StatsFactory statsFactory) {
+    this.statsFactory = statsFactory;
+  }
+
+  public void setStatsFactory(StatsFactory statsFactory) {
     this.statsFactory = statsFactory;
   }
 

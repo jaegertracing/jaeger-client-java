@@ -21,6 +21,7 @@
  */
 package com.uber.jaeger.dropwizard;
 
+import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -50,5 +51,9 @@ public class Configuration extends com.uber.jaeger.Configuration {
       return NoopTracer.INSTANCE;
     }
     return super.getTracer();
+  }
+
+  public void setMetricRegistry(MetricRegistry metricRegistry) {
+    setStatsFactory(new StatsFactory(metricRegistry));
   }
 }
