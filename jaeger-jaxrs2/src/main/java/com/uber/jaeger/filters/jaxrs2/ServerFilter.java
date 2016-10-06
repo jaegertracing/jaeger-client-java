@@ -30,13 +30,13 @@ import io.opentracing.tag.Tags;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.Provider;
-import java.io.IOException;
 
 @Provider
 public class ServerFilter implements ContainerRequestFilter, ContainerResponseFilter {
@@ -57,7 +57,12 @@ public class ServerFilter implements ContainerRequestFilter, ContainerResponseFi
               .buildSpan(containerRequestContext.getMethod())
               .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
               //TODO(oibe) figure out how to get remote addr from grizzly HttpServletRequest
-              .withTag(Tags.HTTP_URL.getKey(), containerRequestContext.getUriInfo().toString());
+              .withTag(
+                  Tags.PEER_HOSTNAME.getKey(),
+                  containerRequestContext.getUriInfo().getBaseUri().getHost())
+              .withTag(
+                  Tags.HTTP_URL.getKey(),
+                  containerRequestContext.getUriInfo().getAbsolutePath().toString());
 
       // TODO(oibe) make X_UBER_SOURCE configurable for open source projects
       MultivaluedMap<String, String> headers = containerRequestContext.getHeaders();
