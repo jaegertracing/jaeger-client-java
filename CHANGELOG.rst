@@ -1,6 +1,13 @@
 Changes by Version
 ==================
 
+0.14.0 (2016-10-06)
+-------------------
+
+- Fix http url tag on jaxrs2 filters
+- Add convenience setter for metrics
+- Expose interceptor callbacks and custom operation name for extension classes
+
 0.13.0 (2016-09-29)
 -------------------
 
