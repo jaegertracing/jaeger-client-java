@@ -72,6 +72,16 @@ subprojects {
     classes.dependsOn tasks.verifyFormatting
 
     apply from: '../gradle/publish.gradle'
+    test {
+    testLogging {
+        events "failed"
+        exceptionFormat "full"
+
+        // remove standard output/error logging from --info builds
+        // by assigning only 'failed' and 'skipped' events
+        info.events = ["failed", "skipped"]
+       }
+    }
 }
 
 configure(subprojects.findAll {it.name != 'jaeger-thrift'}) {
