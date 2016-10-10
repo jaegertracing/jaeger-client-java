@@ -31,17 +31,25 @@ public class Callable<T> implements java.util.concurrent.Callable<T> {
   public Callable(java.util.concurrent.Callable<T> wrappedCallable, TraceContext traceContext) {
     this.wrappedCallable = wrappedCallable;
     this.traceContext = traceContext;
-    currentSpan = traceContext.getCurrentSpan();
+    if (!traceContext.isEmpty()) {
+      this.currentSpan = traceContext.getCurrentSpan();
+    } else {
+      this.currentSpan = null;
+    }
   }
 
   @Override
   public T call() throws Exception {
-    traceContext.push(currentSpan);
+    if (currentSpan != null) {
+      traceContext.push(currentSpan);
+    }
 
     try {
       return wrappedCallable.call();
     } finally {
-      traceContext.pop();
+      if (currentSpan != null) {
+        traceContext.pop();
+      }
     }
   }
 }

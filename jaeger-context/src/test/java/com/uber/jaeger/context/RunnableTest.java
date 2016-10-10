@@ -41,6 +41,7 @@ public class RunnableTest {
     traceContext = mock(TraceContext.class);
     when(traceContext.getCurrentSpan()).thenReturn(span);
     when(traceContext.pop()).thenReturn(span);
+    when(traceContext.isEmpty()).thenReturn(false);
   }
 
   @Test
@@ -53,6 +54,21 @@ public class RunnableTest {
     verify(traceContext, times(1)).push(span);
     verify(traceContext, times(1)).pop();
     verify(traceContext, times(1)).getCurrentSpan();
+    verify(traceContext, times(1)).isEmpty();
+    verify(wrappedRunnable, times(1)).run();
+    verifyNoMoreInteractions(traceContext, wrappedRunnable);
+  }
+
+  @Test
+  public void testIntrumentedRunnableNoCurrentSpan() {
+    when(traceContext.isEmpty()).thenReturn(true);
+
+    Runnable wrappedRunnable = mock(Runnable.class);
+    Runnable runnable = new Runnable(wrappedRunnable, traceContext);
+
+    runnable.run();
+
+    verify(traceContext, times(1)).isEmpty();
     verify(wrappedRunnable, times(1)).run();
     verifyNoMoreInteractions(traceContext, wrappedRunnable);
   }
