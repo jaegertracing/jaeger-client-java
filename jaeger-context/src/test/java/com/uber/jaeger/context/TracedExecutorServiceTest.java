@@ -56,6 +56,7 @@ public class TracedExecutorServiceTest {
     traceContext = mock(TraceContext.class);
     when(traceContext.pop()).thenReturn(span);
     when(traceContext.getCurrentSpan()).thenReturn(span);
+    when(traceContext.isEmpty()).thenReturn(false);
     tracedExecutorService = new TracedExecutorService(wrappedExecutorService, traceContext);
     callableList =
         new ArrayList<java.util.concurrent.Callable<Span>>() {
@@ -112,6 +113,7 @@ public class TracedExecutorServiceTest {
 
     tracedExecutorService.submit(wrappedCallable);
 
+    verify(traceContext, times(1)).isEmpty();
     verify(traceContext, times(1)).getCurrentSpan();
     verify(wrappedExecutorService, times(1)).submit(any(Callable.class));
     verifyNoMoreInteractions(wrappedExecutorService, wrappedCallable, traceContext);
@@ -123,6 +125,7 @@ public class TracedExecutorServiceTest {
 
     tracedExecutorService.submit(wrappedRunnable);
 
+    verify(traceContext, times(1)).isEmpty();
     verify(traceContext, times(1)).getCurrentSpan();
     verify(wrappedExecutorService).submit(any(Runnable.class));
     verifyNoMoreInteractions(wrappedExecutorService, wrappedRunnable, traceContext);
@@ -133,6 +136,7 @@ public class TracedExecutorServiceTest {
     tracedExecutorService.invokeAll(callableList);
 
     verify(wrappedExecutorService).invokeAll(any(List.class));
+    verify(traceContext, times(callableList.size())).isEmpty();
     verify(traceContext, times(callableList.size())).getCurrentSpan();
     verifyNoMoreInteractions(wrappedExecutorService, traceContext);
   }
@@ -142,6 +146,7 @@ public class TracedExecutorServiceTest {
     tracedExecutorService.invokeAny(callableList);
 
     verify(wrappedExecutorService).invokeAny(any(List.class));
+    verify(traceContext, times(callableList.size())).isEmpty();
     verify(traceContext, times(callableList.size())).getCurrentSpan();
     verifyNoMoreInteractions(wrappedExecutorService, traceContext);
   }
@@ -152,6 +157,7 @@ public class TracedExecutorServiceTest {
 
     tracedExecutorService.execute(wrappedRunnable);
 
+    verify(traceContext, times(1)).isEmpty();
     verify(traceContext, times(1)).getCurrentSpan();
     verify(wrappedExecutorService).execute(any(Runnable.class));
     verifyNoMoreInteractions(wrappedExecutorService, traceContext);

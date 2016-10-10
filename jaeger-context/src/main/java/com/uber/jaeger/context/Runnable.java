@@ -31,16 +31,25 @@ public class Runnable implements java.lang.Runnable {
   public Runnable(java.lang.Runnable wrappedRunnable, TraceContext traceContext) {
     this.wrappedRunnable = wrappedRunnable;
     this.traceContext = traceContext;
-    this.currentSpan = traceContext.getCurrentSpan();
+    if (!traceContext.isEmpty()) {
+      this.currentSpan = traceContext.getCurrentSpan();
+    } else {
+      this.currentSpan = null;
+    }
   }
 
   @Override
   public void run() {
-    traceContext.push(currentSpan);
+    if (currentSpan != null) {
+      traceContext.push(currentSpan);
+    }
+
     try {
       wrappedRunnable.run();
     } finally {
-      traceContext.pop();
+      if (currentSpan != null) {
+        traceContext.pop();
+      }
     }
   }
 }

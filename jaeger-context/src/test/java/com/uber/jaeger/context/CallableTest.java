@@ -41,6 +41,7 @@ public class CallableTest {
     traceContext = mock(TraceContext.class);
     when(traceContext.getCurrentSpan()).thenReturn(span);
     when(traceContext.pop()).thenReturn(span);
+    when(traceContext.isEmpty()).thenReturn(false);
   }
 
   @Test
@@ -52,9 +53,25 @@ public class CallableTest {
 
     jaegerCallable.call();
 
+    verify(traceContext, times(1)).isEmpty();
     verify(traceContext, times(1)).push(span);
     verify(traceContext, times(1)).getCurrentSpan();
     verify(traceContext, times(1)).pop();
+    verify(wrappedCallable, times(1)).call();
+    verifyNoMoreInteractions(traceContext, wrappedCallable);
+  }
+
+  @Test
+  public void testInstrumentedCallableNoCurrentSpan() throws Exception {
+    Callable wrappedCallable = mock(Callable.class);
+    when(wrappedCallable.call()).thenReturn(span);
+    when(traceContext.isEmpty()).thenReturn(true);
+
+    Callable<Span> jaegerCallable = new Callable<>(wrappedCallable, traceContext);
+
+    jaegerCallable.call();
+
+    verify(traceContext, times(1)).isEmpty();
     verify(wrappedCallable, times(1)).call();
     verifyNoMoreInteractions(traceContext, wrappedCallable);
   }
