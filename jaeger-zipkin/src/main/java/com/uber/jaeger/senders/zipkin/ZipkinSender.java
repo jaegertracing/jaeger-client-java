@@ -29,6 +29,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import zipkin.Constants;
 import zipkin.reporter.Encoding;
 import zipkin.reporter.internal.AwaitableCallback;
 import zipkin.reporter.urlconnection.URLConnectionSender;
@@ -165,12 +167,7 @@ public final class ZipkinSender implements Sender {
   // serviceName/host is needed on annotations so zipkin can query
   // see https://github.com/uber/jaeger-client-java/pull/75 for more info
   Span backFillHostOnAnnotations(Span span) {
-    Endpoint host = null;
-    for (BinaryAnnotation binaryAnnotation : span.getBinary_annotations()) {
-      if (zipkincoreConstants.LOCAL_COMPONENT.equals(binaryAnnotation.getKey())) {
-        host = binaryAnnotation.getHost();
-      }
-    }
+    Endpoint host = getLocalComponentEndpoint(span);
 
     if (host != null) {
       for (BinaryAnnotation binaryAnnotation : span.getBinary_annotations()) {
@@ -187,5 +184,21 @@ public final class ZipkinSender implements Sender {
     }
 
     return span;
+  }
+
+  private Endpoint getLocalComponentEndpoint(Span span) {
+    for (BinaryAnnotation binaryAnnotation : span.getBinary_annotations()) {
+      if (Constants.CORE_ANNOTATIONS.contains(binaryAnnotation.getKey()) && binaryAnnotation.isSetHost()) {
+        return binaryAnnotation.getHost();
+      }
+    }
+
+    for (BinaryAnnotation binaryAnnotation : span.getBinary_annotations()) {
+      if (zipkincoreConstants.LOCAL_COMPONENT.equals(binaryAnnotation.getKey())) {
+        return binaryAnnotation.getHost();
+      }
+    }
+
+    return null;
   }
 }
