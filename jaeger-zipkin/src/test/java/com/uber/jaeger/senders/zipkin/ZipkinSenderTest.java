@@ -35,6 +35,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import zipkin.Annotation;
+import zipkin.BinaryAnnotation;
 import zipkin.junit.ZipkinRule;
 import zipkin.reporter.urlconnection.URLConnectionSender;
 
@@ -98,7 +100,7 @@ public class ZipkinSenderTest {
     int expectedNumSpans = 11;
     List<byte[]> spansToSend = new ArrayList(expectedNumSpans);
     for (int i = 0; i < expectedNumSpans; i++)
-      spansToSend.add(new ThriftSpanEncoder().encode(span));
+      spansToSend.add(new ThriftSpanEncoder().encode(sender.backFillHostOnAnnotations(span)));
 
     // create a sender thats a multiple of the span size (accounting for span overhead)
     // this allows us to test the boundary conditions of writing spans.
@@ -135,6 +137,12 @@ public class ZipkinSenderTest {
     assertEquals(context.getSpanID(), actualSpan.id);
     assertEquals(context.getParentID(), (long) actualSpan.parentId);
     assertEquals(expectedSpan.getOperationName(), actualSpan.name);
+    for (BinaryAnnotation binaryAnnotation : actualSpan.binaryAnnotations) {
+      assertEquals(tracer.getServiceName(), binaryAnnotation.endpoint.serviceName);
+    }
+    for (Annotation annotation : actualSpan.annotations) {
+      assertEquals(tracer.getServiceName(), annotation.endpoint.serviceName);
+    }
   }
 
   private ZipkinSender newSender(int messageMaxBytes) {

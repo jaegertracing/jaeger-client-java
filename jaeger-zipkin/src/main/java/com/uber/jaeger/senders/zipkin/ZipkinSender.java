@@ -21,7 +21,7 @@
  */
 package com.uber.jaeger.senders.zipkin;
 
-import com.twitter.zipkin.thriftjava.Span;
+import com.twitter.zipkin.thriftjava.*;
 import com.uber.jaeger.exceptions.SenderException;
 import com.uber.jaeger.senders.Sender;
 
@@ -29,6 +29,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import zipkin.Constants;
 import zipkin.reporter.Encoding;
 import zipkin.reporter.internal.AwaitableCallback;
 import zipkin.reporter.urlconnection.URLConnectionSender;
@@ -94,7 +96,7 @@ public final class ZipkinSender implements Sender {
    */
   @Override
   public int append(Span span) throws SenderException {
-    byte[] next = encoder.encode(span);
+    byte[] next = encoder.encode(backFillHostOnAnnotations(span));
     int messageSizeOfNextSpan = delegate.messageSizeInBytes(Collections.singletonList(next));
     // don't enqueue something larger than we can drain
     if (Integer.compare(messageSizeOfNextSpan, delegate.messageMaxBytes()) > 0) {
@@ -160,5 +162,43 @@ public final class ZipkinSender implements Sender {
       throw new SenderException("Failed to close " + delegate, e, n);
     }
     return n;
+  }
+
+  // serviceName/host is needed on annotations so zipkin can query
+  // see https://github.com/uber/jaeger-client-java/pull/75 for more info
+  Span backFillHostOnAnnotations(Span span) {
+    Endpoint host = getServiceEndpoint(span);
+
+    if (host != null) {
+      for (BinaryAnnotation binaryAnnotation : span.getBinary_annotations()) {
+        if (!binaryAnnotation.isSetHost()) {
+          binaryAnnotation.setHost(host);
+        }
+      }
+
+      for (Annotation annotation : span.getAnnotations()) {
+        if (!annotation.isSetHost()) {
+          annotation.setHost(host);
+        }
+      }
+    }
+
+    return span;
+  }
+
+  private Endpoint getServiceEndpoint(Span span) {
+    for (Annotation annotation : span.getAnnotations()) {
+      if (Constants.CORE_ANNOTATIONS.contains(annotation.getValue()) && annotation.isSetHost()) {
+        return annotation.getHost();
+      }
+    }
+
+    for (BinaryAnnotation binaryAnnotation : span.getBinary_annotations()) {
+      if (zipkincoreConstants.LOCAL_COMPONENT.equals(binaryAnnotation.getKey())) {
+        return binaryAnnotation.getHost();
+      }
+    }
+
+    return null;
   }
 }
