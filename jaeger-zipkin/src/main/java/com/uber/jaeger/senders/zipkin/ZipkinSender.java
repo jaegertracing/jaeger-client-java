@@ -167,7 +167,7 @@ public final class ZipkinSender implements Sender {
   // serviceName/host is needed on annotations so zipkin can query
   // see https://github.com/uber/jaeger-client-java/pull/75 for more info
   Span backFillHostOnAnnotations(Span span) {
-    Endpoint host = getLocalComponentEndpoint(span);
+    Endpoint host = getServiceEndpoint(span);
 
     if (host != null) {
       for (BinaryAnnotation binaryAnnotation : span.getBinary_annotations()) {
@@ -186,10 +186,10 @@ public final class ZipkinSender implements Sender {
     return span;
   }
 
-  private Endpoint getLocalComponentEndpoint(Span span) {
-    for (BinaryAnnotation binaryAnnotation : span.getBinary_annotations()) {
-      if (Constants.CORE_ANNOTATIONS.contains(binaryAnnotation.getKey()) && binaryAnnotation.isSetHost()) {
-        return binaryAnnotation.getHost();
+  private Endpoint getServiceEndpoint(Span span) {
+    for (Annotation annotation : span.getAnnotations()) {
+      if (Constants.CORE_ANNOTATIONS.contains(annotation.getValue()) && annotation.isSetHost()) {
+        return annotation.getHost();
       }
     }
 
