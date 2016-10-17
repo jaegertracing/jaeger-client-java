@@ -1,5 +1,5 @@
 gen-java/
-jaeger-core/src/main/resources/jaeger.properties
+jaeger-core/src/main/resources/com/uber/jaeger/jaeger.properties
 
 ### Eclipse ###
 
