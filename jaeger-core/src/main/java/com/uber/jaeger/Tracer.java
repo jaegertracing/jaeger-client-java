@@ -142,6 +142,14 @@ public class Tracer implements io.opentracing.Tracer {
     return extractor.extract(carrier);
   }
 
+  /**
+   * Shuts down the {@link Reporter} and {@link Sampler}
+   */
+  public void close(){
+    reporter.close();
+    sampler.close();
+  }
+
   private class SpanBuilder implements io.opentracing.Tracer.SpanBuilder {
 
     private String operationName = null;

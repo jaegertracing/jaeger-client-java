@@ -21,10 +21,17 @@
  */
 package com.uber.jaeger;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+
 import com.uber.jaeger.metrics.InMemoryStatsReporter;
 import com.uber.jaeger.propagation.Injector;
 import com.uber.jaeger.reporters.InMemoryReporter;
+import com.uber.jaeger.reporters.Reporter;
 import com.uber.jaeger.samplers.ConstSampler;
+import com.uber.jaeger.samplers.Sampler;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
 import io.opentracing.propagation.TextMapExtractAdapter;
@@ -35,11 +42,6 @@ import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 
 public class TracerTest {
 
@@ -131,5 +133,15 @@ public class TracerTest {
   @Test(expected = IllegalArgumentException.class)
   public void testServiceNameNotEmptyNull() {
     new Tracer.Builder("  ", new InMemoryReporter(), new ConstSampler(true));
+  }
+
+  @Test
+  public void testClose(){
+    Reporter reporter = mock(Reporter.class);
+    Sampler sampler = mock(Sampler.class);
+    tracer = new Tracer.Builder("bonda", reporter, sampler).build();
+    tracer.close();
+    verify(reporter).close();
+    verify(sampler).close();
   }
 }
