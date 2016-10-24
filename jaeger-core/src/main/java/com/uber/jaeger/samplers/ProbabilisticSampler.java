@@ -80,6 +80,26 @@ public class ProbabilisticSampler implements Sampler {
     return false;
   }
 
+  @Override
+  public String toString() {
+    return "{\"_class\":\"ProbabilisticSampler\", "
+        + "\"positiveSamplingBoundary\":\""
+        + positiveSamplingBoundary
+        + "\""
+        + ", "
+        + "\"negativeSamplingBoundary\":\""
+        + negativeSamplingBoundary
+        + "\""
+        + ", "
+        + "\"samplingRate\":\""
+        + samplingRate
+        + "\""
+        + ", "
+        + "\"tags\":"
+        + (tags == null ? "null" : "\"" + tags + "\"")
+        + "}";
+  }
+
   /**
    * Only implemented to satisfy the sampler interface
    */

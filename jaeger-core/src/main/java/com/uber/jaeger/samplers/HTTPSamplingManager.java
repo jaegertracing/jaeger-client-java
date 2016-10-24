@@ -129,4 +129,12 @@ public class HTTPSamplingManager implements SamplingManager {
 
     return jsonStringToSamplingStrategy(jsonString);
   }
+
+  @Override
+  public String toString() {
+    return "{\"_class\":\"HTTPSamplingManager\", "
+        + "\"hostPort\":"
+        + (hostPort == null ? "null" : "\"" + hostPort + "\"")
+        + "}";
+  }
 }

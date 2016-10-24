@@ -65,6 +65,18 @@ public class RateLimitingSampler implements Sampler {
     return false;
   }
 
+  @Override
+  public String toString() {
+    return "{\"_class\":\"RateLimitingSampler\", "
+        + "\"maxTracesPerSecond\":\""
+        + maxTracesPerSecond
+        + "\""
+        + ", "
+        + "\"tags\":"
+        + (tags == null ? "null" : "\"" + tags + "\"")
+        + "}";
+  }
+
   /**
    * Only implemented to maintain compatibility with sampling interface.
    */

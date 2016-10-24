@@ -149,6 +149,20 @@ public class RemoteControlledSampler implements Sampler {
   }
 
   @Override
+  public String toString() {
+    return "{\"_class\":\"RemoteControlledSampler\", "
+        + "\"serviceName\":"
+        + (serviceName == null ? "null" : "\"" + serviceName + "\"")
+        + ", "
+        + "\"manager\":"
+        + (manager == null ? "null" : "\"" + manager + "\"")
+        + ", "
+        + "\"sampler\":"
+        + (sampler == null ? "null" : "\"" + sampler + "\"")
+        + "}";
+  }
+
+  @Override
   public void close() {
     synchronized (this) {
       pollTimer.cancel();

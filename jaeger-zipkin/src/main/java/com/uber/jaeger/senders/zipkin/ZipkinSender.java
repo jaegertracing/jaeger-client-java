@@ -21,7 +21,11 @@
  */
 package com.uber.jaeger.senders.zipkin;
 
-import com.twitter.zipkin.thriftjava.*;
+import com.twitter.zipkin.thriftjava.Annotation;
+import com.twitter.zipkin.thriftjava.BinaryAnnotation;
+import com.twitter.zipkin.thriftjava.Endpoint;
+import com.twitter.zipkin.thriftjava.Span;
+import com.twitter.zipkin.thriftjava.zipkincoreConstants;
 import com.uber.jaeger.exceptions.SenderException;
 import com.uber.jaeger.senders.Sender;
 
@@ -29,7 +33,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
 import zipkin.Constants;
 import zipkin.reporter.Encoding;
 import zipkin.reporter.internal.AwaitableCallback;
@@ -200,5 +203,13 @@ public final class ZipkinSender implements Sender {
     }
 
     return null;
+  }
+
+  @Override
+  public String toString() {
+    return "{\"_class\":\"ZipkinSender\", "
+        + "\"delegate\":"
+        + (delegate == null ? "null" : "\"" + delegate + "\"")
+        + "}";
   }
 }

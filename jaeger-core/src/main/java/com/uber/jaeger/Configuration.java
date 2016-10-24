@@ -36,8 +36,12 @@ import com.uber.jaeger.samplers.RateLimitingSampler;
 import com.uber.jaeger.samplers.RemoteControlledSampler;
 import com.uber.jaeger.samplers.Sampler;
 import com.uber.jaeger.senders.UDPSender;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Configuration {
+  private final static Logger logger = LoggerFactory.getLogger(Configuration.class);
+
   public static final double DEFAULT_SAMPLING_PROBABILITY = 0.001;
 
   /**
@@ -95,6 +99,7 @@ public class Configuration {
     }
 
     tracer = getTracerBuilder().build();
+    logger.info("Initialized tracer={}", tracer);
     return tracer;
   }
 
