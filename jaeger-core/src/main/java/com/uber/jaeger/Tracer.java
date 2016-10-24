@@ -145,9 +145,33 @@ public class Tracer implements io.opentracing.Tracer {
   /**
    * Shuts down the {@link Reporter} and {@link Sampler}
    */
-  public void close(){
+  public void close() {
     reporter.close();
     sampler.close();
+  }
+
+  @Override
+  public String toString() {
+    return "{\"_class\":\"Tracer\", "
+        + "\"VERSION\":"
+        + (VERSION == null ? "null" : "\"" + VERSION + "\"")
+        + ", "
+        + "\"serviceName\":"
+        + (serviceName == null ? "null" : "\"" + serviceName + "\"")
+        + ", "
+        + "\"reporter\":"
+        + (reporter == null ? "null" : "\"" + reporter + "\"")
+        + ", "
+        + "\"sampler\":"
+        + (sampler == null ? "null" : "\"" + sampler + "\"")
+        + ", "
+        + "\"ip\":\""
+        + ip
+        + "\""
+        + ", "
+        + "\"tags\":"
+        + (tags == null ? "null" : "\"" + tags + "\"")
+        + "}";
   }
 
   private class SpanBuilder implements io.opentracing.Tracer.SpanBuilder {

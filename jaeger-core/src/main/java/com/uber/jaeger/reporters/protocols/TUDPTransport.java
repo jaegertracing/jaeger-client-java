@@ -25,7 +25,11 @@ import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
 import java.io.IOException;
-import java.net.*;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetSocketAddress;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 
 /*
@@ -151,5 +155,21 @@ public class TUDPTransport extends TTransport implements AutoCloseable {
         this.writeButter = null;
       }
     }
+  }
+
+  @Override
+  public String toString() {
+    return "{\"_class\":\"TUDPTransport\", "
+        + "\"socket\":"
+        + (socket == null ? "null" : "\"" + socket + "\"")
+        + ", "
+        + "\"receiveOffSet\":\""
+        + receiveOffSet
+        + "\""
+        + ", "
+        + "\"receiveLength\":\""
+        + receiveLength
+        + "\""
+        + "}";
   }
 }

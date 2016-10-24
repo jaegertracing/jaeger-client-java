@@ -87,6 +87,18 @@ public class RemoteReporter implements Reporter {
   }
 
   @Override
+  public String toString() {
+    return "{\"_class\":\"RemoteReporter\", "
+        + "\"sender\":"
+        + (sender == null ? "null" : "\"" + sender + "\"")
+        + ", "
+        + "\"maxQueueSize\":\""
+        + maxQueueSize
+        + "\""
+        + "}";
+  }
+
+  @Override
   public void close() {
     commandQueue.add(new CloseCommand());
 

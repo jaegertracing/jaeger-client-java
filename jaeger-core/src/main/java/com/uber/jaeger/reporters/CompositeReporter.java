@@ -24,6 +24,7 @@ package com.uber.jaeger.reporters;
 import com.uber.jaeger.Span;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class CompositeReporter implements Reporter {
@@ -41,6 +42,14 @@ public class CompositeReporter implements Reporter {
     for (Reporter reporter : this.reporters) {
       reporter.report(span);
     }
+  }
+
+  @Override
+  public String toString() {
+    return "{\"_class\":\"CompositeReporter\", "
+        + "\"reporters\":"
+        + (reporters == null ? "null" : Arrays.toString(reporters.toArray()))
+        + "}";
   }
 
   @Override

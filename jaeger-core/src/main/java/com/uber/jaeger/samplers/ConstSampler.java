@@ -67,6 +67,18 @@ public class ConstSampler implements Sampler {
     return false;
   }
 
+  @Override
+  public String toString() {
+    return "{\"_class\":\"ConstSampler\", "
+        + "\"decision\":\""
+        + decision
+        + "\""
+        + ", "
+        + "\"tags\":"
+        + (tags == null ? "null" : "\"" + tags + "\"")
+        + "}";
+  }
+
   /**
    * Only implemented to satisfy the sampler interface
    */

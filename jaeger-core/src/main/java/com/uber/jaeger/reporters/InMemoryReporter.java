@@ -24,13 +24,14 @@ package com.uber.jaeger.reporters;
 import com.uber.jaeger.Span;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class InMemoryReporter implements Reporter {
   private final List<Span> spans;
 
   public InMemoryReporter() {
-    this.spans = new ArrayList<Span>();
+    this.spans = new ArrayList<>();
   }
 
   @Override
@@ -53,5 +54,13 @@ public class InMemoryReporter implements Reporter {
     synchronized (this) {
       spans.clear();
     }
+  }
+
+  @Override
+  public String toString() {
+    return "{\"_class\":\"InMemoryReporter\", "
+        + "\"spans\":"
+        + Arrays.toString(spans.toArray())
+        + "}";
   }
 }

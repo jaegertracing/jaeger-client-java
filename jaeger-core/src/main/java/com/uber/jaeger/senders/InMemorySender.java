@@ -25,6 +25,7 @@ import com.twitter.zipkin.thriftjava.Span;
 import com.uber.jaeger.exceptions.SenderException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class InMemorySender implements Sender {
@@ -69,5 +70,19 @@ public class InMemorySender implements Sender {
   @Override
   public int close() throws SenderException {
     return flush();
+  }
+
+  @Override
+  public String toString() {
+    return "{\"_class\":\"InMemorySender\", "
+        + "\"appended\":"
+        + (appended == null ? "null" : Arrays.toString(appended.toArray()))
+        + ", "
+        + "\"flushed\":"
+        + (flushed == null ? "null" : Arrays.toString(flushed.toArray()))
+        + ", "
+        + "\"received\":"
+        + (received == null ? "null" : Arrays.toString(received.toArray()))
+        + "}";
   }
 }

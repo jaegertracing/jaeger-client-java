@@ -134,4 +134,23 @@ public class UDPSender implements Sender {
     udpTransport.close();
     return n;
   }
+
+  @Override
+  public String toString() {
+    return "{\"_class\":\"UDPSender\", "
+        + "\"maxSpanBytes\":\""
+        + maxSpanBytes
+        + "\""
+        + ", "
+        + "\"udpClient\":"
+        + (udpClient == null ? "null" : "\"" + udpClient + "\"")
+        + ", "
+        + "\"byteBufferSize\":\""
+        + byteBufferSize
+        + "\""
+        + ", "
+        + "\"udpTransport\":"
+        + (udpTransport == null ? "null" : "\"" + udpTransport + "\"")
+        + "}";
+  }
 }

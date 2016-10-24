@@ -29,4 +29,9 @@ public class NoopReporter implements Reporter {
 
   @Override
   public void close() {}
+
+  @Override
+  public String toString() {
+    return "{\"_class\":\"NoopReporter\"}";
+  }
 }

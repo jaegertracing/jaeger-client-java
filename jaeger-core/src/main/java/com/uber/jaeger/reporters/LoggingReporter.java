@@ -51,4 +51,9 @@ public class LoggingReporter implements Reporter {
   public void close() {
     // nothing to do
   }
+
+  @Override
+  public String toString() {
+    return "{\"_class\":\"LoggingReporter\"}";
+  }
 }
