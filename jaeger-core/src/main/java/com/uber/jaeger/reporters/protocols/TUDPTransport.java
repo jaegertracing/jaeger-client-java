@@ -27,10 +27,12 @@ import org.apache.thrift.transport.TTransportException;
 import java.io.IOException;
 import java.net.*;
 import java.nio.ByteBuffer;
+import lombok.ToString;
 
 /*
  * A thrift transport for sending sending/receiving spans.
  */
+@ToString(exclude = {"writeBuffer"})
 public class TUDPTransport extends TTransport implements AutoCloseable {
   public static final int MAX_PACKET_SIZE = 65000;
 
@@ -38,7 +40,7 @@ public class TUDPTransport extends TTransport implements AutoCloseable {
   public byte[] receiveBuf;
   public int receiveOffSet = -1;
   public int receiveLength = 0;
-  public ByteBuffer writeButter;
+  public ByteBuffer writeBuffer;
 
   // Create a UDP client for sending data to specific host and port
   public static TUDPTransport NewTUDPClient(String host, int port) {
@@ -125,30 +127,30 @@ public class TUDPTransport extends TTransport implements AutoCloseable {
     if (!this.isOpen()) {
       throw new TTransportException(TTransportException.NOT_OPEN);
     }
-    if (this.writeButter == null) {
-      this.writeButter = ByteBuffer.allocate(MAX_PACKET_SIZE);
+    if (this.writeBuffer == null) {
+      this.writeBuffer = ByteBuffer.allocate(MAX_PACKET_SIZE);
     }
-    if (this.writeButter.position() + len > MAX_PACKET_SIZE) {
+    if (this.writeBuffer.position() + len > MAX_PACKET_SIZE) {
       throw new TTransportException(
           TTransportException.UNKNOWN, "Message size too large: " + len + " > " + MAX_PACKET_SIZE);
     }
-    this.writeButter.put(bytes, offset, len);
+    this.writeBuffer.put(bytes, offset, len);
   }
 
   @Override
   public void flush() throws TTransportException {
-    if (this.writeButter != null) {
+    if (this.writeBuffer != null) {
       byte[] bytes = new byte[MAX_PACKET_SIZE];
-      int len = this.writeButter.position();
-      this.writeButter.flip();
-      this.writeButter.get(bytes, 0, len);
+      int len = this.writeBuffer.position();
+      this.writeBuffer.flip();
+      this.writeBuffer.get(bytes, 0, len);
       try {
         this.socket.send(new DatagramPacket(bytes, len));
       } catch (IOException e) {
         throw new TTransportException(
             TTransportException.UNKNOWN, "Cannot flush closed transport", e);
       } finally {
-        this.writeButter = null;
+        this.writeBuffer = null;
       }
     }
   }

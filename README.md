@@ -136,6 +136,10 @@ chmod a+x .git/hooks/pre-commit
 You can also setup the [IntelliJ plugin](https://plugins.jetbrains.com/plugin/8527)
 to reformat code from within your IDE
 
+### Lombok
+This project uses [Lombok](https://projectlombok.org/) to reduce boilerplate. You can setup
+ the [IntelliJ plugin](https://plugins.jetbrains.com/plugin/6317) to add IDE support. 
+
 ## License
   
   [The MIT License](LICENSE).

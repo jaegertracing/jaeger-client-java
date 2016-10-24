@@ -37,6 +37,9 @@ import com.uber.jaeger.samplers.RemoteControlledSampler;
 import com.uber.jaeger.samplers.Sampler;
 import com.uber.jaeger.senders.UDPSender;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class Configuration {
   public static final double DEFAULT_SAMPLING_PROBABILITY = 0.001;
 
@@ -95,6 +98,7 @@ public class Configuration {
     }
 
     tracer = getTracerBuilder().build();
+    log.info("Initialized tracer={}", tracer);
     return tracer;
   }
 

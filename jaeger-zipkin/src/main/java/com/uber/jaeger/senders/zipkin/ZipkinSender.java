@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import lombok.ToString;
 import zipkin.Constants;
 import zipkin.reporter.Encoding;
 import zipkin.reporter.internal.AwaitableCallback;
@@ -51,6 +52,7 @@ import zipkin.reporter.urlconnection.URLConnectionSender;
  * <p>
  * See https://github.com/openzipkin/zipkin/tree/master/zipkin-server
  */
+@ToString(exclude = "spanBuffer")
 public final class ZipkinSender implements Sender {
 
   /**

@@ -49,11 +49,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
+import lombok.ToString;
 
+@ToString(exclude = {"registry", "clock", "metrics"})
 public class Tracer implements io.opentracing.Tracer {
-  public static final String VERSION = loadVersion();
   private final static Logger logger = LoggerFactory.getLogger(Tracer.class);
 
+  private final String version;
   private final String serviceName;
   private final Reporter reporter;
   private final Sampler sampler;
@@ -85,13 +87,19 @@ public class Tracer implements io.opentracing.Tracer {
     }
     this.ip = ip;
 
+    this.version = loadVersion();
+
     Map<String, Object> tags = new HashMap<>();
-    tags.put("jaeger.version", Tracer.VERSION);
+    tags.put("jaeger.version", this.version);
     String hostname = getHostName();
     if (hostname != null) {
       tags.put("jaeger.hostname", hostname);
     }
     this.tags = Collections.unmodifiableMap(tags);
+  }
+
+  public String getVersion() {
+    return version;
   }
 
   public Metrics getMetrics() {
@@ -145,7 +153,7 @@ public class Tracer implements io.opentracing.Tracer {
   /**
    * Shuts down the {@link Reporter} and {@link Sampler}
    */
-  public void close(){
+  public void close() {
     reporter.close();
     sampler.close();
   }

@@ -26,8 +26,10 @@ import com.uber.jaeger.Constants;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import lombok.ToString;
 
 @SuppressWarnings("EqualsHashCode")
+@ToString
 public class ProbabilisticSampler implements Sampler {
   public static final String TYPE = "probabilistic";
 
