@@ -31,7 +31,9 @@ import org.apache.thrift.transport.AutoExpandingBufferWriteTransport;
 
 import java.util.ArrayList;
 import java.util.List;
+import lombok.ToString;
 
+@ToString(exclude = {"spanBuffer", "udpClient", "memoryTransport"})
 public class UDPSender implements Sender {
   final static int emitZipkinBatchOverhead = 22;
   private static final String defaultUDPSpanServerHost = "localhost";

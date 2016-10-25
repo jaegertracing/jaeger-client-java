@@ -36,7 +36,9 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import lombok.ToString;
 
+@ToString
 public class HTTPSamplingManager implements SamplingManager {
   private static final String defaultSamplingServerHostPort = "localhost:5778";
   private String hostPort = defaultSamplingServerHostPort;

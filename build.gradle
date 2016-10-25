@@ -82,6 +82,10 @@ subprojects {
         info.events = ["failed", "skipped"]
        }
     }
+
+    dependencies {
+        compileOnly 'org.projectlombok:lombok:1.16.10'
+    }
 }
 
 configure(subprojects.findAll {it.name != 'jaeger-thrift'}) {

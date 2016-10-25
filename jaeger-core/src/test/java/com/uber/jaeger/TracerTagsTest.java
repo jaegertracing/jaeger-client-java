@@ -21,10 +21,12 @@
  */
 package com.uber.jaeger;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
 import io.opentracing.tag.Tags;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,9 +37,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 @RunWith(Parameterized.class)
 public class TracerTagsTest {
@@ -65,7 +64,7 @@ public class TracerTagsTest {
     String hostname = tracer.getHostName();
 
     Map<String, Object> rootTags = new HashMap<>();
-    rootTags.put("jaeger.version", Tracer.VERSION);
+    rootTags.put("jaeger.version", tracer.getVersion());
     rootTags.put("jaeger.hostname", hostname);
     rootTags.put("sampler.type", "const");
     rootTags.put("sampler.param", true);
@@ -77,7 +76,7 @@ public class TracerTagsTest {
     childTags.put("sampler.param", SENTINEL);
 
     Map<String, Object> rpcTags = new HashMap<>();
-    rpcTags.put("jaeger.version", Tracer.VERSION);
+    rpcTags.put("jaeger.version", tracer.getVersion());
     rpcTags.put("jaeger.hostname", hostname);
     rpcTags.put("sampler.type", SENTINEL);
     rpcTags.put("sampler.param", SENTINEL);

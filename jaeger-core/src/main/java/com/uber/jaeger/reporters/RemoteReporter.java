@@ -33,10 +33,12 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import lombok.ToString;
 
 /**
  * RemoteReporter buffers spans in memory and sends them out of process using Sender.
  */
+@ToString(exclude = {"commandQueue", "flushTimer", "queueProcessorThread", "metrics"})
 public class RemoteReporter implements Reporter {
   private final BlockingQueue<Command> commandQueue;
   private final Timer flushTimer;
@@ -148,6 +150,7 @@ public class RemoteReporter implements Reporter {
   /*
    * This class creates a Runnable that is responsible for appending spans using a sender.
    */
+  @ToString
   class QueueProcessor implements Runnable {
     private boolean open = true;
 

@@ -26,7 +26,9 @@ import com.uber.jaeger.exceptions.SenderException;
 
 import java.util.ArrayList;
 import java.util.List;
+import lombok.ToString;
 
+@ToString
 public class InMemorySender implements Sender {
   private List<Span> appended;
   private List<Span> flushed;

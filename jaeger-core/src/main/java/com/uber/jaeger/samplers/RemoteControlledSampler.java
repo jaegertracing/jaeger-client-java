@@ -32,8 +32,10 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import lombok.ToString;
 
 @SuppressWarnings("EqualsHashCode")
+@ToString(exclude = {"pollTimer", "lock"})
 public class RemoteControlledSampler implements Sampler {
   public static final String TYPE = "remote";
 

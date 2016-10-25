@@ -25,9 +25,12 @@ import com.uber.jaeger.Span;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import lombok.ToString;
+
 /**
  * LoggingReporter logs every span it's given.
  */
+@ToString
 public class LoggingReporter implements Reporter {
   private final Logger logger;
 

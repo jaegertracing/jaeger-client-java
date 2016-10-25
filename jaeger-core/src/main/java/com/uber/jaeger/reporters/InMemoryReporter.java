@@ -25,7 +25,9 @@ import com.uber.jaeger.Span;
 
 import java.util.ArrayList;
 import java.util.List;
+import lombok.ToString;
 
+@ToString
 public class InMemoryReporter implements Reporter {
   private final List<Span> spans;
 
