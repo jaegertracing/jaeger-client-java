@@ -1,6 +1,16 @@
 Changes by Version
 ==================
 
+0.15.0 (2016-10-26)
+-------------------
+
+- Add init logging
+- Add a Tracer.close() method
+- Fill in `Host` on all annotations when reporting to Zipkin
+- Downgrade to libthrift 0.9.2
+- Publish a shaded jar with libthrift 0.9.2 packaged
+- Bump up zipkin versions
+
 0.14.0 (2016-10-06)
 -------------------
 
