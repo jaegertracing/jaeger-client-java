@@ -39,6 +39,26 @@ For e.g, to depend on the core jaeger library, you'd include the following
 </dependency>
 ```
 
+###Thrift version conflicts
+Jaeger client uses `org.apache.thrift:libthrift:0.9.2`. If your project depends on a different
+version of `libthrift`, it is recommended that you use the shaded `jaeger-thrift` jar we publish
+which packages it's own `libthrift`.
+
+To depend on the shaded jar, add the following to your maven build.
+Note that this is only supported for a jaeger version >= 0.15.0
+```xml
+<dependencyManagement>
+  <dependencies>
+    <dependency>
+      <groupId>com.uber.jaeger</groupId>
+      <artifactId>jaeger-thrift</artifactId>
+      <classifier>thrift92</classifier>
+      <version>$jaegerVersion</version>
+    </dependency>
+  </dependencies>
+</dependencyManagement>
+```
+
 ## In-process Context Propagation
 `jaeger-context` defines
 [ThreadLocalTraceContext](./jaeger-context/src/main/java/com/uber/jaeger/context)

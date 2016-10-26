@@ -1,4 +1,5 @@
 apply plugin: 'org.jruyi.thrift'
+apply plugin: 'com.github.johnrengelman.shadow'
 
 //This is in a separate subproject so that we can use 
 //standard javac instead of the error prone compiler
@@ -38,6 +39,18 @@ sourceSets {
 jar {
     from sourceSets.main.output
     manifest {
-        attributes('Implementation-Title': 'jaeger-generated', 'Implementation-Version': project.version)
+        attributes('Implementation-Title': 'jaeger-thrift', 'Implementation-Version': project.version)
+    }
+}
+
+shadowJar {
+    baseName = 'jaeger-thrift'
+    relocate 'org.apache.thrift', 'org.shadow.apache.thrift92'
+    classifier 'thrift92'
+}
+
+artifacts {
+    archives(shadowJar.archivePath) {
+        builtBy shadowJar
     }
 }
