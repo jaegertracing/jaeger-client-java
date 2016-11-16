@@ -102,6 +102,12 @@ public class Configuration {
     return tracer;
   }
 
+  synchronized public void closeTracer() {
+    if (tracer != null) {
+      tracer.close();
+    }
+  }
+
   /**
    * @deprecated Use {@link #setStatsFactory(StatsFactory)} instead
    */

@@ -29,4 +29,16 @@ public class ConfigurationTest {
   public void testInstantiableWithNulls() throws Exception {
     new Configuration("serviceName", null, null, null);
   }
+
+  @Test
+  public void testCanCloseTracerWhenDisabled() throws Exception {
+    Configuration configuration = new Configuration("serviceName", true, null, null);
+    configuration.closeTracer();
+  }
+
+  @Test
+  public void testCanCloseTracer() throws Exception {
+    Configuration configuration = new Configuration("serviceName", false, null, null);
+    configuration.closeTracer();
+  }
 }
