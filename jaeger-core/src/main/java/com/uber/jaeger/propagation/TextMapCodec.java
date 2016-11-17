@@ -40,14 +40,14 @@ public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
 
   private static final PrefixedKeys keys = new PrefixedKeys();
 
-  private String contextKey = SPAN_CONTEXT_KEY;
+  private final String contextKey;
 
-  private String baggagePrefix = BAGGAGE_KEY_PREFIX;
+  private final String baggagePrefix;
 
-  private boolean urlEncoding;
+  private final boolean urlEncoding;
 
   public TextMapCodec(boolean urlEncoding) {
-    this.urlEncoding = urlEncoding;
+    this(builder().withURLEncoding(urlEncoding));
   }
 
   private TextMapCodec(Builder builder) {
@@ -98,7 +98,7 @@ public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
   @Override
   public String toString() {
     StringBuilder buffer = new StringBuilder();
-    buffer.append('TextMapCodec{').append("contextKey=").append(contextKey).append(',')
+    buffer.append("TextMapCodec{").append("contextKey=").append(contextKey).append(',')
             .append("baggagePrefix=").append(baggagePrefix).append(',')
             .append("urlEncoding=").append(urlEncoding).append('}');
     return buffer.toString();
