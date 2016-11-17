@@ -17,7 +17,7 @@ crossdock-fresh: gradle-compile
 	docker-compose -f $(XDOCK_YAML) run crossdock
 
 gradle-compile:
-	./gradlew clean :jaeger-crossdock:shadowJar
+	./gradlew :jaeger-crossdock:shadowJar
 
 .PHONY: crossdock-logs
 crossdock-logs:
