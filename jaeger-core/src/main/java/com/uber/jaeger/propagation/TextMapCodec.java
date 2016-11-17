@@ -40,14 +40,20 @@ public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
 
   private static final PrefixedKeys keys = new PrefixedKeys();
 
-  private final String contextKey = SPAN_CONTEXT_KEY;
+  private String contextKey = SPAN_CONTEXT_KEY;
 
-  private final String baggagePrefix = BAGGAGE_KEY_PREFIX;
+  private String baggagePrefix = BAGGAGE_KEY_PREFIX;
 
-  private final boolean urlEncoding;
+  private boolean urlEncoding;
 
   public TextMapCodec(boolean urlEncoding) {
     this.urlEncoding = urlEncoding;
+  }
+
+  private TextMapCodec(Builder builder) {
+    this.urlEncoding = builder.urlEncoding;
+    this.contextKey = builder.spanContextKey;
+    this.baggagePrefix = builder.baggagePrefix;
   }
 
   @Override
@@ -89,6 +95,15 @@ public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
     return context.withBaggage(baggage);
   }
 
+  @Override
+  public String toString() {
+    StringBuilder buffer = new StringBuilder();
+    buffer.append('TextMapCodec{').append("contextKey=").append(contextKey).append(',')
+            .append("baggagePrefix=").append(baggagePrefix).append(',')
+            .append("urlEncoding=").append(urlEncoding).append('}');
+    return buffer.toString();
+  }
+
   private String encodedValue(String value) {
     if (!urlEncoding) {
       return value;
@@ -111,5 +126,40 @@ public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
       // not much we can do, try raw value
       return value;
     }
+  }
+
+  /**
+   * Returns a builder for TextMapCodec
+   * @return Builder
+   */
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static class Builder {
+
+    private boolean urlEncoding;
+    private String spanContextKey = SPAN_CONTEXT_KEY;
+    private String baggagePrefix = BAGGAGE_KEY_PREFIX;
+
+    public Builder withURLEncoding(boolean urlEncoding) {
+      this.urlEncoding = urlEncoding;
+      return this;
+    }
+
+    public Builder withSpanContextKey(String spanContextKey) {
+      this.spanContextKey = spanContextKey;
+      return this;
+    }
+
+    public Builder withBaggagePrefix(String baggagePrefix) {
+      this.baggagePrefix = baggagePrefix;
+      return this;
+    }
+
+    public TextMapCodec build() {
+      return new TextMapCodec(this);
+    }
+
   }
 }
