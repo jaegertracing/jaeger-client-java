@@ -4,14 +4,14 @@ apply plugin: 'com.github.kt3k.coveralls'
 description = 'Integration library for Zipkin'
 
 dependencies {
-    compile group: 'io.zipkin.reporter', name: 'zipkin-reporter', version: '0.6.2'
-    compile group: 'io.zipkin.reporter', name: 'zipkin-sender-urlconnection', version: '0.6.2'
+    compile group: 'io.zipkin.reporter', name: 'zipkin-reporter', version: '0.6.9'
+    compile group: 'io.zipkin.reporter', name: 'zipkin-sender-urlconnection', version: '0.6.9'
     compile project(':jaeger-core')
 
     testCompile group: 'junit', name: 'junit', version: junitVersion
     testCompile group: 'org.mockito', name: 'mockito-all', version: mockitoVersion
-    testCompile group: 'io.zipkin.java', name: 'zipkin-junit', version: '1.13.1'
-    testCompile group: 'io.zipkin.brave', name: 'brave-http', version: '3.14.1'
+    testCompile group: 'io.zipkin.java', name: 'zipkin-junit', version: '1.16.2'
+    testCompile group: 'io.zipkin.brave', name: 'brave-http', version: '3.15.3'
 }
 
 jacocoTestReport {
