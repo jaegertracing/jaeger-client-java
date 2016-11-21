@@ -41,6 +41,7 @@ public class JerseyServerFilterTest extends JerseyTest {
 
   private InMemoryReporter reporter;
 
+  @Override
   protected Application configure() {
     Configuration config = new Configuration("world service", false,
                                              new com.uber.jaeger.Configuration.SamplerConfiguration(ConstSampler.TYPE,
