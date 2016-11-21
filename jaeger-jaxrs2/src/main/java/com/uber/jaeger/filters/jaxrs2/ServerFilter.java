@@ -54,7 +54,7 @@ public class ServerFilter implements ContainerRequestFilter, ContainerResponseFi
     try {
       Tracer.SpanBuilder builder =
           tracer
-              .buildSpan(containerRequestContext.getMethod())
+              .buildSpan(getOperationName(containerRequestContext))
               .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
               //TODO(oibe) figure out how to get remote addr from grizzly HttpServletRequest
               .withTag(
@@ -104,5 +104,14 @@ public class ServerFilter implements ContainerRequestFilter, ContainerResponseFi
     } catch (Exception e) {
       logger.error("Server Filter Response:", e);
     }
+  }
+
+  /**
+   * An operation name to use for the span being reported. Uses the http method name by default.
+   * @param containerRequestContext A class that holds request specific information
+   * @return the operation name
+   */
+  protected String getOperationName(ContainerRequestContext containerRequestContext) {
+    return containerRequestContext.getMethod();
   }
 }
