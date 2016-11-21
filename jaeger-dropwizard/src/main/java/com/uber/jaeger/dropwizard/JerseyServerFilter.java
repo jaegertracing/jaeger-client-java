@@ -82,9 +82,7 @@ public class JerseyServerFilter extends ServerFilter {
               log.error("No access to %s", normalizedTemplate, e);
             }
           }
-          String s = String.format("%s - %s", containerRequest.getMethod(), operationName);
-          System.out.println(s);
-          return s;
+          return String.format("%s - %s", containerRequest.getMethod(), operationName);
         }
       }
     } catch (Exception e) {
