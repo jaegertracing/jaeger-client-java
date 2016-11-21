@@ -75,12 +75,8 @@ public class JerseyServerFilter extends ServerFilter {
           List<UriTemplate> templates = uriRoutingContext.getMatchedTemplates();
           String operationName = "";
           for (UriTemplate uriTemplate : templates) {
-            try {
-              String template = (String) normalizedTemplate.get(uriTemplate);
-              operationName = template + operationName;
-            } catch (IllegalAccessException e) {
-              log.error("No access to %s", normalizedTemplate, e);
-            }
+            String template = (String) normalizedTemplate.get(uriTemplate);
+            operationName = template + operationName;
           }
           return String.format("%s - %s", containerRequest.getMethod(), operationName);
         }
