@@ -22,6 +22,7 @@
 package com.uber.jaeger.dropwizard;
 
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertTrue;
 
 import com.uber.jaeger.Span;
 import com.uber.jaeger.reporters.InMemoryReporter;
@@ -31,7 +32,9 @@ import org.glassfish.jersey.test.JerseyTest;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
@@ -97,6 +100,23 @@ public class JerseyServerFilterTest extends JerseyTest {
     Span span = reporter.getSpans().get(0);
     assertEquals("GET - /stormlord", span.getOperationName());
     assertCache("nakedGet");
+  }
+
+  @Test
+  public void testCacheForBothOperations() throws Exception {
+    Response r1 = target("stormlord/").request().get();
+    assertEquals(200, r1.getStatus());
+    Response r2 = target("hello/world/middle-earth").request().get();
+    assertEquals(200, r2.getStatus());
+
+    Set<Map.Entry<JerseyServerFilter.CacheKey, String>> entries = undertest.getCache().entrySet();
+    Set<String> valueSet = new HashSet<>(2);
+    for (Map.Entry<JerseyServerFilter.CacheKey, String> entry: entries) {
+      valueSet.add(entry.getValue());
+    }
+
+    assertTrue(valueSet.contains("GET - /stormlord"));
+    assertTrue(valueSet.contains("GET - /hello/world/{worldId}"));
   }
 
   private void assertCache(String methodName) {
