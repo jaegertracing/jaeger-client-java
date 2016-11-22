@@ -21,6 +21,8 @@
  */
 package com.uber.jaeger.dropwizard;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import com.uber.jaeger.context.TraceContext;
 import com.uber.jaeger.filters.jaxrs2.ServerFilter;
 import io.opentracing.Tracer;
@@ -30,9 +32,14 @@ import org.glassfish.jersey.server.internal.routing.UriRoutingContext;
 import org.glassfish.jersey.uri.UriTemplate;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.ws.rs.Path;
 import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.ext.Provider;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -41,8 +48,10 @@ import lombok.extern.slf4j.Slf4j;
  * operation name.
  */
 @Slf4j
+@Provider
 public class JerseyServerFilter extends ServerFilter {
 
+  private Map<CacheKey, String> methodToPathCache = new ConcurrentHashMap<>();
   private Field normalizedTemplate;
 
   public JerseyServerFilter(Tracer tracer,
@@ -66,6 +75,11 @@ public class JerseyServerFilter extends ServerFilter {
    */
   @Override
   protected String getOperationName(ContainerRequestContext containerRequestContext) {
+    CacheKey key  = CacheKey.of(resourceInfo.getResourceMethod(), containerRequestContext.getMethod());
+    if(methodToPathCache.containsKey(key)){
+      return methodToPathCache.get(key);
+    }
+
     try {
       if (normalizedTemplate != null && containerRequestContext instanceof ContainerRequest) {
         ContainerRequest containerRequest = (ContainerRequest) containerRequestContext;
@@ -73,17 +87,31 @@ public class JerseyServerFilter extends ServerFilter {
         if (uriInfo instanceof UriRoutingContext) {
           UriRoutingContext uriRoutingContext = (UriRoutingContext) uriInfo;
           List<UriTemplate> templates = uriRoutingContext.getMatchedTemplates();
-          String operationName = "";
+          String path = "";
           for (UriTemplate uriTemplate : templates) {
             String template = (String) normalizedTemplate.get(uriTemplate);
-            operationName = template + operationName;
+            path = template + path;
           }
-          return String.format("%s - %s", containerRequest.getMethod(), operationName);
+          String operationName = String.format("%s - %s", containerRequest.getMethod(), path);
+          methodToPathCache.put(key, operationName);
+          return operationName;
         }
       }
     } catch (Exception e) {
       log.error("Unable to get operation name", e);
+      methodToPathCache.put(key, containerRequestContext.getMethod());
     }
     return containerRequestContext.getMethod();
+  }
+
+  @VisibleForTesting
+  Map<CacheKey, String> getCache(){
+    return new ConcurrentHashMap<>(methodToPathCache);
+  }
+
+  @Value (staticConstructor = "of")
+  static class CacheKey {
+    private final Method resourceMethod;
+    private final String httpMethod;
   }
 }

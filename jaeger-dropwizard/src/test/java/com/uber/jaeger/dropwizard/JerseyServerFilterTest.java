@@ -31,6 +31,7 @@ import org.glassfish.jersey.test.JerseyTest;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
+import java.util.Map;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
@@ -40,12 +41,12 @@ import javax.ws.rs.core.Response;
 public class JerseyServerFilterTest extends JerseyTest {
 
   private InMemoryReporter reporter;
+  private JerseyServerFilter undertest;
 
   @Override
   protected Application configure() {
     Configuration config = new Configuration("world service", false,
-                                             new com.uber.jaeger.Configuration.SamplerConfiguration(ConstSampler.TYPE,
-                                                                                                    1),
+                                             new com.uber.jaeger.Configuration.SamplerConfiguration(ConstSampler.TYPE, 1),
                                              null);
     reporter = new InMemoryReporter();
     com.uber.jaeger.Tracer tracer = (com.uber.jaeger.Tracer) config.getTracer();
@@ -58,7 +59,8 @@ public class JerseyServerFilterTest extends JerseyTest {
     }
 
     ResourceConfig resourceConfig = new ResourceConfig(HelloResource.class, StormlordResource.class);
-    resourceConfig.register(new JaegerFeature(config));
+    undertest = new JerseyServerFilter(tracer, com.uber.jaeger.context.TracingUtils.getTraceContext());
+    resourceConfig.register(undertest);
     return resourceConfig;
   }
 
@@ -85,7 +87,9 @@ public class JerseyServerFilterTest extends JerseyTest {
     assertEquals(200, response.getStatus());
     Span span = reporter.getSpans().get(0);
     assertEquals("GET - /hello/world/{worldId}", span.getOperationName());
+    assertCache("getHello");
   }
+
 
   @Test
   public void testOperationNameWithNakedGet() throws Exception {
@@ -93,6 +97,15 @@ public class JerseyServerFilterTest extends JerseyTest {
     assertEquals(200, response.getStatus());
     Span span = reporter.getSpans().get(0);
     assertEquals("GET - /stormlord", span.getOperationName());
+    assertCache("nakedGet");
+  }
+
+  private void assertCache(String methodName) {
+    Map<JerseyServerFilter.CacheKey, String> cache = undertest.getCache();
+    assertEquals(1, cache.size());
+    JerseyServerFilter.CacheKey key = cache.keySet().iterator().next();
+    assertEquals("GET", key.getHttpMethod());
+    assertEquals(methodName, key.getResourceMethod().getName());
   }
 
 }

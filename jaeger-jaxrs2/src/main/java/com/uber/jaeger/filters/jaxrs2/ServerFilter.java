@@ -35,6 +35,8 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
+import javax.ws.rs.container.ResourceInfo;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.Provider;
 
@@ -44,6 +46,9 @@ public class ServerFilter implements ContainerRequestFilter, ContainerResponseFi
   private final TraceContext traceContext;
   private final Logger logger = LoggerFactory.getLogger(ServerFilter.class);
 
+  @Context
+  protected ResourceInfo resourceInfo;
+
   public ServerFilter(Tracer tracer, TraceContext traceContext) {
     this.tracer = tracer;
     this.traceContext = traceContext;
@@ -51,6 +56,7 @@ public class ServerFilter implements ContainerRequestFilter, ContainerResponseFi
 
   @Override
   public void filter(ContainerRequestContext containerRequestContext) throws IOException {
+    //TODO: Add a @DisableTracing annotation and use the resourceInfo to check if it's applied
     try {
       Tracer.SpanBuilder builder =
           tracer
