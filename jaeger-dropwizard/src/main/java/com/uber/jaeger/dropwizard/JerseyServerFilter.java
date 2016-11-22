@@ -99,11 +99,9 @@ public class JerseyServerFilter extends ServerFilter {
    * @return the operation name
    */
   private String getResourceMethodOperationName(ContainerRequestContext containerRequestContext) {
-    String operationName;Method method = resourceInfo.getResourceMethod();
-    operationName =
-        String.format("%s - %s:%s", containerRequestContext.getMethod(),
-                      method.getDeclaringClass().getCanonicalName(), method.getName());
-    return operationName;
+    Method method = resourceInfo.getResourceMethod();
+    return String.format("%s - %s:%s", containerRequestContext.getMethod(),
+                         method.getDeclaringClass().getCanonicalName(), method.getName());
   }
 
   /**
