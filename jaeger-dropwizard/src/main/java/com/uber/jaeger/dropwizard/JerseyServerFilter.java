@@ -36,6 +36,7 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.inject.Singleton;
 import javax.ws.rs.Path;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.ext.Provider;
@@ -52,6 +53,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Provider
+@Singleton
 public class JerseyServerFilter extends ServerFilter {
 
   private Map<CacheKey, String> methodToPathCache = new ConcurrentHashMap<>();
