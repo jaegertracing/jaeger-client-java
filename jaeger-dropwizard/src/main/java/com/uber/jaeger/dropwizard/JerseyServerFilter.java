@@ -102,7 +102,7 @@ public class JerseyServerFilter extends ServerFilter {
    */
   private String getResourceMethodOperationName(ContainerRequestContext containerRequestContext) {
     Method method = resourceInfo.getResourceMethod();
-    return String.format("%s - %s:%s", containerRequestContext.getMethod(),
+    return String.format("%s:%s:%s", containerRequestContext.getMethod(),
                          method.getDeclaringClass().getCanonicalName(), method.getName());
   }
 
@@ -125,7 +125,7 @@ public class JerseyServerFilter extends ServerFilter {
             String template = (String) normalizedTemplate.get(uriTemplate);
             path = template + path;
           }
-          operationName = String.format("%s - %s", containerRequest.getMethod(), path);
+          operationName = String.format("%s:%s", containerRequest.getMethod(), path);
         }
       }
     } catch (Exception e) {

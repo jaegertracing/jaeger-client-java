@@ -89,7 +89,7 @@ public class JerseyServerFilterTest extends JerseyTest {
     Response response = target("hello/world/middle-earth").request().get();
     assertEquals(200, response.getStatus());
     Span span = reporter.getSpans().get(0);
-    assertEquals("GET - /hello/world/{worldId}", span.getOperationName());
+    assertEquals("GET:/hello/world/{worldId}", span.getOperationName());
     assertCache("getHello");
   }
 
@@ -98,7 +98,7 @@ public class JerseyServerFilterTest extends JerseyTest {
     Response response = target("stormlord/").request().get();
     assertEquals(200, response.getStatus());
     Span span = reporter.getSpans().get(0);
-    assertEquals("GET - /stormlord", span.getOperationName());
+    assertEquals("GET:/stormlord", span.getOperationName());
     assertCache("nakedGet");
   }
 
@@ -115,8 +115,8 @@ public class JerseyServerFilterTest extends JerseyTest {
       valueSet.add(entry.getValue());
     }
 
-    assertTrue(valueSet.contains("GET - /stormlord"));
-    assertTrue(valueSet.contains("GET - /hello/world/{worldId}"));
+    assertTrue(valueSet.contains("GET:/stormlord"));
+    assertTrue(valueSet.contains("GET:/hello/world/{worldId}"));
   }
 
   private void assertCache(String methodName) {
