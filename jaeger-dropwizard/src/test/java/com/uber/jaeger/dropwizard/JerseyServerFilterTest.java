@@ -90,7 +90,6 @@ public class JerseyServerFilterTest extends JerseyTest {
     assertCache("getHello");
   }
 
-
   @Test
   public void testOperationNameWithNakedGet() throws Exception {
     Response response = target("stormlord/").request().get();

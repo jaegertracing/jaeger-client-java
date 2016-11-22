@@ -46,6 +46,9 @@ import lombok.extern.slf4j.Slf4j;
  * A {@link ServerFilter} that provides a Jersey specific {@link #getOperationName} implementation.
  * When using this Filter with Jersey, the full @Path template hierarchy is used as the
  * operation name.
+ *
+ * WARNING: This class relies on an private implementation detail
+ * {@link UriTemplate#normalizedTemplate} to provide functionality.
  */
 @Slf4j
 @Provider
@@ -69,17 +72,47 @@ public class JerseyServerFilter extends ServerFilter {
   }
 
   /**
-   * Retrieves an operation name that contains the http method and value of the
-   * {@link Path} used by a Jersey server implementation.
-   * @return the operation name
+   * Gets an operation name by first calling {@link #getPathOperationName(ContainerRequestContext)},
+   * and falling back on {@link #getResourceMethodOperationName(ContainerRequestContext)}.
+   * @return operation name
    */
   @Override
   protected String getOperationName(ContainerRequestContext containerRequestContext) {
     CacheKey key  = CacheKey.of(resourceInfo.getResourceMethod(), containerRequestContext.getMethod());
-    if(methodToPathCache.containsKey(key)){
-      return methodToPathCache.get(key);
+    String operationName = methodToPathCache.get(key);
+    if (operationName != null) {
+      return operationName;
     }
 
+    operationName = getPathOperationName(containerRequestContext);
+
+    if (operationName.isEmpty()) {
+      operationName = getResourceMethodOperationName(containerRequestContext);
+    }
+
+    methodToPathCache.put(key, operationName);
+    return operationName;
+  }
+
+  /**
+   * Retrieves an operation name that uses the resource method name of the matched jersey resource
+   * @return the operation name
+   */
+  private String getResourceMethodOperationName(ContainerRequestContext containerRequestContext) {
+    String operationName;Method method = resourceInfo.getResourceMethod();
+    operationName =
+        String.format("%s - %s:%s", containerRequestContext.getMethod(),
+                      method.getDeclaringClass().getCanonicalName(), method.getName());
+    return operationName;
+  }
+
+  /**
+   * Retrieves an operation name that contains the http method and value of the
+   * {@link Path} used by a Jersey server implementation.
+   * @return the operation name
+   */
+  private String getPathOperationName(ContainerRequestContext containerRequestContext) {
+    String operationName = "";
     try {
       if (normalizedTemplate != null && containerRequestContext instanceof ContainerRequest) {
         ContainerRequest containerRequest = (ContainerRequest) containerRequestContext;
@@ -92,16 +125,14 @@ public class JerseyServerFilter extends ServerFilter {
             String template = (String) normalizedTemplate.get(uriTemplate);
             path = template + path;
           }
-          String operationName = String.format("%s - %s", containerRequest.getMethod(), path);
-          methodToPathCache.put(key, operationName);
-          return operationName;
+          operationName = String.format("%s - %s", containerRequest.getMethod(), path);
         }
       }
     } catch (Exception e) {
       log.error("Unable to get operation name", e);
-      methodToPathCache.put(key, containerRequestContext.getMethod());
     }
-    return containerRequestContext.getMethod();
+
+    return operationName;
   }
 
   @VisibleForTesting
