@@ -43,7 +43,7 @@ public class JaegerFeature implements Feature {
 
     switch (featureContext.getConfiguration().getRuntimeType()) {
       case SERVER:
-        featureContext.register(TracingUtils.serverFilter(tracer));
+        featureContext.register(new JerseyServerFilter(tracer, com.uber.jaeger.context.TracingUtils.getTraceContext()));
         break;
       case CLIENT:
         featureContext.register(TracingUtils.clientFilter(tracer));
