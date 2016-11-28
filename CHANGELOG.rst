@@ -1,6 +1,14 @@
 Changes by Version
 ==================
 
+0.16.0 (2016-11-28)
+-------------------
+
+- Add a Configuration#closeTracer() method
+- Add Builder to TextMapCodec
+- Bump up zipkin to 1.16.2
+- Automatically add span names for jersey instrumentation
+
 0.15.0 (2016-10-26)
 -------------------
 
