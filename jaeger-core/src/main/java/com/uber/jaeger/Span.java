@@ -223,7 +223,8 @@ public class Span implements io.opentracing.Span {
 
     if (key.equals(Tags.SPAN_KIND.getKey()) && value instanceof String) {
       isClient = Tags.SPAN_KIND_CLIENT.equals(value);
-      isRPC = true;
+      boolean isServer = Tags.SPAN_KIND_SERVER.equals(value);
+      isRPC = isClient || isServer;
       return true;
     }
 
