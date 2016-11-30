@@ -59,7 +59,7 @@ public class Span implements io.opentracing.Span {
     this.startTimeMicroseconds = startTimeMicroseconds;
     this.startTimeNanoTicks = startTimeNanoTicks;
     this.computeDurationViaNanoTicks = computeDurationViaNanoTicks;
-    this.tags = tags;
+    sanitizeAndSetTags(tags);
   }
 
   public String getLocalComponent() {
@@ -199,6 +199,10 @@ public class Span implements io.opentracing.Span {
     return setTagAsObject(key, value);
   }
 
+  /**
+   * Sets various fields on the {@link Span} when certain {@link Tags} are encountered
+   * @return true iff a special tag is handled
+   */
   private boolean handleSpecialTag(String key, Object value) {
     // TODO use a map of handlers for special tags, instead of if/then
     if (key.equals(Tags.COMPONENT.getKey()) && value instanceof String) {
@@ -231,6 +235,11 @@ public class Span implements io.opentracing.Span {
     return false;
   }
 
+  /**
+   * Set a key:value tag on a span ONLY when the tag isn't special.
+   *
+   * See {@link #handleSpecialTag(String, Object)}
+   */
   private Span setTagAsObject(String key, Object value) {
     synchronized (this) {
       if (key.equals(Tags.SAMPLING_PRIORITY.getKey()) && (value instanceof Number)) {
@@ -247,16 +256,22 @@ public class Span implements io.opentracing.Span {
 
       if (context.isSampled()) {
         if (!handleSpecialTag(key, value)) {
-          if (this.tags == null) {
-            this.tags = new HashMap<>();
-          }
-
           tags.put(key, value);
         }
       }
     }
 
     return this;
+  }
+
+  /**
+   * uses {@link #setTagAsObject} to only insert tags that don't have special significance
+   */
+  private void sanitizeAndSetTags(Map<String, Object> tags) {
+    this.tags = new HashMap<>();
+    for (Map.Entry<String, Object> tag : tags.entrySet()) {
+      setTagAsObject(tag.getKey(), tag.getValue());
+    }
   }
 
   @Override

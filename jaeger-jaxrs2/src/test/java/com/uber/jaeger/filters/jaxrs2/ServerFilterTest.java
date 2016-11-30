@@ -22,6 +22,7 @@
 package com.uber.jaeger.filters.jaxrs2;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -93,10 +94,11 @@ public class ServerFilterTest {
 
     List<Span> spans = reporter.getSpans();
     assertEquals(1, spans.size());
-    Map<String, Object> tags = spans.get(0).getTags();
+    Span span = spans.get(0);
+    Map<String, Object> tags = span.getTags();
 
-    assertEquals("server", tags.get(Tags.SPAN_KIND.getKey()));
-    assertEquals(source, tags.get(Tags.PEER_SERVICE.getKey()));
+    assertTrue(span.isRPC() && !span.isRPCClient());
+    assertEquals(source, span.getPeer().getService_name());
     assertEquals(uri.toString(), tags.get(Tags.HTTP_URL.getKey()));
     assertEquals("localhost", tags.get(Tags.PEER_HOSTNAME.getKey()));
   }

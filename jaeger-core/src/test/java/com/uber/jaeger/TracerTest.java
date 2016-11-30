@@ -22,6 +22,8 @@
 package com.uber.jaeger;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -63,6 +65,26 @@ public class TracerTest {
     Span span = (com.uber.jaeger.Span) tracer.buildSpan(expectedOperation).start();
 
     assertEquals(expectedOperation, span.getOperationName());
+  }
+
+  @Test
+  public void testBuildServerSpan() {
+    Span span = (com.uber.jaeger.Span) tracer.buildSpan("flexo")
+                                             .withTag(Tags.SPAN_KIND.getKey(),
+                                                      Tags.SPAN_KIND_SERVER).start();
+
+    assertTrue(span.isRPC());
+    assertFalse(span.isRPCClient());
+  }
+
+  @Test
+  public void testBuildClientSpan() {
+    Span span = (com.uber.jaeger.Span) tracer.buildSpan("bender")
+                                           .withTag(Tags.SPAN_KIND.getKey(),
+                                                    Tags.SPAN_KIND_SERVER).start();
+
+    assertTrue(span.isRPC());
+    assertFalse(span.isRPCClient());
   }
 
   @Test
