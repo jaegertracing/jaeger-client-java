@@ -21,6 +21,12 @@
  */
 package com.uber.jaeger;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.uber.jaeger.metrics.InMemoryStatsReporter;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
@@ -30,11 +36,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Random;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class SpanTest {
   private Clock clock;
@@ -247,11 +248,21 @@ public class SpanTest {
   }
 
   @Test
-  public void testSpanDetectsIsServer() {
+  public void testSpanDetectsIsClient() {
     Span span = (Span) tracer.buildSpan("test-service-operation").start();
     Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
 
+    assertTrue(span.isRPC());
     assertTrue(span.isRPCClient());
+  }
+
+  @Test
+  public void testSpanDetectsIsServer() {
+    Span span = (Span) tracer.buildSpan("test-service-operation").start();
+    Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_SERVER);
+
+    assertTrue(span.isRPC());
+    assertFalse(span.isRPCClient());
   }
 
   @Test
