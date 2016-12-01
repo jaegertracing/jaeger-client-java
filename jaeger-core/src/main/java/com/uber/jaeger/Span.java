@@ -185,17 +185,17 @@ public class Span implements io.opentracing.Span {
   }
 
   @Override
-  public Span setTag(String key, String value) {
+  public synchronized Span setTag(String key, String value) {
     return setTagAsObject(key, value);
   }
 
   @Override
-  public Span setTag(String key, boolean value) {
+  public synchronized Span setTag(String key, boolean value) {
     return setTagAsObject(key, value);
   }
 
   @Override
-  public Span setTag(String key, Number value) {
+  public synchronized Span setTag(String key, Number value) {
     return setTagAsObject(key, value);
   }
 
@@ -241,7 +241,6 @@ public class Span implements io.opentracing.Span {
    * See {@link #handleSpecialTag(String, Object)}
    */
   private Span setTagAsObject(String key, Object value) {
-    synchronized (this) {
       if (key.equals(Tags.SAMPLING_PRIORITY.getKey()) && (value instanceof Number)) {
         int priority = ((Number) value).intValue();
         byte newFlags;
@@ -259,7 +258,6 @@ public class Span implements io.opentracing.Span {
           tags.put(key, value);
         }
       }
-    }
 
     return this;
   }
