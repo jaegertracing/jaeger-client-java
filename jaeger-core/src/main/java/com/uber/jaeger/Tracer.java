@@ -260,7 +260,7 @@ public class Tracer implements io.opentracing.Tracer {
     }
 
     private boolean isRPCServer() {
-      return tags.get(Tags.SPAN_KIND.getKey()) == Tags.SPAN_KIND_SERVER;
+      return Tags.SPAN_KIND_SERVER.equals(tags.get(Tags.SPAN_KIND.getKey()));
     }
 
     @Override
