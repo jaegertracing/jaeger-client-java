@@ -35,11 +35,11 @@ public class Span implements io.opentracing.Span {
   private final long startTimeMicroseconds;
   private final long startTimeNanoTicks;
   private final boolean computeDurationViaNanoTicks;
+  private final Map<String, Object> tags;
   private long durationMicroseconds; // span durationMicroseconds
   private String operationName;
   private SpanContext context;
   private Endpoint peer;
-  private Map<String, Object> tags;
   private List<LogData> logs;
   private String localComponent;
   private boolean isClient;
@@ -59,7 +59,11 @@ public class Span implements io.opentracing.Span {
     this.startTimeMicroseconds = startTimeMicroseconds;
     this.startTimeNanoTicks = startTimeNanoTicks;
     this.computeDurationViaNanoTicks = computeDurationViaNanoTicks;
-    this.tags = tags;
+    this.tags = new HashMap<>();
+
+    for (Map.Entry<String, Object> tag : tags.entrySet()) {
+      setTagAsObject(tag.getKey(), tag.getValue());
+    }
   }
 
   public String getLocalComponent() {
@@ -185,20 +189,24 @@ public class Span implements io.opentracing.Span {
   }
 
   @Override
-  public Span setTag(String key, String value) {
+  public synchronized Span setTag(String key, String value) {
     return setTagAsObject(key, value);
   }
 
   @Override
-  public Span setTag(String key, boolean value) {
+  public synchronized Span setTag(String key, boolean value) {
     return setTagAsObject(key, value);
   }
 
   @Override
-  public Span setTag(String key, Number value) {
+  public synchronized Span setTag(String key, Number value) {
     return setTagAsObject(key, value);
   }
 
+  /**
+   * Sets various fields on the {@link Span} when certain {@link Tags} are encountered
+   * @return true iff a special tag is handled
+   */
   private boolean handleSpecialTag(String key, Object value) {
     // TODO use a map of handlers for special tags, instead of if/then
     if (key.equals(Tags.COMPONENT.getKey()) && value instanceof String) {
@@ -231,8 +239,12 @@ public class Span implements io.opentracing.Span {
     return false;
   }
 
+  /**
+   * Set a key:value tag on a span ONLY when the tag isn't special.
+   *
+   * See {@link #handleSpecialTag(String, Object)}
+   */
   private Span setTagAsObject(String key, Object value) {
-    synchronized (this) {
       if (key.equals(Tags.SAMPLING_PRIORITY.getKey()) && (value instanceof Number)) {
         int priority = ((Number) value).intValue();
         byte newFlags;
@@ -247,14 +259,9 @@ public class Span implements io.opentracing.Span {
 
       if (context.isSampled()) {
         if (!handleSpecialTag(key, value)) {
-          if (this.tags == null) {
-            this.tags = new HashMap<>();
-          }
-
           tags.put(key, value);
         }
       }
-    }
 
     return this;
   }
