@@ -22,6 +22,8 @@
 package com.uber.jaeger;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -133,6 +135,22 @@ public class TracerTest {
   @Test(expected = IllegalArgumentException.class)
   public void testServiceNameNotEmptyNull() {
     new Tracer.Builder("  ", new InMemoryReporter(), new ConstSampler(true));
+  }
+
+  @Test
+  public void testBuilderIsServerRPC() {
+    Tracer.SpanBuilder spanBuilder = (Tracer.SpanBuilder) tracer.buildSpan("ndnd");
+    spanBuilder.withTag(Tags.SPAN_KIND.getKey(), "server");
+
+    assertTrue(spanBuilder.isRPCServer());
+  }
+
+  @Test
+  public void testBuilderIsNotServerRPC() {
+    Tracer.SpanBuilder spanBuilder = (Tracer.SpanBuilder) tracer.buildSpan("Lrrr");
+    spanBuilder.withTag(Tags.SPAN_KIND.getKey(), "peachy");
+
+    assertFalse(spanBuilder.isRPCServer());
   }
 
   @Test

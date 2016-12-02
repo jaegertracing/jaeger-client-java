@@ -158,7 +158,8 @@ public class Tracer implements io.opentracing.Tracer {
     sampler.close();
   }
 
-  private class SpanBuilder implements io.opentracing.Tracer.SpanBuilder {
+  //Visible for testing
+  class SpanBuilder implements io.opentracing.Tracer.SpanBuilder {
 
     private String operationName = null;
     private long startTimeMicroseconds;
@@ -259,8 +260,9 @@ public class Tracer implements io.opentracing.Tracer {
           null);
     }
 
-    private boolean isRPCServer() {
-      return tags.get(Tags.SPAN_KIND.getKey()) == Tags.SPAN_KIND_SERVER;
+    //Visible for testing
+    boolean isRPCServer() {
+      return Tags.SPAN_KIND_SERVER.equals(tags.get(Tags.SPAN_KIND.getKey()));
     }
 
     @Override
