@@ -1,6 +1,12 @@
 Changes by Version
 ==================
 
+0.17.0 (2016-12-02)
+-------------------
+
+- Fix bug where server spans were incorrectly marked as local components
+- Tighten checks for marking a span as a RPC
+
 0.16.0 (2016-11-28)
 -------------------
 
