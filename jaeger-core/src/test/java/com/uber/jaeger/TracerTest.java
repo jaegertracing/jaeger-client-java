@@ -62,16 +62,16 @@ public class TracerTest {
   @Test
   public void testBuildSpan() {
     String expectedOperation = "fry";
-    Span span = (com.uber.jaeger.Span) tracer.buildSpan(expectedOperation).start();
+    Span span = (Span) tracer.buildSpan(expectedOperation).start();
 
     assertEquals(expectedOperation, span.getOperationName());
   }
 
   @Test
   public void testBuildServerSpan() {
-    Span span = (com.uber.jaeger.Span) tracer.buildSpan("flexo")
-                                             .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
-                                             .start();
+    Span span = (Span) tracer.buildSpan("flexo")
+                             .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
+                             .start();
 
     assertTrue(span.isRPC());
     assertFalse(span.isRPCClient());
@@ -79,9 +79,9 @@ public class TracerTest {
 
   @Test
   public void testBuildClientSpan() {
-    Span span = (com.uber.jaeger.Span) tracer.buildSpan("bender")
-                                           .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT)
-                                           .start();
+    Span span = (Span) tracer.buildSpan("bender")
+                             .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT)
+                             .start();
 
     assertTrue(span.isRPC());
     assertTrue(span.isRPCClient());

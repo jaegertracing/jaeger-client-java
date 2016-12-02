@@ -35,11 +35,11 @@ public class Span implements io.opentracing.Span {
   private final long startTimeMicroseconds;
   private final long startTimeNanoTicks;
   private final boolean computeDurationViaNanoTicks;
+  private final Map<String, Object> tags;
   private long durationMicroseconds; // span durationMicroseconds
   private String operationName;
   private SpanContext context;
   private Endpoint peer;
-  private Map<String, Object> tags;
   private List<LogData> logs;
   private String localComponent;
   private boolean isClient;
@@ -59,7 +59,11 @@ public class Span implements io.opentracing.Span {
     this.startTimeMicroseconds = startTimeMicroseconds;
     this.startTimeNanoTicks = startTimeNanoTicks;
     this.computeDurationViaNanoTicks = computeDurationViaNanoTicks;
-    sanitizeAndSetTags(tags);
+    this.tags = new HashMap<>();
+
+    for (Map.Entry<String, Object> tag : tags.entrySet()) {
+      setTagAsObject(tag.getKey(), tag.getValue());
+    }
   }
 
   public String getLocalComponent() {
@@ -71,9 +75,7 @@ public class Span implements io.opentracing.Span {
   }
 
   public long getDuration() {
-    synchronized (this) {
-      return durationMicroseconds;
-    }
+    return durationMicroseconds;
   }
 
   public Tracer getTracer() {
@@ -260,16 +262,6 @@ public class Span implements io.opentracing.Span {
       }
 
     return this;
-  }
-
-  /**
-   * uses {@link #setTagAsObject} to only insert tags that don't have special significance
-   */
-  private void sanitizeAndSetTags(Map<String, Object> tags) {
-    this.tags = new HashMap<>();
-    for (Map.Entry<String, Object> tag : tags.entrySet()) {
-      setTagAsObject(tag.getKey(), tag.getValue());
-    }
   }
 
   @Override
