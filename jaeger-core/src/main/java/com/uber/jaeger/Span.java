@@ -75,7 +75,9 @@ public class Span implements io.opentracing.Span {
   }
 
   public long getDuration() {
-    return durationMicroseconds;
+    synchronized (this) {
+      return durationMicroseconds;
+    }
   }
 
   public Tracer getTracer() {
