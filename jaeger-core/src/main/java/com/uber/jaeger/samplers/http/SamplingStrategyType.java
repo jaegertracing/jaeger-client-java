@@ -19,12 +19,23 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.uber.jaeger.samplers;
+package com.uber.jaeger.samplers.http;
 
-import com.uber.jaeger.exceptions.SamplingStrategyErrorException;
-import com.uber.jaeger.samplers.http.SamplingStrategyResponse;
+import com.google.gson.annotations.SerializedName;
 
-public interface SamplingManager {
-  SamplingStrategyResponse getSamplingStrategy(String serviceName)
-      throws SamplingStrategyErrorException;
+import lombok.Getter;
+
+public enum SamplingStrategyType {
+  @SerializedName("0")
+  PROBABILISTIC (0),
+
+  @SerializedName("1")
+  RATE_LIMITING (1);
+
+  @Getter
+  private final int value;
+
+  SamplingStrategyType(int value) {
+    this.value = value;
+  }
 }

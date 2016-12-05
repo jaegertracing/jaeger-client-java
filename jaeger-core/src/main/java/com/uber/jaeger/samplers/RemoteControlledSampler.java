@@ -24,9 +24,10 @@ package com.uber.jaeger.samplers;
 import com.uber.jaeger.exceptions.SamplingStrategyErrorException;
 import com.uber.jaeger.exceptions.UnknownSamplingStrategyException;
 import com.uber.jaeger.metrics.Metrics;
-import com.uber.jaeger.thrift.sampling_manager.ProbabilisticSamplingStrategy;
-import com.uber.jaeger.thrift.sampling_manager.RateLimitingSamplingStrategy;
-import com.uber.jaeger.thrift.sampling_manager.SamplingStrategyResponse;
+import com.uber.jaeger.samplers.http.ProbabilisticSamplingStrategy;
+import com.uber.jaeger.samplers.http.RateLimitingSamplingStrategy;
+import com.uber.jaeger.samplers.http.SamplingStrategyResponse;
+import com.uber.jaeger.samplers.http.SamplingStrategyType;
 
 import java.util.Map;
 import java.util.Timer;
@@ -104,12 +105,12 @@ public class RemoteControlledSampler implements Sampler {
 
   private Sampler extractSampler(SamplingStrategyResponse response)
       throws UnknownSamplingStrategyException {
-    if (response.isSetProbabilisticSampling()) {
+    if (SamplingStrategyType.PROBABILISTIC.equals(response.getStrategyType())) {
       ProbabilisticSamplingStrategy strategy = response.getProbabilisticSampling();
       return new ProbabilisticSampler(strategy.getSamplingRate());
     }
 
-    if (response.isSetRateLimitingSampling()) {
+    if (SamplingStrategyType.RATE_LIMITING.equals(response.getStrategyType())) {
       RateLimitingSamplingStrategy strategy = response.getRateLimitingSampling();
       return new RateLimitingSampler(strategy.getMaxTracesPerSecond());
     }

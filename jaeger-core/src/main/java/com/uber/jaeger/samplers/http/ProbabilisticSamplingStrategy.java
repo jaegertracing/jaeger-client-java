@@ -19,12 +19,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.uber.jaeger.samplers;
+package com.uber.jaeger.samplers.http;
 
-import com.uber.jaeger.exceptions.SamplingStrategyErrorException;
-import com.uber.jaeger.samplers.http.SamplingStrategyResponse;
+import lombok.Value;
 
-public interface SamplingManager {
-  SamplingStrategyResponse getSamplingStrategy(String serviceName)
-      throws SamplingStrategyErrorException;
+@Value
+public class ProbabilisticSamplingStrategy {
+  double samplingRate;
 }
