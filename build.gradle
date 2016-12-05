@@ -18,7 +18,7 @@ ext.jacksonVersion = '2.7.4'
 ext.apacheHttpComponentsVersion = '4.1.2'
 
 ext.junitVersion = '4.12'
-ext.mockitoVersion = '2.0.2-beta'
+ext.mockitoVersion = '2.2.28'
 
 allprojects {
     apply plugin: 'idea' // intellij support
