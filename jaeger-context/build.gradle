@@ -8,7 +8,7 @@ dependencies {
 
     // Testing Frameworks
     testCompile group: 'junit', name: 'junit', version: junitVersion
-    testCompile group: 'org.mockito', name: 'mockito-all', version: mockitoVersion
+    testCompile group: 'org.mockito', name: 'mockito-core', version: mockitoVersion
 }
 
 jacocoTestReport {
