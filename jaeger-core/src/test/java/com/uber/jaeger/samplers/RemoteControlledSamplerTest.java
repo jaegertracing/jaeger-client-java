@@ -21,18 +21,19 @@
  */
 package com.uber.jaeger.samplers;
 
-import com.uber.jaeger.metrics.InMemoryStatsReporter;
-import com.uber.jaeger.metrics.Metrics;
-import com.uber.jaeger.thrift.sampling_manager.SamplingStrategyResponse;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+
+import com.uber.jaeger.metrics.InMemoryStatsReporter;
+import com.uber.jaeger.metrics.Metrics;
+import com.uber.jaeger.samplers.http.SamplingStrategyResponse;
+import com.uber.jaeger.samplers.http.SamplingStrategyType;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 public class RemoteControlledSamplerTest {
   MockAgent agent;
@@ -72,9 +73,7 @@ public class RemoteControlledSamplerTest {
 
   private RemoteControlledSampler makeSamplerWith(Sampler underlyingSampler) throws Exception {
     HTTPSamplingManager manager = mock(HTTPSamplingManager.class);
-    SamplingStrategyResponse response = mock(SamplingStrategyResponse.class);
-    when(response.isSetProbabilisticSampling()).thenReturn(false);
-    when(response.isSetRateLimitingSampling()).thenReturn(false);
+    SamplingStrategyResponse response = new SamplingStrategyResponse(SamplingStrategyType.PROBABILISTIC, null, null);
     when(manager.getSamplingStrategy("jaeger")).thenReturn(response);
     return new RemoteControlledSampler("jaeger", manager, underlyingSampler, metrics);
   }
