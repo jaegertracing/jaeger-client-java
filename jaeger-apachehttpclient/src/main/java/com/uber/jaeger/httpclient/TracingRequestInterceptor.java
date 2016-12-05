@@ -34,10 +34,9 @@ import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.RequestLine;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.protocol.HttpContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Apache http client request interceptor This is designed to be used along with
@@ -47,9 +46,9 @@ import java.io.IOException;
  * {@link TracingInterceptors}
  *
  */
+@Slf4j
 public class TracingRequestInterceptor implements HttpRequestInterceptor {
   private final Tracer tracer;
-  private final Logger logger = LoggerFactory.getLogger(TracingRequestInterceptor.class);
 
   public TracingRequestInterceptor(Tracer tracer) {
     this.tracer = tracer;
@@ -84,7 +83,7 @@ public class TracingRequestInterceptor implements HttpRequestInterceptor {
 
       httpContext.setAttribute(Constants.CURRENT_SPAN_CONTEXT_KEY, clientSpan);
     } catch (Exception e) {
-      logger.error("Could not start client tracing span.", e);
+      log.error("Could not start client tracing span.", e);
     }
   }
 

@@ -28,21 +28,19 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uber.jaeger.crossdock.api.ObservedSpan;
 import com.uber.jaeger.crossdock.api.TraceResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class TraceResponseDeserializer extends JsonDeserializer<TraceResponse> {
-  private static final Logger logger = LoggerFactory.getLogger(TraceResponseDeserializer.class);
-
   private static final ObjectMapper mapper = new ObjectMapper();
 
   @Override
   public TraceResponse deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
     JsonNode node = jp.getCodec().readTree(jp);
 
-    logger.info("Trace JSON Response: {}", node);
+    log.info("Trace JSON Response: {}", node);
 
     String notImplementedError = node.get("notImplementedError").asText();
 

@@ -26,19 +26,19 @@ import com.uber.jaeger.exceptions.SenderException;
 import com.uber.jaeger.metrics.Metrics;
 import com.uber.jaeger.reporters.protocols.ThriftSpanConverter;
 import com.uber.jaeger.senders.Sender;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * RemoteReporter buffers spans in memory and sends them out of process using Sender.
  */
 @ToString(exclude = {"commandQueue", "flushTimer", "queueProcessorThread", "metrics"})
+@Slf4j
 public class RemoteReporter implements Reporter {
   private final BlockingQueue<Command> commandQueue;
   private final Timer flushTimer;
@@ -47,7 +47,6 @@ public class RemoteReporter implements Reporter {
   private final Sender sender;
   private final int maxQueueSize;
   private final Metrics metrics;
-  private final static Logger logger = LoggerFactory.getLogger(RemoteReporter.class);
 
   /*
    * RemoteReporter takes a Sender object, and sends spans for a specific protocol, and transport.
@@ -166,7 +165,7 @@ public class RemoteReporter implements Reporter {
             metrics.reporterFailure.inc(e.getDroppedSpanCount());
           }
         } catch (InterruptedException e) {
-          logger.error("QueueProcessor error:", e);
+          log.error("QueueProcessor error:", e);
           // Do nothing, and try again on next span.
         }
       }

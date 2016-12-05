@@ -27,17 +27,16 @@ import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpResponseInterceptor;
 import org.apache.http.protocol.HttpContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Apache http client response interceptor that works in conjunction with
  * {@link TracingRequestInterceptor} to report spans
  */
+@Slf4j
 public class TracingResponseInterceptor implements HttpResponseInterceptor {
-  private final Logger logger = LoggerFactory.getLogger(TracingResponseInterceptor.class);
 
   @Override
   public void process(HttpResponse httpResponse, HttpContext httpContext)
@@ -49,12 +48,12 @@ public class TracingResponseInterceptor implements HttpResponseInterceptor {
         beforeSpanFinish(clientSpan, httpResponse, httpContext);
         clientSpan.finish();
       } else {
-        logger.warn(
+        log.warn(
             "The ResponseInterceptor did not find a clientSpan. "
                 + "Verify that the RequestInterceptor is correctly set up.");
       }
     } catch (Exception e) {
-      logger.error("Could not finish client tracing span.", e);
+      log.error("Could not finish client tracing span.", e);
     }
   }
 

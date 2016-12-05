@@ -21,21 +21,20 @@
  */
 package com.uber.jaeger.crossdock.resources.behavior.tchannel;
 
+import com.uber.jaeger.crossdock.api.Downstream;
+import com.uber.jaeger.crossdock.api.TraceResponse;
 import com.uber.jaeger.crossdock.resources.behavior.TraceBehavior;
 import com.uber.jaeger.crossdock.thrift.JoinTraceRequest;
 import com.uber.jaeger.crossdock.thrift.TracedService;
-import com.uber.jaeger.crossdock.api.Downstream;
-import com.uber.jaeger.crossdock.api.TraceResponse;
 import com.uber.tchannel.api.handlers.ThriftRequestHandler;
 import com.uber.tchannel.messages.ThriftRequest;
 import com.uber.tchannel.messages.ThriftResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 class JoinTraceThriftHandler
     extends ThriftRequestHandler<TracedService.joinTrace_args, TracedService.joinTrace_result> {
-  private static final Logger logger = LoggerFactory.getLogger(JoinTraceThriftHandler.class);
-
   private final TraceBehavior behavior;
 
   JoinTraceThriftHandler(TraceBehavior behavior) {
@@ -47,15 +46,15 @@ class JoinTraceThriftHandler
       ThriftRequest<TracedService.joinTrace_args> thriftRequest) {
     JoinTraceRequest request =
         thriftRequest.getBody(TracedService.joinTrace_args.class).getRequest();
-    logger.info("thrift:join_trace request: {}", request);
+    log.info("thrift:join_trace request: {}", request);
     TraceResponse response;
     try {
       response = behavior.prepareResponse(Downstream.fromThrift(request.getDownstream()));
     } catch (Exception e) {
-      logger.error("Failed to call downstream", e);
+      log.error("Failed to call downstream", e);
       response = new TraceResponse(e.getMessage());
     }
-    logger.info("thrift:join_trace response: {}", response);
+    log.info("thrift:join_trace response: {}", response);
     return new ThriftResponse.Builder<TracedService.joinTrace_result>(thriftRequest)
         .setBody(new TracedService.joinTrace_result(TraceResponse.toThrift(response)))
         .build();
