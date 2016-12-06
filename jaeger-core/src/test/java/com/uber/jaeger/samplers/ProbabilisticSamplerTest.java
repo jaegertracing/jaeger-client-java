@@ -21,11 +21,11 @@
  */
 package com.uber.jaeger.samplers;
 
-import org.junit.Test;
-
 import static junit.framework.TestCase.assertFalse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+
+import org.junit.Test;
 
 public class ProbabilisticSamplerTest {
 
@@ -35,9 +35,9 @@ public class ProbabilisticSamplerTest {
 
     long halfwayBoundary = 0x3fffffffffffffffL;
     Sampler sampler = new ProbabilisticSampler(samplingRate);
-    assertTrue(sampler.isSampled(halfwayBoundary));
+    assertTrue(sampler.isSampled("", halfwayBoundary));
 
-    assertFalse(sampler.isSampled(halfwayBoundary + 2));
+    assertFalse(sampler.isSampled("", halfwayBoundary + 2));
   }
 
   @Test
@@ -46,9 +46,9 @@ public class ProbabilisticSamplerTest {
 
     long halfwayBoundary = -0x4000000000000000L;
     Sampler sampler = new ProbabilisticSampler(samplingRate);
-    assertTrue(sampler.isSampled(halfwayBoundary));
+    assertTrue(sampler.isSampled("", halfwayBoundary));
 
-    assertFalse(sampler.isSampled(halfwayBoundary - 1));
+    assertFalse(sampler.isSampled("", halfwayBoundary - 1));
   }
 
   @Test(expected = IllegalArgumentException.class)

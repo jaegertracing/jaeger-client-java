@@ -28,10 +28,9 @@ import java.util.Map;
  */
 public interface Sampler {
   /**
-   * @param id identified of the new trace
    * @return whether or not the new trace should be sampled
    */
-  boolean isSampled(long id);
+  boolean isSampled(String operation, long id);
 
   /**
    * @return a collection of tags describing this sampler

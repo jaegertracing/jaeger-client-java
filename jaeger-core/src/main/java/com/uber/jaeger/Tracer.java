@@ -230,7 +230,8 @@ public class Tracer implements io.opentracing.Tracer {
         flags |= SpanContext.flagSampled | SpanContext.flagDebug;
         tags.put(Constants.DEBUG_ID_HEADER_KEY, debugID);
         metrics.traceStartedSampled.inc(1);
-      } else if (sampler.isSampled(id)) {
+        //TODO(prithvi): Don't assume operationName is set on creation
+      } else if (sampler.isSampled(operationName, id)) {
         flags |= SpanContext.flagSampled;
         tags.putAll(sampler.getTags());
         metrics.traceStartedSampled.inc(1);

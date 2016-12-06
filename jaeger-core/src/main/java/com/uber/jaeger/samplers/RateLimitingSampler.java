@@ -49,7 +49,7 @@ public class RateLimitingSampler implements Sampler {
   }
 
   @Override
-  public boolean isSampled(long id) {
+  public boolean isSampled(String operation, long id) {
     return this.rateLimiter.checkCredit(1.0);
   }
 
