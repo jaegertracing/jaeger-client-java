@@ -37,8 +37,6 @@ import com.uber.jaeger.utils.Utils;
 import io.opentracing.References;
 import io.opentracing.propagation.Format;
 import io.opentracing.tag.Tags;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.net.Inet4Address;
@@ -50,10 +48,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 
 @ToString(exclude = {"registry", "clock", "metrics"})
+@Slf4j
 public class Tracer implements io.opentracing.Tracer {
-  private final static Logger logger = LoggerFactory.getLogger(Tracer.class);
 
   private final String version;
   private final String serviceName;
@@ -414,7 +413,7 @@ public class Tracer implements io.opentracing.Tracer {
     try {
       return InetAddress.getLocalHost().getHostName();
     } catch (UnknownHostException e) {
-      logger.error("Cannot obtain host name", e);
+      log.error("Cannot obtain host name", e);
       return null;
     }
   }

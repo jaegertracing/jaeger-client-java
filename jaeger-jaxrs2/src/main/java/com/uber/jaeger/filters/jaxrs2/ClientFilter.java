@@ -26,8 +26,6 @@ import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
 import io.opentracing.tag.Tags;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import javax.ws.rs.ConstrainedTo;
@@ -37,13 +35,14 @@ import javax.ws.rs.client.ClientRequestFilter;
 import javax.ws.rs.client.ClientResponseContext;
 import javax.ws.rs.client.ClientResponseFilter;
 import javax.ws.rs.ext.Provider;
+import lombok.extern.slf4j.Slf4j;
 
 @Provider
 @ConstrainedTo(RuntimeType.CLIENT)
+@Slf4j
 public class ClientFilter implements ClientRequestFilter, ClientResponseFilter {
   private final Tracer tracer;
   private final TraceContext traceContext;
-  private final Logger logger = LoggerFactory.getLogger(ClientFilter.class);
 
   public ClientFilter(Tracer tracer, TraceContext traceContext) {
     this.tracer = tracer;
@@ -70,7 +69,7 @@ public class ClientFilter implements ClientRequestFilter, ClientResponseFilter {
 
       clientRequestContext.setProperty(Constants.CURRENT_SPAN_CONTEXT_KEY, clientSpan);
     } catch (Exception e) {
-      logger.error("Client Filter Request:", e);
+      log.error("Client Filter Request:", e);
     }
   }
 
@@ -87,7 +86,7 @@ public class ClientFilter implements ClientRequestFilter, ClientResponseFilter {
         clientSpan.finish();
       }
     } catch (Exception e) {
-      logger.error("Client Filter Response:", e);
+      log.error("Client Filter Response:", e);
     }
   }
 }

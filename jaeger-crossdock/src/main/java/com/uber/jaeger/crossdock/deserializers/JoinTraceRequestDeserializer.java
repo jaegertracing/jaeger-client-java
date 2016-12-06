@@ -28,13 +28,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uber.jaeger.crossdock.api.Downstream;
 import com.uber.jaeger.crossdock.api.JoinTraceRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class JoinTraceRequestDeserializer extends JsonDeserializer<JoinTraceRequest> {
-  private static final Logger logger = LoggerFactory.getLogger(JoinTraceRequestDeserializer.class);
 
   private static final ObjectMapper mapper = new ObjectMapper();
 
@@ -43,7 +42,7 @@ public class JoinTraceRequestDeserializer extends JsonDeserializer<JoinTraceRequ
       throws IOException {
     JsonNode node = jp.getCodec().readTree(jp);
 
-    logger.info("join trace json request: {}", node);
+    log.info("join trace json request: {}", node);
 
     String serverRole = node.get("serverRole").asText();
     JsonNode downstreamNode = node.get("downstream");

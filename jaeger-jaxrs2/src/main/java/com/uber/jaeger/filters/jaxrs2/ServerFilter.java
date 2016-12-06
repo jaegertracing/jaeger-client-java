@@ -27,8 +27,6 @@ import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
 import io.opentracing.tag.Tags;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import javax.ws.rs.container.ContainerRequestContext;
@@ -39,12 +37,13 @@ import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.Provider;
+import lombok.extern.slf4j.Slf4j;
 
 @Provider
+@Slf4j
 public class ServerFilter implements ContainerRequestFilter, ContainerResponseFilter {
   private final Tracer tracer;
   private final TraceContext traceContext;
-  private final Logger logger = LoggerFactory.getLogger(ServerFilter.class);
 
   @Context
   protected ResourceInfo resourceInfo;
@@ -88,7 +87,7 @@ public class ServerFilter implements ContainerRequestFilter, ContainerResponseFi
 
       traceContext.push(serverSpan);
     } catch (Exception e) {
-      logger.error("Server Filter Request:", e);
+      log.error("Server Filter Request:", e);
     }
   }
 
@@ -108,7 +107,7 @@ public class ServerFilter implements ContainerRequestFilter, ContainerResponseFi
       Tags.HTTP_STATUS.set(serverSpan, containerResponseContext.getStatus());
       serverSpan.finish();
     } catch (Exception e) {
-      logger.error("Server Filter Response:", e);
+      log.error("Server Filter Response:", e);
     }
   }
 

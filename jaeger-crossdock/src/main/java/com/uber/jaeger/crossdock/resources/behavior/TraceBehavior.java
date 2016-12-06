@@ -27,29 +27,27 @@ import com.uber.jaeger.SpanContext;
 import com.uber.jaeger.context.TracingUtils;
 import com.uber.jaeger.crossdock.Constants;
 import com.uber.jaeger.crossdock.JerseyServer;
-import com.uber.jaeger.crossdock.resources.behavior.tchannel.TChannelServer;
-import com.uber.jaeger.crossdock.thrift.TracedService;
 import com.uber.jaeger.crossdock.api.Downstream;
 import com.uber.jaeger.crossdock.api.JoinTraceRequest;
 import com.uber.jaeger.crossdock.api.ObservedSpan;
 import com.uber.jaeger.crossdock.api.TraceResponse;
+import com.uber.jaeger.crossdock.resources.behavior.tchannel.TChannelServer;
+import com.uber.jaeger.crossdock.thrift.TracedService;
 import com.uber.tchannel.api.SubChannel;
 import com.uber.tchannel.api.TFuture;
 import com.uber.tchannel.messages.ThriftRequest;
 import com.uber.tchannel.messages.ThriftResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class TraceBehavior {
-  private static final Logger logger = LoggerFactory.getLogger(TraceBehavior.class);
-
   private static final ObjectMapper mapper = new ObjectMapper();
 
   public TraceResponse prepareResponse(Downstream downstream) throws Exception {
@@ -64,8 +62,8 @@ public class TraceBehavior {
   }
 
   private TraceResponse callDownstream(Downstream downstream) throws Exception {
-    logger.info("Calling downstream {}", downstream);
-    logger.info(
+    log.info("Calling downstream {}", downstream);
+    log.info(
         "Downstream service {} -> {}:{}",
         downstream.getServiceName(),
         InetAddress.getByName(downstream.getHost()),
@@ -84,7 +82,7 @@ public class TraceBehavior {
   private TraceResponse callDownstreamHTTP(Downstream downstream) throws IOException {
     String downstreamURL =
         String.format("http://%s:%s/join_trace", downstream.getHost(), downstream.getPort());
-    logger.info("Calling downstream http {} at {}", downstream.getServiceName(), downstreamURL);
+    log.info("Calling downstream http {} at {}", downstream.getServiceName(), downstreamURL);
 
     Response resp =
         JerseyServer.client
@@ -96,7 +94,7 @@ public class TraceBehavior {
 
     String respStr = resp.readEntity(String.class);
     TraceResponse response = mapper.readValue(respStr, TraceResponse.class);
-    logger.info("Received response {}", response);
+    log.info("Received response {}", response);
     return response;
   }
 
@@ -107,7 +105,7 @@ public class TraceBehavior {
 
     SubChannel subChannel = TChannelServer.server.makeSubChannel(downstream.getServiceName());
 
-    logger.info("Calling downstream tchannel {}", joinTraceRequest);
+    log.info("Calling downstream tchannel {}", joinTraceRequest);
     ThriftRequest<TracedService.joinTrace_args> thriftRequest =
         new ThriftRequest.Builder<TracedService.joinTrace_args>(
                 downstream.getServiceName(), "TracedService::joinTrace")
@@ -118,7 +116,7 @@ public class TraceBehavior {
         subChannel.send(thriftRequest, host(downstream), port(downstream));
 
     try (ThriftResponse<TracedService.joinTrace_result> thriftResponse = future.get()) {
-      logger.info("Received tchannel response {}", thriftResponse);
+      log.info("Received tchannel response {}", thriftResponse);
       if (thriftResponse.isError()) {
         throw new Exception(thriftResponse.getError().getMessage());
       }
@@ -130,12 +128,12 @@ public class TraceBehavior {
   private ObservedSpan observeSpan() {
     com.uber.jaeger.context.TraceContext traceContext = TracingUtils.getTraceContext();
     if (traceContext.isEmpty()) {
-      logger.error("No span found");
+      log.error("No span found");
       return new ObservedSpan("no span found", false, "no span found");
     }
     Span span = (Span) traceContext.getCurrentSpan();
     if (span == null) {
-      logger.error("No span found");
+      log.error("No span found");
       return new ObservedSpan("no span found", false, "no span found");
     }
 
