@@ -51,8 +51,8 @@ public class ConstSampler implements Sampler {
    * @return A boolean that says whether to sample.
    */
   @Override
-  public boolean isSampled(String operation, long id) {
-    return decision;
+  public SamplingStatus getSamplingStatus(String operation, long id) {
+    return SamplingStatus.of(decision, tags);
   }
 
   @Override

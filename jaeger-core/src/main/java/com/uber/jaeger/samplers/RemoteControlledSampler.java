@@ -120,9 +120,9 @@ public class RemoteControlledSampler implements Sampler {
   }
 
   @Override
-  public boolean isSampled(String operation, long id) {
+  public SamplingStatus getSamplingStatus(String operation, long id) {
     synchronized (this) {
-      return sampler.isSampled(operation, id);
+      return sampler.getSamplingStatus(operation, id);
     }
   }
 
