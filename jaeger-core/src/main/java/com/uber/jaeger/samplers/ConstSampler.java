@@ -55,8 +55,8 @@ public class ConstSampler implements Sampler {
     return SamplingStatus.of(decision, tags);
   }
 
-  @Override
-  public Map<String, Object> getTags() {
+  // Visible for testing
+  Map<String, Object> getTags() {
     return this.tags;
   }
 

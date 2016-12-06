@@ -29,7 +29,6 @@ import com.uber.jaeger.samplers.http.RateLimitingSamplingStrategy;
 import com.uber.jaeger.samplers.http.SamplingStrategyResponse;
 import com.uber.jaeger.samplers.http.SamplingStrategyType;
 
-import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -123,13 +122,6 @@ public class RemoteControlledSampler implements Sampler {
   public SamplingStatus getSamplingStatus(String operation, long id) {
     synchronized (this) {
       return sampler.getSamplingStatus(operation, id);
-    }
-  }
-
-  @Override
-  public Map<String, Object> getTags() {
-    synchronized (this) {
-      return sampler.getTags();
     }
   }
 

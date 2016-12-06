@@ -69,8 +69,8 @@ public class ProbabilisticSampler implements Sampler {
     }
   }
 
-  @Override
-  public Map<String, Object> getTags() {
+  // Visible for testing
+  Map<String, Object> getTags() {
     return tags;
   }
 
