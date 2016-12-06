@@ -63,7 +63,7 @@ public class ProbabilisticSamplerTest {
 
   @Test
   public void testTags() {
-    Sampler sampler = new ProbabilisticSampler(0.1);
+    ProbabilisticSampler sampler = new ProbabilisticSampler(0.1);
     assertEquals("probabilistic", sampler.getTags().get("sampler.type"));
     assertEquals(0.1, sampler.getTags().get("sampler.param"));
   }

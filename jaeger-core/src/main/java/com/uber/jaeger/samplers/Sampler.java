@@ -21,8 +21,6 @@
  */
 package com.uber.jaeger.samplers;
 
-import java.util.Map;
-
 /**
  * Sampler is responsible for deciding if a new trace should be sampled and captured for storage.
  */
@@ -31,11 +29,6 @@ public interface Sampler {
    * @return whether or not the new trace should be sampled
    */
   SamplingStatus getSamplingStatus(String operation, long id);
-
-  /**
-   * @return a collection of tags describing this sampler
-   */
-  Map<String, Object> getTags();
 
   /**
    * Release any resources used by the sampler.

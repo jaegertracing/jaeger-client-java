@@ -100,7 +100,8 @@ public class RemoteControlledSamplerTest {
   @Test
   public void testTags() throws Exception {
     RemoteControlledSampler sampler = makeSamplerWith(new ProbabilisticSampler(0.5));
-    assertEquals("probabilistic", sampler.getTags().get("sampler.type"));
-    assertEquals(0.5, sampler.getTags().get("sampler.param"));
+    SamplingStatus samplingStatus = sampler.getSamplingStatus("some operation", 1);
+    assertEquals("probabilistic", samplingStatus.getTags().get("sampler.type"));
+    assertEquals(0.5, samplingStatus.getTags().get("sampler.param"));
   }
 }

@@ -21,13 +21,14 @@
  */
 package com.uber.jaeger.samplers;
 
-import org.junit.Test;
 import static org.junit.Assert.assertEquals;
+
+import org.junit.Test;
 
 public class TestConstSampler {
   @Test
   public void testTags() {
-    Sampler sampler = new ConstSampler(true);
+    ConstSampler sampler = new ConstSampler(true);
     assertEquals("const", sampler.getTags().get("sampler.type"));
     assertEquals(true, sampler.getTags().get("sampler.param"));
 
