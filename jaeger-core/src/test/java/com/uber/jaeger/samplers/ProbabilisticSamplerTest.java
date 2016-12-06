@@ -35,9 +35,9 @@ public class ProbabilisticSamplerTest {
 
     long halfwayBoundary = 0x3fffffffffffffffL;
     Sampler sampler = new ProbabilisticSampler(samplingRate);
-    assertTrue(sampler.isSampled("", halfwayBoundary));
+    assertTrue(sampler.getSamplingStatus("", halfwayBoundary).isSampled());
 
-    assertFalse(sampler.isSampled("", halfwayBoundary + 2));
+    assertFalse(sampler.getSamplingStatus("", halfwayBoundary + 2).isSampled());
   }
 
   @Test
@@ -46,9 +46,9 @@ public class ProbabilisticSamplerTest {
 
     long halfwayBoundary = -0x4000000000000000L;
     Sampler sampler = new ProbabilisticSampler(samplingRate);
-    assertTrue(sampler.isSampled("", halfwayBoundary));
+    assertTrue(sampler.getSamplingStatus("", halfwayBoundary).isSampled());
 
-    assertFalse(sampler.isSampled("", halfwayBoundary - 1));
+    assertFalse(sampler.getSamplingStatus("", halfwayBoundary - 1).isSampled());
   }
 
   @Test(expected = IllegalArgumentException.class)
