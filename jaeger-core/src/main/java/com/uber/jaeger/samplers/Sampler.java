@@ -26,6 +26,8 @@ package com.uber.jaeger.samplers;
  */
 public interface Sampler {
   /**
+   * @param operation The operation name set on the span
+   * @param id The traceId on the span
    * @return whether or not the new trace should be sampled
    */
   SamplingStatus getSamplingStatus(String operation, long id);
