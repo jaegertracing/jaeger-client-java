@@ -30,10 +30,10 @@ public class TestRateLimitingSampler {
   public void testTags() {
     RateLimitingSampler sampler = new RateLimitingSampler(123);
     assertEquals("ratelimiting", sampler.getTags().get("sampler.type"));
-    assertEquals(123, sampler.getTags().get("sampler.param"));
+    assertEquals(123.00, sampler.getTags().get("sampler.param"));
 
     sampler = new RateLimitingSampler(321);
     assertEquals("ratelimiting", sampler.getTags().get("sampler.type"));
-    assertEquals(321, sampler.getTags().get("sampler.param"));
+    assertEquals(321.00, sampler.getTags().get("sampler.param"));
   }
 }

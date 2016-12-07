@@ -35,18 +35,18 @@ public class RateLimitingSampler implements Sampler {
   public static final String TYPE = "ratelimiting";
 
   private RateLimiter rateLimiter;
-  private int maxTracesPerSecond;
+  private double maxTracesPerSecond;
   private Map<String, Object> tags;
 
-  public RateLimitingSampler(int maxTracesPerSecond) {
+  public RateLimitingSampler(double maxTracesPerSecond) {
     init(maxTracesPerSecond);
   }
 
-  public synchronized void update(int maxTracesPerSecond){
+  public synchronized void update(double maxTracesPerSecond){
    init(maxTracesPerSecond);
   }
 
-  private void init(int maxTracesPerSecond){
+  private void init(double maxTracesPerSecond){
     this.maxTracesPerSecond = maxTracesPerSecond;
 
     rateLimiter = new RateLimiter(maxTracesPerSecond);
