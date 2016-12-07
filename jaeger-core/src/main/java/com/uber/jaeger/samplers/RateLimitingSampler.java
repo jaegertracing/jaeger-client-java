@@ -34,15 +34,28 @@ import lombok.ToString;
 public class RateLimitingSampler implements Sampler {
   public static final String TYPE = "ratelimiting";
 
-  private final RateLimiter rateLimiter;
-  private final int maxTracesPerSecond;
-  private final Map<String, Object> tags;
+  private RateLimiter rateLimiter;
+  private double maxTracesPerSecond;
+  private Map<String, Object> tags;
 
-  public RateLimitingSampler(int maxTracesPerSecond) {
+  public RateLimitingSampler(double maxTracesPerSecond) {
+    init(maxTracesPerSecond);
+  }
+
+  public synchronized void update(double maxTracesPerSecond) {
+    if (this.maxTracesPerSecond == maxTracesPerSecond) {
+      return;
+    }
+
+    init(maxTracesPerSecond);
+  }
+
+  private void init(double maxTracesPerSecond){
     this.maxTracesPerSecond = maxTracesPerSecond;
-    this.rateLimiter = new RateLimiter(maxTracesPerSecond);
 
-    Map<String, Object> tags = new HashMap<>();
+    rateLimiter = new RateLimiter(maxTracesPerSecond);
+
+    HashMap<String, Object> tags = new HashMap<>();
     tags.put(Constants.SAMPLER_TYPE_TAG_KEY, TYPE);
     tags.put(Constants.SAMPLER_PARAM_TAG_KEY, maxTracesPerSecond);
     this.tags = Collections.unmodifiableMap(tags);

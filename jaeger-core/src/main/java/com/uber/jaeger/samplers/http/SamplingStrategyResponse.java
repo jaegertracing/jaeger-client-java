@@ -28,4 +28,5 @@ public class SamplingStrategyResponse {
   SamplingStrategyType strategyType;
   ProbabilisticSamplingStrategy probabilisticSampling;
   RateLimitingSamplingStrategy rateLimitingSampling;
+  OperationSamplingParameters operationSampling;
 }

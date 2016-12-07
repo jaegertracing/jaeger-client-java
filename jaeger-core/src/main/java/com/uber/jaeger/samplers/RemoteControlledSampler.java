@@ -39,6 +39,7 @@ import lombok.ToString;
 public class RemoteControlledSampler implements Sampler {
   public static final String TYPE = "remote";
 
+  private final int maxOperations = 2000;
   private final String serviceName;
   private final SamplingManager manager;
   private final Timer pollTimer;
@@ -104,6 +105,11 @@ public class RemoteControlledSampler implements Sampler {
 
   private Sampler extractSampler(SamplingStrategyResponse response)
       throws UnknownSamplingStrategyException {
+    if(response.getOperationSampling() != null) {
+      return new PerOperationSampler(maxOperations, response.getOperationSampling());
+    }
+
+    //TODO: Cleanup to not use enum
     if (SamplingStrategyType.PROBABILISTIC.equals(response.getStrategyType())) {
       ProbabilisticSamplingStrategy strategy = response.getProbabilisticSampling();
       return new ProbabilisticSampler(strategy.getSamplingRate());

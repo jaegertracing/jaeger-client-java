@@ -24,11 +24,18 @@ package com.uber.jaeger.samplers;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
+import com.uber.jaeger.samplers.http.OperationSamplingParameters;
+import com.uber.jaeger.samplers.http.PerOperationSamplingParameters;
 import com.uber.jaeger.samplers.http.ProbabilisticSamplingStrategy;
 import com.uber.jaeger.samplers.http.RateLimitingSamplingStrategy;
 import com.uber.jaeger.samplers.http.SamplingStrategyResponse;
 import com.uber.jaeger.samplers.http.SamplingStrategyType;
 import org.junit.Test;
+
+import java.io.File;
+import java.net.URL;
+import java.nio.file.Files;
+import java.util.List;
 
 public class HTTPSamplingManagerTest {
 
@@ -36,6 +43,7 @@ public class HTTPSamplingManagerTest {
 
   @Test
   public void testParseProbabilisticSampling() {
+    //TODO: Use fixture
     SamplingStrategyResponse response =
         undertest.parseJson(
             "{\"strategyType\":0,"
@@ -48,6 +56,7 @@ public class HTTPSamplingManagerTest {
 
   @Test
   public void testParseRateLimitingSampling() {
+    //TODO: Use fixture
     SamplingStrategyResponse response =
         undertest.parseJson(
             "{\"strategyType\":1,"
@@ -56,6 +65,30 @@ public class HTTPSamplingManagerTest {
     assertEquals(SamplingStrategyType.RATE_LIMITING, response.getStrategyType());
     assertEquals(new RateLimitingSamplingStrategy(1), response.getRateLimitingSampling());
     assertNull(response.getProbabilisticSampling());
+  }
+
+  @Test
+  public void testParsePerOperationSampling() throws Exception {
+    SamplingStrategyResponse response =
+        undertest.parseJson(readFixture("per_operation_sampling.json"));
+    OperationSamplingParameters actual = response.getOperationSampling();
+    assertEquals(0.001, actual.getDefaultSamplingProbability(), 0.0001);
+    assertEquals(0.001666, actual.getDefaultLowerBoundTracesPerSecond(),0.0001);
+
+    List<PerOperationSamplingParameters> actualPerOperationStrategies = actual.getPerOperationStrategies();
+    assertEquals(2, actualPerOperationStrategies.size());
+    assertEquals(
+        new PerOperationSamplingParameters("GET:/search", new ProbabilisticSamplingStrategy(1.0)),
+        actualPerOperationStrategies.get(0));
+    assertEquals(
+        new PerOperationSamplingParameters("PUT:/pacifique", new ProbabilisticSamplingStrategy(0.8258308134813166)),
+        actualPerOperationStrategies.get(1));
+  }
+
+  private String readFixture(String fixtureName) throws Exception {
+    URL resource = getClass().getClassLoader().getResource(fixtureName);
+    File file = new File(resource.toURI());
+    return new String(Files.readAllBytes(file.toPath()));
   }
 
 }
