@@ -60,7 +60,7 @@ public class PerOperationSampler implements Sampler {
 
     if (defaultSampler == null) {
       defaultSampler = new ProbabilisticSampler(defaultSamplingRate);
-    } else if (Math.abs(defaultSampler.getSamplingRate() - defaultSamplingRate) > 0.001) {
+    } else {
       defaultSampler.update(defaultSamplingRate);
     }
 

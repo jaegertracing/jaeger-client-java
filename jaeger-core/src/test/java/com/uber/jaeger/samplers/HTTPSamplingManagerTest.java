@@ -43,6 +43,7 @@ public class HTTPSamplingManagerTest {
 
   @Test
   public void testParseProbabilisticSampling() {
+    //TODO: Use fixture
     SamplingStrategyResponse response =
         undertest.parseJson(
             "{\"strategyType\":0,"
@@ -55,6 +56,7 @@ public class HTTPSamplingManagerTest {
 
   @Test
   public void testParseRateLimitingSampling() {
+    //TODO: Use fixture
     SamplingStrategyResponse response =
         undertest.parseJson(
             "{\"strategyType\":1,"

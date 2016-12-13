@@ -42,8 +42,12 @@ public class RateLimitingSampler implements Sampler {
     init(maxTracesPerSecond);
   }
 
-  public synchronized void update(double maxTracesPerSecond){
-   init(maxTracesPerSecond);
+  public synchronized void update(double maxTracesPerSecond) {
+    if (this.maxTracesPerSecond == maxTracesPerSecond) {
+      return;
+    }
+
+    init(maxTracesPerSecond);
   }
 
   private void init(double maxTracesPerSecond){

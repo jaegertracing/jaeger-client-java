@@ -36,4 +36,11 @@ public class TestRateLimitingSampler {
     assertEquals("ratelimiting", sampler.getTags().get("sampler.type"));
     assertEquals(321.00, sampler.getTags().get("sampler.param"));
   }
+
+  @Test
+  public void testUpdate() {
+    RateLimitingSampler sampler = new RateLimitingSampler(123);
+    sampler.update(20);
+    assertEquals(20.0, sampler.getTags().get("sampler.param"));
+  }
 }
