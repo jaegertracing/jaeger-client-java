@@ -51,12 +51,12 @@ public class ConstSampler implements Sampler {
    * @return A boolean that says whether to sample.
    */
   @Override
-  public boolean isSampled(long id) {
-    return decision;
+  public SamplingStatus getSamplingStatus(String operation, long id) {
+    return SamplingStatus.of(decision, tags);
   }
 
-  @Override
-  public Map<String, Object> getTags() {
+  // Visible for testing
+  Map<String, Object> getTags() {
     return this.tags;
   }
 

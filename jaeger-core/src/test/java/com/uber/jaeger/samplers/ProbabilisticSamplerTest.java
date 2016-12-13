@@ -21,11 +21,11 @@
  */
 package com.uber.jaeger.samplers;
 
-import org.junit.Test;
-
 import static junit.framework.TestCase.assertFalse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+
+import org.junit.Test;
 
 public class ProbabilisticSamplerTest {
 
@@ -35,9 +35,9 @@ public class ProbabilisticSamplerTest {
 
     long halfwayBoundary = 0x3fffffffffffffffL;
     Sampler sampler = new ProbabilisticSampler(samplingRate);
-    assertTrue(sampler.isSampled(halfwayBoundary));
+    assertTrue(sampler.getSamplingStatus("", halfwayBoundary).isSampled());
 
-    assertFalse(sampler.isSampled(halfwayBoundary + 2));
+    assertFalse(sampler.getSamplingStatus("", halfwayBoundary + 2).isSampled());
   }
 
   @Test
@@ -46,9 +46,9 @@ public class ProbabilisticSamplerTest {
 
     long halfwayBoundary = -0x4000000000000000L;
     Sampler sampler = new ProbabilisticSampler(samplingRate);
-    assertTrue(sampler.isSampled(halfwayBoundary));
+    assertTrue(sampler.getSamplingStatus("", halfwayBoundary).isSampled());
 
-    assertFalse(sampler.isSampled(halfwayBoundary - 1));
+    assertFalse(sampler.getSamplingStatus("", halfwayBoundary - 1).isSampled());
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -63,8 +63,15 @@ public class ProbabilisticSamplerTest {
 
   @Test
   public void testTags() {
-    Sampler sampler = new ProbabilisticSampler(0.1);
+    ProbabilisticSampler sampler = new ProbabilisticSampler(0.1);
     assertEquals("probabilistic", sampler.getTags().get("sampler.type"));
     assertEquals(0.1, sampler.getTags().get("sampler.param"));
+  }
+
+  @Test
+  public void testUpdate(){
+    ProbabilisticSampler sampler = new ProbabilisticSampler(0.1);
+    sampler.update(0.4);
+    assertEquals(0.4, sampler.getTags().get("sampler.param"));
   }
 }

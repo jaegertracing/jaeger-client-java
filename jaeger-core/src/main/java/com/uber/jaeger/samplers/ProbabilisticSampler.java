@@ -33,25 +33,38 @@ import lombok.ToString;
 public class ProbabilisticSampler implements Sampler {
   public static final String TYPE = "probabilistic";
 
-  private final long positiveSamplingBoundary;
-  private final long negativeSamplingBoundary;
-  private final double samplingRate;
-  private final Map<String, Object> tags;
+  private final double DELTA = 0.00001;
+  private long positiveSamplingBoundary;
+  private long negativeSamplingBoundary;
+  private double samplingRate;
+  private Map<String, Object> tags;
 
   public ProbabilisticSampler(double samplingRate) {
+    init(samplingRate);
+  }
+
+  public synchronized void update(double samplingRate) {
+    if(Math.abs(this.samplingRate - samplingRate) < DELTA) {
+      return;
+    }
+
+    init(samplingRate);
+  }
+
+  private void init(double samplingRate) {
     if (samplingRate < 0.0 || samplingRate > 1.0) {
-      throw new IllegalArgumentException(
-          "The sampling rate must be greater than 0.0 and less than 1.0");
+      throw new IllegalArgumentException("The sampling rate must be greater than 0.0 and less than 1.0");
     }
 
     this.samplingRate = samplingRate;
-    this.positiveSamplingBoundary = (long) (((1L << 63) - 1) * samplingRate);
-    this.negativeSamplingBoundary = (long) ((1L << 63) * samplingRate);
 
-    Map<String, Object> tags = new HashMap<>();
+    HashMap<String, Object> tags = new HashMap<>();
     tags.put(Constants.SAMPLER_TYPE_TAG_KEY, TYPE);
     tags.put(Constants.SAMPLER_PARAM_TAG_KEY, samplingRate);
     this.tags = Collections.unmodifiableMap(tags);
+
+    positiveSamplingBoundary = (long) (((1L << 63) - 1) * samplingRate);
+    negativeSamplingBoundary = (long) ((1L << 63) * samplingRate);
   }
 
   /**
@@ -61,15 +74,16 @@ public class ProbabilisticSampler implements Sampler {
    * @return A boolean that says wheter or not to sample.
    */
   @Override
-  public boolean isSampled(long id) {
+  public SamplingStatus getSamplingStatus(String operation, long id) {
     if (id > 0) {
-      return id <= this.positiveSamplingBoundary;
+      return SamplingStatus.of(id <= this.positiveSamplingBoundary, tags);
+    } else {
+      return SamplingStatus.of(id >= this.negativeSamplingBoundary, tags);
     }
-    return id >= this.negativeSamplingBoundary;
   }
 
-  @Override
-  public Map<String, Object> getTags() {
+  // Visible for testing
+  Map<String, Object> getTags() {
     return tags;
   }
 

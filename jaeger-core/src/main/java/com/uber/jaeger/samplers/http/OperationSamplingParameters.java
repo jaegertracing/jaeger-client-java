@@ -19,28 +19,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.uber.jaeger.samplers;
+package com.uber.jaeger.samplers.http;
 
-import static org.junit.Assert.assertEquals;
+import java.util.List;
+import lombok.Value;
 
-import org.junit.Test;
-
-public class TestRateLimitingSampler {
-  @Test
-  public void testTags() {
-    RateLimitingSampler sampler = new RateLimitingSampler(123);
-    assertEquals("ratelimiting", sampler.getTags().get("sampler.type"));
-    assertEquals(123.00, sampler.getTags().get("sampler.param"));
-
-    sampler = new RateLimitingSampler(321);
-    assertEquals("ratelimiting", sampler.getTags().get("sampler.type"));
-    assertEquals(321.00, sampler.getTags().get("sampler.param"));
-  }
-
-  @Test
-  public void testUpdate() {
-    RateLimitingSampler sampler = new RateLimitingSampler(123);
-    sampler.update(20);
-    assertEquals(20.0, sampler.getTags().get("sampler.param"));
-  }
+@Value
+public class OperationSamplingParameters {
+  double defaultSamplingProbability;
+  double defaultLowerBoundTracesPerSecond;
+  List<PerOperationSamplingParameters> perOperationStrategies;
 }

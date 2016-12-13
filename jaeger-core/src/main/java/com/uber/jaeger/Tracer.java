@@ -31,6 +31,7 @@ import com.uber.jaeger.propagation.Injector;
 import com.uber.jaeger.propagation.TextMapCodec;
 import com.uber.jaeger.reporters.Reporter;
 import com.uber.jaeger.samplers.Sampler;
+import com.uber.jaeger.samplers.SamplingStatus;
 import com.uber.jaeger.utils.Clock;
 import com.uber.jaeger.utils.SystemClock;
 import com.uber.jaeger.utils.Utils;
@@ -230,13 +231,18 @@ public class Tracer implements io.opentracing.Tracer {
         flags |= SpanContext.flagSampled | SpanContext.flagDebug;
         tags.put(Constants.DEBUG_ID_HEADER_KEY, debugID);
         metrics.traceStartedSampled.inc(1);
-      } else if (sampler.isSampled(id)) {
-        flags |= SpanContext.flagSampled;
-        tags.putAll(sampler.getTags());
-        metrics.traceStartedSampled.inc(1);
       } else {
-        metrics.traceStartedNotSampled.inc(1);
+        //TODO(prithvi): Don't assume operationName is set on creation
+        SamplingStatus samplingStatus = sampler.getSamplingStatus(operationName, id);
+        if (samplingStatus.isSampled()) {
+          flags |= SpanContext.flagSampled;
+          tags.putAll(samplingStatus.getTags());
+          metrics.traceStartedSampled.inc(1);
+        } else {
+          metrics.traceStartedNotSampled.inc(1);
+        }
       }
+
       return new SpanContext(id, id, 0, flags);
     }
 
