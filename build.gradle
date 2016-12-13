@@ -88,6 +88,13 @@ subprojects {
     }
 }
 
+def publishedProjects = subprojects.findAll { it.path != ':jaeger-crossdock' }
+
+coveralls {
+    sourceDirs = publishedProjects.sourceSets.main.allSource.srcDirs.flatten()
+    jacocoReportPath = "${buildDir}/reports/jacoco/test/jacocotestReport.xml"
+}
+
 configure(subprojects.findAll {it.name != 'jaeger-thrift'}) {
    apply plugin: 'net.ltgt.errorprone'
 }
