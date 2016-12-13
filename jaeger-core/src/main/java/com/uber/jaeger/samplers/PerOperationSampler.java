@@ -36,11 +36,12 @@ import lombok.extern.slf4j.Slf4j;
 public class PerOperationSampler implements Sampler {
   private final ConcurrentHashMap<String, GuaranteedThroughputSampler> operationNameToSampler;
   private final int maxOperations;
-  private volatile ProbabilisticSampler defaultSampler;
+  private final ProbabilisticSampler defaultSampler;
 
   public PerOperationSampler(int maxOperations, OperationSamplingParameters strategies) {
-    this.maxOperations = maxOperations;
-    this.operationNameToSampler = new ConcurrentHashMap<>();
+    this(maxOperations,
+         new ConcurrentHashMap<String, GuaranteedThroughputSampler>(),
+         new ProbabilisticSampler(strategies.getDefaultSamplingProbability()));
     update(strategies);
   }
 
@@ -54,18 +55,16 @@ public class PerOperationSampler implements Sampler {
     this.defaultSampler = defaultSampler;
   }
 
+  // Note that this isn't synchronized because ProbabilisticSampler#update and
+  // GuaranteedThroughputSampler#update are synchronized
   public void update(OperationSamplingParameters strategies){
     double lowerBound = strategies.getDefaultLowerBoundTracesPerSecond();
     double defaultSamplingRate = strategies.getDefaultSamplingProbability();
+    boolean exceededMaxOperations = false;
 
-    if (defaultSampler == null) {
-      defaultSampler = new ProbabilisticSampler(defaultSamplingRate);
-    } else {
-      defaultSampler.update(defaultSamplingRate);
-    }
+    defaultSampler.update(defaultSamplingRate);
 
     for (PerOperationSamplingParameters strategy : strategies.getPerOperationStrategies()) {
-
       String operation = strategy.getOperation();
       double samplingRate = strategy.getProbabilisticSampling().getSamplingRate();
 
@@ -74,10 +73,17 @@ public class PerOperationSampler implements Sampler {
         if (operationNameToSampler.size() < maxOperations) {
           operationNameToSampler
               .putIfAbsent(operation, new GuaranteedThroughputSampler(samplingRate, lowerBound));
+        } else {
+          exceededMaxOperations = true;
         }
       } else {
         guaranteedThroughputSampler.update(samplingRate, lowerBound);
       }
+    }
+
+    if (exceededMaxOperations) {
+      log.info("Exceeded the maximum number of operations(%s) for per operations sampling",
+               maxOperations);
     }
 
   }

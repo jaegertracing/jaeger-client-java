@@ -25,6 +25,7 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.verify;
 
 import com.uber.jaeger.Constants;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,14 +37,19 @@ import java.util.Map;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GuaranteedThroughputSamplerTest {
-  @Mock ProbabilisticSampler probabilisticSampler;
-  @Mock RateLimitingSampler rateLimitingSampler;
+  @Mock private ProbabilisticSampler probabilisticSampler;
+  @Mock private RateLimitingSampler rateLimitingSampler;
 
-  GuaranteedThroughputSampler undertest;
+  private GuaranteedThroughputSampler undertest;
 
   @Before
-  public void SetUp(){
+  public void setUp() {
     undertest = new GuaranteedThroughputSampler(probabilisticSampler, rateLimitingSampler);
+  }
+
+  @After
+  public void tearDown() {
+    undertest.close();
   }
 
   @Test

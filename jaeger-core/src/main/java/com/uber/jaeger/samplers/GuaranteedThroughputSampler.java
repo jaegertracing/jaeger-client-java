@@ -21,22 +21,27 @@
  */
 package com.uber.jaeger.samplers;
 
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+
 /**
  * {@link GuaranteedThroughputSampler} is a {@link Sampler} that guarantees a throughput by using
  * a {@link ProbabilisticSampler} and {@link RateLimitingSampler} in tandem.
  *
  * The RateLimitingSampler is used to establish a lowerBound so that every operation is sampled
- * at least one in the time interval defined by the lowerBound.
+ * at least once in the time interval defined by the lowerBound.
  */
+@EqualsAndHashCode
+@ToString
 public class GuaranteedThroughputSampler implements Sampler {
   private final ProbabilisticSampler probabilisticSampler;
   private final RateLimitingSampler lowerBoundSampler;
 
-  GuaranteedThroughputSampler(double samplingRate,
-                              double lowerBound) {
+  public GuaranteedThroughputSampler(double samplingRate, double lowerBound) {
     this(new ProbabilisticSampler(samplingRate), new RateLimitingSampler(lowerBound));
   }
 
+  // Visible for testing
   GuaranteedThroughputSampler(ProbabilisticSampler probabilisticSampler,
                               RateLimitingSampler rateLimitingSampler) {
     this.probabilisticSampler = probabilisticSampler;
@@ -44,10 +49,18 @@ public class GuaranteedThroughputSampler implements Sampler {
   }
 
 
+  /**
+   * Calls {@link Sampler#getSamplingStatus(String, long)} on both samplers, returning true for
+   * {@link SamplingStatus#isSampled} if either samplers set #isSampled to true.
+   * The tags corresponding to the sampler that returned true are set on {@link SamplingStatus#tags}
+   * If both samplers return true, tags for {@link ProbabilisticSampler} is given priority.
+   * @param operation The operation name, which is ignored by this sampler
+   * @param id The traceId on the span
+   */
   @Override
-  public SamplingStatus getSamplingStatus(String ignored, long id) {
-    SamplingStatus probabilisticSamplingStatus = probabilisticSampler.getSamplingStatus(ignored, id);
-    SamplingStatus lowerBoundSamplingStatus = lowerBoundSampler.getSamplingStatus(ignored, id);
+  public SamplingStatus getSamplingStatus(String operation, long id) {
+    SamplingStatus probabilisticSamplingStatus = probabilisticSampler.getSamplingStatus(operation, id);
+    SamplingStatus lowerBoundSamplingStatus = lowerBoundSampler.getSamplingStatus(operation, id);
 
     if (probabilisticSamplingStatus.isSampled()) {
       return probabilisticSamplingStatus;
