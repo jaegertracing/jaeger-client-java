@@ -67,11 +67,6 @@ public class RateLimitingSampler implements Sampler {
     return tags;
   }
 
-  // Visible for testing
-  double getMaxTracesPerSecond() {
-    return maxTracesPerSecond;
-  }
-
   @Override
   public boolean equals(Object other) {
     if (this == other) return true;

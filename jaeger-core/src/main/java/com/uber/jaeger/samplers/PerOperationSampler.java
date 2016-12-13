@@ -24,7 +24,6 @@ package com.uber.jaeger.samplers;
 import com.uber.jaeger.samplers.http.OperationSamplingParameters;
 import com.uber.jaeger.samplers.http.PerOperationSamplingParameters;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
@@ -37,12 +36,22 @@ import lombok.extern.slf4j.Slf4j;
 public class PerOperationSampler implements Sampler {
   private final ConcurrentHashMap<String, GuaranteedThroughputSampler> operationNameToSampler;
   private final int maxOperations;
-  private ProbabilisticSampler defaultSampler;
+  private volatile ProbabilisticSampler defaultSampler;
 
   public PerOperationSampler(int maxOperations, OperationSamplingParameters strategies) {
     this.maxOperations = maxOperations;
     this.operationNameToSampler = new ConcurrentHashMap<>();
     update(strategies);
+  }
+
+  // Visible for testing
+  PerOperationSampler(int maxOperations,
+                      ConcurrentHashMap<String, GuaranteedThroughputSampler> operationNameToSampler,
+                      ProbabilisticSampler defaultSampler) {
+
+    this.operationNameToSampler = operationNameToSampler;
+    this.maxOperations = maxOperations;
+    this.defaultSampler = defaultSampler;
   }
 
   public void update(OperationSamplingParameters strategies){
@@ -58,7 +67,7 @@ public class PerOperationSampler implements Sampler {
     for (PerOperationSamplingParameters strategy : strategies.getPerOperationStrategies()) {
 
       String operation = strategy.getOperation();
-      double samplingRate = strategy.getProbabilisticSamplingStrategy().getSamplingRate();
+      double samplingRate = strategy.getProbabilisticSampling().getSamplingRate();
 
       GuaranteedThroughputSampler guaranteedThroughputSampler = operationNameToSampler.get(operation);
       if (guaranteedThroughputSampler == null) {
@@ -67,15 +76,10 @@ public class PerOperationSampler implements Sampler {
               .putIfAbsent(operation, new GuaranteedThroughputSampler(samplingRate, lowerBound));
         }
       } else {
-        guaranteedThroughputSampler.updateSamplingRate(samplingRate);
+        guaranteedThroughputSampler.update(samplingRate, lowerBound);
       }
     }
 
-  }
-
-  // Visible for testing
-  Map<String, GuaranteedThroughputSampler> getOperationNameToSampler() {
-    return Collections.unmodifiableMap(operationNameToSampler);
   }
 
   @Override

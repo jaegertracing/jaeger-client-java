@@ -104,6 +104,12 @@ public class RemoteControlledSampler implements Sampler {
 
   private Sampler extractSampler(SamplingStrategyResponse response)
       throws UnknownSamplingStrategyException {
+    if(response.getOperationSampling() != null) {
+      //TODO: make maxOperations configurable
+      return new PerOperationSampler(100, response.getOperationSampling());
+    }
+
+    //TODO: Cleanup to not use enum
     if (SamplingStrategyType.PROBABILISTIC.equals(response.getStrategyType())) {
       ProbabilisticSamplingStrategy strategy = response.getProbabilisticSampling();
       return new ProbabilisticSampler(strategy.getSamplingRate());
