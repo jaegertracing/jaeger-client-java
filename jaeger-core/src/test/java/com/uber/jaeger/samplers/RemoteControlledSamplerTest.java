@@ -73,7 +73,10 @@ public class RemoteControlledSamplerTest {
 
   private RemoteControlledSampler makeSamplerWith(Sampler underlyingSampler) throws Exception {
     HTTPSamplingManager manager = mock(HTTPSamplingManager.class);
-    SamplingStrategyResponse response = new SamplingStrategyResponse(SamplingStrategyType.PROBABILISTIC, null, null);
+    SamplingStrategyResponse response = new SamplingStrategyResponse(SamplingStrategyType.PROBABILISTIC,
+                                                                     null,
+                                                                     null,
+                                                                     null);
     when(manager.getSamplingStrategy("jaeger")).thenReturn(response);
     return new RemoteControlledSampler("jaeger", manager, underlyingSampler, metrics);
   }

@@ -24,9 +24,7 @@ package com.uber.jaeger.samplers.http;
 import lombok.Value;
 
 @Value
-public class SamplingStrategyResponse {
-  SamplingStrategyType strategyType;
-  ProbabilisticSamplingStrategy probabilisticSampling;
-  RateLimitingSamplingStrategy rateLimitingSampling;
-  OperationSamplingParameters operationSampling;
+public class PerOperationSamplingParameters {
+  String operation;
+  ProbabilisticSamplingStrategy probabilisticSamplingStrategy;
 }
