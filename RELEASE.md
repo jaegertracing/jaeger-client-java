@@ -39,6 +39,6 @@ requires private/public keys.
 
 
   [ci-img]: https://travis-ci.org/uber/jaeger-client-java.svg?branch=master
-  [cov-img]: https://coveralls.io/repos/github/uber/jaeger-client-java/badge.svg?branch=master
+  [cov-img]: https://codecov.io/github/uber/jaeger-client-java/coverage.png?branch=master
   [ci]: https://travis-ci.org/uber/jaeger-client-java
-  [cov]: https://coveralls.io/github/uber/jaeger-client-java?branch=master
+  [cov]: https://codecov.io/github/uber/jaeger-client-java/

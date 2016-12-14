@@ -1,6 +1,3 @@
-apply plugin: 'jacoco'
-apply plugin: 'com.github.kt3k.coveralls'
-
 description = 'Integration library for Zipkin'
 
 dependencies {

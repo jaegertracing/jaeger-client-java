@@ -45,7 +45,6 @@ script:
 
 after_success:
 - bash <(curl -s https://codecov.io/bash)
-- ./gradlew jacocoTestReport coveralls
 - ./gradlew uploadArchives -PossrhUsername="${SONATYPE_USERNAME}" -PossrhPassword="${SONATYPE_PASSWORD}"
 - pushd 'jaeger-crossdock'
 - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
