@@ -35,6 +35,7 @@ allprojects {
 subprojects {
     apply plugin: 'com.github.hierynomus.license'
     apply plugin: 'java'
+    apply plugin: 'jacoco'
     apply plugin: 'maven'
     apply plugin: 'signing'
 
@@ -87,7 +88,9 @@ subprojects {
         compileOnly 'org.projectlombok:lombok:1.16.10'
     }
 
-    def publishedProjects = subprojects.findAll { it.path != ':jaeger-crossdock' }
+    def publishedProjects = subprojects.findAll {
+        !it.path.contains('crossdock') || !it.path.contains('thrift')
+    }
 
     task codeCoverageReport(type: JacocoReport, group: 'Coverage reports') {
         description = 'Generates an aggregate report from all subprojects'
@@ -99,9 +102,9 @@ subprojects {
         executionData = files(publishedProjects.jacocoTestReport.executionData)
 
         reports {
-            html.enabled = true // human readable
-            xml.enabled = true // required by coveralls
-            xml.destination "${buildDir}/reports/jacoco/report.xml"
+            html.enabled = false
+            xml.enabled = true
+            xml.destination = "${buildDir}/reports/jacoco/report.xml"
         }
 
         doFirst {
