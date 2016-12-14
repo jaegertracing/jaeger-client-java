@@ -41,8 +41,10 @@ before_install:
 script:
 - make test
 - make crossdock-fresh
+- ./gradlew codeCoverageReport
 
 after_success:
+- bash <(curl -s https://codecov.io/bash)
 - ./gradlew jacocoTestReport coveralls
 - ./gradlew uploadArchives -PossrhUsername="${SONATYPE_USERNAME}" -PossrhPassword="${SONATYPE_PASSWORD}"
 - pushd 'jaeger-crossdock'

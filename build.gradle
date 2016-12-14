@@ -86,6 +86,29 @@ subprojects {
     dependencies {
         compileOnly 'org.projectlombok:lombok:1.16.10'
     }
+
+    def publishedProjects = subprojects.findAll { it.path != ':jaeger-crossdock' }
+
+    task codeCoverageReport(type: JacocoReport, group: 'Coverage reports') {
+        description = 'Generates an aggregate report from all subprojects'
+        dependsOn(publishedProjects.test)
+
+        additionalSourceDirs = files(publishedProjects.sourceSets.main.allSource.srcDirs)
+        sourceDirectories = files(publishedProjects.sourceSets.main.allSource.srcDirs)
+        classDirectories = files(publishedProjects.sourceSets.main.output)
+        executionData = files(publishedProjects.jacocoTestReport.executionData)
+
+        reports {
+            html.enabled = true // human readable
+            xml.enabled = true // required by coveralls
+            xml.destination "${buildDir}/reports/jacoco/report.xml"
+        }
+
+        doFirst {
+            executionData = files(executionData.findAll { it.exists() })
+        }
+    }
+
 }
 
 configure(subprojects.findAll {it.name != 'jaeger-thrift'}) {
