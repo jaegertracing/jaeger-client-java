@@ -119,9 +119,9 @@ public class RemoteControlledSampler implements Sampler {
   }
 
   @Override
-  public SamplingStatus getSamplingStatus(String operation, long id) {
+  public SamplingStatus sample(String operation, long id) {
     synchronized (this) {
-      return sampler.getSamplingStatus(operation, id);
+      return sampler.sample(operation, id);
     }
   }
 

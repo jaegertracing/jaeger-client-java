@@ -49,13 +49,8 @@ public class RateLimitingSampler implements Sampler {
   }
 
   @Override
-  public SamplingStatus getSamplingStatus(String operation, long id) {
+  public SamplingStatus sample(String operation, long id) {
     return SamplingStatus.of(this.rateLimiter.checkCredit(1.0), tags);
-  }
-
-  // Visible for testing
-  Map<String, Object> getTags() {
-    return tags;
   }
 
   @Override

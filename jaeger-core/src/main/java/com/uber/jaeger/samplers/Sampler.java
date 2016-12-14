@@ -28,7 +28,7 @@ public interface Sampler {
   /**
    * @return whether or not the new trace should be sampled
    */
-  SamplingStatus getSamplingStatus(String operation, long id);
+  SamplingStatus sample(String operation, long id);
 
   /**
    * Release any resources used by the sampler.

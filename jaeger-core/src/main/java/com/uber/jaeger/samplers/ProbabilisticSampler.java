@@ -61,17 +61,12 @@ public class ProbabilisticSampler implements Sampler {
    * @return A boolean that says wheter or not to sample.
    */
   @Override
-  public SamplingStatus getSamplingStatus(String operation, long id) {
+  public SamplingStatus sample(String operation, long id) {
     if (id > 0) {
       return SamplingStatus.of(id <= this.positiveSamplingBoundary, tags);
     } else {
       return SamplingStatus.of(id >= this.negativeSamplingBoundary, tags);
     }
-  }
-
-  // Visible for testing
-  Map<String, Object> getTags() {
-    return tags;
   }
 
   @Override

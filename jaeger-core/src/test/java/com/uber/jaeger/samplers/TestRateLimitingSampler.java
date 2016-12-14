@@ -25,15 +25,14 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
+import java.util.Map;
+
 public class TestRateLimitingSampler {
   @Test
   public void testTags() {
     RateLimitingSampler sampler = new RateLimitingSampler(123);
-    assertEquals("ratelimiting", sampler.getTags().get("sampler.type"));
-    assertEquals(123, sampler.getTags().get("sampler.param"));
-
-    sampler = new RateLimitingSampler(321);
-    assertEquals("ratelimiting", sampler.getTags().get("sampler.type"));
-    assertEquals(321, sampler.getTags().get("sampler.param"));
+    Map<String, Object> tags = sampler.sample("operate", 11).getTags();
+    assertEquals("ratelimiting", tags.get("sampler.type"));
+    assertEquals(123, tags.get("sampler.param"));
   }
 }

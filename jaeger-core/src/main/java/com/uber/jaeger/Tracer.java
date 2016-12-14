@@ -233,7 +233,7 @@ public class Tracer implements io.opentracing.Tracer {
         metrics.traceStartedSampled.inc(1);
       } else {
         //TODO(prithvi): Don't assume operationName is set on creation
-        SamplingStatus samplingStatus = sampler.getSamplingStatus(operationName, id);
+        SamplingStatus samplingStatus = sampler.sample(operationName, id);
         if (samplingStatus.isSampled()) {
           flags |= SpanContext.flagSampled;
           tags.putAll(samplingStatus.getTags());
