@@ -22,6 +22,7 @@ ext.mockitoVersion = '2.2.28'
 
 allprojects {
     apply plugin: 'idea' // intellij support
+    apply plugin: 'jacoco'
 
     group = 'com.uber.jaeger'
     version = '0.18.0-SNAPSHOT'
@@ -35,7 +36,6 @@ allprojects {
 subprojects {
     apply plugin: 'com.github.hierynomus.license'
     apply plugin: 'java'
-    apply plugin: 'jacoco'
     apply plugin: 'maven'
     apply plugin: 'signing'
 
@@ -88,30 +88,22 @@ subprojects {
         compileOnly 'org.projectlombok:lombok:1.16.10'
     }
 
-    def publishedProjects = subprojects.findAll {
-        !it.path.contains('crossdock') || !it.path.contains('thrift')
+}
+
+task codeCoverageReport(type: JacocoReport, group: 'Coverage reports') {
+    dependsOn(subprojects*.test)
+
+    executionData fileTree(project.rootDir.absolutePath).include("**/build/jacoco/*.exec")
+
+    subprojects.each {
+        sourceSets it.sourceSets.main
     }
 
-    task codeCoverageReport(type: JacocoReport, group: 'Coverage reports') {
-        description = 'Generates an aggregate report from all subprojects'
-        dependsOn(publishedProjects.test)
-
-        additionalSourceDirs = files(publishedProjects.sourceSets.main.allSource.srcDirs)
-        sourceDirectories = files(publishedProjects.sourceSets.main.allSource.srcDirs)
-        classDirectories = files(publishedProjects.sourceSets.main.output)
-        executionData = files(publishedProjects.jacocoTestReport.executionData)
-
-        reports {
-            html.enabled = false
-            xml.enabled = true
-            xml.destination = "${buildDir}/reports/jacoco/report.xml"
-        }
-
-        doFirst {
-            executionData = files(executionData.findAll { it.exists() })
-        }
+    reports {
+        html.enabled = false
+        xml.enabled = true
+        xml.destination = "${buildDir}/reports/jacoco/report.xml"
     }
-
 }
 
 configure(subprojects.findAll {it.name != 'jaeger-thrift'}) {
