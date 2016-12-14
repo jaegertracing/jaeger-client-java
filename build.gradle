@@ -31,8 +31,12 @@ allprojects {
         mavenCentral()
     }
 
+    repositories {
+        mavenCentral()
+    }
+
     task wrapper(type: Wrapper) {
-        gradleVersion = '2.12' //version required
+        gradleVersion = '3.1.2' //version required
     }
 }
 
