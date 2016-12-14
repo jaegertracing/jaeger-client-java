@@ -1,6 +1,3 @@
-apply plugin: 'jacoco'
-apply plugin: 'com.github.kt3k.coveralls'
-
 description = 'Instrumentation library for apache http client'
 
 dependencies {
@@ -13,23 +10,6 @@ dependencies {
     testCompile group: 'org.mock-server', name: 'mockserver-netty', version: '3.10.4'
     testCompile group: 'junit', name: 'junit', version: junitVersion
     testCompile group: 'org.mockito', name: 'mockito-core', version: mockitoVersion
-}
-
-jacocoTestReport {
-    reports {
-        xml.enabled = true // coveralls plugin depends on xml format report
-        html.enabled = true
-        html.destination "${buildDir}/jacocoHtml"
-    }
-
-    afterEvaluate {
-        classDirectories = files(classDirectories.files.collect {
-            fileTree(dir: it,
-                exclude: [
-                    '**/*Test*',
-                ])
-        })
-    }
 }
 
 sourceSets {

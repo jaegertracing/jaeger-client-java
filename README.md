@@ -168,7 +168,7 @@ This project uses [Lombok](https://projectlombok.org/) to reduce boilerplate. Yo
 
   [ci-img]: https://travis-ci.org/uber/jaeger-client-java.svg?branch=master
   [ci]: https://travis-ci.org/uber/jaeger-client-java
-  [cov-img]: https://coveralls.io/repos/github/uber/jaeger-client-java/badge.svg?branch=master
-  [cov]: https://coveralls.io/github/uber/jaeger-client-java?branch=master
+  [cov-img]: https://codecov.io/github/uber/jaeger-client-java/coverage.png?branch=master
+  [cov]: https://codecov.io/github/uber/jaeger-client-java/
   [maven-img]: https://img.shields.io/maven-central/v/com.uber.jaeger/jaeger-core.svg?maxAge=2000
   [maven]: http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.uber.jaeger%22
