@@ -21,18 +21,11 @@
  */
 package com.uber.jaeger.samplers;
 
-import static org.junit.Assert.assertEquals;
-
-import org.junit.Test;
-
 import java.util.Map;
+import lombok.Value;
 
-public class TestRateLimitingSampler {
-  @Test
-  public void testTags() {
-    RateLimitingSampler sampler = new RateLimitingSampler(123);
-    Map<String, Object> tags = sampler.sample("operate", 11).getTags();
-    assertEquals("ratelimiting", tags.get("sampler.type"));
-    assertEquals(123, tags.get("sampler.param"));
-  }
+@Value(staticConstructor = "of")
+public class SamplingStatus {
+  boolean isSampled;
+  Map<String, Object> tags;
 }

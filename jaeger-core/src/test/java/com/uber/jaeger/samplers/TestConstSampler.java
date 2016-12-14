@@ -21,18 +21,19 @@
  */
 package com.uber.jaeger.samplers;
 
-import org.junit.Test;
 import static org.junit.Assert.assertEquals;
+
+import org.junit.Test;
+
+import java.util.Map;
 
 public class TestConstSampler {
   @Test
   public void testTags() {
-    Sampler sampler = new ConstSampler(true);
-    assertEquals("const", sampler.getTags().get("sampler.type"));
-    assertEquals(true, sampler.getTags().get("sampler.param"));
+    ConstSampler sampler = new ConstSampler(true);
+    Map<String, Object> tags = sampler.sample("biryani", 218L).getTags();
 
-    sampler = new ConstSampler(false);
-    assertEquals("const", sampler.getTags().get("sampler.type"));
-    assertEquals(false, sampler.getTags().get("sampler.param"));
+    assertEquals("const", tags.get("sampler.type"));
+    assertEquals(true, tags.get("sampler.param"));
   }
 }
