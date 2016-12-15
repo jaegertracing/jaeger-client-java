@@ -45,8 +45,8 @@ public class RemoteControlledSampler implements Sampler {
   private final SamplingManager manager;
   private final Timer pollTimer;
   private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-  private Sampler sampler;
-  private Metrics metrics;
+  private final Metrics metrics;
+  private volatile Sampler sampler;
 
   public RemoteControlledSampler(
       String serviceName, SamplingManager manager, Sampler initial, Metrics metrics) {
