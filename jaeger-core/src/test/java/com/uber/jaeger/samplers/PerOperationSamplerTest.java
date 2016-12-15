@@ -42,7 +42,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 
 @RunWith(MockitoJUnitRunner.class)
 public class PerOperationSamplerTest {
@@ -55,7 +54,7 @@ public class PerOperationSamplerTest {
   private final String operation = "some operation";
 
   @Mock private ProbabilisticSampler defaultProbabilisticSampler;
-  private ConcurrentHashMap<String, GuaranteedThroughputSampler>  operationToSamplers = new ConcurrentHashMap<>();
+  private HashMap<String, GuaranteedThroughputSampler>  operationToSamplers = new HashMap<>();
   private PerOperationSampler undertest;
 
   @Before
@@ -71,9 +70,17 @@ public class PerOperationSamplerTest {
 
   @Test
   public void testFallbackToDefaultProbabilisticSampler() {
+    undertest = new PerOperationSampler(0, operationToSamplers, defaultProbabilisticSampler);
     SamplingStatus samplingStatus = undertest.sample(operation, traceId);
     assertTrue(samplingStatus.isSampled());
     verify(defaultProbabilisticSampler).sample(operation, traceId);
+  }
+
+  @Test
+  public void testCreateGuaranteedSamplerOnSample() {
+    String newOperation = "new operation";
+    undertest.sample(newOperation, traceId);
+    assertEquals(new GuaranteedThroughputSampler(0, 0), operationToSamplers.get(newOperation));
   }
 
   @Test

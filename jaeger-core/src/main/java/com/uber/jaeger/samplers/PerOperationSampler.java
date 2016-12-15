@@ -24,8 +24,8 @@ package com.uber.jaeger.samplers;
 import com.uber.jaeger.samplers.http.OperationSamplingParameters;
 import com.uber.jaeger.samplers.http.PerOperationSamplingParameters;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Getter;
@@ -39,20 +39,22 @@ import lombok.extern.slf4j.Slf4j;
 @Data
 @Getter(AccessLevel.NONE)
 public class PerOperationSampler implements Sampler {
-  private final ConcurrentHashMap<String, GuaranteedThroughputSampler> operationNameToSampler;
+  private final HashMap<String, GuaranteedThroughputSampler> operationNameToSampler;
   private final int maxOperations;
-  private volatile ProbabilisticSampler defaultSampler;
+  private ProbabilisticSampler defaultSampler;
+  private double lowerBound;
+  private double defaultSamplingProbability;
 
   public PerOperationSampler(int maxOperations, OperationSamplingParameters strategies) {
     this(maxOperations,
-         new ConcurrentHashMap<String, GuaranteedThroughputSampler>(),
+         new HashMap<String, GuaranteedThroughputSampler>(),
          new ProbabilisticSampler(strategies.getDefaultSamplingProbability()));
     update(strategies);
   }
 
   // Visible for testing
   PerOperationSampler(int maxOperations,
-                      ConcurrentHashMap<String, GuaranteedThroughputSampler> operationNameToSampler,
+                      HashMap<String, GuaranteedThroughputSampler> operationNameToSampler,
                       ProbabilisticSampler defaultSampler) {
 
     this.operationNameToSampler = operationNameToSampler;
@@ -68,7 +70,8 @@ public class PerOperationSampler implements Sampler {
   public synchronized boolean update(OperationSamplingParameters strategies) {
     boolean isUpdated = false;
 
-    double lowerBound = strategies.getDefaultLowerBoundTracesPerSecond();
+    lowerBound = strategies.getDefaultLowerBoundTracesPerSecond();
+    defaultSamplingProbability = strategies.getDefaultSamplingProbability();
     ProbabilisticSampler defaultSampler = new ProbabilisticSampler(strategies.getDefaultSamplingProbability());
 
     if (!defaultSampler.equals(this.defaultSampler)) {
@@ -91,7 +94,7 @@ public class PerOperationSampler implements Sampler {
                    maxOperations);
         }
       } else if (!sampler.equals(oldSampler)) {
-        operationNameToSampler.replace(operation, sampler);
+        operationNameToSampler.put(operation, sampler);
         isUpdated = true;
       }
     }
@@ -100,9 +103,15 @@ public class PerOperationSampler implements Sampler {
   }
 
   @Override
-  public SamplingStatus sample(String operation, long id) {
+  public synchronized SamplingStatus sample(String operation, long id) {
     GuaranteedThroughputSampler sampler = operationNameToSampler.get(operation);
     if (sampler != null) {
+      return sampler.sample(operation, id);
+    }
+
+    if (operationNameToSampler.size() < maxOperations) {
+      sampler = new GuaranteedThroughputSampler(lowerBound, defaultSamplingProbability);
+      operationNameToSampler.put(operation, sampler);
       return sampler.sample(operation, id);
     }
 
