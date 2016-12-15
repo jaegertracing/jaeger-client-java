@@ -22,32 +22,20 @@
 package com.uber.jaeger.samplers;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.verify;
 
 import com.uber.jaeger.Constants;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Map;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GuaranteedThroughputSamplerTest {
-  @Mock private ProbabilisticSampler probabilisticSampler;
-  @Mock private RateLimitingSampler rateLimitingSampler;
 
   private GuaranteedThroughputSampler undertest;
 
-  @Before
-  public void setUp() {
-    undertest = new GuaranteedThroughputSampler(probabilisticSampler, rateLimitingSampler);
-  }
-
-  @After
   public void tearDown() {
     undertest.close();
   }
@@ -75,12 +63,4 @@ public class GuaranteedThroughputSamplerTest {
     assertEquals(tags.get(Constants.SAMPLER_TYPE_TAG_KEY), ProbabilisticSampler.TYPE);
     assertEquals(tags.get(Constants.SAMPLER_PARAM_TAG_KEY), 0.999);
   }
-
-  @Test
-  public void testUpdate() throws Exception {
-    undertest.update(1.234, 2.0);
-    verify(rateLimitingSampler).update(2.0);
-    verify(probabilisticSampler).update(1.234);
- }
-
 }

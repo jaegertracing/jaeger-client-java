@@ -26,33 +26,25 @@ import com.uber.jaeger.Constants;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import lombok.ToString;
+import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Value;
 
-@SuppressWarnings("EqualsHashCode")
-@ToString
+@Value
+@Getter(AccessLevel.NONE)
+@EqualsAndHashCode(of = {"samplingRate"})
 public class ProbabilisticSampler implements Sampler {
   public static final String TYPE = "probabilistic";
 
-  private final double DELTA = 0.00001;
-  private long positiveSamplingBoundary;
-  private long negativeSamplingBoundary;
-  private double samplingRate;
-  private Map<String, Object> tags;
+  @Getter
+  double samplingRate;
+
+  long positiveSamplingBoundary;
+  long negativeSamplingBoundary;
+  Map<String, Object> tags;
 
   public ProbabilisticSampler(double samplingRate) {
-    init(samplingRate);
-  }
-
-  public synchronized boolean update(double samplingRate) {
-    if(Math.abs(this.samplingRate - samplingRate) < DELTA) {
-      return false;
-    }
-
-    init(samplingRate);
-    return true;
-  }
-
-  private void init(double samplingRate) {
     if (samplingRate < 0.0 || samplingRate > 1.0) {
       throw new IllegalArgumentException("The sampling rate must be greater than 0.0 and less than 1.0");
     }
@@ -81,15 +73,6 @@ public class ProbabilisticSampler implements Sampler {
     } else {
       return SamplingStatus.of(id >= this.negativeSamplingBoundary, tags);
     }
-  }
-
-  @Override
-  public boolean equals(Object other) {
-    if (this == other) return true;
-    if (other instanceof ProbabilisticSampler) {
-      return this.samplingRate == ((ProbabilisticSampler) other).samplingRate;
-    }
-    return false;
   }
 
   /**

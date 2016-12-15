@@ -47,11 +47,12 @@ import java.util.concurrent.ConcurrentHashMap;
 @RunWith(MockitoJUnitRunner.class)
 public class PerOperationSamplerTest {
 
-  private static final double SAMPLING_RATE = 0.31415;
-  private static final double DEFAULT_SAMPLING_PROBABILITY = 0.512;
-  private static final double DEFAULT_LOWER_BOUND_TRACES_PER_SECOND = 2.0;
-  private long traceId = 1L;
-  private String operation = "some operation";
+  private final double SAMPLING_RATE = 0.31415;
+  private final double DEFAULT_SAMPLING_PROBABILITY = 0.512;
+  private final double DEFAULT_LOWER_BOUND_TRACES_PER_SECOND = 2.0;
+  private final int MAX_OPERATIONS = 100;
+  private final long traceId = 1L;
+  private final String operation = "some operation";
 
   @Mock private ProbabilisticSampler defaultProbabilisticSampler;
   private ConcurrentHashMap<String, GuaranteedThroughputSampler>  operationToSamplers = new ConcurrentHashMap<>();
@@ -59,7 +60,7 @@ public class PerOperationSamplerTest {
 
   @Before
   public void setUp(){
-    undertest = new PerOperationSampler(100, operationToSamplers, defaultProbabilisticSampler);
+    undertest = new PerOperationSampler(MAX_OPERATIONS, operationToSamplers, defaultProbabilisticSampler);
     when(defaultProbabilisticSampler.sample(operation, traceId)).thenReturn(SamplingStatus.of(true, new HashMap<String, Object>()));
   }
 
@@ -98,11 +99,13 @@ public class PerOperationSamplerTest {
     List<PerOperationSamplingParameters> parametersList = new ArrayList<>();
     parametersList.add(perOperationSamplingParameters);
 
-    undertest.update(new OperationSamplingParameters(DEFAULT_SAMPLING_PROBABILITY,
-                                                     DEFAULT_LOWER_BOUND_TRACES_PER_SECOND, parametersList));
+    OperationSamplingParameters parameters =
+        new OperationSamplingParameters(DEFAULT_SAMPLING_PROBABILITY,
+                                        DEFAULT_LOWER_BOUND_TRACES_PER_SECOND, parametersList);
 
-    verify(guaranteedThroughputSampler).update(SAMPLING_RATE, DEFAULT_LOWER_BOUND_TRACES_PER_SECOND);
-    verify(defaultProbabilisticSampler).update(DEFAULT_SAMPLING_PROBABILITY);
+    assertTrue(undertest.update(parameters));
+    //Checks that creating a new instance with the given parameters is the same as updating an existing instance
+    assertEquals(new PerOperationSampler(MAX_OPERATIONS, parameters), undertest);
   }
 
   @Test

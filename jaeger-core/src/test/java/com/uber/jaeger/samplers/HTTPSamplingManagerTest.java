@@ -34,6 +34,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.List;
 
@@ -88,7 +89,7 @@ public class HTTPSamplingManagerTest {
   private String readFixture(String fixtureName) throws Exception {
     URL resource = getClass().getClassLoader().getResource(fixtureName);
     File file = new File(resource.toURI());
-    return new String(Files.readAllBytes(file.toPath()));
+    return new String(Files.readAllBytes(file.toPath()), Charset.defaultCharset());
   }
 
 }

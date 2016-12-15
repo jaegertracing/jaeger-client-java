@@ -21,8 +21,7 @@
  */
 package com.uber.jaeger.samplers;
 
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
+import lombok.Value;
 
 /**
  * {@link GuaranteedThroughputSampler} is a {@link Sampler} that guarantees a throughput by using
@@ -31,13 +30,12 @@ import lombok.ToString;
  * The RateLimitingSampler is used to establish a lowerBound so that every operation is sampled
  * at least once in the time interval defined by the lowerBound.
  */
-@EqualsAndHashCode
-@ToString
+@Value
 public class GuaranteedThroughputSampler implements Sampler {
-  private final ProbabilisticSampler probabilisticSampler;
-  private final RateLimitingSampler lowerBoundSampler;
+  ProbabilisticSampler probabilisticSampler;
+  RateLimitingSampler lowerBoundSampler;
 
-  public GuaranteedThroughputSampler(double samplingRate, double lowerBound) {
+  GuaranteedThroughputSampler(double samplingRate, double lowerBound) {
     this(new ProbabilisticSampler(samplingRate), new RateLimitingSampler(lowerBound));
   }
 
@@ -67,13 +65,6 @@ public class GuaranteedThroughputSampler implements Sampler {
     }
 
     return lowerBoundSamplingStatus;
-  }
-
-  public boolean update(double samplingRate, double lowerBound){
-    boolean isUpdated;
-    isUpdated = probabilisticSampler.update(samplingRate);
-    isUpdated |= lowerBoundSampler.update(lowerBound);
-    return isUpdated;
   }
 
   @Override

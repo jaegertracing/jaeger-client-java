@@ -26,6 +26,9 @@ import com.uber.jaeger.samplers.http.PerOperationSamplingParameters;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import lombok.AccessLevel;
+import lombok.Data;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -33,10 +36,12 @@ import lombok.extern.slf4j.Slf4j;
  * {@link GuaranteedThroughputSampler} instance for each operation.
  */
 @Slf4j
+@Data
+@Getter(AccessLevel.NONE)
 public class PerOperationSampler implements Sampler {
   private final ConcurrentHashMap<String, GuaranteedThroughputSampler> operationNameToSampler;
   private final int maxOperations;
-  private final ProbabilisticSampler defaultSampler;
+  private volatile ProbabilisticSampler defaultSampler;
 
   public PerOperationSampler(int maxOperations, OperationSamplingParameters strategies) {
     this(maxOperations,
@@ -57,36 +62,42 @@ public class PerOperationSampler implements Sampler {
 
   /**
    * Updates the probabilistic samplers for each operation
+   * @param strategies The parameters for operation sampling
    * @return true iff any samplers were updated
    */
-  public boolean update(OperationSamplingParameters strategies){
-    // Note that this isn't synchronized because ProbabilisticSampler#update and
-    // GuaranteedThroughputSampler#update are synchronized
-    boolean isUpdated;
+  public boolean update(OperationSamplingParameters strategies) {
+    boolean isUpdated = false;
 
     double lowerBound = strategies.getDefaultLowerBoundTracesPerSecond();
-    double defaultSamplingRate = strategies.getDefaultSamplingProbability();
+    ProbabilisticSampler defaultSampler = new ProbabilisticSampler(strategies.getDefaultSamplingProbability());
 
-    isUpdated = defaultSampler.update(defaultSamplingRate);
+    if (!defaultSampler.equals(this.defaultSampler)) {
+      this.defaultSampler = defaultSampler;
+      isUpdated = true;
+    }
 
     for (PerOperationSamplingParameters strategy : strategies.getPerOperationStrategies()) {
       String operation = strategy.getOperation();
       double samplingRate = strategy.getProbabilisticSampling().getSamplingRate();
+      GuaranteedThroughputSampler sampler = new GuaranteedThroughputSampler(samplingRate, lowerBound);
 
-      GuaranteedThroughputSampler guaranteedThroughputSampler = operationNameToSampler.get(operation);
-
-      if (guaranteedThroughputSampler != null) {
-        isUpdated |= guaranteedThroughputSampler.update(samplingRate, lowerBound);
-      } else if (operationNameToSampler.size() < maxOperations) {
-        isUpdated = (operationNameToSampler
-                        .putIfAbsent(operation,
-                                     new GuaranteedThroughputSampler(samplingRate,lowerBound)))
-                        == null;
-      } else {
-        log.info("Exceeded the maximum number of operations({}) for per operations sampling",
-                 maxOperations);
+      GuaranteedThroughputSampler oldSampler = operationNameToSampler.replace(operation, sampler);
+      if (oldSampler == null) {
+        //No sampler exists for operation
+        synchronized (this) {
+          if (operationNameToSampler.size() < maxOperations) {
+            operationNameToSampler.put(operation, sampler);
+            isUpdated = true;
+          } else {
+            log.info("Exceeded the maximum number of operations({}) for per operations sampling",
+                     maxOperations);
+          }
+        }
+      } else if (!sampler.equals(oldSampler)) {
+        isUpdated = true;
       }
     }
+
     return isUpdated;
   }
 

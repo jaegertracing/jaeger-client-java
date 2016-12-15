@@ -22,7 +22,6 @@
 package com.uber.jaeger.samplers;
 
 import com.uber.jaeger.exceptions.SamplingStrategyErrorException;
-import com.uber.jaeger.exceptions.UnknownSamplingStrategyException;
 import com.uber.jaeger.metrics.Metrics;
 import com.uber.jaeger.samplers.http.OperationSamplingParameters;
 import com.uber.jaeger.samplers.http.ProbabilisticSamplingStrategy;
@@ -97,8 +96,9 @@ public class RemoteControlledSampler implements Sampler {
         if (((PerOperationSampler) sampler).update(samplingParameters)) {
           metrics.samplerUpdated.inc(1);
         }
+      } else {
+        sampler = new PerOperationSampler(maxOperations, response.getOperationSampling());
       }
-      sampler = new PerOperationSampler(maxOperations, response.getOperationSampling());
     } else if (response.getProbabilisticSampling() != null) {
       ProbabilisticSamplingStrategy strategy = response.getProbabilisticSampling();
       sampler = new ProbabilisticSampler(strategy.getSamplingRate());
@@ -110,17 +110,9 @@ public class RemoteControlledSampler implements Sampler {
       log.info("No strategy present in response.");
     }
 
-    if (oldSampler != sampler) {
+    if (oldSampler.equals(sampler)) {
       metrics.samplerUpdated.inc(1);
     }
-
-  }
-
-  private Sampler extractSampler(SamplingStrategyResponse response)
-      throws UnknownSamplingStrategyException {
-
-    throw new UnknownSamplingStrategyException(
-        String.format("Unsupported sampling strategy type %s", response.getStrategyType()));
   }
 
   @Override
