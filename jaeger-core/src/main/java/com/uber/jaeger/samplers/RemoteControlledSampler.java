@@ -24,18 +24,20 @@ package com.uber.jaeger.samplers;
 import com.uber.jaeger.exceptions.SamplingStrategyErrorException;
 import com.uber.jaeger.exceptions.UnknownSamplingStrategyException;
 import com.uber.jaeger.metrics.Metrics;
+import com.uber.jaeger.samplers.http.OperationSamplingParameters;
 import com.uber.jaeger.samplers.http.ProbabilisticSamplingStrategy;
 import com.uber.jaeger.samplers.http.RateLimitingSamplingStrategy;
 import com.uber.jaeger.samplers.http.SamplingStrategyResponse;
-import com.uber.jaeger.samplers.http.SamplingStrategyType;
 
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 
 @SuppressWarnings("EqualsHashCode")
 @ToString(exclude = {"pollTimer", "lock"})
+@Slf4j
 public class RemoteControlledSampler implements Sampler {
   public static final String TYPE = "remote";
 
@@ -87,38 +89,35 @@ public class RemoteControlledSampler implements Sampler {
       return;
     }
 
-    Sampler newSampler;
-    try {
-      newSampler = extractSampler(response);
-    } catch (UnknownSamplingStrategyException e) {
+    Sampler oldSampler = sampler;
+
+    if (response.getOperationSampling() != null) {
+      OperationSamplingParameters samplingParameters = response.getOperationSampling();
+      if (sampler instanceof PerOperationSampler) {
+        if (((PerOperationSampler) sampler).update(samplingParameters)) {
+          metrics.samplerUpdated.inc(1);
+        }
+      }
+      sampler = new PerOperationSampler(maxOperations, response.getOperationSampling());
+    } else if (response.getProbabilisticSampling() != null) {
+      ProbabilisticSamplingStrategy strategy = response.getProbabilisticSampling();
+      sampler = new ProbabilisticSampler(strategy.getSamplingRate());
+    } else if (response.getRateLimitingSampling() != null) {
+      RateLimitingSamplingStrategy strategy = response.getRateLimitingSampling();
+      sampler = new RateLimitingSampler(strategy.getMaxTracesPerSecond());
+    } else {
       metrics.samplerParsingFailure.inc(1);
-      return; // sampler updateGauge without a new sampler
+      log.info("No strategy present in response.");
     }
 
-    if (!this.sampler.equals(newSampler)) {
-      synchronized (this) {
-        this.sampler = newSampler;
-        metrics.samplerUpdated.inc(1);
-      }
+    if (oldSampler != sampler) {
+      metrics.samplerUpdated.inc(1);
     }
+
   }
 
   private Sampler extractSampler(SamplingStrategyResponse response)
       throws UnknownSamplingStrategyException {
-    if(response.getOperationSampling() != null) {
-      return new PerOperationSampler(maxOperations, response.getOperationSampling());
-    }
-
-    //TODO: Cleanup to not use enum
-    if (SamplingStrategyType.PROBABILISTIC.equals(response.getStrategyType())) {
-      ProbabilisticSamplingStrategy strategy = response.getProbabilisticSampling();
-      return new ProbabilisticSampler(strategy.getSamplingRate());
-    }
-
-    if (SamplingStrategyType.RATE_LIMITING.equals(response.getStrategyType())) {
-      RateLimitingSamplingStrategy strategy = response.getRateLimitingSampling();
-      return new RateLimitingSampler(strategy.getMaxTracesPerSecond());
-    }
 
     throw new UnknownSamplingStrategyException(
         String.format("Unsupported sampling strategy type %s", response.getStrategyType()));

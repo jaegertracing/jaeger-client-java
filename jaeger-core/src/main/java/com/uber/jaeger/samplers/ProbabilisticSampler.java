@@ -43,12 +43,13 @@ public class ProbabilisticSampler implements Sampler {
     init(samplingRate);
   }
 
-  public synchronized void update(double samplingRate) {
+  public synchronized boolean update(double samplingRate) {
     if(Math.abs(this.samplingRate - samplingRate) < DELTA) {
-      return;
+      return false;
     }
 
     init(samplingRate);
+    return true;
   }
 
   private void init(double samplingRate) {

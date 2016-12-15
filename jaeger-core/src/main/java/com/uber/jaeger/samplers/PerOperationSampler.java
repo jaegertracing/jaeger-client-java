@@ -55,13 +55,19 @@ public class PerOperationSampler implements Sampler {
     this.defaultSampler = defaultSampler;
   }
 
-  // Note that this isn't synchronized because ProbabilisticSampler#update and
-  // GuaranteedThroughputSampler#update are synchronized
-  public void update(OperationSamplingParameters strategies){
+  /**
+   * Updates the probabilistic samplers for each operation
+   * @return true iff any samplers were updated
+   */
+  public boolean update(OperationSamplingParameters strategies){
+    // Note that this isn't synchronized because ProbabilisticSampler#update and
+    // GuaranteedThroughputSampler#update are synchronized
+    boolean isUpdated;
+
     double lowerBound = strategies.getDefaultLowerBoundTracesPerSecond();
     double defaultSamplingRate = strategies.getDefaultSamplingProbability();
 
-    defaultSampler.update(defaultSamplingRate);
+    isUpdated = defaultSampler.update(defaultSamplingRate);
 
     for (PerOperationSamplingParameters strategy : strategies.getPerOperationStrategies()) {
       String operation = strategy.getOperation();
@@ -70,17 +76,18 @@ public class PerOperationSampler implements Sampler {
       GuaranteedThroughputSampler guaranteedThroughputSampler = operationNameToSampler.get(operation);
 
       if (guaranteedThroughputSampler != null) {
-        guaranteedThroughputSampler.update(samplingRate, lowerBound);
+        isUpdated |= guaranteedThroughputSampler.update(samplingRate, lowerBound);
       } else if (operationNameToSampler.size() < maxOperations) {
-        operationNameToSampler.putIfAbsent(operation,
-                                           new GuaranteedThroughputSampler(samplingRate,
-                                                                           lowerBound));
+        isUpdated = (operationNameToSampler
+                        .putIfAbsent(operation,
+                                     new GuaranteedThroughputSampler(samplingRate,lowerBound)))
+                        == null;
       } else {
         log.info("Exceeded the maximum number of operations({}) for per operations sampling",
                  maxOperations);
       }
     }
-
+    return isUpdated;
   }
 
   @Override

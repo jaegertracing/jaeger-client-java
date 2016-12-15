@@ -69,9 +69,11 @@ public class GuaranteedThroughputSampler implements Sampler {
     return lowerBoundSamplingStatus;
   }
 
-  public void update(double samplingRate, double lowerBound){
-    probabilisticSampler.update(samplingRate);
-    lowerBoundSampler.update(lowerBound);
+  public boolean update(double samplingRate, double lowerBound){
+    boolean isUpdated;
+    isUpdated = probabilisticSampler.update(samplingRate);
+    isUpdated |= lowerBoundSampler.update(lowerBound);
+    return isUpdated;
   }
 
   @Override
