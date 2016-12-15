@@ -110,7 +110,7 @@ public class RemoteControlledSampler implements Sampler {
       log.info("No strategy present in response.");
     }
 
-    if (oldSampler.equals(sampler)) {
+    if (!oldSampler.equals(sampler)) {
       metrics.samplerUpdated.inc(1);
     }
   }
