@@ -56,8 +56,8 @@ public class ProbabilisticSampler implements Sampler {
     tags.put(Constants.SAMPLER_PARAM_TAG_KEY, samplingRate);
     this.tags = Collections.unmodifiableMap(tags);
 
-    positiveSamplingBoundary = (long) (((1L << 63) - 1) * samplingRate);
-    negativeSamplingBoundary = (long) ((1L << 63) * samplingRate);
+    this.positiveSamplingBoundary = (long) (((1L << 63) - 1) * samplingRate);
+    this.negativeSamplingBoundary = (long) ((1L << 63) * samplingRate);
   }
 
   /**
