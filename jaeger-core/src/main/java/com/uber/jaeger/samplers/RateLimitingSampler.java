@@ -27,29 +27,22 @@ import com.uber.jaeger.utils.RateLimiter;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import lombok.AccessLevel;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import lombok.ToString;
-import lombok.Value;
 
-@Value
+@SuppressWarnings("EqualsHashCode")
 @ToString(exclude = "rateLimiter")
-@EqualsAndHashCode(of = {"maxTracesPerSecond"})
-@Getter(AccessLevel.NONE)
 public class RateLimitingSampler implements Sampler {
   public static final String TYPE = "ratelimiting";
 
-  @Getter
-  double maxTracesPerSecond;
-
-  RateLimiter rateLimiter;
-  Map<String, Object> tags;
+  private final RateLimiter rateLimiter;
+  private final double maxTracesPerSecond;
+  private final Map<String, Object> tags;
 
   public RateLimitingSampler(double maxTracesPerSecond) {
     this.maxTracesPerSecond = maxTracesPerSecond;
-    rateLimiter = new RateLimiter(maxTracesPerSecond);
-    HashMap<String, Object> tags = new HashMap<>();
+    this.rateLimiter = new RateLimiter(maxTracesPerSecond);
+
+    Map<String, Object> tags = new HashMap<>();
     tags.put(Constants.SAMPLER_TYPE_TAG_KEY, TYPE);
     tags.put(Constants.SAMPLER_PARAM_TAG_KEY, maxTracesPerSecond);
     this.tags = Collections.unmodifiableMap(tags);
@@ -58,6 +51,15 @@ public class RateLimitingSampler implements Sampler {
   @Override
   public SamplingStatus sample(String operation, long id) {
     return SamplingStatus.of(this.rateLimiter.checkCredit(1.0), tags);
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (this == other) return true;
+    if (other instanceof RateLimitingSampler) {
+      return this.maxTracesPerSecond == ((RateLimitingSampler) other).maxTracesPerSecond;
+    }
+    return false;
   }
 
   /**

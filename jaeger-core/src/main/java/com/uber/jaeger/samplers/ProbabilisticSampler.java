@@ -26,38 +26,32 @@ import com.uber.jaeger.Constants;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import lombok.AccessLevel;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Value;
+import lombok.ToString;
 
-@Value
-@Getter(AccessLevel.NONE)
-@EqualsAndHashCode(of = {"samplingRate"})
+@SuppressWarnings("EqualsHashCode")
+@ToString
 public class ProbabilisticSampler implements Sampler {
   public static final String TYPE = "probabilistic";
 
-  @Getter
-  double samplingRate;
-
-  long positiveSamplingBoundary;
-  long negativeSamplingBoundary;
-  Map<String, Object> tags;
+  private final long positiveSamplingBoundary;
+  private final long negativeSamplingBoundary;
+  private final double samplingRate;
+  private final Map<String, Object> tags;
 
   public ProbabilisticSampler(double samplingRate) {
     if (samplingRate < 0.0 || samplingRate > 1.0) {
-      throw new IllegalArgumentException("The sampling rate must be greater than 0.0 and less than 1.0");
+      throw new IllegalArgumentException(
+          "The sampling rate must be greater than 0.0 and less than 1.0");
     }
 
     this.samplingRate = samplingRate;
+    this.positiveSamplingBoundary = (long) (((1L << 63) - 1) * samplingRate);
+    this.negativeSamplingBoundary = (long) ((1L << 63) * samplingRate);
 
-    HashMap<String, Object> tags = new HashMap<>();
+    Map<String, Object> tags = new HashMap<>();
     tags.put(Constants.SAMPLER_TYPE_TAG_KEY, TYPE);
     tags.put(Constants.SAMPLER_PARAM_TAG_KEY, samplingRate);
     this.tags = Collections.unmodifiableMap(tags);
-
-    this.positiveSamplingBoundary = (long) (((1L << 63) - 1) * samplingRate);
-    this.negativeSamplingBoundary = (long) ((1L << 63) * samplingRate);
   }
 
   /**
@@ -73,6 +67,15 @@ public class ProbabilisticSampler implements Sampler {
     } else {
       return SamplingStatus.of(id >= this.negativeSamplingBoundary, tags);
     }
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (this == other) return true;
+    if (other instanceof ProbabilisticSampler) {
+      return this.samplingRate == ((ProbabilisticSampler) other).samplingRate;
+    }
+    return false;
   }
 
   /**

@@ -25,7 +25,6 @@ import com.uber.jaeger.samplers.http.OperationSamplingParameters;
 import com.uber.jaeger.samplers.http.PerOperationSamplingParameters;
 
 import java.util.HashMap;
-import java.util.Map;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Getter;
@@ -98,7 +97,6 @@ public class PerOperationSampler implements Sampler {
         isUpdated = true;
       }
     }
-
     return isUpdated;
   }
 
@@ -119,11 +117,10 @@ public class PerOperationSampler implements Sampler {
   }
 
   @Override
-  public void close() {
+  public synchronized void close() {
     defaultSampler.close();
-    for (Map.Entry<String, GuaranteedThroughputSampler> sampler : operationNameToSampler.entrySet()) {
-      sampler.getValue().close();
+    for (GuaranteedThroughputSampler sampler : operationNameToSampler.values()) {
+      sampler.close();
     }
-
   }
 }
