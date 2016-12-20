@@ -26,6 +26,7 @@ import com.uber.jaeger.Constants;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import lombok.Getter;
 import lombok.ToString;
 
 @SuppressWarnings("EqualsHashCode")
@@ -35,6 +36,7 @@ public class ProbabilisticSampler implements Sampler {
 
   private final long positiveSamplingBoundary;
   private final long negativeSamplingBoundary;
+  @Getter
   private final double samplingRate;
   private final Map<String, Object> tags;
 

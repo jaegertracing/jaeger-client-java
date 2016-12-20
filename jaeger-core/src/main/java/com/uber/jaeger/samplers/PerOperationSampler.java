@@ -26,8 +26,9 @@ import com.uber.jaeger.samplers.http.PerOperationSamplingParameters;
 
 import java.util.HashMap;
 import lombok.AccessLevel;
-import lombok.Data;
-import lombok.Getter;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -35,30 +36,21 @@ import lombok.extern.slf4j.Slf4j;
  * {@link GuaranteedThroughputSampler} instance for each operation.
  */
 @Slf4j
-@Data
-@Getter(AccessLevel.NONE)
+@EqualsAndHashCode
+@ToString
+@AllArgsConstructor(access = AccessLevel.PACKAGE)
 public class PerOperationSampler implements Sampler {
-  private final HashMap<String, GuaranteedThroughputSampler> operationNameToSampler;
   private final int maxOperations;
+  private final HashMap<String, GuaranteedThroughputSampler> operationNameToSampler;
   private ProbabilisticSampler defaultSampler;
   private double lowerBound;
-  private double defaultSamplingProbability;
 
   public PerOperationSampler(int maxOperations, OperationSamplingParameters strategies) {
     this(maxOperations,
          new HashMap<String, GuaranteedThroughputSampler>(),
-         new ProbabilisticSampler(strategies.getDefaultSamplingProbability()));
+         new ProbabilisticSampler(strategies.getDefaultSamplingProbability()),
+         strategies.getDefaultLowerBoundTracesPerSecond());
     update(strategies);
-  }
-
-  // Visible for testing
-  PerOperationSampler(int maxOperations,
-                      HashMap<String, GuaranteedThroughputSampler> operationNameToSampler,
-                      ProbabilisticSampler defaultSampler) {
-
-    this.operationNameToSampler = operationNameToSampler;
-    this.maxOperations = maxOperations;
-    this.defaultSampler = defaultSampler;
   }
 
   /**
@@ -70,7 +62,6 @@ public class PerOperationSampler implements Sampler {
     boolean isUpdated = false;
 
     lowerBound = strategies.getDefaultLowerBoundTracesPerSecond();
-    defaultSamplingProbability = strategies.getDefaultSamplingProbability();
     ProbabilisticSampler defaultSampler = new ProbabilisticSampler(strategies.getDefaultSamplingProbability());
 
     if (!defaultSampler.equals(this.defaultSampler)) {
@@ -108,7 +99,7 @@ public class PerOperationSampler implements Sampler {
     }
 
     if (operationNameToSampler.size() < maxOperations) {
-      sampler = new GuaranteedThroughputSampler(lowerBound, defaultSamplingProbability);
+      sampler = new GuaranteedThroughputSampler(defaultSampler.getSamplingRate(), lowerBound);
       operationNameToSampler.put(operation, sampler);
       return sampler.sample(operation, id);
     }

@@ -46,7 +46,7 @@ public class RemoteControlledSampler implements Sampler {
   private final Timer pollTimer;
   private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
   private final Metrics metrics;
-  private volatile Sampler sampler;
+  private Sampler sampler;
 
   public RemoteControlledSampler(
       String serviceName, SamplingManager manager, Sampler initial, Metrics metrics) {
@@ -77,29 +77,33 @@ public class RemoteControlledSampler implements Sampler {
     return lock;
   }
 
-  private void updateSampler() {
+  /**
+   * Updates {@link #sampler} to a new sampler when it is different.
+   */
+  private synchronized void updateSampler() {
     SamplingStrategyResponse response;
     try {
       response = manager.getSamplingStrategy(serviceName);
       metrics.samplerRetrieved.inc(1);
     } catch (SamplingStrategyErrorException e) {
       metrics.samplerQueryFailure.inc(1);
-
       return;
     }
 
-    Sampler oldSampler = sampler;
-
     if (response.getOperationSampling() != null) {
-      OperationSamplingParameters samplingParameters = response.getOperationSampling();
-      if (sampler instanceof PerOperationSampler) {
-        if (((PerOperationSampler) sampler).update(samplingParameters)) {
-          metrics.samplerUpdated.inc(1);
-        }
-      } else {
-        sampler = new PerOperationSampler(maxOperations, response.getOperationSampling());
-      }
-    } else if (response.getProbabilisticSampling() != null) {
+      updatePerOperationSampler(response.getOperationSampling());
+    } else {
+      updateRateLimitingOrProbabilisticSampler(response);
+    }
+  }
+
+  /**
+   * Replace {@link #sampler} with a new instance when parameters are updated.
+   * @param response which contains either a {@link ProbabilisticSampler} or {@link RateLimitingSampler}
+   */
+  private void updateRateLimitingOrProbabilisticSampler(SamplingStrategyResponse response) {
+    Sampler sampler;
+    if (response.getProbabilisticSampling() != null) {
       ProbabilisticSamplingStrategy strategy = response.getProbabilisticSampling();
       sampler = new ProbabilisticSampler(strategy.getSamplingRate());
     } else if (response.getRateLimitingSampling() != null) {
@@ -107,16 +111,28 @@ public class RemoteControlledSampler implements Sampler {
       sampler = new RateLimitingSampler(strategy.getMaxTracesPerSecond());
     } else {
       metrics.samplerParsingFailure.inc(1);
-      log.info("No strategy present in response.");
+      log.error("No strategy present in response. Not updating sampler.");
+      return;
     }
 
-    if (!oldSampler.equals(sampler)) {
+    if (!this.sampler.equals(sampler)) {
+      this.sampler = sampler;
       metrics.samplerUpdated.inc(1);
     }
   }
 
+  private void updatePerOperationSampler(OperationSamplingParameters samplingParameters) {
+    if (sampler instanceof PerOperationSampler) {
+      if (((PerOperationSampler) sampler).update(samplingParameters)) {
+        metrics.samplerUpdated.inc(1);
+      }
+    } else {
+      sampler = new PerOperationSampler(maxOperations, samplingParameters);
+    }
+  }
+
   @Override
-  public SamplingStatus sample(String operation, long id) {
+  public synchronized SamplingStatus sample(String operation, long id) {
     synchronized (this) {
       return sampler.sample(operation, id);
     }
