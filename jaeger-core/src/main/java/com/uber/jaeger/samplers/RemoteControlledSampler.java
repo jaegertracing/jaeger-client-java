@@ -132,7 +132,7 @@ public class RemoteControlledSampler implements Sampler {
   }
 
   @Override
-  public synchronized SamplingStatus sample(String operation, long id) {
+  public SamplingStatus sample(String operation, long id) {
     synchronized (this) {
       return sampler.sample(operation, id);
     }
