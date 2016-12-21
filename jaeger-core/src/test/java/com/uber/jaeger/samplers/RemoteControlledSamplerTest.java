@@ -22,90 +22,135 @@
 package com.uber.jaeger.samplers;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNotEquals;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.uber.jaeger.exceptions.SamplingStrategyErrorException;
 import com.uber.jaeger.metrics.InMemoryStatsReporter;
 import com.uber.jaeger.metrics.Metrics;
+import com.uber.jaeger.samplers.http.OperationSamplingParameters;
+import com.uber.jaeger.samplers.http.PerOperationSamplingParameters;
+import com.uber.jaeger.samplers.http.ProbabilisticSamplingStrategy;
+import com.uber.jaeger.samplers.http.RateLimitingSamplingStrategy;
 import com.uber.jaeger.samplers.http.SamplingStrategyResponse;
-import com.uber.jaeger.samplers.http.SamplingStrategyType;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.ArrayList;
+import java.util.List;
+
+@RunWith(MockitoJUnitRunner.class)
 public class RemoteControlledSamplerTest {
-  MockAgent agent;
-  Metrics metrics;
+  @Mock private SamplingManager samplingManager;
+  @Mock private Sampler initialSampler;
+  private Metrics metrics;
+  private final String SERVICE_NAME = "thachi mamu";
+
+  private RemoteControlledSampler undertest;
 
   @Before
   public void setUp() throws Exception {
-    agent = new MockAgent();
-    agent.start();
     metrics = Metrics.fromStatsReporter(new InMemoryStatsReporter());
+    undertest = new RemoteControlledSampler(SERVICE_NAME, samplingManager, initialSampler, metrics);
   }
 
   @After
   public void tearDown() {
-    agent.stop();
+    undertest.close();
   }
 
   @Test
-  public void testGetProbabilisticRemoteSamplingStrategy() throws Exception {
-    double expectedSamplingRate = 0.001;
-    double delta = expectedSamplingRate / 100;
-    HTTPSamplingManager manager = new HTTPSamplingManager("localhost:" + agent.getPort());
-    SamplingStrategyResponse response = manager.getSamplingStrategy("clairvoyant");
+  public void testUpdateToProbabilisticSampler() throws Exception {
+    final double samplingRate = 0.55;
+    SamplingStrategyResponse probabilisticResponse = new SamplingStrategyResponse(null, new ProbabilisticSamplingStrategy(samplingRate), null, null);
+    when(samplingManager.getSamplingStrategy(SERVICE_NAME)).thenReturn(probabilisticResponse);
 
-    assertEquals(
-        response.getProbabilisticSampling().getSamplingRate(), expectedSamplingRate, delta);
+    undertest.updateSampler();
+
+    assertEquals(new ProbabilisticSampler(samplingRate), undertest.getSampler());
   }
 
   @Test
-  public void testGetRateLimitingRemoteSamplingStrategy() throws Exception {
-    int expectedMaxTracesPerSecond = 8;
-    HTTPSamplingManager manager = new HTTPSamplingManager("localhost:" + agent.getPort());
-    SamplingStrategyResponse response = manager.getSamplingStrategy("jaeger");
-    assertEquals(
-        response.getRateLimitingSampling().getMaxTracesPerSecond(), expectedMaxTracesPerSecond);
-  }
+  public void testUpdateToRateLimitingSampler() throws Exception {
+    final int tracesPerSecond = 22;
+    SamplingStrategyResponse rateLimitingResponse = new SamplingStrategyResponse(null, null, new RateLimitingSamplingStrategy(tracesPerSecond), null);
+    when(samplingManager.getSamplingStrategy(SERVICE_NAME)).thenReturn(rateLimitingResponse);
 
-  private RemoteControlledSampler makeSamplerWith(Sampler underlyingSampler) throws Exception {
-    HTTPSamplingManager manager = mock(HTTPSamplingManager.class);
-    SamplingStrategyResponse response = new SamplingStrategyResponse(
-                                                                     SamplingStrategyType.PROBABILISTIC,
-                                                                    null,
-                                                                    null,
-                                                                    null);
-    when(manager.getSamplingStrategy("jaeger")).thenReturn(response);
-    return new RemoteControlledSampler("jaeger", manager, underlyingSampler, metrics);
-  }
+    undertest.updateSampler();
 
-  private void testEqualsAgainstSamplers(Sampler trueSampler, Sampler falseSampler)
-      throws Exception {
-    RemoteControlledSampler sampler = makeSamplerWith(trueSampler);
-    RemoteControlledSampler otherSampler = makeSamplerWith(trueSampler);
-
-    assertTrue(sampler.equals(otherSampler));
-
-    otherSampler = makeSamplerWith(falseSampler);
-
-    assertFalse(sampler.equals(otherSampler));
+    assertEquals(new RateLimitingSampler(tracesPerSecond), undertest.getSampler());
   }
 
   @Test
-  public void testEquals() throws Exception {
-    testEqualsAgainstSamplers(new ConstSampler(true), new ConstSampler(false));
-    testEqualsAgainstSamplers(new ProbabilisticSampler(0.1), new ProbabilisticSampler(0.01));
-    testEqualsAgainstSamplers(new RateLimitingSampler(4), new RateLimitingSampler(5));
+  public void testUpdateToPerOperationSamplerReplacesProbabilisticSampler() throws Exception {
+    List<PerOperationSamplingParameters> operationToSampler = new ArrayList<>();
+    operationToSampler.add(new PerOperationSamplingParameters("operation", new ProbabilisticSamplingStrategy(0.1)));
+    OperationSamplingParameters parameters = new OperationSamplingParameters(0.11, 0.22, operationToSampler);
+    SamplingStrategyResponse response = new SamplingStrategyResponse(null, null, null, parameters);
+    when(samplingManager.getSamplingStrategy(SERVICE_NAME)).thenReturn(response);
+
+    undertest.updateSampler();
+
+    PerOperationSampler perOperationSampler = new PerOperationSampler(2000, parameters);
+    Sampler actualSampler = undertest.getSampler();
+    assertEquals(perOperationSampler, actualSampler);
   }
 
   @Test
-  public void testTags() throws Exception {
-    RemoteControlledSampler sampler = makeSamplerWith(new ProbabilisticSampler(0.5));
-    SamplingStatus samplingStatus = sampler.sample("some operation", 1);
-    assertEquals("probabilistic", samplingStatus.getTags().get("sampler.type"));
-    assertEquals(0.5, samplingStatus.getTags().get("sampler.param"));
+  public void testUpdatePerOperationSamplerUpdatesExistingPerOperationSampler() throws Exception {
+    PerOperationSampler perOperationSampler = mock(PerOperationSampler.class);
+    OperationSamplingParameters parameters = mock(OperationSamplingParameters.class);
+    when(samplingManager.getSamplingStrategy(SERVICE_NAME)).thenReturn(
+        new SamplingStrategyResponse(null, null, null, parameters));
+    undertest = new RemoteControlledSampler(SERVICE_NAME, samplingManager, perOperationSampler, metrics);
+
+    undertest.updateSampler();
+    Thread.sleep(20);
+    //updateSampler is hit once automatically because of the pollTimer
+    verify(perOperationSampler, times(2)).update(parameters);
   }
+
+  @Test
+  public void testNullResponse() throws Exception {
+    when(samplingManager.getSamplingStrategy(SERVICE_NAME)).thenReturn(new SamplingStrategyResponse(null, null, null, null));
+    undertest.updateSampler();
+    assertEquals(initialSampler, undertest.getSampler());
+  }
+
+  @Test
+  public void testUnparseableResponse() throws Exception {
+    when(samplingManager.getSamplingStrategy(SERVICE_NAME)).thenThrow(new SamplingStrategyErrorException("test"));
+    undertest.updateSampler();
+    assertEquals(initialSampler, undertest.getSampler());
+  }
+
+  @Test
+  public void testSample() throws Exception {
+    undertest.sample("op", 1L);
+    verify(initialSampler).sample("op", 1L);
+  }
+
+  @Test
+  public void testEquals() {
+    RemoteControlledSampler i2 = new RemoteControlledSampler(SERVICE_NAME, samplingManager, mock(Sampler.class), metrics);
+
+    assertEquals(undertest, undertest);
+    assertNotEquals(undertest, initialSampler);
+    assertNotEquals(undertest, i2);
+    assertNotEquals(i2, undertest);
+  }
+
+  @Test
+  public void testDefaultProbabilisticSampler() {
+    undertest = new RemoteControlledSampler(SERVICE_NAME, samplingManager, null, metrics);
+    assertEquals(new ProbabilisticSampler(0.001), undertest.getSampler());
+  }
+
 }

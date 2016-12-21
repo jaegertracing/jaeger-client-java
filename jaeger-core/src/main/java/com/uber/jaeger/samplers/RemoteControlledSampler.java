@@ -31,6 +31,8 @@ import com.uber.jaeger.samplers.http.SamplingStrategyResponse;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
@@ -46,6 +48,7 @@ public class RemoteControlledSampler implements Sampler {
   private final Timer pollTimer;
   private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
   private final Metrics metrics;
+  @Getter(AccessLevel.PACKAGE)
   private Sampler sampler;
 
   public RemoteControlledSampler(
@@ -80,7 +83,7 @@ public class RemoteControlledSampler implements Sampler {
   /**
    * Updates {@link #sampler} to a new sampler when it is different.
    */
-  private void updateSampler() {
+  void updateSampler() {
     SamplingStrategyResponse response;
     try {
       response = manager.getSamplingStrategy(serviceName);
