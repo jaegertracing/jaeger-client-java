@@ -35,10 +35,6 @@ public class MockAgentResource {
       return "{\"strategyType\":0,\"probabilisticSampling\":{\"samplingRate\":0.001},\"rateLimitingSampling\":null}";
     }
 
-    if (serviceName.equals("jaeger")) {
-      return "{\"strategyType\":1,\"probabilisticSampling\":null,\"rateLimitingSampling\":{\"maxTracesPerSecond\":8}}";
-    }
-
-    return "{\"strategyType\":0,\"probabilisticSampling\":{\"samplingRate\":0.001},\"rateLimitingSampling\":null}";
+    throw new WebApplicationException();
   }
 }

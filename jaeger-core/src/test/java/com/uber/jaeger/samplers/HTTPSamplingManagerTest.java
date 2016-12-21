@@ -22,50 +22,73 @@
 package com.uber.jaeger.samplers;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
+import com.uber.jaeger.exceptions.SamplingStrategyErrorException;
 import com.uber.jaeger.samplers.http.OperationSamplingParameters;
 import com.uber.jaeger.samplers.http.PerOperationSamplingParameters;
 import com.uber.jaeger.samplers.http.ProbabilisticSamplingStrategy;
 import com.uber.jaeger.samplers.http.RateLimitingSamplingStrategy;
 import com.uber.jaeger.samplers.http.SamplingStrategyResponse;
 import com.uber.jaeger.samplers.http.SamplingStrategyType;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.test.JerseyTest;
 import org.junit.Test;
 
 import java.io.File;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.List;
+import javax.ws.rs.core.Application;
 
-public class HTTPSamplingManagerTest {
+public class HTTPSamplingManagerTest extends JerseyTest {
 
   HTTPSamplingManager undertest = new HTTPSamplingManager(null);
 
+  @Override
+  protected Application configure() {
+    return new ResourceConfig(MockAgentResource.class);
+  }
+
   @Test
-  public void testParseProbabilisticSampling() {
-    //TODO: Use fixture
+  public void testGetSamplingStrategy() throws Exception {
+    URI uri = target().getUri();
+    undertest = new HTTPSamplingManager(uri.getHost() + ":" + uri.getPort());
+    SamplingStrategyResponse response = undertest.getSamplingStrategy("clairvoyant");
+    assertNotNull(response.getProbabilisticSampling());
+  }
+
+  @Test (expected = SamplingStrategyErrorException.class)
+  public void testGetSamplingStrategyError() throws Exception {
+    URI uri = target().getUri();
+    undertest = new HTTPSamplingManager(uri.getHost() + ":" + uri.getPort());
+    undertest.getSamplingStrategy("");
+  }
+
+  @Test
+  public void testParseProbabilisticSampling() throws Exception {
     SamplingStrategyResponse response =
-        undertest.parseJson(
-            "{\"strategyType\":0,"
-                + "\"probabilisticSampling\":{\"samplingRate\":0.01},"
-                + "\"rateLimitingSampling\":null}");
+        undertest.parseJson(readFixture("probabilistic_sampling.json") );
     assertEquals(SamplingStrategyType.PROBABILISTIC, response.getStrategyType());
     assertEquals(new ProbabilisticSamplingStrategy(0.01), response.getProbabilisticSampling());
     assertNull(response.getRateLimitingSampling());
   }
 
   @Test
-  public void testParseRateLimitingSampling() {
-    //TODO: Use fixture
+  public void testParseRateLimitingSampling() throws Exception {
     SamplingStrategyResponse response =
-        undertest.parseJson(
-            "{\"strategyType\":1,"
-                + "\"probabilisticSampling\":null,"
-                + "\"rateLimitingSampling\":{\"maxTracesPerSecond\":1}}");
+        undertest.parseJson(readFixture("ratelimiting_sampling.json"));
     assertEquals(SamplingStrategyType.RATE_LIMITING, response.getStrategyType());
-    assertEquals(new RateLimitingSamplingStrategy(1), response.getRateLimitingSampling());
+    assertEquals(new RateLimitingSamplingStrategy(2.1), response.getRateLimitingSampling());
     assertNull(response.getProbabilisticSampling());
+  }
+
+  @Test (expected = SamplingStrategyErrorException.class)
+  public void testParseInvalidJson() throws Exception {
+    undertest.parseJson("invalid json");
   }
 
   @Test
