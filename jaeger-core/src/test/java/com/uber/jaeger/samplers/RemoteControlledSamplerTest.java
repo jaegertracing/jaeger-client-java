@@ -24,6 +24,7 @@ package com.uber.jaeger.samplers;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -113,7 +114,9 @@ public class RemoteControlledSamplerTest {
     undertest = new RemoteControlledSampler(SERVICE_NAME, samplingManager, perOperationSampler, metrics);
 
     undertest.updateSampler();
-    verify(perOperationSampler).update(parameters);
+    Thread.sleep(20);
+    //updateSampler is hit once automatically because of the pollTimer
+    verify(perOperationSampler, times(2)).update(parameters);
   }
 
   @Test
