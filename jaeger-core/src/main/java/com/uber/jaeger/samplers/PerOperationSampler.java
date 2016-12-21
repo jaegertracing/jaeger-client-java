@@ -28,6 +28,7 @@ import java.util.HashMap;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
@@ -39,6 +40,7 @@ import lombok.extern.slf4j.Slf4j;
 @EqualsAndHashCode
 @ToString
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
+@Getter(AccessLevel.PACKAGE) //Visible for testing
 public class PerOperationSampler implements Sampler {
   private final int maxOperations;
   private final HashMap<String, GuaranteedThroughputSampler> operationNameToSampler;

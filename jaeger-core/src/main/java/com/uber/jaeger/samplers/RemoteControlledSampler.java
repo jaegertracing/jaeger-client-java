@@ -80,7 +80,7 @@ public class RemoteControlledSampler implements Sampler {
   /**
    * Updates {@link #sampler} to a new sampler when it is different.
    */
-  private synchronized void updateSampler() {
+  private void updateSampler() {
     SamplingStrategyResponse response;
     try {
       response = manager.getSamplingStrategy(serviceName);
@@ -115,13 +115,15 @@ public class RemoteControlledSampler implements Sampler {
       return;
     }
 
-    if (!this.sampler.equals(sampler)) {
-      this.sampler = sampler;
-      metrics.samplerUpdated.inc(1);
+    synchronized (this) {
+      if (!this.sampler.equals(sampler)) {
+        this.sampler = sampler;
+        metrics.samplerUpdated.inc(1);
+      }
     }
   }
 
-  private void updatePerOperationSampler(OperationSamplingParameters samplingParameters) {
+  private synchronized void updatePerOperationSampler(OperationSamplingParameters samplingParameters) {
     if (sampler instanceof PerOperationSampler) {
       if (((PerOperationSampler) sampler).update(samplingParameters)) {
         metrics.samplerUpdated.inc(1);
