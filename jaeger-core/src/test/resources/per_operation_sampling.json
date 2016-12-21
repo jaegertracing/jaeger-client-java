@@ -1,0 +1,25 @@
+{
+  "operationSampling": {
+    "defaultLowerBoundTracesPerSecond": 0.0016666666666666668,
+    "defaultSamplingProbability": 0.001,
+    "perOperationStrategies": [
+      {
+        "operation": "GET:/search",
+        "probabilisticSampling": {
+          "samplingRate": 1
+        }
+      },
+      {
+        "operation": "PUT:/pacifique",
+        "probabilisticSampling": {
+          "samplingRate": 0.8258308134813166
+        }
+      }
+    ]
+  },
+  "probabilisticSampling": {
+    "samplingRate": 0.001
+  },
+  "rateLimitingSampling": null,
+  "strategyType": 0
+}
