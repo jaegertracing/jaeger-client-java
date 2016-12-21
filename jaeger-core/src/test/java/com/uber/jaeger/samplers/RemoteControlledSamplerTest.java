@@ -89,8 +89,7 @@ public class RemoteControlledSamplerTest {
   }
 
   @Test
-  //Tests that the PerOperationSampler replaces the existing probabilistic initialSampler
-  public void testUpdateToPerOperationSampler() throws Exception {
+  public void testUpdateToPerOperationSamplerReplacesProbabilisticSampler() throws Exception {
     List<PerOperationSamplingParameters> operationToSampler = new ArrayList<>();
     operationToSampler.add(new PerOperationSamplingParameters("operation", new ProbabilisticSamplingStrategy(0.1)));
     OperationSamplingParameters parameters = new OperationSamplingParameters(0.11, 0.22, operationToSampler);
@@ -105,8 +104,7 @@ public class RemoteControlledSamplerTest {
   }
 
   @Test
-  //Tests that the update method is called on a per operation sampler instead of replacing the whole object
-  public void testUpdatePerOperationSampler() throws Exception {
+  public void testUpdatePerOperationSamplerUpdatesExistingPerOperationSampler() throws Exception {
     PerOperationSampler perOperationSampler = mock(PerOperationSampler.class);
     OperationSamplingParameters parameters = mock(OperationSamplingParameters.class);
     when(samplingManager.getSamplingStrategy(SERVICE_NAME)).thenReturn(
