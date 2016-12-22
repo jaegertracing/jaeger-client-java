@@ -31,7 +31,6 @@ import com.uber.jaeger.samplers.http.PerOperationSamplingParameters;
 import com.uber.jaeger.samplers.http.ProbabilisticSamplingStrategy;
 import com.uber.jaeger.samplers.http.RateLimitingSamplingStrategy;
 import com.uber.jaeger.samplers.http.SamplingStrategyResponse;
-import com.uber.jaeger.samplers.http.SamplingStrategyType;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.junit.Test;
@@ -72,7 +71,6 @@ public class HTTPSamplingManagerTest extends JerseyTest {
   public void testParseProbabilisticSampling() throws Exception {
     SamplingStrategyResponse response =
         undertest.parseJson(readFixture("probabilistic_sampling.json") );
-    assertEquals(SamplingStrategyType.PROBABILISTIC, response.getStrategyType());
     assertEquals(new ProbabilisticSamplingStrategy(0.01), response.getProbabilisticSampling());
     assertNull(response.getRateLimitingSampling());
   }
@@ -81,7 +79,6 @@ public class HTTPSamplingManagerTest extends JerseyTest {
   public void testParseRateLimitingSampling() throws Exception {
     SamplingStrategyResponse response =
         undertest.parseJson(readFixture("ratelimiting_sampling.json"));
-    assertEquals(SamplingStrategyType.RATE_LIMITING, response.getStrategyType());
     assertEquals(new RateLimitingSamplingStrategy(2.1), response.getRateLimitingSampling());
     assertNull(response.getProbabilisticSampling());
   }

@@ -69,7 +69,7 @@ public class RemoteControlledSamplerTest {
   @Test
   public void testUpdateToProbabilisticSampler() throws Exception {
     final double samplingRate = 0.55;
-    SamplingStrategyResponse probabilisticResponse = new SamplingStrategyResponse(null, new ProbabilisticSamplingStrategy(samplingRate), null, null);
+    SamplingStrategyResponse probabilisticResponse = new SamplingStrategyResponse(new ProbabilisticSamplingStrategy(samplingRate), null, null);
     when(samplingManager.getSamplingStrategy(SERVICE_NAME)).thenReturn(probabilisticResponse);
 
     undertest.updateSampler();
@@ -80,7 +80,7 @@ public class RemoteControlledSamplerTest {
   @Test
   public void testUpdateToRateLimitingSampler() throws Exception {
     final int tracesPerSecond = 22;
-    SamplingStrategyResponse rateLimitingResponse = new SamplingStrategyResponse(null, null, new RateLimitingSamplingStrategy(tracesPerSecond), null);
+    SamplingStrategyResponse rateLimitingResponse = new SamplingStrategyResponse(null, new RateLimitingSamplingStrategy(tracesPerSecond), null);
     when(samplingManager.getSamplingStrategy(SERVICE_NAME)).thenReturn(rateLimitingResponse);
 
     undertest.updateSampler();
@@ -93,7 +93,7 @@ public class RemoteControlledSamplerTest {
     List<PerOperationSamplingParameters> operationToSampler = new ArrayList<>();
     operationToSampler.add(new PerOperationSamplingParameters("operation", new ProbabilisticSamplingStrategy(0.1)));
     OperationSamplingParameters parameters = new OperationSamplingParameters(0.11, 0.22, operationToSampler);
-    SamplingStrategyResponse response = new SamplingStrategyResponse(null, null, null, parameters);
+    SamplingStrategyResponse response = new SamplingStrategyResponse(null, null, parameters);
     when(samplingManager.getSamplingStrategy(SERVICE_NAME)).thenReturn(response);
 
     undertest.updateSampler();
@@ -108,7 +108,7 @@ public class RemoteControlledSamplerTest {
     PerOperationSampler perOperationSampler = mock(PerOperationSampler.class);
     OperationSamplingParameters parameters = mock(OperationSamplingParameters.class);
     when(samplingManager.getSamplingStrategy(SERVICE_NAME)).thenReturn(
-        new SamplingStrategyResponse(null, null, null, parameters));
+        new SamplingStrategyResponse(null, null, parameters));
     undertest = new RemoteControlledSampler(SERVICE_NAME, samplingManager, perOperationSampler, metrics);
 
     undertest.updateSampler();
@@ -119,7 +119,7 @@ public class RemoteControlledSamplerTest {
 
   @Test
   public void testNullResponse() throws Exception {
-    when(samplingManager.getSamplingStrategy(SERVICE_NAME)).thenReturn(new SamplingStrategyResponse(null, null, null, null));
+    when(samplingManager.getSamplingStrategy(SERVICE_NAME)).thenReturn(new SamplingStrategyResponse(null, null, null));
     undertest.updateSampler();
     assertEquals(initialSampler, undertest.getSampler());
   }
