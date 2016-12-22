@@ -19,14 +19,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.uber.jaeger.exceptions;
+package com.uber.jaeger.samplers.http;
 
-public class SamplingStrategyErrorException extends RuntimeException {
-  public SamplingStrategyErrorException(String msg) {
-    super(msg);
-  }
+import lombok.Value;
 
-  public SamplingStrategyErrorException(String msg, Throwable cause) {
-    super(msg, cause);
-  }
+@Value
+public class SamplingParameters {
+  ProbabilisticSamplingParameters probabilisticSampling;
+  RateLimitingSamplingParameters rateLimitingSampling;
+  OperationSamplingParameters operationSampling;
 }

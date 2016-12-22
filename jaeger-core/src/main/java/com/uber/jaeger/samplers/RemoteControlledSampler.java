@@ -21,12 +21,12 @@
  */
 package com.uber.jaeger.samplers;
 
-import com.uber.jaeger.exceptions.SamplingStrategyErrorException;
+import com.uber.jaeger.exceptions.SamplingParameterException;
 import com.uber.jaeger.metrics.Metrics;
 import com.uber.jaeger.samplers.http.OperationSamplingParameters;
 import com.uber.jaeger.samplers.http.ProbabilisticSamplingParameters;
 import com.uber.jaeger.samplers.http.RateLimitingSamplingParameters;
-import com.uber.jaeger.samplers.http.SamplingStrategyResponse;
+import com.uber.jaeger.samplers.http.SamplingParameters;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -84,11 +84,11 @@ public class RemoteControlledSampler implements Sampler {
    * Updates {@link #sampler} to a new sampler when it is different.
    */
   void updateSampler() {
-    SamplingStrategyResponse response;
+    SamplingParameters response;
     try {
       response = manager.getSamplingStrategy(serviceName);
       metrics.samplerRetrieved.inc(1);
-    } catch (SamplingStrategyErrorException e) {
+    } catch (SamplingParameterException e) {
       metrics.samplerQueryFailure.inc(1);
       return;
     }
@@ -104,7 +104,7 @@ public class RemoteControlledSampler implements Sampler {
    * Replace {@link #sampler} with a new instance when parameters are updated.
    * @param response which contains either a {@link ProbabilisticSampler} or {@link RateLimitingSampler}
    */
-  private void updateRateLimitingOrProbabilisticSampler(SamplingStrategyResponse response) {
+  private void updateRateLimitingOrProbabilisticSampler(SamplingParameters response) {
     Sampler sampler;
     if (response.getProbabilisticSampling() != null) {
       ProbabilisticSamplingParameters parameters = response.getProbabilisticSampling();

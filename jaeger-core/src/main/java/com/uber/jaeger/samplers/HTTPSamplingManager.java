@@ -24,8 +24,8 @@ package com.uber.jaeger.samplers;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
-import com.uber.jaeger.exceptions.SamplingStrategyErrorException;
-import com.uber.jaeger.samplers.http.SamplingStrategyResponse;
+import com.uber.jaeger.exceptions.SamplingParameterException;
+import com.uber.jaeger.samplers.http.SamplingParameters;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -68,24 +68,24 @@ public class HTTPSamplingManager implements SamplingManager {
     return result.toString();
   }
 
-  SamplingStrategyResponse parseJson(String json) {
+  SamplingParameters parseJson(String json) {
     try {
-      return gson.fromJson(json, SamplingStrategyResponse.class);
+      return gson.fromJson(json, SamplingParameters.class);
     } catch (JsonSyntaxException e) {
-      throw new SamplingStrategyErrorException("Cannot deserialize json", e);
+      throw new SamplingParameterException("Cannot deserialize json", e);
     }
   }
 
   @Override
-  public SamplingStrategyResponse getSamplingStrategy(String serviceName)
-      throws SamplingStrategyErrorException {
+  public SamplingParameters getSamplingStrategy(String serviceName)
+      throws SamplingParameterException {
     String jsonString;
     try {
       jsonString =
           makeGetRequest(
               "http://" + hostPort + "/?service=" + URLEncoder.encode(serviceName, "UTF-8"));
     } catch (IOException e) {
-      throw new SamplingStrategyErrorException(
+      throw new SamplingParameterException(
           "http call to get sampling strategy from local agent failed.", e);
     }
 
