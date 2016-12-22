@@ -8,11 +8,7 @@ dependencies {
 
     // Testing frameworks
     // Jersey dependencies for unit tests
-    testCompile group: 'org.glassfish.jersey.containers', name: 'jersey-container-grizzly2-http', version: jerseyVersion
-    testCompile group: 'org.glassfish.jersey.containers', name: 'jersey-container-servlet', version: jerseyVersion
-    testCompile group: 'org.glassfish.jersey.core', name: 'jersey-client', version: jerseyVersion
-    testCompile group: 'org.glassfish.jersey.media', name: 'jersey-media-json-jackson', version: jerseyVersion
-    testCompile group: 'org.glassfish.jersey.media', name: 'jersey-media-moxy', version: '2.12'
+    testCompile group: 'org.glassfish.jersey.test-framework.providers', name: 'jersey-test-framework-provider-grizzly2', version: jerseyVersion
 
     testCompile group: 'junit', name: 'junit', version: junitVersion
     testCompile group: 'org.mockito', name: 'mockito-core', version: mockitoVersion
