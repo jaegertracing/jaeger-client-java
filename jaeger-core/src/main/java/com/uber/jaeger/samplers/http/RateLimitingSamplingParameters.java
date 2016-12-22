@@ -24,6 +24,6 @@ package com.uber.jaeger.samplers.http;
 import lombok.Value;
 
 @Value
-public class RateLimitingSamplingStrategy {
+public class RateLimitingSamplingParameters {
   double maxTracesPerSecond;
 }
