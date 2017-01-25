@@ -44,10 +44,7 @@ import org.junit.runners.Parameterized;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -67,8 +64,10 @@ public class EndToEndBehaviorResourceTest {
 
   @Test
   public void testCreateTraces() throws Exception {
+    Map<String, String> tags = new HashMap<String, String>();
+    tags.put("key", "value");
     CreateTracesRequest request =
-        new CreateTracesRequest("operation", 2, null);
+        new CreateTracesRequest("operation", 2, tags);
 
     resource.createTraces(request);
     validateSpans(reporter.getSpans(), request);

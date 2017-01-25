@@ -32,6 +32,10 @@ public class EndToEndBehavior {
 
   private io.opentracing.Tracer tracer;
 
+  public EndToEndBehavior() {
+    this(null);
+  }
+
   public EndToEndBehavior(io.opentracing.Tracer tracer) {
     final Configuration cfg = new Configuration(
         "crossdock-java",
