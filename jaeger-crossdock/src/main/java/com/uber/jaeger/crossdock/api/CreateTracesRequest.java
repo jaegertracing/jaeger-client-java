@@ -23,11 +23,13 @@ package com.uber.jaeger.crossdock.api;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Getter;
 import lombok.ToString;
 
 import java.util.Map;
 
 @ToString
+@Getter
 public class CreateTracesRequest {
   private String operation;
   private int count;
@@ -41,17 +43,5 @@ public class CreateTracesRequest {
     this.operation = operation;
     this.count = count;
     this.tags = tags;
-  }
-
-  public String getOperation() {
-    return operation;
-  }
-
-  public int getCount() {
-    return count;
-  }
-
-  public Map<String, String> getTags() {
-    return tags;
   }
 }
