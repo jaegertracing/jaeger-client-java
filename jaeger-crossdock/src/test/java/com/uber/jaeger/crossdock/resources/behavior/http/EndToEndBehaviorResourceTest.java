@@ -22,33 +22,16 @@
 package com.uber.jaeger.crossdock.resources.behavior.http;
 
 import com.uber.jaeger.Span;
-import com.uber.jaeger.context.TracingUtils;
-import com.uber.jaeger.crossdock.Constants;
-import com.uber.jaeger.crossdock.JerseyServer;
 import com.uber.jaeger.crossdock.api.*;
-import com.uber.jaeger.crossdock.resources.behavior.EndToEndBehavior;
-import com.uber.jaeger.crossdock.resources.behavior.TraceBehavior;
-import com.uber.jaeger.crossdock.resources.behavior.tchannel.TChannelServer;
 import com.uber.jaeger.reporters.InMemoryReporter;
-import com.uber.jaeger.reporters.Reporter;
 import com.uber.jaeger.samplers.ConstSampler;
-import io.opentracing.tag.Tags;
-import org.apache.log4j.BasicConfigurator;
-import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.util.*;
 
 import static org.junit.Assert.*;
 
-@RunWith(Parameterized.class)
 public class EndToEndBehaviorResourceTest {
   private EndToEndBehaviorResource resource;
   private InMemoryReporter reporter;
