@@ -30,16 +30,15 @@ import java.util.Map;
 
 public class EndToEndBehavior {
 
-  private static final Configuration cfg = new Configuration(
-      "crossdock-java",
-      // TODO make polling interval available for sampler
-      new Configuration.SamplerConfiguration("remote", 1, "test_driver:5778"),
-      new Configuration.ReporterConfiguration(null, "test_driver", 5775, 1000, null));
-
   private io.opentracing.Tracer tracer;
 
   public EndToEndBehavior() {
-    this(cfg.getTracer());
+    Configuration cfg = new Configuration(
+        "crossdock-java",
+        // TODO make polling interval available for sampler
+        new Configuration.SamplerConfiguration("remote", 1, "test_driver:5778"),
+        new Configuration.ReporterConfiguration(null, "test_driver", 5775, 1000, null));
+    this.tracer = cfg.getTracer();
   }
 
   public EndToEndBehavior(io.opentracing.Tracer tracer) {

@@ -59,7 +59,7 @@ public class EndToEndBehaviorResource {
   private final EndToEndBehavior behavior;
 
   public EndToEndBehaviorResource() {
-    this.behavior = new EndToEndBehavior(null);
+    this.behavior = new EndToEndBehavior();
   }
 
   public EndToEndBehaviorResource(io.opentracing.Tracer tracer) {
