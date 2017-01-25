@@ -61,7 +61,6 @@ public class EndToEndBehaviorResourceTest {
     for (Span s : spans) {
       assertEquals(request.getOperation(), s.getOperationName());
       Map<String, Object> tags = s.getTags();
-      assertEquals(request.getTags().size(), tags.size());
       for (Map.Entry<String, String> entry : request.getTags().entrySet()) {
         assertTrue(tags.containsKey(entry.getKey()));
         Object value = tags.get(entry.getKey());
