@@ -27,6 +27,7 @@ import com.uber.jaeger.Configuration.SamplerConfiguration;
 import com.uber.jaeger.context.TraceContext;
 import com.uber.jaeger.crossdock.resources.behavior.ExceptionMapper;
 import com.uber.jaeger.crossdock.resources.behavior.TraceBehavior;
+import com.uber.jaeger.crossdock.resources.behavior.http.EndToEndBehaviorResource;
 import com.uber.jaeger.crossdock.resources.behavior.http.TraceBehaviorResource;
 import com.uber.jaeger.crossdock.resources.behavior.tchannel.TChannelServer;
 import com.uber.jaeger.crossdock.resources.health.HealthResource;
@@ -120,7 +121,7 @@ public class JerseyServer {
 
   public static void main(String[] args) throws Exception {
     BasicConfigurator.configure();
-    JerseyServer server = new JerseyServer("0.0.0.0:8081", TraceBehaviorResource.class);
+    JerseyServer server = new JerseyServer("0.0.0.0:8081", TraceBehaviorResource.class, EndToEndBehaviorResource.class);
     TraceBehavior behavior = new TraceBehavior();
     new TChannelServer(8082, behavior, server.getTracer(), false).start();
     new JerseyServer("0.0.0.0:8080", HealthResource.class);
