@@ -87,7 +87,7 @@ public class TraceBehaviorResourceTest {
       port = "55555";
     }
     hostPort = String.format("127.0.0.1:%s", port);
-    server = new JerseyServer(hostPort, TraceBehaviorResource.class);
+    server = new JerseyServer(hostPort, TraceBehaviorResource.class, EndToEndBehaviorResource.class);
     behavior = new TraceBehavior();
   }
 
