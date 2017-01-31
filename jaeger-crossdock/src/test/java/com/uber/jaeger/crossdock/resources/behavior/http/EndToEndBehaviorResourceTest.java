@@ -49,6 +49,12 @@ public class EndToEndBehaviorResourceTest {
   }
 
   @Test
+  public void testConstructor() throws Exception {
+    EndToEndBehaviorResource testResource = new EndToEndBehaviorResource();
+    assertNotNull(testResource);
+  }
+
+  @Test
   public void testCreateTraces() throws Exception {
     Map<String, String> tags = new HashMap<String, String>();
     tags.put("key", "value");
