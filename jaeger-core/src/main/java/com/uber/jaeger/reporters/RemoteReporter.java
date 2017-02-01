@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Uber Technologies, Inc
+ * Copyright (c) 2017, Uber Technologies, Inc
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -60,11 +60,11 @@ public class RemoteReporter implements Reporter {
 
     // start a thread to append spans
     queueProcessor = new QueueProcessor();
-    queueProcessorThread = new Thread(queueProcessor);
+    queueProcessorThread = new Thread(queueProcessor, "jaeger.RemoteReporter-QueueProcessor");
     queueProcessorThread.setDaemon(true);
     queueProcessorThread.start();
 
-    flushTimer = new Timer();
+    flushTimer = new Timer("jaeger.RemoteReporter-FlushTimer", true /* isDaemon */);
     flushTimer.schedule(
         new TimerTask() {
           @Override

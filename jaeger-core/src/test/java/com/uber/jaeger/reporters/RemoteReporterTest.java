@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Uber Technologies, Inc
+ * Copyright (c) 2017, Uber Technologies, Inc
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,6 +34,8 @@ import org.junit.Test;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class RemoteReporterTest {
   private Reporter reporter;
@@ -88,5 +90,18 @@ public class RemoteReporterTest {
         100L, metricsReporter.counters.get("jaeger.reporter-spans.state=success").longValue());
     assertEquals(
         100L, metricsReporter.counters.get("jaeger.traces.sampled=y.state=started").longValue());
+  }
+
+  @Test
+  public void testRemoteReporterFlushTimerThread() throws Exception {
+    int flushTimerThreadCount = 0;
+    for (Thread thread : Thread.getAllStackTraces().keySet()) {
+      if (!thread.getName().equals("jaeger.RemoteReporter-FlushTimer")) {
+        continue;
+      }
+      ++flushTimerThreadCount;
+      assertTrue(thread.isDaemon());
+    }
+    assertFalse(flushTimerThreadCount == 0);
   }
 }
