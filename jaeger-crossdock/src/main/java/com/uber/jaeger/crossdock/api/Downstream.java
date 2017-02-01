@@ -24,16 +24,14 @@ package com.uber.jaeger.crossdock.api;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.uber.jaeger.crossdock.Constants;
-import com.uber.jaeger.crossdock.deserializers.DownstreamDeserializer;
-import com.uber.jaeger.crossdock.serializers.DownstreamSerializer;
 import com.uber.jaeger.crossdock.thrift.Transport;
+import lombok.Getter;
+import lombok.ToString;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonSerialize(using = DownstreamSerializer.class)
-@JsonDeserialize(using = DownstreamDeserializer.class)
+@ToString
+@Getter
 public class Downstream {
   private String serviceName;
   private String host;
@@ -56,53 +54,6 @@ public class Downstream {
     this.transport = transport;
     this.serverRole = serverRole;
     this.downstream = downstream;
-  }
-
-  public String getServiceName() {
-    return serviceName;
-  }
-
-  public String getHost() {
-    return host;
-  }
-
-  public String getPort() {
-    return port;
-  }
-
-  public String getTransport() {
-    return transport;
-  }
-
-  public String getServerRole() {
-    return serverRole;
-  }
-
-  public Downstream getDownstream() {
-    return downstream;
-  }
-
-  @Override
-  public String toString() {
-    return "Downstream{"
-        + "serviceName='"
-        + serviceName
-        + '\''
-        + ", host='"
-        + host
-        + '\''
-        + ", port='"
-        + port
-        + '\''
-        + ", transport='"
-        + transport
-        + '\''
-        + ", serverRole='"
-        + serverRole
-        + '\''
-        + ", downstream="
-        + downstream
-        + '}';
   }
 
   public static Downstream fromThrift(com.uber.jaeger.crossdock.thrift.Downstream downstream) {

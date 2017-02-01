@@ -23,20 +23,21 @@ package com.uber.jaeger.crossdock.api;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.uber.jaeger.crossdock.deserializers.TraceResponseDeserializer;
 import com.uber.jaeger.crossdock.serializers.TraceResponseSerializer;
+import lombok.Getter;
+import lombok.ToString;
 
 @JsonSerialize(using = TraceResponseSerializer.class)
-@JsonDeserialize(using = TraceResponseDeserializer.class)
+@ToString
+@Getter
 public class TraceResponse {
   private String notImplementedError = "";
-  private ObservedSpan span;
+  private ObservedSpan observedSpan;
   private TraceResponse downstream;
 
   public TraceResponse(ObservedSpan span) {
-    this.span = span;
+    this.observedSpan = span;
   }
 
   @JsonCreator
@@ -45,7 +46,7 @@ public class TraceResponse {
       @JsonProperty("span") ObservedSpan span,
       @JsonProperty("downstream") TraceResponse downstream) {
     this.notImplementedError = notImplementedError;
-    this.span = span;
+    this.observedSpan = span;
     this.downstream = downstream;
   }
 
@@ -56,31 +57,6 @@ public class TraceResponse {
   public TraceResponse setDownstream(TraceResponse downstream) {
     this.downstream = downstream;
     return this;
-  }
-
-  public String getNotImplementedError() {
-    return notImplementedError;
-  }
-
-  public ObservedSpan getObservedSpan() {
-    return span;
-  }
-
-  public TraceResponse getDownstream() {
-    return downstream;
-  }
-
-  @Override
-  public String toString() {
-    return "TraceResponse{"
-        + "notImplementedError='"
-        + notImplementedError
-        + '\''
-        + ", span="
-        + span
-        + ", downstream="
-        + downstream
-        + '}';
   }
 
   public static com.uber.jaeger.crossdock.thrift.TraceResponse toThrift(TraceResponse resp) {
@@ -100,7 +76,7 @@ public class TraceResponse {
         new com.uber.jaeger.crossdock.thrift.ObservedSpan();
     res.setTraceId(observedSpan.getTraceID());
     res.setBaggage(observedSpan.getBaggage());
-    res.setSampled(observedSpan.getSampled());
+    res.setSampled(observedSpan.isSampled());
     return res;
   }
 

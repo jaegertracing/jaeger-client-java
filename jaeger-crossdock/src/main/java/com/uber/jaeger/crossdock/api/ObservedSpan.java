@@ -23,13 +23,14 @@ package com.uber.jaeger.crossdock.api;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.uber.jaeger.crossdock.deserializers.ObservedSpanDeserializer;
 import com.uber.jaeger.crossdock.serializers.ObservedSpanSerializer;
+import lombok.Getter;
+import lombok.ToString;
 
 @JsonSerialize(using = ObservedSpanSerializer.class)
-@JsonDeserialize(using = ObservedSpanDeserializer.class)
+@ToString
+@Getter
 public class ObservedSpan {
   private String traceID;
   private boolean sampled;
@@ -45,33 +46,7 @@ public class ObservedSpan {
     this.baggage = baggage;
   }
 
-  public String getTraceID() {
-    return traceID;
-  }
-
-  public boolean getSampled() {
-    return sampled;
-  }
-
-  public String getBaggage() {
-    return baggage;
-  }
-
   static ObservedSpan fromThrift(com.uber.jaeger.crossdock.thrift.ObservedSpan span) {
     return new ObservedSpan(span.getTraceId(), span.isSampled(), span.getBaggage());
-  }
-
-  @Override
-  public String toString() {
-    return "ObservedSpan{"
-        + "traceID='"
-        + traceID
-        + '\''
-        + ", sampled="
-        + sampled
-        + ", baggage='"
-        + baggage
-        + '\''
-        + '}';
   }
 }

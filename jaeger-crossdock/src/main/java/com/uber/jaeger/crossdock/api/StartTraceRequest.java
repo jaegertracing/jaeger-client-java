@@ -23,10 +23,11 @@ package com.uber.jaeger.crossdock.api;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.uber.jaeger.crossdock.deserializers.StartTraceRequestDeserializer;
+import lombok.Getter;
+import lombok.ToString;
 
-@JsonDeserialize(using = StartTraceRequestDeserializer.class)
+@ToString
+@Getter
 public class StartTraceRequest {
   private boolean sampled;
   private String baggage;
@@ -43,37 +44,5 @@ public class StartTraceRequest {
     this.sampled = sampled;
     this.baggage = baggage;
     this.downstream = downstream;
-  }
-
-  public String getServerRole() {
-    return serverRole;
-  }
-
-  public boolean getSampled() {
-    return sampled;
-  }
-
-  public String getBaggage() {
-    return baggage;
-  }
-
-  public Downstream getDownstream() {
-    return downstream;
-  }
-
-  @Override
-  public String toString() {
-    return "StartTraceRequest{"
-        + "sampled="
-        + sampled
-        + ", baggage='"
-        + baggage
-        + '\''
-        + ", downstream="
-        + downstream
-        + ", serverRole='"
-        + serverRole
-        + '\''
-        + '}';
   }
 }

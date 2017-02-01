@@ -35,7 +35,7 @@ public class ObservedSpanSerializer extends JsonSerializer<ObservedSpan> {
       throws IOException {
     jgen.writeStartObject();
     jgen.writeStringField("traceId", span.getTraceID());
-    jgen.writeBooleanField("sampled", span.getSampled());
+    jgen.writeBooleanField("sampled", span.isSampled());
     jgen.writeStringField("baggage", span.getBaggage());
     jgen.writeEndObject();
   }
