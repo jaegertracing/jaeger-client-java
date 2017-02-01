@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Uber Technologies, Inc
+ * Copyright (c) 2017, Uber Technologies, Inc
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,6 +31,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicLong;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
@@ -47,6 +48,7 @@ public class RemoteReporter implements Reporter {
   private final Sender sender;
   private final int maxQueueSize;
   private final Metrics metrics;
+  private static final AtomicLong nextSerialNumber = new AtomicLong(0);
 
   /*
    * RemoteReporter takes a Sender object, and sends spans for a specific protocol, and transport.
@@ -59,12 +61,14 @@ public class RemoteReporter implements Reporter {
     commandQueue = new ArrayBlockingQueue<>(maxQueueSize);
 
     // start a thread to append spans
+    long serialNumber = nextSerialNumber.getAndIncrement();
     queueProcessor = new QueueProcessor();
-    queueProcessorThread = new Thread(queueProcessor);
+    queueProcessorThread =
+        new Thread(queueProcessor, "jaeger.RemoteReporter-QueueProcessor-" + serialNumber);
     queueProcessorThread.setDaemon(true);
     queueProcessorThread.start();
 
-    flushTimer = new Timer();
+    flushTimer = new Timer("jaeger.RemoteReporter-FlushTimer-" + serialNumber, true /* isDaemon */);
     flushTimer.schedule(
         new TimerTask() {
           @Override
