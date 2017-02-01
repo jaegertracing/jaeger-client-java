@@ -84,6 +84,6 @@ public class EndToEndBehaviorResource {
   public Response createTraces(CreateTracesRequest request) throws Exception {
     logger.info("http:create_traces request: {}", mapper.writeValueAsString(request));
     behavior.GenerateTraces(request);
-    return Response.ok().build();
+    return Response.ok("OK").build();
   }
 }

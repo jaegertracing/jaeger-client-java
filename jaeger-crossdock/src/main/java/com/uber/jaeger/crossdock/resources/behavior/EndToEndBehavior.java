@@ -80,8 +80,10 @@ public class EndToEndBehavior {
     Tracer tracer = tracers.get(samplerType);
     for (int i = 0; i < request.getCount(); i++) {
       Tracer.SpanBuilder builder = tracer.buildSpan(request.getOperation());
-      for (Map.Entry<String, String> kv: request.getTags().entrySet()) {
-        builder.withTag(kv.getKey(), kv.getValue());
+      if (request.getTags() != null) {
+        for (Map.Entry<String, String> kv: request.getTags().entrySet()) {
+          builder.withTag(kv.getKey(), kv.getValue());
+        }
       }
       Span span = builder.start();
       span.finish();
