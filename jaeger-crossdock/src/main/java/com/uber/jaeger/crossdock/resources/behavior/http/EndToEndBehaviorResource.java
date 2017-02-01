@@ -31,7 +31,9 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
 import lombok.extern.slf4j.Slf4j;
 
@@ -78,8 +80,10 @@ public class EndToEndBehaviorResource {
   @POST
   @Path("create_traces")
   @Consumes(MediaType.APPLICATION_JSON)
-  public void createTraces(CreateTracesRequest request) throws Exception {
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response createTraces(CreateTracesRequest request) throws Exception {
     logger.info("http:create_traces request: {}", mapper.writeValueAsString(request));
     behavior.GenerateTraces(request);
+    return Response.ok().build();
   }
 }

@@ -9,6 +9,7 @@ services:
             - python
         environment:
             - WAIT_FOR=go,java,python
+            - WAIT_FOR_TIMEOUT=60s
 
             - AXIS_CLIENT=go
             - AXIS_S1NAME=go,java,python
