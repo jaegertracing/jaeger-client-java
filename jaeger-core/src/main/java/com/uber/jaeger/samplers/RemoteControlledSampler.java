@@ -41,6 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class RemoteControlledSampler implements Sampler {
   public static final String TYPE = "remote";
+  private static final int DEFAULT_POLLING_INTERVAL_MS = 60000;
 
   private final int maxOperations = 2000;
   private final String serviceName;
@@ -48,12 +49,18 @@ public class RemoteControlledSampler implements Sampler {
   private final Timer pollTimer;
   private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
   private final Metrics metrics;
+  private final int pollingIntervalMs;
   @Getter(AccessLevel.PACKAGE)
   private Sampler sampler;
 
   public RemoteControlledSampler(
       String serviceName, SamplingManager manager, Sampler initial, Metrics metrics) {
-    final int pollingIntervalMs = 60000;
+    this(serviceName, manager, initial, metrics, DEFAULT_POLLING_INTERVAL_MS);
+  }
+
+  public RemoteControlledSampler(
+      String serviceName, SamplingManager manager, Sampler initial, Metrics metrics, int pollingIntervalMs) {
+    this.pollingIntervalMs = pollingIntervalMs;
     this.serviceName = serviceName;
     this.manager = manager;
     this.metrics = metrics;

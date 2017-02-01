@@ -25,6 +25,7 @@ import com.uber.jaeger.Span;
 import com.uber.jaeger.crossdock.api.*;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
+import io.opentracing.Tracer;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -39,10 +40,18 @@ public class EndToEndBehaviorResourceTest {
   @Before
   public void setUp() throws Exception {
     reporter = new InMemoryReporter();
-    io.opentracing.Tracer tracer =
+    Tracer tracer =
         new com.uber.jaeger.Tracer.Builder("crossdock-java", reporter, new ConstSampler(true))
             .build();
-    resource = new EndToEndBehaviorResource(tracer);
+    Map<String, Tracer> tracers = new HashMap<String, Tracer>();
+    tracers.put("const", tracer);
+    resource = new EndToEndBehaviorResource(tracers);
+  }
+
+  @Test
+  public void testConstructor() throws Exception {
+    EndToEndBehaviorResource testResource = new EndToEndBehaviorResource("localhost");
+    assertNotNull(testResource);
   }
 
   @Test
@@ -50,7 +59,7 @@ public class EndToEndBehaviorResourceTest {
     Map<String, String> tags = new HashMap<String, String>();
     tags.put("key", "value");
     CreateTracesRequest request =
-        new CreateTracesRequest("operation", 2, tags);
+        new CreateTracesRequest("const", "operation", 2, tags);
 
     resource.createTraces(request);
     validateSpans(reporter.getSpans(), request);
