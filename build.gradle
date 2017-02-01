@@ -61,6 +61,7 @@ subprojects {
 
     license {
         header rootProject.file('license-template')
+        skipExistingHeaders true
         strictCheck true
         include "**/*.java"
         excludes(["**/gen-java/**"])
