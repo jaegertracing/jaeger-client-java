@@ -31,7 +31,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.atomic.AtomicLong;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
@@ -48,7 +47,6 @@ public class RemoteReporter implements Reporter {
   private final Sender sender;
   private final int maxQueueSize;
   private final Metrics metrics;
-  private static final AtomicLong nextSerialNumber = new AtomicLong(0);
 
   /*
    * RemoteReporter takes a Sender object, and sends spans for a specific protocol, and transport.
@@ -61,14 +59,12 @@ public class RemoteReporter implements Reporter {
     commandQueue = new ArrayBlockingQueue<>(maxQueueSize);
 
     // start a thread to append spans
-    long serialNumber = nextSerialNumber.getAndIncrement();
     queueProcessor = new QueueProcessor();
-    queueProcessorThread =
-        new Thread(queueProcessor, "jaeger.RemoteReporter-QueueProcessor-" + serialNumber);
+    queueProcessorThread = new Thread(queueProcessor, "jaeger.RemoteReporter-QueueProcessor");
     queueProcessorThread.setDaemon(true);
     queueProcessorThread.start();
 
-    flushTimer = new Timer("jaeger.RemoteReporter-FlushTimer-" + serialNumber, true /* isDaemon */);
+    flushTimer = new Timer("jaeger.RemoteReporter-FlushTimer", true /* isDaemon */);
     flushTimer.schedule(
         new TimerTask() {
           @Override

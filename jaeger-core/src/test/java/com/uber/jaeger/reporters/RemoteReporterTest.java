@@ -96,7 +96,7 @@ public class RemoteReporterTest {
   public void testRemoteReporterFlushTimerThread() throws Exception {
     int flushTimerThreadCount = 0;
     for (Thread thread : Thread.getAllStackTraces().keySet()) {
-      if (!thread.getName().startsWith("jaeger.RemoteReporter-FlushTimer")) {
+      if (!thread.getName().equals("jaeger.RemoteReporter-FlushTimer")) {
         continue;
       }
       ++flushTimerThreadCount;
