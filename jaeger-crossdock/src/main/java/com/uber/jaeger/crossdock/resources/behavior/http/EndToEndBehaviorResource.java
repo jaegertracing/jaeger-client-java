@@ -61,13 +61,18 @@ public class EndToEndBehaviorResource {
 
   private final ObjectMapper mapper = new ObjectMapper();
   private final EndToEndBehavior behavior;
+  private String agentHost = "test_driver";
 
   public EndToEndBehaviorResource() {
-    this.behavior = new EndToEndBehavior();
+    this.behavior = new EndToEndBehavior(agentHost);
+  }
+
+  public EndToEndBehaviorResource(String agentHost) {
+    this.behavior = new EndToEndBehavior(agentHost);
   }
 
   public EndToEndBehaviorResource(Map<String, Tracer> tracers) {
-    this.behavior = new EndToEndBehavior(tracers);
+    this.behavior = new EndToEndBehavior(agentHost, tracers);
   }
 
   @POST

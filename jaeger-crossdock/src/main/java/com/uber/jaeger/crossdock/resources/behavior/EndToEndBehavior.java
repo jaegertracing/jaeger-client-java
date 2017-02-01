@@ -40,8 +40,10 @@ public class EndToEndBehavior {
   private static final String SERVICE_NAME = "crossdock-java";
 
   private Map<String, Tracer> tracers;
+  private String host;
 
-  public EndToEndBehavior() {
+  public EndToEndBehavior(String host) {
+    this.host = host;
     StatsFactory statsFactory = new StatsFactoryImpl(new NullStatsReporter());
     Metrics metrics = new Metrics(statsFactory);
     Reporter reporter = getReporter(metrics);
@@ -54,13 +56,13 @@ public class EndToEndBehavior {
   }
 
   private Reporter getReporter(Metrics metrics) {
-    UDPSender sender = new UDPSender("test_driver", 5775, 0);
+    UDPSender sender = new UDPSender(host, 5775, 0);
     return new RemoteReporter(sender, 1000, 100, metrics);
   }
 
   private Tracer getRemoteTracer(Metrics metrics, Reporter reporter) {
     Sampler initialSampler = new ProbabilisticSampler(1.0);
-    HTTPSamplingManager manager = new HTTPSamplingManager("test_driver:5778");
+    HTTPSamplingManager manager = new HTTPSamplingManager(host + ":5778");
 
     RemoteControlledSampler remoteSampler = new RemoteControlledSampler(SERVICE_NAME, manager, initialSampler, metrics, 5000);
 
@@ -68,7 +70,8 @@ public class EndToEndBehavior {
     return remoteTracerBuilder.build();
   }
 
-  public EndToEndBehavior(Map<String, Tracer> tracers) {
+  public EndToEndBehavior(String host, Map<String, Tracer> tracers) {
+    this.host = host;
     this.tracers = tracers;
   }
 

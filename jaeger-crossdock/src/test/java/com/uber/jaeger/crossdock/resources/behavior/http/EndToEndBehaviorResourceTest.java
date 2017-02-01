@@ -50,7 +50,7 @@ public class EndToEndBehaviorResourceTest {
 
   @Test
   public void testConstructor() throws Exception {
-    EndToEndBehaviorResource testResource = new EndToEndBehaviorResource();
+    EndToEndBehaviorResource testResource = new EndToEndBehaviorResource("localhost");
     assertNotNull(testResource);
   }
 
