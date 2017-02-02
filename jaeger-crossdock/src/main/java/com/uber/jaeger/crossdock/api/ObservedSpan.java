@@ -23,25 +23,22 @@ package com.uber.jaeger.crossdock.api;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.uber.jaeger.crossdock.serializers.ObservedSpanSerializer;
 import lombok.Getter;
 import lombok.ToString;
 
-@JsonSerialize(using = ObservedSpanSerializer.class)
 @ToString
 @Getter
 public class ObservedSpan {
-  private String traceID;
+  private String traceId;
   private boolean sampled;
   private String baggage;
 
   @JsonCreator
   public ObservedSpan(
-      @JsonProperty("traceId") String traceID,
+      @JsonProperty("traceId") String traceId,
       @JsonProperty("sampled") boolean sampled,
       @JsonProperty("baggage") String baggage) {
-    this.traceID = traceID;
+    this.traceId = traceId;
     this.sampled = sampled;
     this.baggage = baggage;
   }
