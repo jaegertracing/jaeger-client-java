@@ -30,8 +30,6 @@ import com.uber.jaeger.crossdock.api.JoinTraceRequest;
 import com.uber.jaeger.crossdock.api.StartTraceRequest;
 import com.uber.jaeger.crossdock.api.TraceResponse;
 import io.opentracing.tag.Tags;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -45,8 +43,6 @@ import lombok.extern.slf4j.Slf4j;
 @Provider
 @Slf4j
 public class TraceBehaviorResource {
-  private static final Logger logger = LoggerFactory.getLogger(TraceBehaviorResource.class);
-
   private final ObjectMapper mapper = new ObjectMapper();
   private final TraceBehavior behavior;
 
@@ -64,7 +60,7 @@ public class TraceBehaviorResource {
     Span span = (Span) TracingUtils.getTraceContext().getCurrentSpan();
     String baggage = startRequest.getBaggage();
     span.setBaggageItem(Constants.BAGGAGE_KEY, baggage);
-    if (startRequest.getSampled()) {
+    if (startRequest.isSampled()) {
       Tags.SAMPLING_PRIORITY.set(span, (short) 1);
     }
     TraceResponse response = behavior.prepareResponse(startRequest.getDownstream());

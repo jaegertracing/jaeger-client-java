@@ -23,12 +23,12 @@ package com.uber.jaeger.crossdock.api;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.uber.jaeger.crossdock.deserializers.JoinTraceRequestDeserializer;
+import lombok.Getter;
+import lombok.ToString;
 
-@JsonDeserialize(using = JoinTraceRequestDeserializer.class)
+@ToString
+@Getter
 public class JoinTraceRequest {
-
   private String serverRole;
   private Downstream downstream;
 
@@ -38,24 +38,5 @@ public class JoinTraceRequest {
       @JsonProperty("downstream") Downstream downstream) {
     this.serverRole = serverRole;
     this.downstream = downstream;
-  }
-
-  public String getServerRole() {
-    return serverRole;
-  }
-
-  public Downstream getDownstream() {
-    return downstream;
-  }
-
-  @Override
-  public String toString() {
-    return "JoinTraceRequest{"
-        + "serverRole='"
-        + serverRole
-        + '\''
-        + ", downstream="
-        + downstream
-        + '}';
   }
 }

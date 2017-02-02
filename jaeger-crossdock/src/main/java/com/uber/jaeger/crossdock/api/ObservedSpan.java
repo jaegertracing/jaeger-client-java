@@ -23,55 +23,27 @@ package com.uber.jaeger.crossdock.api;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.uber.jaeger.crossdock.deserializers.ObservedSpanDeserializer;
-import com.uber.jaeger.crossdock.serializers.ObservedSpanSerializer;
+import lombok.Getter;
+import lombok.ToString;
 
-@JsonSerialize(using = ObservedSpanSerializer.class)
-@JsonDeserialize(using = ObservedSpanDeserializer.class)
+@ToString
+@Getter
 public class ObservedSpan {
-  private String traceID;
+  private String traceId;
   private boolean sampled;
   private String baggage;
 
   @JsonCreator
   public ObservedSpan(
-      @JsonProperty("traceId") String traceID,
+      @JsonProperty("traceId") String traceId,
       @JsonProperty("sampled") boolean sampled,
       @JsonProperty("baggage") String baggage) {
-    this.traceID = traceID;
+    this.traceId = traceId;
     this.sampled = sampled;
     this.baggage = baggage;
   }
 
-  public String getTraceID() {
-    return traceID;
-  }
-
-  public boolean getSampled() {
-    return sampled;
-  }
-
-  public String getBaggage() {
-    return baggage;
-  }
-
   static ObservedSpan fromThrift(com.uber.jaeger.crossdock.thrift.ObservedSpan span) {
     return new ObservedSpan(span.getTraceId(), span.isSampled(), span.getBaggage());
-  }
-
-  @Override
-  public String toString() {
-    return "ObservedSpan{"
-        + "traceID='"
-        + traceID
-        + '\''
-        + ", sampled="
-        + sampled
-        + ", baggage='"
-        + baggage
-        + '\''
-        + '}';
   }
 }

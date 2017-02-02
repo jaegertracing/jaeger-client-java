@@ -194,10 +194,10 @@ public class TraceBehaviorResourceTest {
       String expectedTraceId,
       String expectedBaggage,
       int expectedDownstream) {
-    ObservedSpan span = response.getObservedSpan();
-    assertEquals(expectedTraceId, span.getTraceID());
+    ObservedSpan span = response.getSpan();
+    assertEquals(expectedTraceId, span.getTraceId());
     assertEquals(expectedBaggage, span.getBaggage());
-    assertEquals(expectedSampled, span.getSampled());
+    assertEquals(expectedSampled, span.isSampled());
 
     TraceResponse downstream = response.getDownstream();
     if (expectedDownstream > 0) {

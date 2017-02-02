@@ -25,8 +25,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uber.jaeger.crossdock.api.CreateTracesRequest;
 import com.uber.jaeger.crossdock.resources.behavior.EndToEndBehavior;
 import io.opentracing.Tracer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -59,8 +57,6 @@ import java.util.Map;
 @Provider
 @Slf4j
 public class EndToEndBehaviorResource {
-  private static final Logger logger = LoggerFactory.getLogger(EndToEndBehaviorResource.class);
-
   private final ObjectMapper mapper = new ObjectMapper();
   private final EndToEndBehavior behavior;
   private String agentHost = "test_driver";
@@ -82,7 +78,7 @@ public class EndToEndBehaviorResource {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   public Response createTraces(CreateTracesRequest request) throws Exception {
-    logger.info("http:create_traces request: {}", mapper.writeValueAsString(request));
+    log.info("http:create_traces request: {}", mapper.writeValueAsString(request));
     behavior.GenerateTraces(request);
     return Response.ok("OK").build();
   }
