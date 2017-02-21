@@ -44,10 +44,10 @@ public class RateLimiter {
     double elapsedTime = currentTime - lastTick;
     lastTick = currentTime;
     balance += elapsedTime * creditsPerNanosecond;
-    if (balance > creditsPerSecond) {
-      balance = creditsPerSecond;
+    double upperbound = Math.max(creditsPerSecond, itemCost);
+    if (balance > upperbound) {
+      balance = upperbound;
     }
-
     if (balance >= itemCost) {
       balance -= itemCost;
       return true;

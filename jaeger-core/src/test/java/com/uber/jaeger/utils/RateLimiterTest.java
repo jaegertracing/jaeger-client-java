@@ -116,4 +116,21 @@ public class RateLimiterTest {
     assertFalse(limiter.checkCredit(0.25));
     assertFalse(limiter.checkCredit(0.25));
   }
+
+  @Test
+  public void testRateLimiterUpperbound() {
+    MockClock clock = new MockClock();
+    RateLimiter limiter = new RateLimiter(0.1, clock);
+
+    long currentTime = TimeUnit.MICROSECONDS.toNanos(100);
+    clock.timeNanos = currentTime;
+    assertFalse(limiter.checkCredit(1.0));
+
+    // move time 20s forward, enough to accumulate credits for 2 messages, but it should still be capped at 1
+    currentTime += TimeUnit.MILLISECONDS.toNanos(2000);
+    clock.timeNanos = currentTime;
+
+    assertTrue(limiter.checkCredit(1.0));
+    assertFalse(limiter.checkCredit(1.0));
+  }
 }
