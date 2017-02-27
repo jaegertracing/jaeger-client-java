@@ -4,7 +4,7 @@ plugins {
     id "com.github.hierynomus.license" version "0.12.1"
     id 'com.github.sherter.google-java-format' version '0.3.2'
     id "com.github.johnrengelman.shadow" version "1.2.3"
-    id "net.ltgt.errorprone" version "0.0.8"
+    id "net.ltgt.errorprone" version "0.0.9"
 }
 
 
@@ -89,7 +89,7 @@ subprojects {
     }
 
     dependencies {
-        compileOnly 'org.projectlombok:lombok:1.16.10'
+        compileOnly 'org.projectlombok:lombok:1.16.12'
     }
 
 }
@@ -112,4 +112,7 @@ task codeCoverageReport(type: JacocoReport, group: 'Coverage reports') {
 
 configure(subprojects.findAll {it.name != 'jaeger-thrift'}) {
    apply plugin: 'net.ltgt.errorprone'
+   dependencies {
+     errorprone 'com.google.errorprone:error_prone_core:2.0.15'
+   }
 }
