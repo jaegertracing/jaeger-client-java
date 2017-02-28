@@ -40,7 +40,7 @@ public class RateLimitingSampler implements Sampler {
 
   public RateLimitingSampler(double maxTracesPerSecond) {
     this.maxTracesPerSecond = maxTracesPerSecond;
-    this.rateLimiter = new RateLimiter(maxTracesPerSecond);
+    this.rateLimiter = new RateLimiter(maxTracesPerSecond, 1.0);
 
     Map<String, Object> tags = new HashMap<>();
     tags.put(Constants.SAMPLER_TYPE_TAG_KEY, TYPE);

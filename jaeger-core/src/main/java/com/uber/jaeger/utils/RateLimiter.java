@@ -22,20 +22,20 @@
 package com.uber.jaeger.utils;
 
 public class RateLimiter {
-  private final double creditsPerSecond;
   private final double creditsPerNanosecond;
   private final Clock clock;
   private double balance;
+  private double maxBalance;
   private long lastTick;
 
-  public RateLimiter(double creditsPerSecond) {
-    this(creditsPerSecond, new SystemClock());
+  public RateLimiter(double creditsPerSecond, double maxBalance) {
+    this(creditsPerSecond, maxBalance, new SystemClock());
   }
 
-  public RateLimiter(double creditsPerSecond, Clock clock) {
+  public RateLimiter(double creditsPerSecond, double maxBalance, Clock clock) {
     this.clock = clock;
-    this.creditsPerSecond = creditsPerSecond;
     this.balance = creditsPerSecond;
+    this.maxBalance = maxBalance;
     this.creditsPerNanosecond = creditsPerSecond / 1.0e9;
   }
 
@@ -44,15 +44,13 @@ public class RateLimiter {
     double elapsedTime = currentTime - lastTick;
     lastTick = currentTime;
     balance += elapsedTime * creditsPerNanosecond;
-    double upperbound = Math.max(creditsPerSecond, itemCost);
-    if (balance > upperbound) {
-      balance = upperbound;
+    if (balance > maxBalance) {
+      balance = maxBalance;
     }
     if (balance >= itemCost) {
       balance -= itemCost;
       return true;
     }
-
     return false;
   }
 }
