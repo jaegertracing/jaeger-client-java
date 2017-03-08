@@ -34,7 +34,7 @@ public class RateLimiter {
 
   public RateLimiter(double creditsPerSecond, double maxBalance, Clock clock) {
     this.clock = clock;
-    this.balance = creditsPerSecond;
+    this.balance = maxBalance;
     this.maxBalance = maxBalance;
     this.creditsPerNanosecond = creditsPerSecond / 1.0e9;
   }
