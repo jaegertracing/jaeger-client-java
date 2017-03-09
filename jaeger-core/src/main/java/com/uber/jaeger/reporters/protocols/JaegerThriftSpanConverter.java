@@ -21,8 +21,10 @@
  */
 package com.uber.jaeger.reporters.protocols;
 
-import com.uber.jaeger.*;
+import com.uber.jaeger.Constants;
+import com.uber.jaeger.LogData;
 import com.uber.jaeger.Span;
+import com.uber.jaeger.SpanContext;
 import com.uber.jaeger.thriftjava.Log;
 import com.uber.jaeger.thriftjava.Tag;
 import com.uber.jaeger.thriftjava.TagType;
@@ -38,7 +40,7 @@ public class JaegerThriftSpanConverter {
 
     return new com.uber.jaeger.thriftjava.Span(
             context.getTraceID(),
-            0,
+            0, // TraceIdHigh is currently not supported
             context.getSpanID(),
             context.getParentID(),
             span.getOperationName(),
@@ -79,36 +81,30 @@ public class JaegerThriftSpanConverter {
   protected static Tag buildTag(String tagKey, Object tagValue) {
     Tag tag = new Tag();
     tag.setKey(tagKey);
-    if (tagValue instanceof Number) {
-      if (tagValue instanceof Integer || tagValue instanceof Short || tagValue instanceof Long) {
-        tag.setVType(TagType.LONG);
-        tag.setVLong(((Number)tagValue).longValue());
-      } else if (tagValue instanceof Double || tagValue instanceof Float) {
-        tag.setVType(TagType.DOUBLE);
-        tag.setVDouble(((Number)tagValue).doubleValue());
-      } else {
-        tag = buildStringTag(tag, tagValue);
-      }
+    if (tagValue instanceof Integer || tagValue instanceof Short || tagValue instanceof Long) {
+      tag.setVType(TagType.LONG);
+      tag.setVLong(((Number) tagValue).longValue());
+    } else if (tagValue instanceof Double || tagValue instanceof Float) {
+      tag.setVType(TagType.DOUBLE);
+      tag.setVDouble(((Number)tagValue).doubleValue());
     } else if (tagValue instanceof Boolean) {
       tag.setVType(TagType.BOOL);
       tag.setVBool((Boolean) tagValue);
     } else {
-      tag = buildStringTag(tag, tagValue);
+      buildStringTag(tag, tagValue);
     }
     return tag;
   }
 
-  protected static Tag buildStringTag(Tag tag, Object tagValue) {
+  protected static void buildStringTag(Tag tag, Object tagValue) {
     tag.setVType(TagType.STRING);
-    String stringTagValue = tagValue.toString();
+    String stringTagValue = String.valueOf(tagValue);
     tag.setVStr(truncateString(stringTagValue));
-    return tag;
   }
 
   protected static String truncateString(String s) {
-    // TODO rename to MAX_TAG_LENGTH
-    if (s.length() > Constants.MAX_ANNOTATION_LENGTH) {
-      return s.substring(0, Constants.MAX_ANNOTATION_LENGTH);
+    if (s.length() > Constants.MAX_TAG_LENGTH) {
+      return s.substring(0, Constants.MAX_TAG_LENGTH);
     }
     return s;
   }

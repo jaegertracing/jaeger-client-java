@@ -129,8 +129,8 @@ public class ThriftSpanConverter {
     BinaryAnnotation banno = new BinaryAnnotation().setKey(tagKey);
 
     String stringTagValue = tagValue.toString();
-    if (stringTagValue.length() > Constants.MAX_ANNOTATION_LENGTH) {
-      tagValue = stringTagValue.substring(0, Constants.MAX_ANNOTATION_LENGTH);
+    if (stringTagValue.length() > Constants.MAX_TAG_LENGTH) {
+      tagValue = stringTagValue.substring(0, Constants.MAX_TAG_LENGTH);
     }
 
     banno

@@ -43,7 +43,6 @@ class InMemorySpanServerHandler implements Agent.Iface {
   public void emitBatch(Batch batch) throws TException {
     synchronized (this) {
       // TODO convert spans
-      //this.spans = batch.spans;
     }
   }
 
