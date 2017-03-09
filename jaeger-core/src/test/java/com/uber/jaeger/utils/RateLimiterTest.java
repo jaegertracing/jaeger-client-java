@@ -54,7 +54,7 @@ public class RateLimiterTest {
   @Test
   public void testRateLimiterWholeNumber() {
     MockClock clock = new MockClock();
-    RateLimiter limiter = new RateLimiter(2.0, clock);
+    RateLimiter limiter = new RateLimiter(2.0, 2.0, clock);
 
     long currentTime = TimeUnit.MICROSECONDS.toNanos(100);
     clock.timeNanos = currentTime;
@@ -87,7 +87,7 @@ public class RateLimiterTest {
   @Test
   public void testRateLimiterLessThanOne() {
     MockClock clock = new MockClock();
-    RateLimiter limiter = new RateLimiter(0.5, clock);
+    RateLimiter limiter = new RateLimiter(0.5, 0.5, clock);
 
     long currentTime = TimeUnit.MICROSECONDS.toNanos(100);
     clock.timeNanos = currentTime;
@@ -115,5 +115,23 @@ public class RateLimiterTest {
     assertFalse(limiter.checkCredit(0.25));
     assertFalse(limiter.checkCredit(0.25));
     assertFalse(limiter.checkCredit(0.25));
+  }
+
+  @Test
+  public void testRateLimiterMaxBalance() {
+    MockClock clock = new MockClock();
+    RateLimiter limiter = new RateLimiter(0.1, 1.0, clock);
+
+    long currentTime = TimeUnit.MICROSECONDS.toNanos(100);
+    clock.timeNanos = currentTime;
+    assertTrue(limiter.checkCredit(1.0));
+    assertFalse(limiter.checkCredit(1.0));
+
+    // move time 20s forward, enough to accumulate credits for 2 messages, but it should still be capped at 1
+    currentTime += TimeUnit.MILLISECONDS.toNanos(20000);
+    clock.timeNanos = currentTime;
+
+    assertTrue(limiter.checkCredit(1.0));
+    assertFalse(limiter.checkCredit(1.0));
   }
 }
