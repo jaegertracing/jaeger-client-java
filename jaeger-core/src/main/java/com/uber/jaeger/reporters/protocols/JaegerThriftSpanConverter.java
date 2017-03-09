@@ -27,7 +27,6 @@ import com.uber.jaeger.thriftjava.Log;
 import com.uber.jaeger.thriftjava.Tag;
 import com.uber.jaeger.thriftjava.TagType;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -51,20 +50,21 @@ public class JaegerThriftSpanConverter {
         .setLogs(buildLogs(span.getLogs()));
   }
 
-  private static List<Log> buildLogs(List<LogData> logs) {
+  protected static List<Log> buildLogs(List<LogData> logs) {
     List<Log> jLogs = new ArrayList<>();
     if (logs != null) {
       for (LogData logData : logs) {
-        Log log = new Log();
-        log.setTimestamp(logData.getTime());
+        Log jLog = new Log();
+        jLog.setTimestamp(logData.getTime());
         final Tag tag = buildTag(logData.getMessage(), logData.getPayload());
-        log.setFields(new ArrayList<Tag>() {{add(tag);}});
+        jLog.setFields(new ArrayList<Tag>() {{add(tag);}});
+        jLogs.add(jLog);
       }
     }
     return jLogs;
   }
 
-  private static List<Tag> buildTags(Map<String, Object> tags) {
+  protected static List<Tag> buildTags(Map<String, Object> tags) {
     List<Tag> jTags = new ArrayList<>();
     if (tags != null) {
       for (Map.Entry<String, Object> entry : tags.entrySet()) {
@@ -76,38 +76,37 @@ public class JaegerThriftSpanConverter {
     return jTags;
   }
 
-  private static Tag buildTag(String tagKey, Object tagValue) {
-    // N.B.
-    //http://stackoverflow.com/questions/5579309/switch-instanceof
-
+  protected static Tag buildTag(String tagKey, Object tagValue) {
     Tag tag = new Tag();
     tag.setKey(tagKey);
-    if (tagValue instanceof String) {
-      tag.setVType(TagType.STRING);
-      tag.setVStr(truncateString((String) tagValue));
-    } else if (tagValue instanceof Integer || tagValue instanceof Short || tagValue instanceof Long) {
-      tag.setVType(TagType.LONG);
-      tag.setVLong((Long) tagValue);
-    } else if (tagValue instanceof Double || tagValue instanceof Float) {
-      tag.setVType(TagType.DOUBLE);
-      tag.setVDouble((Double) tagValue);
-    } else if (tagValue instanceof ByteBuffer) {
-      // TODO how to handle []byte
-      tag.setVType(TagType.BINARY);
-      tag.setVBinary((ByteBuffer) tagValue);
+    if (tagValue instanceof Number) {
+      if (tagValue instanceof Integer || tagValue instanceof Short || tagValue instanceof Long) {
+        tag.setVType(TagType.LONG);
+        tag.setVLong(((Number)tagValue).longValue());
+      } else if (tagValue instanceof Double || tagValue instanceof Float) {
+        tag.setVType(TagType.DOUBLE);
+        tag.setVDouble(((Number)tagValue).doubleValue());
+      } else {
+        tag = buildStringTag(tag, tagValue);
+      }
     } else if (tagValue instanceof Boolean) {
       tag.setVType(TagType.BOOL);
       tag.setVBool((Boolean) tagValue);
     } else {
-      tag.setVType(TagType.STRING);
-      String stringTagValue = tagValue.toString();
-      tag.setVStr(truncateString(stringTagValue));
+      tag = buildStringTag(tag, tagValue);
     }
     return tag;
   }
 
-  private static String truncateString(String s) {
-    // TODO MAX_TAG_LENGTH
+  protected static Tag buildStringTag(Tag tag, Object tagValue) {
+    tag.setVType(TagType.STRING);
+    String stringTagValue = tagValue.toString();
+    tag.setVStr(truncateString(stringTagValue));
+    return tag;
+  }
+
+  protected static String truncateString(String s) {
+    // TODO rename to MAX_TAG_LENGTH
     if (s.length() > Constants.MAX_ANNOTATION_LENGTH) {
       return s.substring(0, Constants.MAX_ANNOTATION_LENGTH);
     }
