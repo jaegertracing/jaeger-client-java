@@ -25,7 +25,7 @@ public class Constants {
   // TODO these should be configurable
   public static final String X_UBER_SOURCE = "x-uber-source";
 
-  public static final int MAX_ANNOTATION_LENGTH = 256;
+  public static final int MAX_TAG_LENGTH = 256;
 
   /**
    * Span tag key to describe the type of sampler used on the root span.

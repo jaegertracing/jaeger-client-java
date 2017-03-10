@@ -18,6 +18,7 @@ ext.gsonVersion = '2.8.0'
 
 ext.junitVersion = '4.12'
 ext.mockitoVersion = '2.2.28'
+ext.junitDataProviderVersion = '1.10.0'
 
 allprojects {
     apply plugin: 'idea' // intellij support
