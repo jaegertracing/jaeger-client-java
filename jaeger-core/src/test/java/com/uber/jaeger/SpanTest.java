@@ -21,9 +21,7 @@
  */
 package com.uber.jaeger;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -35,6 +33,8 @@ import io.opentracing.tag.Tags;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 public class SpanTest {
@@ -193,34 +193,66 @@ public class SpanTest {
   @Test
   public void testLog() {
     long expectedTimestamp = 2222;
-    String expectedLog = "some-log";
+    final String expectedLog = "some-log";
+    final String expectedEvent = "event";
     Object expectedPayload = new Object();
+    Map<String, String> fields = new HashMap<String, String>() {{put(expectedEvent, expectedLog);}};
 
     span.log(expectedTimestamp, expectedLog, expectedPayload);
+    span.log(expectedTimestamp, expectedEvent);
+    span.log(expectedTimestamp, fields);
 
     LogData actualLogData = span.getLogs().get(0);
 
     assertEquals(expectedTimestamp, actualLogData.getTime());
     assertEquals(expectedLog, actualLogData.getMessage());
     assertEquals(expectedPayload, actualLogData.getPayload());
+
+    actualLogData = span.getLogs().get(1);
+
+    assertEquals(expectedTimestamp, actualLogData.getTime());
+    assertEquals(expectedEvent, actualLogData.getMessage());
+    assertNull(actualLogData.getPayload());
+
+    actualLogData = span.getLogs().get(2);
+
+    assertEquals(expectedTimestamp, actualLogData.getTime());
+    assertEquals(expectedEvent, actualLogData.getMessage());
+    assertEquals(expectedLog, actualLogData.getPayload());
   }
 
   @Test
   public void testLogWithTimestamp() {
     final long expectedTimestamp = 2222;
     final String expectedLog = "some-log";
+    final String expectedEvent = "expectedEvent";
     final Object expectedPayload = new Object();
+    Map<String, String> fields = new HashMap<String, String>() {{put(expectedEvent, expectedLog);}};
 
     when(clock.currentTimeMicros()).thenReturn(expectedTimestamp);
 
     Span span = (Span) tracer.buildSpan("test-service-operation").start();
     span.log(expectedLog, expectedPayload);
+    span.log(expectedEvent);
+    span.log(fields);
 
     LogData actualLogData = span.getLogs().get(0);
 
     assertEquals(expectedTimestamp, actualLogData.getTime());
     assertEquals(expectedLog, actualLogData.getMessage());
     assertEquals(expectedPayload, actualLogData.getPayload());
+
+    actualLogData = span.getLogs().get(1);
+
+    assertEquals(expectedTimestamp, actualLogData.getTime());
+    assertEquals(expectedEvent, actualLogData.getMessage());
+    assertNull(actualLogData.getPayload());
+
+    actualLogData = span.getLogs().get(2);
+
+    assertEquals(expectedTimestamp, actualLogData.getTime());
+    assertEquals(expectedEvent, actualLogData.getMessage());
+    assertEquals(expectedLog, actualLogData.getPayload());
   }
 
   @Test
