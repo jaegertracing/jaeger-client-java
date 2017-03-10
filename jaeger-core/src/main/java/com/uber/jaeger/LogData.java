@@ -21,26 +21,28 @@
  */
 package com.uber.jaeger;
 
+import lombok.Getter;
+
+import java.util.Map;
+
+@Getter
 public final class LogData {
   private final long time; // time in microseconds
   private final String message;
   private final Object payload;
+  private final Map<String, Object> fields;
 
   LogData(long time, String message, Object payload) {
     this.time = time;
     this.message = message;
     this.payload = payload;
+    this.fields = null;
   }
 
-  public long getTime() {
-    return time;
-  }
-
-  public String getMessage() {
-    return message;
-  }
-
-  public Object getPayload() {
-    return payload;
+  LogData(long time, Map fields) {
+    this.time = time;
+    this.message = null;
+    this.payload = null;
+    this.fields = fields;
   }
 }

@@ -274,11 +274,14 @@ public class Span implements io.opentracing.Span {
   @Override
   public Span log(long timestampMicroseconds, Map<String, ?> fields) {
     synchronized (this) {
+      if (fields == null) {
+        return this;
+      }
       if (context.isSampled()) {
         if (logs == null) {
           this.logs = new ArrayList<>();
         }
-        logs.add(new LogData(timestampMicroseconds, "", fields));
+        logs.add(new LogData(timestampMicroseconds, fields));
       }
       return this;
     }
@@ -302,6 +305,9 @@ public class Span implements io.opentracing.Span {
   @Override
   public Span log(long timestampMicroseconds, String message, /* @Nullable */ Object payload) {
     synchronized (this) {
+      if (message == null) {
+        return this;
+      }
       if (context.isSampled()) {
         if (logs == null) {
           this.logs = new ArrayList<>();

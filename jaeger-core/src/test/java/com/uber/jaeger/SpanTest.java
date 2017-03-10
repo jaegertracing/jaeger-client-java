@@ -215,8 +215,9 @@ public class SpanTest {
     actualLogData = span.getLogs().get(2);
 
     assertEquals(expectedTimestamp, actualLogData.getTime());
-    assertEquals("", actualLogData.getMessage());
-    assertEquals(expectedFields, actualLogData.getPayload());
+    assertNull(actualLogData.getMessage());
+    assertNull(actualLogData.getPayload());
+    assertEquals(expectedFields, actualLogData.getFields());
   }
 
   @Test
@@ -249,8 +250,9 @@ public class SpanTest {
     actualLogData = span.getLogs().get(2);
 
     assertEquals(expectedTimestamp, actualLogData.getTime());
-    assertEquals("", actualLogData.getMessage());
-    assertEquals(expectedFields, actualLogData.getPayload());
+    assertNull(actualLogData.getMessage());
+    assertNull(actualLogData.getPayload());
+    assertEquals(expectedFields, actualLogData.getFields());
   }
 
   @Test

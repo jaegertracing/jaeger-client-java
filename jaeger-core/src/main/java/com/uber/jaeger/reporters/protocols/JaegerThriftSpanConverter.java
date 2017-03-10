@@ -58,12 +58,8 @@ public class JaegerThriftSpanConverter {
       for (LogData logData : logs) {
         Log jLog = new Log();
         jLog.setTimestamp(logData.getTime());
-        if (logData.getPayload() instanceof Map<?, ?>) {
-          Map<String, Object> fields = null;
-          try {
-            fields = (Map<String, Object>) logData.getPayload();
-          } catch (ClassCastException e) {}
-          jLog.setFields(buildTags(fields));
+        if (logData.getFields() != null) {
+          jLog.setFields(buildTags(logData.getFields()));
         } else {
           final Tag tag = buildTag(logData.getMessage(), logData.getPayload());
           jLog.setFields(new ArrayList<Tag>() {{add(tag);}});

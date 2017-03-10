@@ -8,7 +8,7 @@ plugins {
 }
 
 
-ext.opentracingVersion = '0.20.9'
+ext.opentracingVersion = '0.20.10'
 ext.guavaVersion = '18.0'
 ext.apacheThriftVersion = '0.9.2'
 ext.jerseyVersion = '2.22.2'
