@@ -266,10 +266,12 @@ public class Span implements io.opentracing.Span {
     return this;
   }
 
+  @Override
   public Span log(Map<String, ?> fields) {
     return log(tracer.clock().currentTimeMicros(), fields);
   }
 
+  @Override
   public Span log(long timestampMicroseconds, Map<String, ?> fields) {
     synchronized (this) {
       if (context.isSampled()) {
@@ -284,10 +286,12 @@ public class Span implements io.opentracing.Span {
     }
   }
 
+  @Override
   public Span log(String event) {
     return log(tracer.clock().currentTimeMicros(), event, null);
   }
 
+  @Override
   public Span log(long timestampMicroseconds, String event) {
     return log(timestampMicroseconds, event, null);
   }
