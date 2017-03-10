@@ -124,9 +124,12 @@ public class JaegerThriftSpanConverterTest {
     assertEquals(2, jSpan.getLogs().size());
     Log jLog = jSpan.getLogs().get(0);
     assertEquals(1, jLog.getTimestamp());
-    assertEquals(1, jLog.getFields().size());
+    assertEquals(2, jLog.getFields().size());
     Tag jTag = jLog.getFields().get(0);
-    assertEquals("key", jTag.getKey());
+    assertEquals("event", jTag.getKey());
+    assertEquals("key", jTag.getVStr());
+    jTag = jLog.getFields().get(1);
+    assertEquals("payload", jTag.getKey());
     assertEquals("value", jTag.getVStr());
 
     jLog = jSpan.getLogs().get(1);

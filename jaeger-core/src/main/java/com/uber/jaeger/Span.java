@@ -305,7 +305,7 @@ public class Span implements io.opentracing.Span {
   @Override
   public Span log(long timestampMicroseconds, String message, /* @Nullable */ Object payload) {
     synchronized (this) {
-      if (message == null) {
+      if (message == null && payload == null) {
         return this;
       }
       if (context.isSampled()) {
