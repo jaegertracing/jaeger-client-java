@@ -278,9 +278,7 @@ public class Span implements io.opentracing.Span {
         if (logs == null) {
           this.logs = new ArrayList<>();
         }
-        for (Map.Entry<String, ?> kv : fields.entrySet()) {
-          logs.add(new LogData(timestampMicroseconds, kv.getKey(), kv.getValue()));
-        }
+        logs.add(new LogData(timestampMicroseconds, "", fields));
       }
       return this;
     }

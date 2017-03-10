@@ -27,6 +27,7 @@ import static org.junit.Assert.assertNotNull;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
+import com.uber.jaeger.LogData;
 import com.uber.jaeger.Tracer;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
@@ -110,18 +111,29 @@ public class JaegerThriftSpanConverterTest {
 
   @Test
   public void testConvertSpan() {
+    Map<String, Object> fields = new HashMap<>();
+    fields.put("k", "v");
+
     Span span = tracer.buildSpan("operation-name").start();
     span = span.log(1, "key", "value");
+    span = span.log(1, fields);
 
     com.uber.jaeger.thriftjava.Span jSpan = JaegerThriftSpanConverter.convertSpan((com.uber.jaeger.Span) span);
 
     assertEquals("operation-name", jSpan.getOperationName());
-    assertEquals(1, jSpan.getLogs().size());
+    assertEquals(2, jSpan.getLogs().size());
     Log jLog = jSpan.getLogs().get(0);
     assertEquals(1, jLog.getTimestamp());
     assertEquals(1, jLog.getFields().size());
     Tag jTag = jLog.getFields().get(0);
     assertEquals("key", jTag.getKey());
     assertEquals("value", jTag.getVStr());
+
+    jLog = jSpan.getLogs().get(1);
+    assertEquals(1, jLog.getTimestamp());
+    assertEquals(1, jLog.getFields().size());
+    jTag = jLog.getFields().get(0);
+    assertEquals("k", jTag.getKey());
+    assertEquals("v", jTag.getVStr());
   }
 }
