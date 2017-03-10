@@ -86,7 +86,7 @@ public class JaegerThriftSpanConverter {
       tag.setVLong(((Number) tagValue).longValue());
     } else if (tagValue instanceof Double || tagValue instanceof Float) {
       tag.setVType(TagType.DOUBLE);
-      tag.setVDouble(((Number)tagValue).doubleValue());
+      tag.setVDouble(((Number) tagValue).doubleValue());
     } else if (tagValue instanceof Boolean) {
       tag.setVType(TagType.BOOL);
       tag.setVBool((Boolean) tagValue);
