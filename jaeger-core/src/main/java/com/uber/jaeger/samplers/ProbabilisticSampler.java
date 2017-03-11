@@ -36,8 +36,7 @@ public class ProbabilisticSampler implements Sampler {
 
   private final long positiveSamplingBoundary;
   private final long negativeSamplingBoundary;
-  @Getter
-  private final double samplingRate;
+  @Getter private final double samplingRate;
   private final Map<String, Object> tags;
 
   public ProbabilisticSampler(double samplingRate) {
@@ -50,7 +49,7 @@ public class ProbabilisticSampler implements Sampler {
     this.positiveSamplingBoundary = (long) (((1L << 63) - 1) * samplingRate);
     this.negativeSamplingBoundary = (long) ((1L << 63) * samplingRate);
 
-    Map<String, Object> tags = new HashMap<>();
+    Map<String, Object> tags = new HashMap<String, Object>();
     tags.put(Constants.SAMPLER_TYPE_TAG_KEY, TYPE);
     tags.put(Constants.SAMPLER_PARAM_TAG_KEY, samplingRate);
     this.tags = Collections.unmodifiableMap(tags);

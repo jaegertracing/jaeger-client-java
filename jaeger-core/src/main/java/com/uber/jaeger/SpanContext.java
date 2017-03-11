@@ -132,7 +132,7 @@ public class SpanContext implements io.opentracing.SpanContext {
   }
 
   public SpanContext withBaggageItem(String key, String val) {
-    Map<String, String> newBaggage = new HashMap<>(this.baggage);
+    Map<String, String> newBaggage = new HashMap<String, String>(this.baggage);
     newBaggage.put(key, val);
     return new SpanContext(traceID, spanID, parentID, flags, newBaggage, debugID);
   }

@@ -5,6 +5,11 @@ description = 'A jaeger instrumented java server meant for testing interoperabil
 ext.jacksonVersion = '2.7.4'
 shadowJar.archiveName = 'jaeger-crossdock.jar'
 
+compileJava {
+    sourceCompatibility = 1.7
+    targetCompatibility = 1.7
+}
+
 dependencies {
     compile project(':jaeger-jaxrs2')
 

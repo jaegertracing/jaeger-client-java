@@ -32,7 +32,7 @@ public class CompositeReporter implements Reporter {
   private final List<Reporter> reporters;
 
   public CompositeReporter(Reporter... reporters) {
-    this.reporters = new ArrayList<>();
+    this.reporters = new ArrayList<Reporter>();
     for (int i = 0; i < reporters.length; i++) {
       this.reporters.add(reporters[i]);
     }

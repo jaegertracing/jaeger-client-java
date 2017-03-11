@@ -35,21 +35,21 @@ public class InMemorySender implements Sender {
   private List<Span> received;
 
   public InMemorySender() {
-    appended = new ArrayList<>();
-    flushed = new ArrayList<>();
-    received = new ArrayList<>();
+    appended = new ArrayList<Span>();
+    flushed = new ArrayList<Span>();
+    received = new ArrayList<Span>();
   }
 
   public List<Span> getAppended() {
-    return new ArrayList<>(appended);
+    return new ArrayList<Span>(appended);
   }
 
   public List<Span> getFlushed() {
-    return new ArrayList<>(flushed);
+    return new ArrayList<Span>(flushed);
   }
 
   public List<Span> getReceived() {
-    return new ArrayList<>(received);
+    return new ArrayList<Span>(received);
   }
 
   @Override

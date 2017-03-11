@@ -101,7 +101,7 @@ public final class ZipkinSender implements Sender {
     byte[] next = encoder.encode(backFillHostOnAnnotations(span));
     int messageSizeOfNextSpan = delegate.messageSizeInBytes(Collections.singletonList(next));
     // don't enqueue something larger than we can drain
-    if (Integer.compare(messageSizeOfNextSpan, delegate.messageMaxBytes()) > 0) {
+    if (Integer.valueOf(messageSizeOfNextSpan).compareTo(delegate.messageMaxBytes()) > 0) {
       throw new SenderException(
           delegate.toString() + " received a span that was too large", null, 1);
     }
@@ -109,7 +109,7 @@ public final class ZipkinSender implements Sender {
     spanBuffer.add(next); // speculatively add to the buffer so we can size it
     int nextSizeInBytes = delegate.messageSizeInBytes(spanBuffer);
     int includingNextVsMaxMessageSize =
-        Integer.compare(nextSizeInBytes, delegate.messageMaxBytes());
+        Integer.valueOf(nextSizeInBytes).compareTo(delegate.messageMaxBytes());
     // If we can fit queued spans and the next into one message...
     if (includingNextVsMaxMessageSize <= 0) {
 

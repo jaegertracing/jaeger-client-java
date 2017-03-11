@@ -43,7 +43,7 @@ public class RateLimitingSampler implements Sampler {
     double maxBalance = maxTracesPerSecond < 1.0 ? 1.0 : maxTracesPerSecond;
     this.rateLimiter = new RateLimiter(maxTracesPerSecond, maxBalance);
 
-    Map<String, Object> tags = new HashMap<>();
+    Map<String, Object> tags = new HashMap<String, Object>();
     tags.put(Constants.SAMPLER_TYPE_TAG_KEY, TYPE);
     tags.put(Constants.SAMPLER_PARAM_TAG_KEY, maxTracesPerSecond);
     this.tags = Collections.unmodifiableMap(tags);

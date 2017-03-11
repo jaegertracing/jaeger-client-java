@@ -35,9 +35,6 @@ import com.uber.jaeger.samplers.SamplingStatus;
 import com.uber.jaeger.utils.Clock;
 import com.uber.jaeger.utils.SystemClock;
 import com.uber.jaeger.utils.Utils;
-import io.opentracing.References;
-import io.opentracing.propagation.Format;
-import io.opentracing.tag.Tags;
 
 import java.io.InputStream;
 import java.net.Inet4Address;
@@ -46,8 +43,11 @@ import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Properties;
+
+import io.opentracing.References;
+import io.opentracing.propagation.Format;
+import io.opentracing.tag.Tags;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
@@ -89,7 +89,7 @@ public class Tracer implements io.opentracing.Tracer {
 
     this.version = loadVersion();
 
-    Map<String, Object> tags = new HashMap<>();
+    Map<String, Object> tags = new HashMap<String, Object>();
     tags.put("jaeger.version", this.version);
     String hostname = getHostName();
     if (hostname != null) {
@@ -164,7 +164,7 @@ public class Tracer implements io.opentracing.Tracer {
     private String operationName = null;
     private long startTimeMicroseconds;
     private SpanContext parent;
-    private final Map<String, Object> tags = new HashMap<>();
+    private final Map<String, Object> tags = new HashMap<String, Object>();
 
     SpanBuilder(String operationName) {
       this.operationName = operationName;
@@ -192,8 +192,8 @@ public class Tracer implements io.opentracing.Tracer {
     public io.opentracing.Tracer.SpanBuilder addReference(
         String referenceType, io.opentracing.SpanContext referencedContext) {
       if (parent == null
-          && (Objects.equals(referenceType, References.CHILD_OF)
-              || Objects.equals(referenceType, References.FOLLOWS_FROM))) {
+          && (Utils.equals(referenceType, References.CHILD_OF)
+              || Utils.equals(referenceType, References.FOLLOWS_FROM))) {
         this.parent = (SpanContext) referencedContext;
       }
       return this;
@@ -376,8 +376,8 @@ public class Tracer implements io.opentracing.Tracer {
   }
 
   private static class PropagationRegistry {
-    private final Map<Format<?>, Injector<?>> injectors = new HashMap<>();
-    private final Map<Format<?>, Extractor<?>> extractors = new HashMap<>();
+    private final Map<Format<?>, Injector<?>> injectors = new HashMap<Format<?>, Injector<?>>();
+    private final Map<Format<?>, Extractor<?>> extractors = new HashMap<Format<?>, Extractor<?>>();
 
     @SuppressWarnings("unchecked")
     <T> Injector<T> getInjector(Format<T> format) {
@@ -401,10 +401,13 @@ public class Tracer implements io.opentracing.Tracer {
   private static String loadVersion() {
     String version;
     try {
-      try (InputStream is = Tracer.class.getResourceAsStream("jaeger.properties")) {
+      InputStream is = Tracer.class.getResourceAsStream("jaeger.properties");
+      try {
         Properties prop = new Properties();
         prop.load(is);
         version = prop.getProperty("jaeger.version");
+      } finally {
+        is.close();
       }
     } catch (Exception e) {
       throw new RuntimeException("Cannot read jaeger.properties", e);

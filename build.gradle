@@ -46,9 +46,16 @@ subprojects {
     apply plugin: 'java'
     apply plugin: 'maven'
     apply plugin: 'signing'
+    
+    compileJava {
+        sourceCompatibility = 1.6
+        targetCompatibility = 1.6
+    }
 
-    sourceCompatibility = 1.7
-    targetCompatibility = 1.7
+    compileTestJava {
+        sourceCompatibility = 1.7
+        targetCompatibility = 1.7
+    }
 
     [compileJava, compileTestJava, javadoc]*.options*.encoding = 'UTF-8'
 

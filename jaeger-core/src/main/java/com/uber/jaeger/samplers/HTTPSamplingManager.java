@@ -33,7 +33,8 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
+
 import lombok.ToString;
 
 @ToString
@@ -54,13 +55,16 @@ public class HTTPSamplingManager implements SamplingManager {
     StringBuilder result = new StringBuilder();
     try {
       conn.setRequestMethod("GET");
-      try (BufferedReader rd =
+      BufferedReader rd =
           new BufferedReader(
-              new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
+              new InputStreamReader(conn.getInputStream(), Charset.forName("UTF-8")));
+      try {
         String line;
         while ((line = rd.readLine()) != null) {
           result.append(line);
         }
+      } finally {
+        rd.close();
       }
     } finally {
       conn.disconnect();

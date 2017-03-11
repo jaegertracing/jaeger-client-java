@@ -40,7 +40,7 @@ public class Metrics {
       }
 
       String metricName = "jaeger.";
-      HashMap<String, String> tags = new HashMap<>();
+      HashMap<String, String> tags = new HashMap<String, String>();
 
       Annotation[] annotations = field.getAnnotations();
       for (Annotation anno : annotations) {
@@ -66,7 +66,7 @@ public class Metrics {
           throw new RuntimeException(
               "A field type that was neither Counter, Gauge, or Timer was parsed in reflection.");
         }
-      } catch (ReflectiveOperationException e) {
+      } catch (Exception e) {
         // This exception should only happen at the start of a program if the code below is not set up correctly.
         // As long as tests are run this code should never be thrown in production.
         throw new RuntimeException(
@@ -84,7 +84,7 @@ public class Metrics {
     StringBuilder sb = new StringBuilder();
     sb.append(name);
 
-    SortedSet<String> sortedKeys = new TreeSet<>(tags.keySet());
+    SortedSet<String> sortedKeys = new TreeSet<String>(tags.keySet());
     for (String key : sortedKeys) {
       sb.append(".");
       sb.append(key);

@@ -66,7 +66,7 @@ public class TracedExecutorService implements ExecutorService {
 
   @Override
   public <T> Future<T> submit(java.util.concurrent.Callable<T> task) {
-    return delegate.submit(new Callable<>(task, traceContext));
+    return delegate.submit(new Callable<T>(task, traceContext));
   }
 
   @Override
@@ -113,9 +113,9 @@ public class TracedExecutorService implements ExecutorService {
   private <T> Collection<? extends java.util.concurrent.Callable<T>> wrapJaegerCallableCollection(
       Collection<? extends java.util.concurrent.Callable<T>> originalCollection) {
     Collection<java.util.concurrent.Callable<T>> collection =
-        new ArrayList<>(originalCollection.size());
+        new ArrayList<java.util.concurrent.Callable<T>>(originalCollection.size());
     for (java.util.concurrent.Callable<T> c : originalCollection) {
-      collection.add(new Callable<>(c, traceContext));
+      collection.add(new Callable<T>(c, traceContext));
     }
     return collection;
   }

@@ -46,20 +46,24 @@ public class JaegerThriftSpanConverter {
             span.getOperationName(),
             context.getFlags(),
             span.getStart(),
-            span.getDuration()
-        )
+            span.getDuration())
         .setTags(buildTags(span.getTags()))
         .setLogs(buildLogs(span.getLogs()));
   }
 
   protected static List<Log> buildLogs(List<LogData> logs) {
-    List<Log> jLogs = new ArrayList<>();
+    List<Log> jLogs = new ArrayList<Log>();
     if (logs != null) {
       for (LogData logData : logs) {
         Log jLog = new Log();
         jLog.setTimestamp(logData.getTime());
         final Tag tag = buildTag(logData.getMessage(), logData.getPayload());
-        jLog.setFields(new ArrayList<Tag>() {{add(tag);}});
+        jLog.setFields(
+            new ArrayList<Tag>() {
+              {
+                add(tag);
+              }
+            });
         jLogs.add(jLog);
       }
     }
@@ -67,7 +71,7 @@ public class JaegerThriftSpanConverter {
   }
 
   protected static List<Tag> buildTags(Map<String, Object> tags) {
-    List<Tag> jTags = new ArrayList<>();
+    List<Tag> jTags = new ArrayList<Tag>();
     if (tags != null) {
       for (Map.Entry<String, Object> entry : tags.entrySet()) {
         String tagKey = entry.getKey();
