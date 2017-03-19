@@ -25,6 +25,8 @@ dependencies {
 
     // Testing Frameworks
     testCompile group: 'junit', name: 'junit', version: junitVersion
+
+    signature 'org.codehaus.mojo.signature:java17:1.0@signature'
 }
 
 sourceSets {

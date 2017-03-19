@@ -9,6 +9,8 @@ dependencies {
     testCompile group: 'org.mockito', name: 'mockito-core', version: mockitoVersion
     testCompile group: 'io.zipkin.java', name: 'zipkin-junit', version: '1.16.2'
     testCompile group: 'io.zipkin.brave', name: 'brave-http', version: '3.15.3'
+
+    signature 'org.codehaus.mojo.signature:java16:1.1@signature'
 }
 
 sourceSets {

@@ -21,50 +21,26 @@
  */
 package com.uber.jaeger.utils;
 
-import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
+import org.junit.Test;
 
-import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
-public final class Java6CompatibleThreadLocalRandom {
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
-  static final boolean THREAD_LOCAL_RANDOM_PRESENT;
+public class Java6CompatibleThreadLocalRandomTest {
 
-  private static final String THREAD_LOCAL_RANDOM_CLASS_NAME =
-      "java.util.concurrent.ThreadLocalRandom";
-
-  static {
-    boolean present = true;
-    try {
-      Class.forName(THREAD_LOCAL_RANDOM_CLASS_NAME);
-    } catch (ClassNotFoundException e) {
-      present = false;
-    }
-    THREAD_LOCAL_RANDOM_PRESENT = present;
-  }
-
-  private static final ThreadLocal<Random> threadLocal =
-      new ThreadLocal<Random>() {
-        @Override
-        protected Random initialValue() {
-          return new Random();
+    @Test
+    public void testGetCurrentRandom() throws Exception {
+        if (System.getProperty("java.version").startsWith("1.6.")) {
+            assertFalse(Java6CompatibleThreadLocalRandom.THREAD_LOCAL_RANDOM_PRESENT);
+        } else {
+            assertTrue(Java6CompatibleThreadLocalRandom.THREAD_LOCAL_RANDOM_PRESENT);
+            assertSame(Java6CompatibleThreadLocalRandom.current(), ThreadLocalRandom.current());
         }
-      };
-
-  /**
-   * Calls {@link ThreadLocalRandom#current()}, if this class is present (if you are using Java 7).
-   * Otherwise uses a Java 6 compatible fallback.
-   *
-   * @return the current thread's {@link Random}
-   */
-  @IgnoreJRERequirement
-  public static Random current() {
-    if (THREAD_LOCAL_RANDOM_PRESENT) {
-      return ThreadLocalRandom.current();
-    } else {
-      return threadLocal.get();
+        assertNotNull(Java6CompatibleThreadLocalRandom.current().nextLong());
     }
-  }
 
-  private Java6CompatibleThreadLocalRandom() {}
 }
