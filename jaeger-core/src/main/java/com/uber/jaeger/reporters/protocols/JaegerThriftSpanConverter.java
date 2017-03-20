@@ -53,23 +53,33 @@ public class JaegerThriftSpanConverter {
   }
 
   protected static List<Log> buildLogs(List<LogData> logs) {
-    List<Log> jLogs = new ArrayList<>();
+    List<Log> jLogs = new ArrayList<Log>();
     if (logs != null) {
       for (LogData logData : logs) {
         Log jLog = new Log();
         jLog.setTimestamp(logData.getTime());
-        final Tag tag = buildTag(logData.getMessage(), logData.getPayload());
-        jLog.setFields(new ArrayList<Tag>() {{add(tag);}});
+        if (logData.getFields() != null) {
+          jLog.setFields(buildTags(logData.getFields()));
+        } else {
+          List<Tag> tags = new ArrayList<Tag>();
+          if (logData.getMessage() != null) {
+            tags.add(buildTag("event", logData.getMessage()));
+          }
+          if (logData.getPayload() != null) {
+            tags.add(buildTag("payload", logData.getPayload()));
+          }
+          jLog.setFields(tags);
+        }
         jLogs.add(jLog);
       }
     }
     return jLogs;
   }
 
-  protected static List<Tag> buildTags(Map<String, Object> tags) {
-    List<Tag> jTags = new ArrayList<>();
+  protected static List<Tag> buildTags(Map<String, ?> tags) {
+    List<Tag> jTags = new ArrayList<Tag>();
     if (tags != null) {
-      for (Map.Entry<String, Object> entry : tags.entrySet()) {
+      for (Map.Entry<String, ?> entry : tags.entrySet()) {
         String tagKey = entry.getKey();
         Object tagValue = entry.getValue();
         jTags.add(buildTag(tagKey, tagValue));
