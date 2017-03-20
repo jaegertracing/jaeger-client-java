@@ -189,7 +189,7 @@ public class SpanTest {
   }
 
   @Test
-  public void testLog() {
+  public void testLogWithTimestamp() {
     long expectedTimestamp = 2222;
     final String expectedLog = "some-log";
     final String expectedEvent = "event";
@@ -199,6 +199,8 @@ public class SpanTest {
     span.log(expectedTimestamp, expectedLog, expectedPayload);
     span.log(expectedTimestamp, expectedEvent);
     span.log(expectedTimestamp, expectedFields);
+    span.log(expectedTimestamp, (String) null);
+    span.log(expectedTimestamp, (Map<String, ?>) null);
 
     LogData actualLogData = span.getLogs().get(0);
 
@@ -221,7 +223,7 @@ public class SpanTest {
   }
 
   @Test
-  public void testLogWithTimestamp() {
+  public void testLog() {
     final long expectedTimestamp = 2222;
     final String expectedLog = "some-log";
     final String expectedEvent = "expectedEvent";
@@ -230,10 +232,11 @@ public class SpanTest {
 
     when(clock.currentTimeMicros()).thenReturn(expectedTimestamp);
 
-    Span span = (Span) tracer.buildSpan("test-service-operation").start();
     span.log(expectedLog, expectedPayload);
     span.log(expectedEvent);
     span.log(expectedFields);
+    span.log((String) null);
+    span.log((Map<String, ?>) null);
 
     LogData actualLogData = span.getLogs().get(0);
 

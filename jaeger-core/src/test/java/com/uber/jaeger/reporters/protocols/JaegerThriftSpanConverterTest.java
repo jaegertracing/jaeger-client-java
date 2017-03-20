@@ -27,7 +27,6 @@ import static org.junit.Assert.assertNotNull;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
-import com.uber.jaeger.LogData;
 import com.uber.jaeger.Tracer;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
@@ -98,7 +97,7 @@ public class JaegerThriftSpanConverterTest {
 
   @Test
   public void testBuildTags() {
-    Map<String, Object> tags = new HashMap<>();
+    Map<String, Object> tags = new HashMap<String, Object>();
     tags.put("key", "value");
 
     List<Tag> jTags = JaegerThriftSpanConverter.buildTags(tags);
@@ -111,7 +110,7 @@ public class JaegerThriftSpanConverterTest {
 
   @Test
   public void testConvertSpan() {
-    Map<String, Object> fields = new HashMap<>();
+    Map<String, Object> fields = new HashMap<String, Object>();
     fields.put("k", "v");
 
     Span span = tracer.buildSpan("operation-name").start();
@@ -138,5 +137,26 @@ public class JaegerThriftSpanConverterTest {
     jTag = jLog.getFields().get(0);
     assertEquals("k", jTag.getKey());
     assertEquals("v", jTag.getVStr());
+  }
+
+  @Test
+  public void testTruncateString() {
+    String testString =
+        "k9bHT50f9JNpPUggw3Qz\n" +
+        "Q1MUhMobIMPA5ItaB3KD\n" +
+        "vNUoBPRjOpJw2C46vgn3\n" +
+        "UisXI5KIIH8Wd8uqJ8Wn\n" +
+        "Z8NVmrcpIBwxc2Qje5d6\n" +
+        "1mJdQnPMc3VmX1v75As8\n" +
+        "pUyoicWVPeGEidRuhHpt\n" +
+        "R1sIR1YNjwtBIy9Swwdq\n" +
+        "LUIZXdLcPmCvQVPB3cYw\n" +
+        "VGAtFXG7D8ksLsKw94eY\n" +
+        "c7PNm74nEV3jIIvlJ217\n" +
+        "SLBfUBHW6SEjrHcz553i\n" +
+        "VSjpBvJYXR6CsoEMGce0\n" +
+        "LqSypCXJHDAzb0DL1w8B\n" +
+        "kS9g0wCgregSAlq63OIf";
+    assertEquals(256, JaegerThriftSpanConverter.truncateString(testString).length());
   }
 }

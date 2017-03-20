@@ -279,7 +279,7 @@ public class Span implements io.opentracing.Span {
       }
       if (context.isSampled()) {
         if (logs == null) {
-          this.logs = new ArrayList<>();
+          this.logs = new ArrayList<LogData>();
         }
         logs.add(new LogData(timestampMicroseconds, fields));
       }
@@ -310,7 +310,7 @@ public class Span implements io.opentracing.Span {
       }
       if (context.isSampled()) {
         if (logs == null) {
-          this.logs = new ArrayList<>();
+          this.logs = new ArrayList<LogData>();
         }
         logs.add(new LogData(timestampMicroseconds, message, payload));
       }

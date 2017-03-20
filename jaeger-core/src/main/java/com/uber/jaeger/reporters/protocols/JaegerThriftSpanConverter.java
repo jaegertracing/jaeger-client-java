@@ -53,7 +53,7 @@ public class JaegerThriftSpanConverter {
   }
 
   protected static List<Log> buildLogs(List<LogData> logs) {
-    List<Log> jLogs = new ArrayList<>();
+    List<Log> jLogs = new ArrayList<Log>();
     if (logs != null) {
       for (LogData logData : logs) {
         Log jLog = new Log();
@@ -61,7 +61,7 @@ public class JaegerThriftSpanConverter {
         if (logData.getFields() != null) {
           jLog.setFields(buildTags(logData.getFields()));
         } else {
-          List<Tag> tags = new ArrayList<>();
+          List<Tag> tags = new ArrayList<Tag>();
           if (logData.getMessage() != null) {
             tags.add(buildTag("event", logData.getMessage()));
           }
@@ -76,10 +76,10 @@ public class JaegerThriftSpanConverter {
     return jLogs;
   }
 
-  protected static List<Tag> buildTags(Map<String, Object> tags) {
-    List<Tag> jTags = new ArrayList<>();
+  protected static List<Tag> buildTags(Map<String, ?> tags) {
+    List<Tag> jTags = new ArrayList<Tag>();
     if (tags != null) {
-      for (Map.Entry<String, Object> entry : tags.entrySet()) {
+      for (Map.Entry<String, ?> entry : tags.entrySet()) {
         String tagKey = entry.getKey();
         Object tagValue = entry.getValue();
         jTags.add(buildTag(tagKey, tagValue));
