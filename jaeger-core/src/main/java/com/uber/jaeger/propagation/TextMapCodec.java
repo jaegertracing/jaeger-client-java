@@ -23,13 +23,14 @@ package com.uber.jaeger.propagation;
 
 import com.uber.jaeger.Constants;
 import com.uber.jaeger.SpanContext;
-import io.opentracing.propagation.TextMap;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
+
+import io.opentracing.propagation.TextMap;
 
 public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
   /** Key used to store serialized span context representation */
@@ -78,7 +79,7 @@ public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
         debugID = decodedValue(entry.getValue());
       } else if (key.startsWith(baggagePrefix)) {
         if (baggage == null) {
-          baggage = new HashMap<>();
+          baggage = new HashMap<String, String>();
         }
         baggage.put(keys.unprefixedKey(key, baggagePrefix), decodedValue(entry.getValue()));
       }
@@ -98,9 +99,17 @@ public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
   @Override
   public String toString() {
     StringBuilder buffer = new StringBuilder();
-    buffer.append("TextMapCodec{").append("contextKey=").append(contextKey).append(',')
-            .append("baggagePrefix=").append(baggagePrefix).append(',')
-            .append("urlEncoding=").append(urlEncoding).append('}');
+    buffer
+        .append("TextMapCodec{")
+        .append("contextKey=")
+        .append(contextKey)
+        .append(',')
+        .append("baggagePrefix=")
+        .append(baggagePrefix)
+        .append(',')
+        .append("urlEncoding=")
+        .append(urlEncoding)
+        .append('}');
     return buffer.toString();
   }
 
@@ -130,6 +139,7 @@ public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
 
   /**
    * Returns a builder for TextMapCodec
+   *
    * @return Builder
    */
   public static Builder builder() {
@@ -160,6 +170,5 @@ public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
     public TextMapCodec build() {
       return new TextMapCodec(this);
     }
-
   }
 }

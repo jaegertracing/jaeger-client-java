@@ -32,12 +32,14 @@ import com.uber.jaeger.Span;
 import com.uber.jaeger.SpanContext;
 import com.uber.jaeger.Tracer;
 
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public class ThriftSpanConverter {
+
+  private static final Charset UTF_8 = Charset.forName("UTF-8");
 
   public static com.twitter.zipkin.thriftjava.Span convertSpan(Span span) {
     Tracer tracer = span.getTracer();
@@ -57,7 +59,7 @@ public class ThriftSpanConverter {
   }
 
   private static List<Annotation> buildAnnotations(Span span, Endpoint host) {
-    List<Annotation> annotations = new ArrayList<>();
+    List<Annotation> annotations = new ArrayList<Annotation>();
 
     if (span.isRPC()) {
       String startLabel = zipkincoreConstants.SERVER_RECV;
@@ -99,10 +101,10 @@ public class ThriftSpanConverter {
     if (!span.isRPC()) {
       byte[] componentName;
       if (span.getLocalComponent() != null) {
-        componentName = span.getLocalComponent().getBytes(StandardCharsets.UTF_8);
+        componentName = span.getLocalComponent().getBytes(UTF_8);
       } else {
         // spans always have associated tracers, and service names
-        componentName = span.getTracer().getServiceName().getBytes(StandardCharsets.UTF_8);
+        componentName = span.getTracer().getServiceName().getBytes(UTF_8);
       }
 
       binaryAnnotations.add(
@@ -133,9 +135,7 @@ public class ThriftSpanConverter {
       tagValue = stringTagValue.substring(0, Constants.MAX_TAG_LENGTH);
     }
 
-    banno
-        .setValue(stringTagValue.getBytes(StandardCharsets.UTF_8))
-        .setAnnotation_type(AnnotationType.STRING);
+    banno.setValue(stringTagValue.getBytes(UTF_8)).setAnnotation_type(AnnotationType.STRING);
 
     return banno;
   }

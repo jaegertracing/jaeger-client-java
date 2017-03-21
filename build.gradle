@@ -5,6 +5,7 @@ plugins {
     id 'com.github.sherter.google-java-format' version '0.3.2'
     id "com.github.johnrengelman.shadow" version "1.2.3"
     id "net.ltgt.errorprone" version "0.0.9"
+    id 'ru.vyarus.animalsniffer' version '1.2.0'
 }
 
 
@@ -31,10 +32,6 @@ allprojects {
         mavenCentral()
     }
 
-    repositories {
-        mavenCentral()
-    }
-
     task wrapper(type: Wrapper) {
         gradleVersion = '3.1.2' //version required
     }
@@ -42,13 +39,25 @@ allprojects {
 
 
 subprojects {
+    apply plugin: 'ru.vyarus.animalsniffer'
     apply plugin: 'com.github.hierynomus.license'
     apply plugin: 'java'
     apply plugin: 'maven'
     apply plugin: 'signing'
 
-    sourceCompatibility = 1.7
-    targetCompatibility = 1.7
+    compileJava {
+        sourceCompatibility = 1.6
+        targetCompatibility = 1.6
+    }
+
+    compileTestJava {
+        sourceCompatibility = 1.7
+        targetCompatibility = 1.7
+    }
+
+    animalsniffer {
+        sourceSets = [sourceSets.main]
+    }
 
     [compileJava, compileTestJava, javadoc]*.options*.encoding = 'UTF-8'
 
@@ -91,6 +100,7 @@ subprojects {
 
     dependencies {
         compileOnly 'org.projectlombok:lombok:1.16.12'
+        compileOnly 'org.codehaus.mojo:animal-sniffer-annotations:1.15'
     }
 
 }

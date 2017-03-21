@@ -25,14 +25,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class InMemoryStatsReporter implements StatsReporter {
-  public Map<String, Long> counters = new HashMap<>();
-  public Map<String, Long> gauges = new HashMap<>();
-  public Map<String, Long> timers = new HashMap<>();
+  public Map<String, Long> counters = new HashMap<String, Long>();
+  public Map<String, Long> gauges = new HashMap<String, Long>();
+  public Map<String, Long> timers = new HashMap<String, Long>();
 
   void reset() {
-    counters = new HashMap<>();
-    gauges = new HashMap<>();
-    timers = new HashMap<>();
+    counters = new HashMap<String, Long>();
+    gauges = new HashMap<String, Long>();
+    timers = new HashMap<String, Long>();
   }
 
   @Override

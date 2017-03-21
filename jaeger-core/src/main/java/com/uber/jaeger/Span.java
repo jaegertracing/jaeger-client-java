@@ -22,13 +22,14 @@
 package com.uber.jaeger;
 
 import com.twitter.zipkin.thriftjava.Endpoint;
-import io.opentracing.tag.Tags;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import io.opentracing.tag.Tags;
 
 public class Span implements io.opentracing.Span {
   private final Tracer tracer;
@@ -59,7 +60,7 @@ public class Span implements io.opentracing.Span {
     this.startTimeMicroseconds = startTimeMicroseconds;
     this.startTimeNanoTicks = startTimeNanoTicks;
     this.computeDurationViaNanoTicks = computeDurationViaNanoTicks;
-    this.tags = new HashMap<>();
+    this.tags = new HashMap<String, Object>();
 
     for (Map.Entry<String, Object> tag : tags.entrySet()) {
       setTagAsObject(tag.getKey(), tag.getValue());
@@ -205,6 +206,7 @@ public class Span implements io.opentracing.Span {
 
   /**
    * Sets various fields on the {@link Span} when certain {@link Tags} are encountered
+   *
    * @return true iff a special tag is handled
    */
   private boolean handleSpecialTag(String key, Object value) {
@@ -245,23 +247,23 @@ public class Span implements io.opentracing.Span {
    * See {@link #handleSpecialTag(String, Object)}
    */
   private Span setTagAsObject(String key, Object value) {
-      if (key.equals(Tags.SAMPLING_PRIORITY.getKey()) && (value instanceof Number)) {
-        int priority = ((Number) value).intValue();
-        byte newFlags;
-        if (priority > 0) {
-          newFlags = (byte) (context.getFlags() | SpanContext.flagSampled | SpanContext.flagDebug);
-        } else {
-          newFlags = (byte) (context.getFlags() & (~SpanContext.flagSampled));
-        }
-
-        context = context.withFlags(newFlags);
+    if (key.equals(Tags.SAMPLING_PRIORITY.getKey()) && (value instanceof Number)) {
+      int priority = ((Number) value).intValue();
+      byte newFlags;
+      if (priority > 0) {
+        newFlags = (byte) (context.getFlags() | SpanContext.flagSampled | SpanContext.flagDebug);
+      } else {
+        newFlags = (byte) (context.getFlags() & (~SpanContext.flagSampled));
       }
 
-      if (context.isSampled()) {
-        if (!handleSpecialTag(key, value)) {
-          tags.put(key, value);
-        }
+      context = context.withFlags(newFlags);
+    }
+
+    if (context.isSampled()) {
+      if (!handleSpecialTag(key, value)) {
+        tags.put(key, value);
       }
+    }
 
     return this;
   }

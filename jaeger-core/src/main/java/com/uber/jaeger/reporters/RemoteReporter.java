@@ -56,7 +56,7 @@ public class RemoteReporter implements Reporter {
     this.sender = sender;
     this.maxQueueSize = maxQueueSize;
     this.metrics = metrics;
-    commandQueue = new ArrayBlockingQueue<>(maxQueueSize);
+    commandQueue = new ArrayBlockingQueue<Command>(maxQueueSize);
 
     // start a thread to append spans
     queueProcessor = new QueueProcessor();

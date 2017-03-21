@@ -26,7 +26,6 @@ import com.uber.jaeger.exceptions.NotFourOctetsException;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.concurrent.ThreadLocalRandom;
 
 public class Utils {
   public static String normalizeBaggageKey(String key) {
@@ -59,8 +58,12 @@ public class Utils {
   public static long uniqueID() {
     long val = 0;
     while (val == 0) {
-      val = ThreadLocalRandom.current().nextLong();
+      val = Java6CompatibleThreadLocalRandom.current().nextLong();
     }
     return val;
+  }
+
+  public static boolean equals(Object a, Object b) {
+    return (a == b) || (a != null && a.equals(b));
   }
 }

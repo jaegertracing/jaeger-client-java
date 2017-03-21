@@ -65,7 +65,7 @@ public class UDPSender implements Sender {
     udpTransport = TUDPTransport.NewTUDPClient(host, port);
     udpClient = new Agent.Client(new TCompactProtocol(udpTransport));
     maxSpanBytes = maxPacketSize - emitZipkinBatchOverhead;
-    spanBuffer = new ArrayList<>();
+    spanBuffer = new ArrayList<Span>();
   }
 
   int getSizeOfSerializedSpan(Span span) throws SenderException {

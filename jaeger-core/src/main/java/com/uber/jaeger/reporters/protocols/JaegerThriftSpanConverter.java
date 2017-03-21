@@ -46,8 +46,7 @@ public class JaegerThriftSpanConverter {
             span.getOperationName(),
             context.getFlags(),
             span.getStart(),
-            span.getDuration()
-        )
+            span.getDuration())
         .setTags(buildTags(span.getTags()))
         .setLogs(buildLogs(span.getLogs()));
   }

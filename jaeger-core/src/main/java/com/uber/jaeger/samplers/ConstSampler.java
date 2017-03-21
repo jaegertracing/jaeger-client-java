@@ -39,7 +39,7 @@ public class ConstSampler implements Sampler {
 
   public ConstSampler(boolean decision) {
     this.decision = decision;
-    Map<String, Object> tags = new HashMap<>();
+    Map<String, Object> tags = new HashMap<String, Object>();
     tags.put(Constants.SAMPLER_TYPE_TAG_KEY, TYPE);
     tags.put(Constants.SAMPLER_PARAM_TAG_KEY, decision);
     this.tags = Collections.unmodifiableMap(tags);
