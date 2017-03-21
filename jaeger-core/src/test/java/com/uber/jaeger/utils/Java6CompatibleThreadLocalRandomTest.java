@@ -21,26 +21,57 @@
  */
 package com.uber.jaeger.utils;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
 
 public class Java6CompatibleThreadLocalRandomTest {
 
+    @After
+    @Before
+    public void clearState() throws Exception {
+        // As test classes are targeted at 1.7 and gradle 3.x can't be run with Java 6,
+        // its safe to say that this test won't ever be executed with JDK 6
+        Java6CompatibleThreadLocalRandom.threadLocalRandomPresent = true;
+    }
+
     @Test
-    public void testGetCurrentRandom() throws Exception {
-        if (System.getProperty("java.version").startsWith("1.6.")) {
-            assertFalse(Java6CompatibleThreadLocalRandom.THREAD_LOCAL_RANDOM_PRESENT);
-        } else {
-            assertTrue(Java6CompatibleThreadLocalRandom.THREAD_LOCAL_RANDOM_PRESENT);
-            assertSame(Java6CompatibleThreadLocalRandom.current(), ThreadLocalRandom.current());
-        }
+    public void testThreadLocalRandomPresent() throws Exception {
+        assertSame(Java6CompatibleThreadLocalRandom.current(), ThreadLocalRandom.current());
         assertNotNull(Java6CompatibleThreadLocalRandom.current().nextLong());
+    }
+
+    @Test
+    public void testThreadLocalRandomNotPresent() throws Exception {
+        Java6CompatibleThreadLocalRandom.threadLocalRandomPresent = false;
+        assertNotSame(Java6CompatibleThreadLocalRandom.current(), ThreadLocalRandom.current());
+        assertNotNull(Java6CompatibleThreadLocalRandom.current().nextLong());
+    }
+
+    @Test
+    public void testRandomFromOtherThreadIsNotSame() throws Exception {
+        Java6CompatibleThreadLocalRandom.threadLocalRandomPresent = false;
+        final AtomicReference<Random> randomFromOtherThread = new AtomicReference<>();
+        final Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                randomFromOtherThread.set(Java6CompatibleThreadLocalRandom.current());
+            }
+        });
+        thread.start();
+        thread.join();
+        assertNotSame(Java6CompatibleThreadLocalRandom.current(), randomFromOtherThread.get());
+        assertNotNull(Java6CompatibleThreadLocalRandom.current().nextLong());
+        assertNotNull(randomFromOtherThread.get());
+        assertNotNull(randomFromOtherThread.get().nextLong());
     }
 
 }

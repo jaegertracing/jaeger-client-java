@@ -28,19 +28,17 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public final class Java6CompatibleThreadLocalRandom {
 
-  static final boolean THREAD_LOCAL_RANDOM_PRESENT;
+  static boolean threadLocalRandomPresent = true;
 
   private static final String THREAD_LOCAL_RANDOM_CLASS_NAME =
       "java.util.concurrent.ThreadLocalRandom";
 
   static {
-    boolean present = true;
     try {
       Class.forName(THREAD_LOCAL_RANDOM_CLASS_NAME);
     } catch (ClassNotFoundException e) {
-      present = false;
+      threadLocalRandomPresent = false;
     }
-    THREAD_LOCAL_RANDOM_PRESENT = present;
   }
 
   private static final ThreadLocal<Random> threadLocal =
@@ -59,7 +57,7 @@ public final class Java6CompatibleThreadLocalRandom {
    */
   @IgnoreJRERequirement
   public static Random current() {
-    if (THREAD_LOCAL_RANDOM_PRESENT) {
+    if (threadLocalRandomPresent) {
       return ThreadLocalRandom.current();
     } else {
       return threadLocal.get();
