@@ -25,7 +25,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.opentracing.NoopTracer;
+import io.opentracing.NoopTracerFactory;
 import io.opentracing.Tracer;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -48,7 +48,7 @@ public class Configuration extends com.uber.jaeger.Configuration {
   @Override
   synchronized public Tracer getTracer() {
     if (disable) {
-      return NoopTracer.INSTANCE;
+      return NoopTracerFactory.create();
     }
     return super.getTracer();
   }
