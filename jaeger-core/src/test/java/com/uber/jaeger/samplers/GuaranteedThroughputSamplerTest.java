@@ -48,8 +48,8 @@ public class GuaranteedThroughputSamplerTest {
     Assert.assertTrue(samplingStatus.isSampled());
     Map<String, Object> tags = samplingStatus.getTags();
 
-    assertEquals(tags.get(Constants.SAMPLER_TYPE_TAG_KEY), RateLimitingSampler.TYPE);
-    assertEquals(tags.get(Constants.SAMPLER_PARAM_TAG_KEY), 1.0);
+    assertEquals(tags.get(Constants.SAMPLER_TYPE_TAG_KEY), GuaranteedThroughputSampler.TYPE);
+    assertEquals(tags.get(Constants.SAMPLER_PARAM_TAG_KEY), 0.0001);
   }
 
   @Test
