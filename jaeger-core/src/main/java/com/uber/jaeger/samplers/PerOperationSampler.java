@@ -76,7 +76,7 @@ public class PerOperationSampler implements Sampler {
       double samplingRate = strategy.getProbabilisticSampling().getSamplingRate();
       GuaranteedThroughputSampler sampler = operationNameToSampler.get(operation);
       if (sampler != null) {
-        isUpdated = isUpdated || sampler.update(samplingRate, lowerBound);
+        isUpdated = sampler.update(samplingRate, lowerBound) || isUpdated;
       } else {
         if (operationNameToSampler.size() < maxOperations) {
           sampler = new GuaranteedThroughputSampler(samplingRate, lowerBound);

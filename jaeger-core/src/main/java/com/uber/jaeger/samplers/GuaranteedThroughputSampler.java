@@ -54,8 +54,8 @@ public final class GuaranteedThroughputSampler implements Sampler {
     tags.put(Constants.SAMPLER_TYPE_TAG_KEY, TYPE);
     tags.put(Constants.SAMPLER_PARAM_TAG_KEY, samplingRate);
 
-    this.probabilisticSampler = new ProbabilisticSampler(samplingRate);
-    this.lowerBoundSampler = new RateLimitingSampler(lowerBound);
+    probabilisticSampler = new ProbabilisticSampler(samplingRate);
+    lowerBoundSampler = new RateLimitingSampler(lowerBound);
   }
 
   /**

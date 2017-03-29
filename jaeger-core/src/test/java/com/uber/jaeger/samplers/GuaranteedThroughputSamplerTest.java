@@ -22,6 +22,8 @@
 package com.uber.jaeger.samplers;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import com.uber.jaeger.Constants;
 import org.junit.Assert;
@@ -62,5 +64,28 @@ public class GuaranteedThroughputSamplerTest {
 
     assertEquals(tags.get(Constants.SAMPLER_TYPE_TAG_KEY), ProbabilisticSampler.TYPE);
     assertEquals(tags.get(Constants.SAMPLER_PARAM_TAG_KEY), 0.999);
+  }
+
+  @Test
+  public void testUpdate() {
+    undertest = new GuaranteedThroughputSampler(0.001, 1);
+
+    assertFalse(undertest.update(0.001, 1));
+    assertTrue(undertest.update(0.002, 1));
+    assertTrue(undertest.update(0.002, 2));
+
+    SamplingStatus samplingStatus = undertest.sample("test", Long.MAX_VALUE);
+    Assert.assertTrue(samplingStatus.isSampled());
+    Map<String, Object> tags = samplingStatus.getTags();
+
+    assertEquals(tags.get(Constants.SAMPLER_TYPE_TAG_KEY), GuaranteedThroughputSampler.TYPE);
+    assertEquals(tags.get(Constants.SAMPLER_PARAM_TAG_KEY), 0.002);
+
+    samplingStatus = undertest.sample("test", 0L);
+    Assert.assertTrue(samplingStatus.isSampled());
+    tags = samplingStatus.getTags();
+
+    assertEquals(tags.get(Constants.SAMPLER_TYPE_TAG_KEY), ProbabilisticSampler.TYPE);
+    assertEquals(tags.get(Constants.SAMPLER_PARAM_TAG_KEY), 0.002);
   }
 }
