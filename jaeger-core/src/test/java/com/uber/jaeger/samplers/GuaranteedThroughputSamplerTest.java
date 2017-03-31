@@ -67,12 +67,11 @@ public class GuaranteedThroughputSamplerTest {
   }
 
   @Test
-  public void testUpdate() {
+  public void testUpdate_probabilisticSampler() {
     undertest = new GuaranteedThroughputSampler(0.001, 1);
 
     assertFalse(undertest.update(0.001, 1));
     assertTrue(undertest.update(0.002, 1));
-    assertTrue(undertest.update(0.002, 2));
 
     SamplingStatus samplingStatus = undertest.sample("test", Long.MAX_VALUE);
     Assert.assertTrue(samplingStatus.isSampled());
@@ -80,12 +79,20 @@ public class GuaranteedThroughputSamplerTest {
 
     assertEquals(tags.get(Constants.SAMPLER_TYPE_TAG_KEY), GuaranteedThroughputSampler.TYPE);
     assertEquals(tags.get(Constants.SAMPLER_PARAM_TAG_KEY), 0.002);
+  }
 
-    samplingStatus = undertest.sample("test", 0L);
+  @Test
+  public void testUpdate_rateLimitingSampler() {
+    undertest = new GuaranteedThroughputSampler(0.001, 1);
+
+    assertFalse(undertest.update(0.001, 1));
+    assertTrue(undertest.update(0.001, 0));
+
+    SamplingStatus samplingStatus = undertest.sample("test", 0L);
     Assert.assertTrue(samplingStatus.isSampled());
-    tags = samplingStatus.getTags();
+    Map<String, Object> tags = samplingStatus.getTags();
 
     assertEquals(tags.get(Constants.SAMPLER_TYPE_TAG_KEY), ProbabilisticSampler.TYPE);
-    assertEquals(tags.get(Constants.SAMPLER_PARAM_TAG_KEY), 0.002);
+    assertEquals(tags.get(Constants.SAMPLER_PARAM_TAG_KEY), 0.001);
   }
 }

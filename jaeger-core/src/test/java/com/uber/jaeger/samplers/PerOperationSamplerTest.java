@@ -103,21 +103,21 @@ public class PerOperationSamplerTest {
 
   @Test
   public void testUpdate(){
-    GuaranteedThroughputSampler guaranteedThroughputSampler = new GuaranteedThroughputSampler(SAMPLING_RATE, DEFAULT_LOWER_BOUND_TRACES_PER_SECOND);
+    GuaranteedThroughputSampler guaranteedThroughputSampler = mock(GuaranteedThroughputSampler.class);
     operationToSamplers.put(OPERATION, guaranteedThroughputSampler);
 
     PerOperationSamplingParameters perOperationSamplingParameters =
-        new PerOperationSamplingParameters(OPERATION, new ProbabilisticSamplingStrategy(0.001));
+        new PerOperationSamplingParameters(OPERATION, new ProbabilisticSamplingStrategy(SAMPLING_RATE));
     List<PerOperationSamplingParameters> parametersList = new ArrayList<>();
     parametersList.add(perOperationSamplingParameters);
 
     OperationSamplingParameters parameters =
         new OperationSamplingParameters(DEFAULT_SAMPLING_PROBABILITY,
-                                        1.0, parametersList);
+            DEFAULT_LOWER_BOUND_TRACES_PER_SECOND, parametersList);
 
     assertTrue(undertest.update(parameters));
-    assertEquals(new GuaranteedThroughputSampler(0.001, 1.0),
-        undertest.getOperationNameToSampler().get(OPERATION));
+    verify(guaranteedThroughputSampler).update(SAMPLING_RATE, DEFAULT_LOWER_BOUND_TRACES_PER_SECOND);
+    verifyNoMoreInteractions(guaranteedThroughputSampler);
   }
 
   @Test
