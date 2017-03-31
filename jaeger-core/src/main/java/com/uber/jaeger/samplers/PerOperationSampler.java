@@ -56,7 +56,7 @@ public class PerOperationSampler implements Sampler {
   }
 
   /**
-   * Updates the probabilistic samplers for each operation
+   * Updates the GuaranteedThroughputSampler for each operation
    * @param strategies The parameters for operation sampling
    * @return true iff any samplers were updated
    */
@@ -74,20 +74,18 @@ public class PerOperationSampler implements Sampler {
     for (PerOperationSamplingParameters strategy : strategies.getPerOperationStrategies()) {
       String operation = strategy.getOperation();
       double samplingRate = strategy.getProbabilisticSampling().getSamplingRate();
-      GuaranteedThroughputSampler sampler = new GuaranteedThroughputSampler(samplingRate, lowerBound);
-      GuaranteedThroughputSampler oldSampler = operationNameToSampler.get(operation);
-
-      if (oldSampler == null) {
+      GuaranteedThroughputSampler sampler = operationNameToSampler.get(operation);
+      if (sampler != null) {
+        isUpdated = sampler.update(samplingRate, lowerBound) || isUpdated;
+      } else {
         if (operationNameToSampler.size() < maxOperations) {
+          sampler = new GuaranteedThroughputSampler(samplingRate, lowerBound);
           operationNameToSampler.put(operation, sampler);
           isUpdated = true;
         } else {
           log.info("Exceeded the maximum number of operations({}) for per operations sampling",
-                   maxOperations);
+              maxOperations);
         }
-      } else if (!sampler.equals(oldSampler)) {
-        operationNameToSampler.put(operation, sampler);
-        isUpdated = true;
       }
     }
     return isUpdated;
