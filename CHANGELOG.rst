@@ -1,6 +1,14 @@
 Changes by Version
 ==================
 
+0.18.0 (2017-04-13)
+-------------------
+
+- Add adaptive sampler
+- Run RemoteReporter's flush timer in daemon thread (https://github.com/uber/jaeger-client-java/pull/124)
+- Bump opentracingVersion to 0.21.0 (https://github.com/uber/jaeger-client-java/pull/137)
+- Add Java 6 compatibility (https://github.com/uber/jaeger-client-java/pull/132)
+
 0.17.0 (2016-12-02)
 -------------------
 
