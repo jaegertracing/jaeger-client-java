@@ -261,7 +261,7 @@ public class SpanTest {
   @Test
   public void testSpanDetectsEndpointTags() {
     int expectedIp = (127 << 24) | 1;
-    short expectedPort = 8080;
+    int expectedPort = 8080;
     String expectedServiceName = "some-peer-service";
     Span span = (Span) tracer.buildSpan("test-service-operation").start();
     Tags.PEER_HOST_IPV4.set(span, expectedIp);
