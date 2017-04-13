@@ -73,7 +73,7 @@ public class TracingRequestInterceptor implements HttpRequestInterceptor {
       if (httpContext instanceof HttpClientContext) {
         HttpHost host = ((HttpClientContext) httpContext).getTargetHost();
         Tags.PEER_HOSTNAME.set(clientSpan, host.getHostName());
-        Tags.PEER_PORT.set(clientSpan, (short) host.getPort());
+        Tags.PEER_PORT.set(clientSpan, host.getPort());
       }
 
       onSpanStarted(clientSpan, httpRequest, httpContext);
