@@ -55,12 +55,22 @@ public final class Java6CompatibleThreadLocalRandom {
    *
    * @return the current thread's {@link Random}
    */
-  @IgnoreJRERequirement
   public static Random current() {
     if (threadLocalRandomPresent) {
-      return ThreadLocalRandom.current();
+      return ThreadLocalRandomAccessor.getCurrentThreadLocalRandom();
     } else {
       return threadLocal.get();
+    }
+  }
+
+  /**
+   * This class prevents that {@link ThreadLocalRandom} gets loaded unless
+   * {@link #getCurrentThreadLocalRandom()} is called
+   */
+  private static class ThreadLocalRandomAccessor {
+    @IgnoreJRERequirement
+    private static Random getCurrentThreadLocalRandom() {
+      return ThreadLocalRandom.current();
     }
   }
 
