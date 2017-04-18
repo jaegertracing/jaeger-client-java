@@ -21,27 +21,29 @@
  */
 package com.uber.jaeger.senders;
 
-import com.uber.jaeger.Span;
-import com.uber.jaeger.SpanContext;
-import com.uber.jaeger.Tracer;
-import com.uber.jaeger.agent.thrift.Agent;
-import com.uber.jaeger.exceptions.SenderException;
-import com.uber.jaeger.metrics.InMemoryStatsReporter;
-import com.uber.jaeger.reporters.InMemoryReporter;
-import com.uber.jaeger.reporters.Reporter;
-import com.uber.jaeger.reporters.protocols.TestTServer;
-import com.uber.jaeger.reporters.protocols.ThriftSpanConverter;
-import com.uber.jaeger.samplers.ConstSampler;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.transport.AutoExpandingBufferWriteTransport;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
+import com.uber.jaeger.Span;
+import com.uber.jaeger.Tracer;
+import com.uber.jaeger.agent.thrift.Agent;
+import com.uber.jaeger.exceptions.SenderException;
+import com.uber.jaeger.metrics.InMemoryStatsReporter;
+import com.uber.jaeger.reporters.InMemoryReporter;
+import com.uber.jaeger.reporters.Reporter;
+import com.uber.jaeger.reporters.protocols.JaegerThriftSpanConverter;
+import com.uber.jaeger.reporters.protocols.TestTServer;
+import com.uber.jaeger.reporters.protocols.ThriftSpanConverter;
+import com.uber.jaeger.samplers.ConstSampler;
 
 public class UDPSenderTest {
   final String destHost = "localhost";
@@ -85,7 +87,7 @@ public class UDPSenderTest {
     reporter.close();
   }
 
-  @Test(expected = SenderException.class)
+  @Test
   public void testAppendSpanTooLarge() throws Exception {
     Span jaegerSpan = (Span) tracer.buildSpan("raza").start();
     String msg = "";
@@ -94,7 +96,7 @@ public class UDPSenderTest {
     }
 
     jaegerSpan.log(msg, new Object());
-    com.twitter.zipkin.thriftjava.Span span = ThriftSpanConverter.convertSpan(jaegerSpan);
+    com.uber.jaeger.thriftjava.Span span = JaegerThriftSpanConverter.convertSpan(jaegerSpan);
     try {
       sender.append(span);
     } catch (SenderException e) {
@@ -108,8 +110,8 @@ public class UDPSenderTest {
     // find size of the initial span
     AutoExpandingBufferWriteTransport memoryTransport =
         new AutoExpandingBufferWriteTransport(maxPacketSize, 2);
-    com.twitter.zipkin.thriftjava.Span span =
-        ThriftSpanConverter.convertSpan((Span) tracer.buildSpan("raza").start());
+    com.uber.jaeger.thriftjava.Span span =
+            JaegerThriftSpanConverter.convertSpan((Span) tracer.buildSpan("raza").start());
     span.write(new TCompactProtocol(memoryTransport));
     int spanSize = memoryTransport.getPos();
 
@@ -137,22 +139,20 @@ public class UDPSenderTest {
     int timeout = 50; // in milliseconds
     int expectedNumSpans = 1;
     Span expectedSpan = (Span) tracer.buildSpan("raza").start();
-    com.twitter.zipkin.thriftjava.Span span = ThriftSpanConverter.convertSpan(expectedSpan);
-    int appendNum = sender.append(span);
+    int appendNum = sender.append(JaegerThriftSpanConverter.convertSpan(expectedSpan));
     int flushNum = sender.flush();
     assertEquals(appendNum, 0);
     assertEquals(flushNum, 1);
 
-    List<com.twitter.zipkin.thriftjava.Span> spans = server.getSpans(expectedNumSpans, timeout);
+    List<com.uber.jaeger.thriftjava.Span> spans = server.getSpans(expectedNumSpans, timeout);
     assertEquals(spans.size(), expectedNumSpans);
 
-    com.twitter.zipkin.thriftjava.Span actualSpan = spans.get(0);
-    SpanContext context = expectedSpan.context();
-
-    assertEquals(context.getTraceID(), actualSpan.getTrace_id());
-    assertEquals(context.getSpanID(), actualSpan.getId());
-    assertEquals(context.getParentID(), actualSpan.getParent_id());
-    assertEquals(expectedSpan.getOperationName(), actualSpan.getName());
+    com.uber.jaeger.thriftjava.Span actualSpan = spans.get(0);
+    assertEquals(expectedSpan.context().getTraceID(), actualSpan.getTraceIdLow());
+    assertEquals(expectedSpan.context().getSpanID(), actualSpan.getSpanId());
+    assertEquals(0, actualSpan.getParentSpanId());
+    assertTrue(actualSpan.references.isEmpty());
+    assertEquals(expectedSpan.getOperationName(), actualSpan.getOperationName());
   }
 
   @Test

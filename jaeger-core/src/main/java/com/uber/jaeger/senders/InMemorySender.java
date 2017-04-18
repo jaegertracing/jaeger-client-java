@@ -21,11 +21,12 @@
  */
 package com.uber.jaeger.senders;
 
-import com.twitter.zipkin.thriftjava.Span;
-import com.uber.jaeger.exceptions.SenderException;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import com.uber.jaeger.exceptions.SenderException;
+import com.uber.jaeger.thriftjava.Span;
+
 import lombok.ToString;
 
 @ToString

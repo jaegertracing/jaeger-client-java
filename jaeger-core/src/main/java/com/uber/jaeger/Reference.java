@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Uber Technologies, Inc
+ * Copyright (c) 2017, Uber Technologies, Inc
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,15 +19,26 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.uber.jaeger.senders;
+package com.uber.jaeger;
 
-import com.uber.jaeger.thriftjava.Span;
-import com.uber.jaeger.exceptions.SenderException;
+/**
+ * @author Pavol Loffay
+ */
+public class Reference {
 
-public interface Sender {
-  int append(Span span) throws SenderException;
+    private final SpanContext spanContext;
+    private final String type;
 
-  int flush() throws SenderException;
+    public Reference(SpanContext spanContext, String type) {
+        this.spanContext = spanContext;
+        this.type = type;
+    }
 
-  int close() throws SenderException;
+    public SpanContext referencedContext() {
+        return spanContext;
+    }
+
+    public String getType() {
+        return type;
+    }
 }

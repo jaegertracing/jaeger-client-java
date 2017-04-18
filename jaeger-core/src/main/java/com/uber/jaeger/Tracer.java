@@ -21,6 +21,17 @@
  */
 package com.uber.jaeger;
 
+import java.io.InputStream;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+
 import com.uber.jaeger.exceptions.UnsupportedFormatException;
 import com.uber.jaeger.metrics.Metrics;
 import com.uber.jaeger.metrics.NullStatsReporter;
@@ -35,15 +46,6 @@ import com.uber.jaeger.samplers.SamplingStatus;
 import com.uber.jaeger.utils.Clock;
 import com.uber.jaeger.utils.SystemClock;
 import com.uber.jaeger.utils.Utils;
-
-import java.io.InputStream;
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
 
 import io.opentracing.References;
 import io.opentracing.propagation.Format;
@@ -163,8 +165,9 @@ public class Tracer implements io.opentracing.Tracer {
 
     private String operationName = null;
     private long startTimeMicroseconds;
-    private SpanContext parent;
+    private List<Reference> references = new ArrayList<Reference>();
     private final Map<String, Object> tags = new HashMap<String, Object>();
+    private final Map<String, String> baggage = new HashMap<String, String>();
 
     SpanBuilder(String operationName) {
       this.operationName = operationName;
@@ -172,10 +175,7 @@ public class Tracer implements io.opentracing.Tracer {
 
     @Override
     public Iterable<Map.Entry<String, String>> baggageItems() {
-      if (parent == null) {
-        return Collections.emptyList();
-      }
-      return parent.baggageItems();
+      return baggage.entrySet();
     }
 
     @Override
@@ -191,11 +191,13 @@ public class Tracer implements io.opentracing.Tracer {
     @Override
     public io.opentracing.Tracer.SpanBuilder addReference(
         String referenceType, io.opentracing.SpanContext referencedContext) {
-      if (parent == null
-          && (Utils.equals(referenceType, References.CHILD_OF)
-              || Utils.equals(referenceType, References.FOLLOWS_FROM))) {
-        this.parent = (SpanContext) referencedContext;
+      if (referencedContext instanceof SpanContext &&
+              (Utils.equals(referenceType, References.CHILD_OF)
+                      || Utils.equals(referenceType, References .FOLLOWS_FROM))) {
+        this.references.add(new Reference((SpanContext) referencedContext, referenceType));
+        this.baggage.putAll(((SpanContext)referencedContext).baggage());
       }
+
       return this;
     }
 
@@ -246,22 +248,21 @@ public class Tracer implements io.opentracing.Tracer {
       return new SpanContext(id, id, 0, flags);
     }
 
-    private SpanContext createChildContext() {
+    private SpanContext createChildContext(SpanContext preferredParent) {
       // For server-side RPC spans we reuse spanID per Zipkin convention
       if (isRPCServer()) {
-        if (parent.isSampled()) {
+        if (preferredParent.isSampled()) {
           metrics.tracesJoinedSampled.inc(1);
         } else {
           metrics.tracesJoinedNotSampled.inc(1);
         }
-        return parent;
       }
       return new SpanContext(
-          parent.getTraceID(),
+          preferredParent.getTraceID(),
           Utils.uniqueID(),
-          parent.getSpanID(),
-          parent.getFlags(),
-          parent.baggage(),
+          preferredParent.getSpanID(),
+          preferredParent.getFlags(),
+          preferredParent.baggage(),
           null);
     }
 
@@ -272,13 +273,23 @@ public class Tracer implements io.opentracing.Tracer {
 
     @Override
     public io.opentracing.Span start() {
+      // find preferredParent, it is first childOf
+      Reference preferredParent = references.isEmpty() ? null : references.get(0);
+      for (Reference reference: references) {
+        if (References.CHILD_OF.equals(reference.getType()) &&
+                References.FOLLOWS_FROM.equals(preferredParent.getType())) {
+          preferredParent = reference;
+          break;
+        }
+      }
+
       SpanContext context;
-      if (parent == null) {
+      if (preferredParent == null) {
         context = createNewContext(null);
-      } else if (parent.isDebugIDContainerOnly()) {
-        context = createNewContext(parent.getDebugID());
+      } else if (preferredParent.referencedContext().isDebugIDContainerOnly()) {
+        context = createNewContext(preferredParent.referencedContext().getDebugID());
       } else {
-        context = createChildContext();
+        context = createChildContext(preferredParent.referencedContext());
       }
 
       long startTimeNanoTicks = 0;
@@ -292,7 +303,7 @@ public class Tracer implements io.opentracing.Tracer {
         }
       }
 
-      if (parent == null || isRPCServer()) {
+      if (preferredParent == null || isRPCServer()) {
         // add tracer tags only to first span in the process
         tags.putAll(Tracer.this.tags);
       }
@@ -305,7 +316,8 @@ public class Tracer implements io.opentracing.Tracer {
               startTimeMicroseconds,
               startTimeNanoTicks,
               computeDurationViaNanoTicks,
-              tags);
+              tags,
+              references);
       if (context.isSampled()) {
         metrics.spansSampled.inc(1);
       } else {

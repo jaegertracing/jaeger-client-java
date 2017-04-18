@@ -21,32 +21,43 @@
  */
 package com.uber.jaeger.reporters.protocols;
 
-import com.twitter.zipkin.thriftjava.Span;
-import com.uber.jaeger.agent.thrift.Agent;
-import com.uber.jaeger.thriftjava.Batch;
-import org.apache.thrift.TException;
-
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.thrift.TException;
+
+import com.twitter.zipkin.thriftjava.Span;
+import com.uber.jaeger.agent.thrift.Agent;
+import com.uber.jaeger.thriftjava.Batch;
+
 class InMemorySpanServerHandler implements Agent.Iface {
-  private List<Span> spans;
+  private List<Span> zipkinSpans;
+  private List<com.uber.jaeger.thriftjava.Span> spans;
 
   @Override
   public void emitZipkinBatch(List<Span> spans) throws TException {
     synchronized (this) {
-      this.spans = spans;
+      this.zipkinSpans = spans;
     }
   }
 
   @Override
   public void emitBatch(Batch batch) throws TException {
     synchronized (this) {
-      // TODO convert spans
+      this.spans = batch.getSpans();
     }
   }
 
-  public List<Span> getSpans() {
+  public List<Span> getZipkinSpans() {
+    synchronized (this) {
+      if (zipkinSpans != null) {
+        return new ArrayList<>(zipkinSpans);
+      }
+      return new ArrayList<>();
+    }
+  }
+
+  public List<com.uber.jaeger.thriftjava.Span> getSpans() {
     synchronized (this) {
       if (spans != null) {
         return new ArrayList<>(spans);

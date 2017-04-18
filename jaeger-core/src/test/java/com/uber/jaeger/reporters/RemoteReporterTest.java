@@ -21,6 +21,15 @@
  */
 package com.uber.jaeger.reporters;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import java.util.List;
+
+import org.junit.Before;
+import org.junit.Test;
+
 import com.uber.jaeger.Span;
 import com.uber.jaeger.Tracer;
 import com.uber.jaeger.metrics.InMemoryStatsReporter;
@@ -28,14 +37,6 @@ import com.uber.jaeger.metrics.Metrics;
 import com.uber.jaeger.metrics.StatsFactoryImpl;
 import com.uber.jaeger.samplers.ConstSampler;
 import com.uber.jaeger.senders.InMemorySender;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 public class RemoteReporterTest {
   private Reporter reporter;
@@ -64,7 +65,7 @@ public class RemoteReporterTest {
     Span span = (Span) tracer.buildSpan("raza").start();
     reporter.report(span);
     Thread.sleep(5);
-    List<com.twitter.zipkin.thriftjava.Span> received = sender.getReceived();
+    List<com.uber.jaeger.thriftjava.Span> received = sender.getReceived();
 
     assertEquals(received.size(), 1);
   }

@@ -21,13 +21,13 @@
  */
 package com.uber.jaeger;
 
-import com.twitter.zipkin.thriftjava.Endpoint;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.twitter.zipkin.thriftjava.Endpoint;
 
 import io.opentracing.tag.Tags;
 
@@ -39,6 +39,7 @@ public class Span implements io.opentracing.Span {
   private final Map<String, Object> tags;
   private long durationMicroseconds; // span durationMicroseconds
   private String operationName;
+  private List<Reference> references;
   private SpanContext context;
   private Endpoint peer;
   private List<LogData> logs;
@@ -53,7 +54,8 @@ public class Span implements io.opentracing.Span {
       long startTimeMicroseconds,
       long startTimeNanoTicks,
       boolean computeDurationViaNanoTicks,
-      Map<String, Object> tags) {
+      Map<String, Object> tags,
+      List<Reference> references) {
     this.tracer = tracer;
     this.operationName = operationName;
     this.context = context;
@@ -61,6 +63,7 @@ public class Span implements io.opentracing.Span {
     this.startTimeNanoTicks = startTimeNanoTicks;
     this.computeDurationViaNanoTicks = computeDurationViaNanoTicks;
     this.tags = new HashMap<String, Object>();
+    this.references = references;
 
     for (Map.Entry<String, Object> tag : tags.entrySet()) {
       setTagAsObject(tag.getKey(), tag.getValue());
@@ -97,6 +100,12 @@ public class Span implements io.opentracing.Span {
         peer = new Endpoint(0, (short) 0, "");
       }
       return peer;
+    }
+  }
+
+  public List<Reference> getReferences() {
+    synchronized (this) {
+      return Collections.unmodifiableList(references);
     }
   }
 

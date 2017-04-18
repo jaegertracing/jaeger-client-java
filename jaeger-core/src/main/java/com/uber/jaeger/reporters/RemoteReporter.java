@@ -21,16 +21,17 @@
  */
 package com.uber.jaeger.reporters;
 
-import com.uber.jaeger.Span;
-import com.uber.jaeger.exceptions.SenderException;
-import com.uber.jaeger.metrics.Metrics;
-import com.uber.jaeger.reporters.protocols.ThriftSpanConverter;
-import com.uber.jaeger.senders.Sender;
-
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+
+import com.uber.jaeger.Span;
+import com.uber.jaeger.exceptions.SenderException;
+import com.uber.jaeger.metrics.Metrics;
+import com.uber.jaeger.reporters.protocols.JaegerThriftSpanConverter;
+import com.uber.jaeger.senders.Sender;
+
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
@@ -84,7 +85,7 @@ public class RemoteReporter implements Reporter {
       return;
     }
 
-    commandQueue.add(new AppendCommand(ThriftSpanConverter.convertSpan(span)));
+    commandQueue.add(new AppendCommand(JaegerThriftSpanConverter.convertSpan(span)));
   }
 
   @Override
@@ -117,9 +118,9 @@ public class RemoteReporter implements Reporter {
   }
 
   class AppendCommand implements Command {
-    private final com.twitter.zipkin.thriftjava.Span span;
+    private final com.uber.jaeger.thriftjava.Span span;
 
-    public AppendCommand(com.twitter.zipkin.thriftjava.Span span) {
+    public AppendCommand(com.uber.jaeger.thriftjava.Span span) {
       this.span = span;
     }
 

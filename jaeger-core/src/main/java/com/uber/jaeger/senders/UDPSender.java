@@ -21,23 +21,28 @@
  */
 package com.uber.jaeger.senders;
 
-import com.twitter.zipkin.thriftjava.Span;
-import com.uber.jaeger.agent.thrift.Agent;
-import com.uber.jaeger.exceptions.SenderException;
-import com.uber.jaeger.reporters.protocols.TUDPTransport;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.thrift.TException;
+import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.transport.AutoExpandingBufferWriteTransport;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.uber.jaeger.agent.thrift.Agent;
+import com.uber.jaeger.exceptions.SenderException;
+import com.uber.jaeger.reporters.protocols.TUDPTransport;
+import com.uber.jaeger.thriftjava.Batch;
+import com.uber.jaeger.thriftjava.Process;
+import com.uber.jaeger.thriftjava.Span;
+
 import lombok.ToString;
 
 @ToString(exclude = {"spanBuffer", "udpClient", "memoryTransport"})
 public class UDPSender implements Sender {
   final static int emitZipkinBatchOverhead = 22;
   private static final String defaultUDPSpanServerHost = "localhost";
-  private static final int defaultUDPSpanServerPort = 5775;
+  private static final int defaultUDPSpanServerPort = 6832;
   private static final int defaultUDPPacketSize = 65000;
 
   private int maxSpanBytes;
@@ -63,7 +68,7 @@ public class UDPSender implements Sender {
     memoryTransport = new AutoExpandingBufferWriteTransport(maxPacketSize, 2);
 
     udpTransport = TUDPTransport.NewTUDPClient(host, port);
-    udpClient = new Agent.Client(new TCompactProtocol(udpTransport));
+    udpClient = new Agent.Client(new TBinaryProtocol(udpTransport));
     maxSpanBytes = maxPacketSize - emitZipkinBatchOverhead;
     spanBuffer = new ArrayList<Span>();
   }
@@ -120,7 +125,9 @@ public class UDPSender implements Sender {
 
     int n = spanBuffer.size();
     try {
-      udpClient.emitZipkinBatch(spanBuffer);
+      Process process = new Process();
+      process.setServiceName("jaeger-core");
+      udpClient.emitBatch(new Batch(process,spanBuffer));
     } catch (TException e) {
       throw new SenderException("Failed to flush spans.", e, n);
     } finally {
