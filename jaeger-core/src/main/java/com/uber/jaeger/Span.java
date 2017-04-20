@@ -43,7 +43,6 @@ public class Span implements io.opentracing.Span {
   private SpanContext context;
   private Endpoint peer;
   private List<LogData> logs;
-  private String localComponent; // todo remove
   private boolean isClient;
   private boolean isRPC;
 
@@ -68,10 +67,6 @@ public class Span implements io.opentracing.Span {
     for (Map.Entry<String, Object> tag : tags.entrySet()) {
       setTagAsObject(tag.getKey(), tag.getValue());
     }
-  }
-
-  public String getLocalComponent() {
-    return localComponent;
   }
 
   public long getStart() {
@@ -220,11 +215,6 @@ public class Span implements io.opentracing.Span {
    */
   private boolean handleSpecialTag(String key, Object value) {
     // TODO use a map of handlers for special tags, instead of if/then
-    if (key.equals(Tags.COMPONENT.getKey()) && value instanceof String) {
-      localComponent = (String) value;
-      return false;
-    }
-
     if (key.equals(Tags.PEER_HOST_IPV4.getKey()) && value instanceof Integer) {
       getOrMakePeer().setIpv4((Integer) value);
       return true;

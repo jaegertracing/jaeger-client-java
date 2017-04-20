@@ -38,6 +38,8 @@ import com.uber.jaeger.Span;
 import com.uber.jaeger.SpanContext;
 import com.uber.jaeger.Tracer;
 
+import io.opentracing.tag.Tags;
+
 public class ThriftSpanConverter {
 
   private static final Charset UTF_8 = Charset.forName("UTF-8");
@@ -126,8 +128,9 @@ public class ThriftSpanConverter {
 
     if (!span.isRPC()) {
       byte[] componentName;
-      if (span.getLocalComponent() != null) {
-        componentName = span.getLocalComponent().getBytes(UTF_8);
+      Object componentTag = span.getTags().get(Tags.COMPONENT.getKey());
+      if (componentTag instanceof String) {
+        componentName = componentTag.toString().getBytes();
       } else {
         // spans always have associated tracers, and service names
         componentName = span.getTracer().getServiceName().getBytes(UTF_8);

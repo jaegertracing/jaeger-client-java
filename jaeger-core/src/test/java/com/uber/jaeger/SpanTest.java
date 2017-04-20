@@ -22,22 +22,24 @@
 package com.uber.jaeger;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.junit.Before;
+import org.junit.Test;
 
 import com.uber.jaeger.metrics.InMemoryStatsReporter;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
 import com.uber.jaeger.utils.Clock;
-import io.opentracing.tag.Tags;
-import org.junit.Before;
-import org.junit.Test;
 
-import java.util.HashMap;
-import java.util.Map;
+import io.opentracing.tag.Tags;
 
 public class SpanTest {
   private Clock clock;
@@ -271,15 +273,6 @@ public class SpanTest {
     assertEquals(expectedIp, span.getPeer().getIpv4());
     assertEquals(expectedPort, span.getPeer().getPort());
     assertEquals(expectedServiceName, span.getPeer().getService_name());
-  }
-
-  @Test
-  public void testSpanDetectsLocalComponent() {
-    String expectedComponentName = "some-lc-name";
-    Span span = (Span) tracer.buildSpan("test-service-operation").start();
-    Tags.COMPONENT.set(span, expectedComponentName);
-
-    assertEquals(expectedComponentName, span.getLocalComponent());
   }
 
   @Test
