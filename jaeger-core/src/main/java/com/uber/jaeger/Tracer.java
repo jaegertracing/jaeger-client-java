@@ -66,6 +66,7 @@ public class Tracer implements io.opentracing.Tracer {
   private final Metrics metrics;
   private final int ip;
   private final Map<String, Object> tags;
+  private final boolean sharedRPCSpan;
 
   private Tracer(
       String serviceName,
@@ -74,13 +75,15 @@ public class Tracer implements io.opentracing.Tracer {
       PropagationRegistry registry,
       Clock clock,
       Metrics metrics,
-      Map<String, Object> tags) {
+      Map<String, Object> tags,
+      boolean sharedRPCSpan) {
     this.serviceName = serviceName;
     this.reporter = reporter;
     this.sampler = sampler;
     this.registry = registry;
     this.clock = clock;
     this.metrics = metrics;
+    this.sharedRPCSpan = sharedRPCSpan;
 
     int ip;
     try {
@@ -249,12 +252,16 @@ public class Tracer implements io.opentracing.Tracer {
     }
 
     private SpanContext createChildContext(SpanContext preferredParent) {
-      // For server-side RPC spans we reuse spanID per Zipkin convention
       if (isRPCServer()) {
         if (preferredParent.isSampled()) {
           metrics.tracesJoinedSampled.inc(1);
         } else {
           metrics.tracesJoinedNotSampled.inc(1);
+        }
+
+        // Zipkin server compatibility
+        if (sharedRPCSpan) {
+          return preferredParent;
         }
       }
       return new SpanContext(
@@ -339,6 +346,7 @@ public class Tracer implements io.opentracing.Tracer {
     private String serviceName;
     private Clock clock = new SystemClock();
     private Map<String, Object> tags = new HashMap<String, Object>();
+    private boolean sharedRPCSpan;
 
     public Builder(String serviceName, Reporter reporter, Sampler sampler) {
       if (serviceName == null || serviceName.trim().length() == 0) {
@@ -378,6 +386,11 @@ public class Tracer implements io.opentracing.Tracer {
       return this;
     }
 
+    public Builder withSharedRPCSpan() {
+      sharedRPCSpan = true;
+      return this;
+    }
+
     Builder withMetrics(Metrics metrics) {
       this.metrics = metrics;
       return this;
@@ -399,7 +412,7 @@ public class Tracer implements io.opentracing.Tracer {
     }
 
     public Tracer build() {
-      return new Tracer(this.serviceName, reporter, sampler, registry, clock, metrics, tags);
+      return new Tracer(this.serviceName, reporter, sampler, registry, clock, metrics, tags, sharedRPCSpan);
     }
   }
 

@@ -27,7 +27,9 @@ import static org.junit.Assert.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -35,10 +37,15 @@ import org.junit.Test;
 import com.twitter.zipkin.thriftjava.Annotation;
 import com.twitter.zipkin.thriftjava.zipkincoreConstants;
 import com.uber.jaeger.Span;
+import com.uber.jaeger.SpanContext;
 import com.uber.jaeger.Tracer;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
 
+import io.opentracing.propagation.Format;
+import io.opentracing.propagation.TextMap;
+import io.opentracing.propagation.TextMapExtractAdapter;
+import io.opentracing.propagation.TextMapInjectAdapter;
 import io.opentracing.tag.Tags;
 
 public class ThriftSpanConverterTest {
@@ -48,6 +55,7 @@ public class ThriftSpanConverterTest {
   public void setUp() {
     tracer =
         new Tracer.Builder("test-service-name", new InMemoryReporter(), new ConstSampler(true))
+                .withSharedRPCSpan()
             .build();
   }
 
@@ -143,4 +151,28 @@ public class ThriftSpanConverterTest {
     assertTrue(ThriftSpanConverter.isRPC(span));
     assertFalse(ThriftSpanConverter.isRPCClient(span));
   }
+
+   @Test
+  public void testRPCChildSpanHasTheSameID() {
+    String expectedOperation = "parent";
+     Span client = (Span) tracer.buildSpan(expectedOperation)
+             .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT)
+             .start();
+
+     Map<String, String> map = new HashMap<>();
+     TextMap carrier = new TextMapInjectAdapter(map);
+     tracer.inject(client.context(), Format.Builtin.TEXT_MAP, carrier);
+
+     carrier = new TextMapExtractAdapter(map);
+     SpanContext ctx = (SpanContext) tracer.extract(Format.Builtin.TEXT_MAP, carrier);
+     assertEquals(client.context().getSpanID(), ctx.getSpanID());
+
+     Span server = (Span)tracer.buildSpan("child")
+             .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
+             .asChildOf(ctx)
+             .start();
+
+     assertEquals("client and server must have the same span ID",
+             client.context().getSpanID(), server.context().getSpanID());
+   }
 }
