@@ -23,7 +23,6 @@ package com.uber.jaeger.reporters.protocols;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -79,32 +78,7 @@ public class ThriftSpanConverter {
     List<LogData> logs = span.getLogs();
     if (logs != null) {
       for (LogData logData : logs) {
-        // skip if log is empty
-        if (logData.getMessage() == null && logData.getPayload() == null &&
-                (logData.getFields() == null || logData.getFields().isEmpty())) {
-          continue;
-        }
-
-        String value = logData.getMessage();
-        if (logData.getPayload() != null) {
-          value = logData.getPayload().toString();
-        } else if (logData.getFields() != null && !logData.getFields().isEmpty()) {
-          // special-case the "event" field which is similar to the semantics of a zipkin annotation
-          Object event = logData.getFields().get("event");
-          if (event != null && logData.getFields().size() == 1) {
-            value  = event.toString();
-          } else {
-            StringBuilder result = new StringBuilder();
-            for (Iterator<? extends Map.Entry<String, ?>> i = logData.getFields().entrySet().iterator(); i.hasNext(); ) {
-              Map.Entry<String, ?> next = i.next();
-              result.append(next.getKey()).append('=').append(next.getValue());
-              if (i.hasNext()) result.append(' ');
-            }
-            value = result.toString();
-          }
-        }
-
-        annotations.add(new Annotation(logData.getTime(), value));
+        annotations.add(new Annotation(logData.getTime(), logData.getMessage()));
       }
     }
 
