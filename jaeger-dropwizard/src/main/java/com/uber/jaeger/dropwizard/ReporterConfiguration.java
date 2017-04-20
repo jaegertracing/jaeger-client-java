@@ -33,7 +33,8 @@ public class ReporterConfiguration extends Configuration.ReporterConfiguration {
       @JsonProperty("agentHost") String agentHost,
       @JsonProperty("agentPort") Integer agentPort,
       @JsonProperty("flushIntervalMs") Integer flushIntervalMs,
-      @JsonProperty("maxQueueSize") Integer maxQueueSize) {
-    super(logSpans, agentHost, agentPort, flushIntervalMs, maxQueueSize);
+      @JsonProperty("maxQueueSize") Integer maxQueueSize,
+      @JsonProperty("serviceName") String serviceName) {
+    super(logSpans, agentHost, agentPort, flushIntervalMs, maxQueueSize, serviceName);
   }
 }

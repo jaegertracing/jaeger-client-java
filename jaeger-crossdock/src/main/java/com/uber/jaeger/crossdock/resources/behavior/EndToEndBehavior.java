@@ -21,6 +21,9 @@
  */
 package com.uber.jaeger.crossdock.resources.behavior;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.uber.jaeger.crossdock.api.CreateTracesRequest;
 import com.uber.jaeger.metrics.Metrics;
 import com.uber.jaeger.metrics.NullStatsReporter;
@@ -28,13 +31,15 @@ import com.uber.jaeger.metrics.StatsFactory;
 import com.uber.jaeger.metrics.StatsFactoryImpl;
 import com.uber.jaeger.reporters.RemoteReporter;
 import com.uber.jaeger.reporters.Reporter;
-import com.uber.jaeger.samplers.*;
+import com.uber.jaeger.samplers.ConstSampler;
+import com.uber.jaeger.samplers.HTTPSamplingManager;
+import com.uber.jaeger.samplers.ProbabilisticSampler;
+import com.uber.jaeger.samplers.RemoteControlledSampler;
+import com.uber.jaeger.samplers.Sampler;
 import com.uber.jaeger.senders.UDPSender;
+
 import io.opentracing.Span;
 import io.opentracing.Tracer;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class EndToEndBehavior {
   private static final String SERVICE_NAME = "crossdock-java";
@@ -56,7 +61,7 @@ public class EndToEndBehavior {
   }
 
   private Reporter getReporter(Metrics metrics) {
-    UDPSender sender = new UDPSender(host, 5775, 0);
+    UDPSender sender = new UDPSender(host, 5775, 0, SERVICE_NAME);
     return new RemoteReporter(sender, 1000, 100, metrics);
   }
 

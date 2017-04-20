@@ -262,7 +262,7 @@ public class Tracer implements io.opentracing.Tracer {
           Utils.uniqueID(),
           preferredParent.getSpanID(),
           preferredParent.getFlags(),
-          preferredParent.baggage(),
+          this.baggage,
           null);
     }
 

@@ -40,7 +40,7 @@ import lombok.ToString;
 
 @ToString(exclude = {"spanBuffer", "udpClient", "memoryTransport"})
 public class UDPSender implements Sender {
-  final static int emitZipkinBatchOverhead = 22;
+  final static int emitBatchOverhead = 22;
   private static final String defaultUDPSpanServerHost = "localhost";
   private static final int defaultUDPSpanServerPort = 6832;
   private static final int defaultUDPPacketSize = 65000;
@@ -51,8 +51,9 @@ public class UDPSender implements Sender {
   private int byteBufferSize;
   private AutoExpandingBufferWriteTransport memoryTransport;
   private TUDPTransport udpTransport;
+  private Process process;
 
-  public UDPSender(String host, int port, int maxPacketSize) {
+  public UDPSender(String host, int port, int maxPacketSize, String serviceName) {
     if (host == null || host.length() == 0) {
       host = defaultUDPSpanServerHost;
     }
@@ -69,8 +70,9 @@ public class UDPSender implements Sender {
 
     udpTransport = TUDPTransport.NewTUDPClient(host, port);
     udpClient = new Agent.Client(new TBinaryProtocol(udpTransport));
-    maxSpanBytes = maxPacketSize - emitZipkinBatchOverhead;
+    maxSpanBytes = maxPacketSize - emitBatchOverhead;
     spanBuffer = new ArrayList<Span>();
+    this.process = new Process(serviceName);
   }
 
   int getSizeOfSerializedSpan(Span span) throws SenderException {
@@ -125,9 +127,7 @@ public class UDPSender implements Sender {
 
     int n = spanBuffer.size();
     try {
-      Process process = new Process();
-      process.setServiceName("jaeger-core");
-      udpClient.emitBatch(new Batch(process,spanBuffer));
+      udpClient.emitBatch(new Batch(process, spanBuffer));
     } catch (TException e) {
       throw new SenderException("Failed to flush spans.", e, n);
     } finally {

@@ -76,7 +76,7 @@ public class UDPSenderTest {
         new Tracer.Builder("test-sender", reporter, new ConstSampler(true))
             .withStatsReporter(new InMemoryStatsReporter())
             .build();
-    sender = new UDPSender(destHost, destPort, maxPacketSize);
+    sender = new UDPSender(destHost, destPort, maxPacketSize, "undefined");
     converter = new ThriftSpanConverter();
   }
 
@@ -118,10 +118,10 @@ public class UDPSenderTest {
     // create a sender thats a multiple of the span size (accounting for span overhead)
     // this allows us to test the boundary conditions of writing spans.
     int expectedNumSpans = 11;
-    int maxPacketSize = (spanSize * expectedNumSpans) + sender.emitZipkinBatchOverhead;
-    sender = new UDPSender(destHost, destPort, maxPacketSize);
+    int maxPacketSize = (spanSize * expectedNumSpans) + sender.emitBatchOverhead;
+    sender = new UDPSender(destHost, destPort, maxPacketSize, "undefined");
 
-    int maxPacketSizeLeft = maxPacketSize - sender.emitZipkinBatchOverhead;
+    int maxPacketSizeLeft = maxPacketSize - sender.emitBatchOverhead;
     // add enough spans to be under buffer limit
     while (spanSize < maxPacketSizeLeft) {
       sender.append(span);
@@ -164,7 +164,7 @@ public class UDPSenderTest {
     // If this test breaks it means we have changed our protocol, or
     // the protocol information has changed (likely due to a new version of thrift).
     assertEquals(a, b);
-    assertEquals(b, UDPSender.emitZipkinBatchOverhead);
+    assertEquals(b, UDPSender.emitBatchOverhead);
   }
 
   private int calculateZipkinBatchOverheadDifference(int numberOfSpans) throws Exception {

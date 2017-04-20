@@ -78,7 +78,7 @@ public class Configuration {
     this.samplerConfig = samplerConfig;
 
     if (reporterConfig == null) {
-      reporterConfig = new ReporterConfiguration(null, null, null, null, null);
+      reporterConfig = new ReporterConfiguration(null, null, null, null, null, serviceName);
     }
     this.reporterConfig = reporterConfig;
 
@@ -216,8 +216,10 @@ public class Configuration {
 
     private final Integer maxQueueSize;
 
+    private final String serviceName;
+
     public ReporterConfiguration() {
-      this(null, null, null, null, null);
+      this(null, null, null, null, null, "undefined");
     }
 
     public ReporterConfiguration(
@@ -225,12 +227,14 @@ public class Configuration {
         String agentHost,
         Integer agentPort,
         Integer flushIntervalMs,
-        Integer maxQueueSize) {
+        Integer maxQueueSize,
+        String serviceName) {
       this.logSpans = logSpans;
       this.agentHost = agentHost;
       this.agentPort = agentPort;
       this.flushIntervalMs = flushIntervalMs;
       this.maxQueueSize = maxQueueSize;
+      this.serviceName = serviceName;
     }
 
     private Reporter getReporter(Metrics metrics) {
@@ -238,7 +242,8 @@ public class Configuration {
           new UDPSender(
               stringOrDefault(this.agentHost, defaultAgentHost),
               numberOrDefault(this.agentPort, defaultAgentPort).intValue(),
-              0 /* max packet size */);
+              0 /* max packet size */,
+              serviceName);
 
       Reporter reporter =
           new RemoteReporter(
