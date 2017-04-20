@@ -95,7 +95,7 @@ public class JaegerThriftSpanConverter {
     return jLogs;
   }
 
-  static List<Tag> buildTags(Map<String, ?> tags) {
+  public static List<Tag> buildTags(Map<String, ?> tags) {
     List<Tag> jTags = new ArrayList<Tag>();
     if (tags != null) {
       for (Map.Entry<String, ?> entry : tags.entrySet()) {

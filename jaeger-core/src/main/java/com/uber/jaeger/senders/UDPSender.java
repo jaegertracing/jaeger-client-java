@@ -94,6 +94,7 @@ public class UDPSender implements Sender {
   public int append(Span span) throws SenderException {
     if (process == null) {
       process = new Process(span.getTracer().getServiceName());
+      process.setTags(JaegerThriftSpanConverter.buildTags(span.getTracer().tags()));
     }
 
     com.uber.jaeger.thriftjava.Span thriftSpan = JaegerThriftSpanConverter.convertSpan(span);

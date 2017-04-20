@@ -65,8 +65,8 @@ public class Tracer implements io.opentracing.Tracer {
   private final Clock clock;
   private final Metrics metrics;
   private final int ip;
-  private final Map<String, Object> tags;
-  private final boolean sharedRPCSpan;
+  private final Map<String, ?> tags;
+  private final boolean zipkinSharedRPCSpan;
 
   private Tracer(
       String serviceName,
@@ -76,14 +76,14 @@ public class Tracer implements io.opentracing.Tracer {
       Clock clock,
       Metrics metrics,
       Map<String, Object> tags,
-      boolean sharedRPCSpan) {
+      boolean zipkinSharedRPCSpan) {
     this.serviceName = serviceName;
     this.reporter = reporter;
     this.sampler = sampler;
     this.registry = registry;
     this.clock = clock;
     this.metrics = metrics;
-    this.sharedRPCSpan = sharedRPCSpan;
+    this.zipkinSharedRPCSpan = zipkinSharedRPCSpan;
 
     int ip;
     try {
@@ -113,6 +113,10 @@ public class Tracer implements io.opentracing.Tracer {
 
   public String getServiceName() {
     return serviceName;
+  }
+
+  public Map<String, ?> tags() {
+    return tags;
   }
 
   public int getIP() {
@@ -260,7 +264,7 @@ public class Tracer implements io.opentracing.Tracer {
         }
 
         // Zipkin server compatibility
-        if (sharedRPCSpan) {
+        if (zipkinSharedRPCSpan) {
           return preferredParent;
         }
       }
@@ -310,8 +314,8 @@ public class Tracer implements io.opentracing.Tracer {
         }
       }
 
-      if (preferredParent == null || isRPCServer()) {
-        // add tracer tags only to first span in the process
+      // add tracer tags to zipkin first span in process
+      if (zipkinSharedRPCSpan && (preferredParent == null || isRPCServer())) {
         tags.putAll(Tracer.this.tags);
       }
 
