@@ -21,8 +21,12 @@
  */
 package com.uber.jaeger.exceptions;
 
-public class UnknownSamplingStrategyException extends Exception {
-  public UnknownSamplingStrategyException(String msg) {
+public class SamplingParameterException extends RuntimeException {
+  public SamplingParameterException(String msg) {
     super(msg);
+  }
+
+  public SamplingParameterException(String msg, Throwable cause) {
+    super(msg, cause);
   }
 }

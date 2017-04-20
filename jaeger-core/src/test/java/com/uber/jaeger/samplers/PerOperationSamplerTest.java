@@ -32,7 +32,7 @@ import static org.mockito.Mockito.when;
 
 import com.uber.jaeger.samplers.http.OperationSamplingParameters;
 import com.uber.jaeger.samplers.http.PerOperationSamplingParameters;
-import com.uber.jaeger.samplers.http.ProbabilisticSamplingStrategy;
+import com.uber.jaeger.samplers.http.ProbabilisticSamplingParameters;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -107,7 +107,7 @@ public class PerOperationSamplerTest {
     operationToSamplers.put(OPERATION, guaranteedThroughputSampler);
 
     PerOperationSamplingParameters perOperationSamplingParameters =
-        new PerOperationSamplingParameters(OPERATION, new ProbabilisticSamplingStrategy(SAMPLING_RATE));
+        new PerOperationSamplingParameters(OPERATION, new ProbabilisticSamplingParameters(SAMPLING_RATE));
     List<PerOperationSamplingParameters> parametersList = new ArrayList<>();
     parametersList.add(perOperationSamplingParameters);
 
@@ -128,7 +128,7 @@ public class PerOperationSamplerTest {
     undertest = new PerOperationSampler(MAX_OPERATIONS, operationToSamplers, defaultProbabilisticSampler, DEFAULT_LOWER_BOUND_TRACES_PER_SECOND);
 
     List<PerOperationSamplingParameters> parametersList = new ArrayList<>();
-    parametersList.add(new PerOperationSamplingParameters(OPERATION, new ProbabilisticSamplingStrategy(operationSamplingRate)));
+    parametersList.add(new PerOperationSamplingParameters(OPERATION, new ProbabilisticSamplingParameters(operationSamplingRate)));
     OperationSamplingParameters parameters = new OperationSamplingParameters(DEFAULT_SAMPLING_PROBABILITY, DEFAULT_LOWER_BOUND_TRACES_PER_SECOND, parametersList);
 
     assertFalse(undertest.update(parameters));
@@ -144,9 +144,9 @@ public class PerOperationSamplerTest {
 
     PerOperationSampler undertest = new PerOperationSampler(1, operationToSamplers, defaultProbabilisticSampler, DEFAULT_LOWER_BOUND_TRACES_PER_SECOND);
     PerOperationSamplingParameters perOperationSamplingParameters1 =
-        new PerOperationSamplingParameters(OPERATION, new ProbabilisticSamplingStrategy(SAMPLING_RATE));
+        new PerOperationSamplingParameters(OPERATION, new ProbabilisticSamplingParameters(SAMPLING_RATE));
     PerOperationSamplingParameters perOperationSamplingParameters2 =
-        new PerOperationSamplingParameters("second OPERATION", new ProbabilisticSamplingStrategy(SAMPLING_RATE));
+        new PerOperationSamplingParameters("second OPERATION", new ProbabilisticSamplingParameters(SAMPLING_RATE));
     List<PerOperationSamplingParameters> parametersList = new ArrayList<>();
     parametersList.add(perOperationSamplingParameters1);
     parametersList.add(perOperationSamplingParameters2);
@@ -161,7 +161,7 @@ public class PerOperationSamplerTest {
   @Test
   public void testUpdateAddOperation(){
     PerOperationSamplingParameters perOperationSamplingParameters1 =
-        new PerOperationSamplingParameters(OPERATION, new ProbabilisticSamplingStrategy(SAMPLING_RATE));
+        new PerOperationSamplingParameters(OPERATION, new ProbabilisticSamplingParameters(SAMPLING_RATE));
     List<PerOperationSamplingParameters> parametersList = new ArrayList<>();
     parametersList.add(perOperationSamplingParameters1);
 

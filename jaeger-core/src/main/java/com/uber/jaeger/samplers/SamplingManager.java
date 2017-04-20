@@ -21,10 +21,10 @@
  */
 package com.uber.jaeger.samplers;
 
-import com.uber.jaeger.exceptions.SamplingStrategyErrorException;
-import com.uber.jaeger.samplers.http.SamplingStrategyResponse;
+import com.uber.jaeger.exceptions.SamplingParameterException;
+import com.uber.jaeger.samplers.http.SamplingParameters;
 
 public interface SamplingManager {
-  SamplingStrategyResponse getSamplingStrategy(String serviceName)
-      throws SamplingStrategyErrorException;
+  SamplingParameters getSamplingStrategy(String serviceName)
+      throws SamplingParameterException;
 }

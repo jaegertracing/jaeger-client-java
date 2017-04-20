@@ -25,12 +25,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
-import com.uber.jaeger.exceptions.SamplingStrategyErrorException;
+import com.uber.jaeger.exceptions.SamplingParameterException;
 import com.uber.jaeger.samplers.http.OperationSamplingParameters;
 import com.uber.jaeger.samplers.http.PerOperationSamplingParameters;
-import com.uber.jaeger.samplers.http.ProbabilisticSamplingStrategy;
-import com.uber.jaeger.samplers.http.RateLimitingSamplingStrategy;
-import com.uber.jaeger.samplers.http.SamplingStrategyResponse;
+import com.uber.jaeger.samplers.http.ProbabilisticSamplingParameters;
+import com.uber.jaeger.samplers.http.RateLimitingSamplingParameters;
+import com.uber.jaeger.samplers.http.SamplingParameters;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.junit.Test;
@@ -56,11 +56,11 @@ public class HTTPSamplingManagerTest extends JerseyTest {
   public void testGetSamplingStrategy() throws Exception {
     URI uri = target().getUri();
     undertest = new HTTPSamplingManager(uri.getHost() + ":" + uri.getPort());
-    SamplingStrategyResponse response = undertest.getSamplingStrategy("clairvoyant");
+    SamplingParameters response = undertest.getSamplingStrategy("clairvoyant");
     assertNotNull(response.getProbabilisticSampling());
   }
 
-  @Test (expected = SamplingStrategyErrorException.class)
+  @Test (expected = SamplingParameterException.class)
   public void testGetSamplingStrategyError() throws Exception {
     URI uri = target().getUri();
     undertest = new HTTPSamplingManager(uri.getHost() + ":" + uri.getPort());
@@ -69,28 +69,28 @@ public class HTTPSamplingManagerTest extends JerseyTest {
 
   @Test
   public void testParseProbabilisticSampling() throws Exception {
-    SamplingStrategyResponse response =
+    SamplingParameters response =
         undertest.parseJson(readFixture("probabilistic_sampling.json") );
-    assertEquals(new ProbabilisticSamplingStrategy(0.01), response.getProbabilisticSampling());
+    assertEquals(new ProbabilisticSamplingParameters(0.01), response.getProbabilisticSampling());
     assertNull(response.getRateLimitingSampling());
   }
 
   @Test
   public void testParseRateLimitingSampling() throws Exception {
-    SamplingStrategyResponse response =
+    SamplingParameters response =
         undertest.parseJson(readFixture("ratelimiting_sampling.json"));
-    assertEquals(new RateLimitingSamplingStrategy(2.1), response.getRateLimitingSampling());
+    assertEquals(new RateLimitingSamplingParameters(2.1), response.getRateLimitingSampling());
     assertNull(response.getProbabilisticSampling());
   }
 
-  @Test (expected = SamplingStrategyErrorException.class)
+  @Test (expected = SamplingParameterException.class)
   public void testParseInvalidJson() throws Exception {
     undertest.parseJson("invalid json");
   }
 
   @Test
   public void testParsePerOperationSampling() throws Exception {
-    SamplingStrategyResponse response =
+    SamplingParameters response =
         undertest.parseJson(readFixture("per_operation_sampling.json"));
     OperationSamplingParameters actual = response.getOperationSampling();
     assertEquals(0.001, actual.getDefaultSamplingProbability(), 0.0001);
@@ -99,10 +99,10 @@ public class HTTPSamplingManagerTest extends JerseyTest {
     List<PerOperationSamplingParameters> actualPerOperationStrategies = actual.getPerOperationStrategies();
     assertEquals(2, actualPerOperationStrategies.size());
     assertEquals(
-        new PerOperationSamplingParameters("GET:/search", new ProbabilisticSamplingStrategy(1.0)),
+        new PerOperationSamplingParameters("GET:/search", new ProbabilisticSamplingParameters(1.0)),
         actualPerOperationStrategies.get(0));
     assertEquals(
-        new PerOperationSamplingParameters("PUT:/pacifique", new ProbabilisticSamplingStrategy(0.8258308134813166)),
+        new PerOperationSamplingParameters("PUT:/pacifique", new ProbabilisticSamplingParameters(0.8258308134813166)),
         actualPerOperationStrategies.get(1));
   }
 
