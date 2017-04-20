@@ -21,7 +21,7 @@
  */
 package com.uber.jaeger.senders;
 
-import com.uber.jaeger.thriftjava.Span;
+import com.uber.jaeger.Span;
 import com.uber.jaeger.exceptions.SenderException;
 
 public interface Sender {

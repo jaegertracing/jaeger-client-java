@@ -21,14 +21,19 @@
  */
 package com.uber.jaeger.senders.zipkin;
 
-import com.twitter.zipkin.thriftjava.*;
-import com.uber.jaeger.exceptions.SenderException;
-import com.uber.jaeger.senders.Sender;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import com.twitter.zipkin.thriftjava.Annotation;
+import com.twitter.zipkin.thriftjava.BinaryAnnotation;
+import com.twitter.zipkin.thriftjava.Endpoint;
+import com.twitter.zipkin.thriftjava.Span;
+import com.twitter.zipkin.thriftjava.zipkincoreConstants;
+import com.uber.jaeger.exceptions.SenderException;
+import com.uber.jaeger.reporters.protocols.ThriftSpanConverter;
+import com.uber.jaeger.senders.Sender;
 
 import lombok.ToString;
 import zipkin.Constants;
@@ -97,8 +102,8 @@ public final class ZipkinSender implements Sender {
    * a single thread that calls this append function
    */
   @Override
-  public int append(Span span) throws SenderException {
-    byte[] next = encoder.encode(backFillHostOnAnnotations(span));
+  public int append(com.uber.jaeger.Span span) throws SenderException {
+    byte[] next = encoder.encode(backFillHostOnAnnotations(ThriftSpanConverter.convertSpan(span)));
     int messageSizeOfNextSpan = delegate.messageSizeInBytes(Collections.singletonList(next));
     // don't enqueue something larger than we can drain
     if (messageSizeOfNextSpan > delegate.messageMaxBytes()) {

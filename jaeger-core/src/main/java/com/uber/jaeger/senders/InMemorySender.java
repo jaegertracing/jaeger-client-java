@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.uber.jaeger.exceptions.SenderException;
+import com.uber.jaeger.reporters.protocols.JaegerThriftSpanConverter;
 import com.uber.jaeger.thriftjava.Span;
 
 import lombok.ToString;
@@ -54,9 +55,10 @@ public class InMemorySender implements Sender {
   }
 
   @Override
-  public int append(Span span) throws SenderException {
-    appended.add(span);
-    received.add(span);
+  public int append(com.uber.jaeger.Span span) throws SenderException {
+    com.uber.jaeger.thriftjava.Span thriftSpan = JaegerThriftSpanConverter.convertSpan(span);
+    appended.add(thriftSpan);
+    received.add(thriftSpan);
     return 0;
   }
 

@@ -29,7 +29,6 @@ import java.util.concurrent.BlockingQueue;
 import com.uber.jaeger.Span;
 import com.uber.jaeger.exceptions.SenderException;
 import com.uber.jaeger.metrics.Metrics;
-import com.uber.jaeger.reporters.protocols.JaegerThriftSpanConverter;
 import com.uber.jaeger.senders.Sender;
 
 import lombok.ToString;
@@ -85,7 +84,7 @@ public class RemoteReporter implements Reporter {
       return;
     }
 
-    commandQueue.add(new AppendCommand(JaegerThriftSpanConverter.convertSpan(span)));
+    commandQueue.add(new AppendCommand(span));
   }
 
   @Override
@@ -118,9 +117,9 @@ public class RemoteReporter implements Reporter {
   }
 
   class AppendCommand implements Command {
-    private final com.uber.jaeger.thriftjava.Span span;
+    private final Span span;
 
-    public AppendCommand(com.uber.jaeger.thriftjava.Span span) {
+    public AppendCommand(Span span) {
       this.span = span;
     }
 

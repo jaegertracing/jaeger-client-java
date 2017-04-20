@@ -21,6 +21,17 @@
  */
 package com.uber.jaeger.senders.zipkin;
 
+import static org.junit.Assert.assertEquals;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.thrift.transport.AutoExpandingBufferWriteTransport;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+
 import com.uber.jaeger.Span;
 import com.uber.jaeger.SpanContext;
 import com.uber.jaeger.Tracer;
@@ -30,20 +41,11 @@ import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.reporters.Reporter;
 import com.uber.jaeger.reporters.protocols.ThriftSpanConverter;
 import com.uber.jaeger.samplers.ConstSampler;
-import org.apache.thrift.transport.AutoExpandingBufferWriteTransport;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+
 import zipkin.Annotation;
 import zipkin.BinaryAnnotation;
 import zipkin.junit.ZipkinRule;
 import zipkin.reporter.urlconnection.URLConnectionSender;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
 
 public class ZipkinSenderTest {
   final int messageMaxBytes = 1000;
@@ -81,9 +83,8 @@ public class ZipkinSenderTest {
     }
 
     jaegerSpan.log(msg, new Object());
-    com.twitter.zipkin.thriftjava.Span span = ThriftSpanConverter.convertSpan(jaegerSpan);
     try {
-      sender.append(span);
+      sender.append(jaegerSpan);
     } catch (SenderException e) {
       assertEquals(e.getDroppedSpanCount(), 1);
     }
@@ -94,8 +95,8 @@ public class ZipkinSenderTest {
     // find size of the initial span
     AutoExpandingBufferWriteTransport memoryTransport =
         new AutoExpandingBufferWriteTransport(messageMaxBytes, 2);
-    com.twitter.zipkin.thriftjava.Span span =
-        ThriftSpanConverter.convertSpan((Span) tracer.buildSpan("raza").start());
+    Span jaegerSpan = (Span) tracer.buildSpan("raza").start();
+    com.twitter.zipkin.thriftjava.Span span = ThriftSpanConverter.convertSpan(jaegerSpan);
 
     int expectedNumSpans = 11;
     List<byte[]> spansToSend = new ArrayList(expectedNumSpans);
@@ -110,20 +111,19 @@ public class ZipkinSenderTest {
 
     // add enough spans to be under buffer limit
     for (int i = 0; i < expectedNumSpans - 1; i++) {
-      assertEquals(0, sender.append(span));
+      assertEquals(0, sender.append(jaegerSpan));
     }
 
     // add a span that overflows the limit to hit the last branch
-    int result = sender.append(span);
+    int result = sender.append(jaegerSpan);
     assertEquals(expectedNumSpans, result);
   }
 
   @Test
   public void testFlushSendsSpan() throws Exception {
     Span expectedSpan = (Span) tracer.buildSpan("raza").start();
-    com.twitter.zipkin.thriftjava.Span span = ThriftSpanConverter.convertSpan(expectedSpan);
 
-    assertEquals(0, sender.append(span));
+    assertEquals(0, sender.append(expectedSpan));
     assertEquals(1, sender.flush());
 
     List<List<zipkin.Span>> traces = zipkinRule.getTraces();

@@ -29,12 +29,13 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.transport.AutoExpandingBufferWriteTransport;
 
+import com.uber.jaeger.Span;
 import com.uber.jaeger.agent.thrift.Agent;
 import com.uber.jaeger.exceptions.SenderException;
+import com.uber.jaeger.reporters.protocols.JaegerThriftSpanConverter;
 import com.uber.jaeger.reporters.protocols.TUDPTransport;
 import com.uber.jaeger.thriftjava.Batch;
 import com.uber.jaeger.thriftjava.Process;
-import com.uber.jaeger.thriftjava.Span;
 
 import lombok.ToString;
 
@@ -47,7 +48,7 @@ public class UDPSender implements Sender {
 
   private int maxSpanBytes;
   private Agent.Client udpClient;
-  private List<Span> spanBuffer;
+  private List<com.uber.jaeger.thriftjava.Span> spanBuffer;
   private int byteBufferSize;
   private AutoExpandingBufferWriteTransport memoryTransport;
   private TUDPTransport udpTransport;
@@ -71,11 +72,11 @@ public class UDPSender implements Sender {
     udpTransport = TUDPTransport.NewTUDPClient(host, port);
     udpClient = new Agent.Client(new TBinaryProtocol(udpTransport));
     maxSpanBytes = maxPacketSize - emitBatchOverhead;
-    spanBuffer = new ArrayList<Span>();
+    spanBuffer = new ArrayList<com.uber.jaeger.thriftjava.Span>();
     this.process = new Process(serviceName);
   }
 
-  int getSizeOfSerializedSpan(Span span) throws SenderException {
+  int getSizeOfSerializedSpan(com.uber.jaeger.thriftjava.Span span) throws SenderException {
     memoryTransport.reset();
     try {
       span.write(new TCompactProtocol(memoryTransport));
@@ -92,14 +93,15 @@ public class UDPSender implements Sender {
    */
   @Override
   public int append(Span span) throws SenderException {
-    int spanSize = getSizeOfSerializedSpan(span);
+    com.uber.jaeger.thriftjava.Span thriftSpan = JaegerThriftSpanConverter.convertSpan(span);
+    int spanSize = getSizeOfSerializedSpan(thriftSpan);
     if (spanSize > maxSpanBytes) {
       throw new SenderException("UDPSender received a span that was too large", null, 1);
     }
 
     byteBufferSize += spanSize;
     if (byteBufferSize <= maxSpanBytes) {
-      spanBuffer.add(span);
+      spanBuffer.add(thriftSpan);
       if (byteBufferSize < maxSpanBytes) {
         return 0;
       }
@@ -114,7 +116,7 @@ public class UDPSender implements Sender {
       throw new SenderException(e.getMessage(), e.getCause(), e.getDroppedSpanCount() + 1);
     }
 
-    spanBuffer.add(span);
+    spanBuffer.add(thriftSpan);
     byteBufferSize = spanSize;
     return n;
   }

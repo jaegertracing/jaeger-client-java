@@ -96,9 +96,8 @@ public class UDPSenderTest {
     }
 
     jaegerSpan.log(msg, new Object());
-    com.uber.jaeger.thriftjava.Span span = JaegerThriftSpanConverter.convertSpan(jaegerSpan);
     try {
-      sender.append(span);
+      sender.append(jaegerSpan);
     } catch (SenderException e) {
       assertEquals(e.getDroppedSpanCount(), 1);
       throw e;
@@ -110,8 +109,9 @@ public class UDPSenderTest {
     // find size of the initial span
     AutoExpandingBufferWriteTransport memoryTransport =
         new AutoExpandingBufferWriteTransport(maxPacketSize, 2);
+    Span jaegerSpan = (Span)tracer.buildSpan("raza").start();
     com.uber.jaeger.thriftjava.Span span =
-            JaegerThriftSpanConverter.convertSpan((Span) tracer.buildSpan("raza").start());
+            JaegerThriftSpanConverter.convertSpan(jaegerSpan);
     span.write(new TCompactProtocol(memoryTransport));
     int spanSize = memoryTransport.getPos();
 
@@ -124,12 +124,12 @@ public class UDPSenderTest {
     int maxPacketSizeLeft = maxPacketSize - sender.emitBatchOverhead;
     // add enough spans to be under buffer limit
     while (spanSize < maxPacketSizeLeft) {
-      sender.append(span);
+      sender.append(jaegerSpan);
       maxPacketSizeLeft -= spanSize;
     }
 
     // add a span that overflows the limit to hit the last branch
-    int result = sender.append(span);
+    int result = sender.append(jaegerSpan);
 
     assertEquals(expectedNumSpans, result);
   }
@@ -139,7 +139,7 @@ public class UDPSenderTest {
     int timeout = 50; // in milliseconds
     int expectedNumSpans = 1;
     Span expectedSpan = (Span) tracer.buildSpan("raza").start();
-    int appendNum = sender.append(JaegerThriftSpanConverter.convertSpan(expectedSpan));
+    int appendNum = sender.append(expectedSpan);
     int flushNum = sender.flush();
     assertEquals(appendNum, 0);
     assertEquals(flushNum, 1);
