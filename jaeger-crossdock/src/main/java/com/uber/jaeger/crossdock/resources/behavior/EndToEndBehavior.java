@@ -61,7 +61,7 @@ public class EndToEndBehavior {
   }
 
   private Reporter getReporter(Metrics metrics) {
-    UDPSender sender = new UDPSender(host, 5775, 0, SERVICE_NAME);
+    UDPSender sender = new UDPSender(host, 5775, 0);
     return new RemoteReporter(sender, 1000, 100, metrics);
   }
 

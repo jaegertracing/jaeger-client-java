@@ -68,7 +68,7 @@ public class JerseyServer {
         new Configuration(
             SERVICE_NAME,
             new SamplerConfiguration(samplingType, samplingParam),
-            new ReporterConfiguration(logging, null, null, null, null, "undefined"));
+            new ReporterConfiguration(logging, null, null, null, null));
 
     // create a resource config that scans for JAX-RS resources and providers
     final ResourceConfig rc = new ResourceConfig();

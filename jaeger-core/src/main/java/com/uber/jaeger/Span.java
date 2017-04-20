@@ -222,12 +222,12 @@ public class Span implements io.opentracing.Span {
 
     if (key.equals(Tags.PEER_PORT.getKey()) && value instanceof Number) {
       getOrMakePeer().setPort(((Number) value).shortValue());
-      return true;
+      return false;
     }
 
     if (key.equals(Tags.PEER_SERVICE.getKey()) && value instanceof String) {
       getOrMakePeer().setService_name((String) value);
-      return true;
+      return false;
     }
 
     if (key.equals(Tags.SPAN_KIND.getKey()) && value instanceof String) {

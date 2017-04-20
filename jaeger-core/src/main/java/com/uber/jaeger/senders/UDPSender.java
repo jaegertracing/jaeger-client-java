@@ -54,7 +54,7 @@ public class UDPSender implements Sender {
   private TUDPTransport udpTransport;
   private Process process;
 
-  public UDPSender(String host, int port, int maxPacketSize, String serviceName) {
+  public UDPSender(String host, int port, int maxPacketSize) {
     if (host == null || host.length() == 0) {
       host = defaultUDPSpanServerHost;
     }
@@ -73,7 +73,6 @@ public class UDPSender implements Sender {
     udpClient = new Agent.Client(new TBinaryProtocol(udpTransport));
     maxSpanBytes = maxPacketSize - emitBatchOverhead;
     spanBuffer = new ArrayList<com.uber.jaeger.thriftjava.Span>();
-    this.process = new Process(serviceName);
   }
 
   int getSizeOfSerializedSpan(com.uber.jaeger.thriftjava.Span span) throws SenderException {
@@ -93,6 +92,10 @@ public class UDPSender implements Sender {
    */
   @Override
   public int append(Span span) throws SenderException {
+    if (process == null) {
+      process = new Process(span.getTracer().getServiceName());
+    }
+
     com.uber.jaeger.thriftjava.Span thriftSpan = JaegerThriftSpanConverter.convertSpan(span);
     int spanSize = getSizeOfSerializedSpan(thriftSpan);
     if (spanSize > maxSpanBytes) {

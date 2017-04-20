@@ -76,7 +76,7 @@ public class UDPSenderTest {
         new Tracer.Builder("test-sender", reporter, new ConstSampler(true))
             .withStatsReporter(new InMemoryStatsReporter())
             .build();
-    sender = new UDPSender(destHost, destPort, maxPacketSize, "undefined");
+    sender = new UDPSender(destHost, destPort, maxPacketSize);
     converter = new ThriftSpanConverter();
   }
 
@@ -119,7 +119,7 @@ public class UDPSenderTest {
     // this allows us to test the boundary conditions of writing spans.
     int expectedNumSpans = 11;
     int maxPacketSize = (spanSize * expectedNumSpans) + sender.emitBatchOverhead;
-    sender = new UDPSender(destHost, destPort, maxPacketSize, "undefined");
+    sender = new UDPSender(destHost, destPort, maxPacketSize);
 
     int maxPacketSizeLeft = maxPacketSize - sender.emitBatchOverhead;
     // add enough spans to be under buffer limit
