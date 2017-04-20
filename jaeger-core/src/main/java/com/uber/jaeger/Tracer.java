@@ -71,7 +71,8 @@ public class Tracer implements io.opentracing.Tracer {
       Sampler sampler,
       PropagationRegistry registry,
       Clock clock,
-      Metrics metrics) {
+      Metrics metrics,
+      Map<String, Object> tags) {
     this.serviceName = serviceName;
     this.reporter = reporter;
     this.sampler = sampler;
@@ -89,7 +90,6 @@ public class Tracer implements io.opentracing.Tracer {
 
     this.version = loadVersion();
 
-    Map<String, Object> tags = new HashMap<String, Object>();
     tags.put("jaeger.version", this.version);
     String hostname = getHostName();
     if (hostname != null) {
@@ -326,6 +326,7 @@ public class Tracer implements io.opentracing.Tracer {
     private Metrics metrics;
     private String serviceName;
     private Clock clock = new SystemClock();
+    private Map<String, Object> tags = new HashMap<String, Object>();
 
     public Builder(String serviceName, Reporter reporter, Sampler sampler) {
       if (serviceName == null || serviceName.trim().length() == 0) {
@@ -370,8 +371,23 @@ public class Tracer implements io.opentracing.Tracer {
       return this;
     }
 
+    Builder withTag(String key, String value) {
+      tags.put(key, value);
+      return this;
+    }
+
+    Builder withTag(String key, boolean value) {
+      tags.put(key, value);
+      return this;
+    }
+
+    Builder withTag(String key, Number value) {
+      tags.put(key, value);
+      return this;
+    }
+
     public Tracer build() {
-      return new Tracer(this.serviceName, reporter, sampler, registry, clock, metrics);
+      return new Tracer(this.serviceName, reporter, sampler, registry, clock, metrics, tags);
     }
   }
 
