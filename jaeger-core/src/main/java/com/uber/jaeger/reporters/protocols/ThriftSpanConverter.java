@@ -64,10 +64,10 @@ public class ThriftSpanConverter {
   private static List<Annotation> buildAnnotations(Span span, Endpoint host) {
     List<Annotation> annotations = new ArrayList<Annotation>();
 
-    if (span.isRPC()) {
+    if (isRPC(span)) {
       String startLabel = zipkincoreConstants.SERVER_RECV;
       String endLabel = zipkincoreConstants.SERVER_SEND;
-      if (span.isRPCClient()) {
+      if (isRPCClient(span)) {
         startLabel = zipkincoreConstants.CLIENT_SEND;
         endLabel = zipkincoreConstants.CLIENT_RECV;
       }
@@ -113,22 +113,26 @@ public class ThriftSpanConverter {
 
   private static List<BinaryAnnotation> buildBinaryAnnotations(Span span, Endpoint host) {
     List<BinaryAnnotation> binaryAnnotations = new ArrayList<BinaryAnnotation>();
+    Map<String, Object> tags = span.getTags();
+    boolean isRpc = isRPC(span);
+    boolean isClient = isRPCClient(span);
 
-    if (span.getPeer() != null && span.isRPC()) {
-      String label =
-          span.isRPCClient() ? zipkincoreConstants.SERVER_ADDR : zipkincoreConstants.CLIENT_ADDR;
+    Endpoint peerEndpoint = extractPeerEndpoint(tags);
+    if (peerEndpoint != null && isClient) {
+      String key =
+          isClient ? zipkincoreConstants.SERVER_ADDR : zipkincoreConstants.CLIENT_ADDR;
 
       binaryAnnotations.add(
           new BinaryAnnotation()
-              .setKey(label)
+              .setKey(key)
               .setValue(new byte[] {1})
               .setAnnotation_type(AnnotationType.BOOL)
-              .setHost(span.getPeer()));
+              .setHost(peerEndpoint));
     }
 
-    if (!span.isRPC()) {
+    if (!isRpc) {
       byte[] componentName;
-      Object componentTag = span.getTags().get(Tags.COMPONENT.getKey());
+      Object componentTag = tags.get(Tags.COMPONENT.getKey());
       if (componentTag instanceof String) {
         componentName = componentTag.toString().getBytes();
       } else {
@@ -144,7 +148,6 @@ public class ThriftSpanConverter {
               .setHost(host));
     }
 
-    Map<String, Object> tags = span.getTags();
     if (tags != null) {
       for (String tagKey : tags.keySet()) {
         // Every value is converted to string because zipkin search doesn't
@@ -167,5 +170,41 @@ public class ThriftSpanConverter {
     banno.setValue(stringTagValue.getBytes(UTF_8)).setAnnotation_type(AnnotationType.STRING);
 
     return banno;
+  }
+
+  public static boolean isRPC(Span span) {
+    Object spanKindValue = span.getTags().get(Tags.SPAN_KIND.getKey());
+    return Tags.SPAN_KIND_CLIENT.equals(spanKindValue) || Tags.SPAN_KIND_SERVER.equals(spanKindValue);
+
+  }
+
+  public static boolean isRPCClient(Span span) {
+    return Tags.SPAN_KIND_CLIENT.equals(span.getTags().get(Tags.SPAN_KIND.getKey()));
+  }
+
+  /**
+   * Extract peer Endpoint from tags
+   *
+   * @param tags tags
+   * @return null or peer endpoint
+   */
+  public static Endpoint extractPeerEndpoint(Map<String, Object> tags) {
+    Object tagValue = tags.get(Tags.PEER_HOST_IPV4.getKey());
+    Endpoint peerEndpoint = null;
+    if (tagValue instanceof Integer) {
+      peerEndpoint = new Endpoint((Integer) tagValue, (short) 0, "");
+    }
+    tagValue = tags.get(Tags.PEER_PORT.getKey());
+    if (tagValue instanceof Number) {
+      if (peerEndpoint == null) { peerEndpoint = new Endpoint(0, (short) 0, ""); }
+      peerEndpoint.setPort(((Number)tagValue).shortValue());
+    }
+    tagValue = tags.get(Tags.PEER_SERVICE.getKey());
+    if (tagValue instanceof String) {
+      if (peerEndpoint == null) { peerEndpoint = new Endpoint(0, (short) 0, ""); }
+      peerEndpoint.setService_name((String) tagValue);
+    }
+
+    return peerEndpoint;
   }
 }

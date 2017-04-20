@@ -28,9 +28,6 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -43,8 +40,6 @@ import com.uber.jaeger.samplers.Sampler;
 
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
-import io.opentracing.propagation.TextMapExtractAdapter;
-import io.opentracing.propagation.TextMapInjectAdapter;
 import io.opentracing.tag.Tags;
 
 public class TracerTest {
@@ -67,56 +62,6 @@ public class TracerTest {
     Span span = (Span) tracer.buildSpan(expectedOperation).start();
 
     assertEquals(expectedOperation, span.getOperationName());
-  }
-
-  @Test
-  public void testBuildServerSpan() {
-    Span span = (Span) tracer.buildSpan("flexo")
-                             .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
-                             .start();
-
-    assertTrue(span.isRPC());
-    assertFalse(span.isRPCClient());
-  }
-
-  @Test
-  public void testBuildClientSpan() {
-    Span span = (Span) tracer.buildSpan("bender")
-                             .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT)
-                             .start();
-
-    assertTrue(span.isRPC());
-    assertTrue(span.isRPCClient());
-  }
-
-//  @Test // TODO remove?
-  public void testRPCChildSpanHasTheSameID() {
-    String expectedOperation = "parent";
-    Span client =
-        (Span)
-            tracer
-                .buildSpan(expectedOperation)
-                .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT)
-                .start();
-
-    Map<String, String> map = new HashMap<>();
-    TextMap carrier = new TextMapInjectAdapter(map);
-    tracer.inject(client.context(), Format.Builtin.TEXT_MAP, carrier);
-
-    carrier = new TextMapExtractAdapter(map);
-    SpanContext ctx = (SpanContext) tracer.extract(Format.Builtin.TEXT_MAP, carrier);
-    assertEquals(client.context().getSpanID(), ctx.getSpanID());
-
-    Span server =
-        (Span)
-            tracer
-                .buildSpan("child")
-                .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
-                .asChildOf(ctx)
-                .start();
-
-    assertEquals("client and server must have the same span ID",
-        client.context().getSpanID(), server.context().getSpanID());
   }
 
   @Test
