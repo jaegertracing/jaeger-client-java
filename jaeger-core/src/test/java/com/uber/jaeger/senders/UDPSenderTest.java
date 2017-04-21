@@ -27,6 +27,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.transport.AutoExpandingBufferWriteTransport;
 import org.junit.After;
@@ -42,10 +43,12 @@ import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.reporters.Reporter;
 import com.uber.jaeger.reporters.protocols.JaegerThriftSpanConverter;
 import com.uber.jaeger.reporters.protocols.TestTServer;
-import com.uber.jaeger.reporters.protocols.ThriftSpanConverter;
 import com.uber.jaeger.samplers.ConstSampler;
+import com.uber.jaeger.thriftjava.Batch;
+import com.uber.jaeger.thriftjava.Process;
 
 public class UDPSenderTest {
+  final static String SERVICE_NAME = "test-sender";
   final String destHost = "localhost";
   int destPort;
   int localPort = 0;
@@ -55,7 +58,6 @@ public class UDPSenderTest {
   Reporter reporter;
   UDPSender sender;
   TestTServer server;
-  ThriftSpanConverter converter;
 
   private TestTServer startServer() throws Exception {
     TestTServer server = new TestTServer(localPort);
@@ -73,11 +75,10 @@ public class UDPSenderTest {
     server = startServer();
     reporter = new InMemoryReporter();
     tracer =
-        new Tracer.Builder("test-sender", reporter, new ConstSampler(true))
+        new Tracer.Builder(SERVICE_NAME, reporter, new ConstSampler(true))
             .withStatsReporter(new InMemoryStatsReporter())
             .build();
     sender = new UDPSender(destHost, destPort, maxPacketSize);
-    converter = new ThriftSpanConverter();
   }
 
   @After
@@ -170,23 +171,23 @@ public class UDPSenderTest {
   private int calculateZipkinBatchOverheadDifference(int numberOfSpans) throws Exception {
     AutoExpandingBufferWriteTransport memoryTransport =
         new AutoExpandingBufferWriteTransport(maxPacketSize, 2);
-    Agent.Client memoryClient = new Agent.Client(new TCompactProtocol(memoryTransport));
+    Agent.Client memoryClient = new Agent.Client(new TBinaryProtocol(memoryTransport));
     Span jaegerSpan = (Span) tracer.buildSpan("raza").start();
-    com.twitter.zipkin.thriftjava.Span span = ThriftSpanConverter.convertSpan(jaegerSpan);
-    List<com.twitter.zipkin.thriftjava.Span> spans = new ArrayList<>();
+    com.uber.jaeger.thriftjava.Span span = JaegerThriftSpanConverter.convertSpan(jaegerSpan);
+    List<com.uber.jaeger.thriftjava.Span> spans = new ArrayList<>();
     for (int i = 0; i < numberOfSpans; i++) {
       spans.add(span);
     }
 
-    memoryClient.emitZipkinBatch(spans);
-    int emitZipkinBatchOverheadMultipleSpans = memoryTransport.getPos();
+    memoryClient.emitBatch(new Batch(new Process(SERVICE_NAME), spans));
+    int emitBatchOverheadMultipleSpans = memoryTransport.getPos();
 
     memoryTransport.reset();
     for (int j = 0; j < numberOfSpans; j++) {
-      span.write(new TCompactProtocol(memoryTransport));
+      span.write(new TBinaryProtocol(memoryTransport));
     }
-    int writeZipkinBatchOverheadMultipleSpans = memoryTransport.getPos();
+    int writeBatchOverheadMultipleSpans = memoryTransport.getPos();
 
-    return emitZipkinBatchOverheadMultipleSpans - writeZipkinBatchOverheadMultipleSpans;
+    return emitBatchOverheadMultipleSpans - writeBatchOverheadMultipleSpans;
   }
 }

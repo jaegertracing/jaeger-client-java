@@ -41,7 +41,7 @@ import lombok.ToString;
 
 @ToString(exclude = {"spanBuffer", "udpClient", "memoryTransport"})
 public class UDPSender implements Sender {
-  final static int emitBatchOverhead = 22;
+  final static int emitBatchOverhead = 56;
   private static final String defaultUDPSpanServerHost = "localhost";
   private static final int defaultUDPSpanServerPort = 6832;
   private static final int defaultUDPPacketSize = 65000;

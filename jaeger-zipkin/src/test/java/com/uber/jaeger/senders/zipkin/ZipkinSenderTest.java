@@ -39,7 +39,6 @@ import com.uber.jaeger.exceptions.SenderException;
 import com.uber.jaeger.metrics.InMemoryStatsReporter;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.reporters.Reporter;
-import com.uber.jaeger.reporters.protocols.ThriftSpanConverter;
 import com.uber.jaeger.samplers.ConstSampler;
 
 import zipkin.Annotation;

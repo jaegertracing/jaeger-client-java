@@ -22,7 +22,6 @@
 package com.uber.jaeger.filters.jaxrs2;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -48,7 +47,6 @@ import com.uber.jaeger.context.ThreadLocalTraceContext;
 import com.uber.jaeger.context.TraceContext;
 import com.uber.jaeger.propagation.FilterIntegrationTest;
 import com.uber.jaeger.reporters.InMemoryReporter;
-import com.uber.jaeger.reporters.protocols.ThriftSpanConverter;
 import com.uber.jaeger.samplers.ConstSampler;
 
 import io.opentracing.tag.Tags;
@@ -101,8 +99,8 @@ public class ServerFilterTest {
     Span span = spans.get(0);
     Map<String, Object> tags = span.getTags();
 
-    assertTrue(ThriftSpanConverter.isRPC(span) && !ThriftSpanConverter.isRPCClient(span));
-    assertEquals(source, ThriftSpanConverter.extractPeerEndpoint(span.getTags()).getService_name());
+    assertEquals(method, span.getOperationName());
+    assertEquals(Tags.SPAN_KIND_SERVER, tags.get(Tags.SPAN_KIND.getKey()));
     assertEquals(uri.toString(), tags.get(Tags.HTTP_URL.getKey()));
     assertEquals("localhost", tags.get(Tags.PEER_HOSTNAME.getKey()));
   }

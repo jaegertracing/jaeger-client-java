@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.uber.jaeger.reporters.protocols;
+package com.uber.jaeger.senders.zipkin;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;

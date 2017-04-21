@@ -32,7 +32,6 @@ import com.twitter.zipkin.thriftjava.Endpoint;
 import com.twitter.zipkin.thriftjava.Span;
 import com.twitter.zipkin.thriftjava.zipkincoreConstants;
 import com.uber.jaeger.exceptions.SenderException;
-import com.uber.jaeger.reporters.protocols.ThriftSpanConverter;
 import com.uber.jaeger.senders.Sender;
 
 import lombok.ToString;
