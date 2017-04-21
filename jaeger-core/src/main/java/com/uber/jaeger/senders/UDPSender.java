@@ -26,7 +26,6 @@ import java.util.List;
 
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.transport.AutoExpandingBufferWriteTransport;
 
 import com.uber.jaeger.Span;
@@ -78,7 +77,7 @@ public class UDPSender implements Sender {
   int getSizeOfSerializedSpan(com.uber.jaeger.thriftjava.Span span) throws SenderException {
     memoryTransport.reset();
     try {
-      span.write(new TCompactProtocol(memoryTransport));
+      span.write(new TBinaryProtocol((memoryTransport)));
     } catch (TException e) {
       throw new SenderException("UDPSender failed writing to memory buffer.", e, 1);
     }

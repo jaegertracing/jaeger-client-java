@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.transport.AutoExpandingBufferWriteTransport;
 import org.junit.After;
 import org.junit.Before;
@@ -88,15 +87,15 @@ public class UDPSenderTest {
     reporter.close();
   }
 
-  @Test
+  @Test(expected = SenderException.class)
   public void testAppendSpanTooLarge() throws Exception {
     Span jaegerSpan = (Span) tracer.buildSpan("raza").start();
     String msg = "";
-    for (int i = 0; i < 1001; i++) {
+    for (int i = 0; i < 10001; i++) {
       msg += ".";
+      jaegerSpan.log(msg, new Object());
     }
 
-    jaegerSpan.log(msg, new Object());
     try {
       sender.append(jaegerSpan);
     } catch (SenderException e) {
@@ -113,7 +112,7 @@ public class UDPSenderTest {
     Span jaegerSpan = (Span)tracer.buildSpan("raza").start();
     com.uber.jaeger.thriftjava.Span span =
             JaegerThriftSpanConverter.convertSpan(jaegerSpan);
-    span.write(new TCompactProtocol(memoryTransport));
+    span.write(new TBinaryProtocol((memoryTransport)));
     int spanSize = memoryTransport.getPos();
 
     // create a sender thats a multiple of the span size (accounting for span overhead)
@@ -150,6 +149,7 @@ public class UDPSenderTest {
 
     com.uber.jaeger.thriftjava.Span actualSpan = spans.get(0);
     assertEquals(expectedSpan.context().getTraceID(), actualSpan.getTraceIdLow());
+    assertEquals(0, actualSpan.getTraceIdHigh());
     assertEquals(expectedSpan.context().getSpanID(), actualSpan.getSpanId());
     assertEquals(0, actualSpan.getParentSpanId());
     assertTrue(actualSpan.references.isEmpty());
@@ -157,18 +157,18 @@ public class UDPSenderTest {
   }
 
   @Test
-  public void testEmitZipkinBatchOverhead() throws Exception {
-    int a = calculateZipkinBatchOverheadDifference(1);
-    int b = calculateZipkinBatchOverheadDifference(2);
+  public void testEmitBatchOverhead() throws Exception {
+    int a = calculateBatchOverheadDifference(1);
+    int b = calculateBatchOverheadDifference(2);
 
-    // This value has been empirically observed to be 22.
+    // This value has been empirically observed to be 56.
     // If this test breaks it means we have changed our protocol, or
     // the protocol information has changed (likely due to a new version of thrift).
     assertEquals(a, b);
     assertEquals(b, UDPSender.emitBatchOverhead);
   }
 
-  private int calculateZipkinBatchOverheadDifference(int numberOfSpans) throws Exception {
+  private int calculateBatchOverheadDifference(int numberOfSpans) throws Exception {
     AutoExpandingBufferWriteTransport memoryTransport =
         new AutoExpandingBufferWriteTransport(maxPacketSize, 2);
     Agent.Client memoryClient = new Agent.Client(new TBinaryProtocol(memoryTransport));
