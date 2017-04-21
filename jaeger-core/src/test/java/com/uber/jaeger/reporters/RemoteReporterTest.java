@@ -36,7 +36,6 @@ import com.uber.jaeger.metrics.InMemoryStatsReporter;
 import com.uber.jaeger.metrics.Metrics;
 import com.uber.jaeger.metrics.StatsFactoryImpl;
 import com.uber.jaeger.samplers.ConstSampler;
-import com.uber.jaeger.senders.InMemorySender;
 
 public class RemoteReporterTest {
   private Reporter reporter;
