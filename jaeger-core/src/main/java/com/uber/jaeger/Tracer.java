@@ -288,7 +288,7 @@ public class Tracer implements io.opentracing.Tracer {
       Reference preferredParent = references.isEmpty() ? null : references.get(0);
       for (Reference reference: references) {
         if (References.CHILD_OF.equals(reference.getType()) &&
-                References.FOLLOWS_FROM.equals(preferredParent.getType())) {
+                !References.CHILD_OF.equals(preferredParent.getType())) {
           preferredParent = reference;
           break;
         }
@@ -314,7 +314,7 @@ public class Tracer implements io.opentracing.Tracer {
         }
       }
 
-      // add tracer tags to zipkin first span in process
+      // TODO add tracer tags to zipkin first span in process
       if (zipkinSharedRPCSpan && (preferredParent == null || isRPCServer())) {
         tags.putAll(Tracer.this.tags);
       }
@@ -350,7 +350,7 @@ public class Tracer implements io.opentracing.Tracer {
     private String serviceName;
     private Clock clock = new SystemClock();
     private Map<String, Object> tags = new HashMap<String, Object>();
-    private boolean sharedRPCSpan;
+    private boolean zipkinSharedRPCSpan;
 
     public Builder(String serviceName, Reporter reporter, Sampler sampler) {
       if (serviceName == null || serviceName.trim().length() == 0) {
@@ -390,8 +390,8 @@ public class Tracer implements io.opentracing.Tracer {
       return this;
     }
 
-    public Builder withSharedRPCSpan() {
-      sharedRPCSpan = true;
+    public Builder withZipkinSharedRPCSpan() {
+      zipkinSharedRPCSpan = true;
       return this;
     }
 
@@ -416,7 +416,7 @@ public class Tracer implements io.opentracing.Tracer {
     }
 
     public Tracer build() {
-      return new Tracer(this.serviceName, reporter, sampler, registry, clock, metrics, tags, sharedRPCSpan);
+      return new Tracer(this.serviceName, reporter, sampler, registry, clock, metrics, tags, zipkinSharedRPCSpan);
     }
   }
 

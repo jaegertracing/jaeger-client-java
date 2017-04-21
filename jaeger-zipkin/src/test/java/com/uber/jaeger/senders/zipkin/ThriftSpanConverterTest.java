@@ -55,7 +55,7 @@ public class ThriftSpanConverterTest {
   public void setUp() {
     tracer =
         new Tracer.Builder("test-service-name", new InMemoryReporter(), new ConstSampler(true))
-                .withSharedRPCSpan()
+                .withZipkinSharedRPCSpan()
             .build();
   }
 

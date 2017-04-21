@@ -106,7 +106,7 @@ public class TracerTagsTest {
   public void testTracerTags() throws Exception {
     InMemoryReporter spanReporter = new InMemoryReporter();
     Tracer tracer = new Tracer.Builder("x", spanReporter, new ConstSampler(true))
-            .withSharedRPCSpan()
+            .withZipkinSharedRPCSpan()
             .withTag("tracer.tag.str", "y")
             .withTag("tracer.tag.bool", true)
             .withTag("tracer.tag.num", 1)
