@@ -66,18 +66,27 @@ public class TracerTagsTest {
     Map<String, Object> rootTags = new HashMap<>();
     rootTags.put("jaeger.version", tracer.getVersion());
     rootTags.put("jaeger.hostname", hostname);
+    rootTags.put("tracer.tag.str", "y");
+    rootTags.put("tracer.tag.bool", true);
+    rootTags.put("tracer.tag.num", 1);
     rootTags.put("sampler.type", "const");
     rootTags.put("sampler.param", true);
 
     Map<String, Object> childTags = new HashMap<>();
     childTags.put("jaeger.version", SENTINEL);
     childTags.put("jaeger.hostname", SENTINEL);
+    childTags.put("tracer.tag.str", SENTINEL);
+    childTags.put("tracer.tag.bool", SENTINEL);
+    childTags.put("tracer.tag.num", SENTINEL);
     childTags.put("sampler.type", SENTINEL);
     childTags.put("sampler.param", SENTINEL);
 
     Map<String, Object> rpcTags = new HashMap<>();
     rpcTags.put("jaeger.version", tracer.getVersion());
     rpcTags.put("jaeger.hostname", hostname);
+    rpcTags.put("tracer.tag.str", "y");
+    rpcTags.put("tracer.tag.bool", true);
+    rpcTags.put("tracer.tag.num", 1);
     rpcTags.put("sampler.type", SENTINEL);
     rpcTags.put("sampler.param", SENTINEL);
 
@@ -94,7 +103,11 @@ public class TracerTagsTest {
   @Test
   public void testTracerTags() throws Exception {
     InMemoryReporter spanReporter = new InMemoryReporter();
-    Tracer tracer = new Tracer.Builder("x", spanReporter, new ConstSampler(true)).build();
+    Tracer tracer = new Tracer.Builder("x", spanReporter, new ConstSampler(true))
+            .withTag("tracer.tag.str", "y")
+            .withTag("tracer.tag.bool", true)
+            .withTag("tracer.tag.num", 1)
+            .build();
 
     Span span = (Span) tracer.buildSpan("root").start();
     if (spanType == SpanType.CHILD) {

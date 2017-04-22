@@ -32,7 +32,6 @@ import java.net.URI;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import zipkin.internal.Util;
 
 import static com.uber.jaeger.propagation.b3.B3TextMapCodec.SPAN_ID_NAME;
 import static com.uber.jaeger.propagation.b3.B3TextMapCodec.TRACE_ID_NAME;
@@ -67,8 +66,8 @@ public class B3TextMapCodecTest {
 
     SpanContext context = b3Codec.extract(textMap);
 
-    assertEquals(Util.lowerHexToUnsignedLong(lower64Bits), context.getTraceID());
-    assertEquals(Util.lowerHexToUnsignedLong(lower64Bits), context.getSpanID());
+    assertEquals(HexCodec.lowerHexToUnsignedLong(lower64Bits), context.getTraceID());
+    assertEquals(HexCodec.lowerHexToUnsignedLong(lower64Bits), context.getSpanID());
   }
 
   @Test

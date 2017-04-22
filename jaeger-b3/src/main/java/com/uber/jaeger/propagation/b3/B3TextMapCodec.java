@@ -25,7 +25,6 @@ import com.uber.jaeger.SpanContext;
 import com.uber.jaeger.propagation.Extractor;
 import com.uber.jaeger.propagation.Injector;
 import io.opentracing.propagation.TextMap;
-import zipkin.internal.Util;
 
 import java.util.Map;
 
@@ -58,11 +57,11 @@ public final class B3TextMapCodec implements Injector<TextMap>, Extractor<TextMa
 
   @Override
   public void inject(SpanContext spanContext, TextMap carrier) {
-    carrier.put(TRACE_ID_NAME, Util.toLowerHex(spanContext.getTraceID()));
+    carrier.put(TRACE_ID_NAME, HexCodec.toLowerHex(spanContext.getTraceID()));
     if (spanContext.getParentID() != 0L) { // Conventionally, parent id == 0 means the root span
-      carrier.put(PARENT_SPAN_ID_NAME, Util.toLowerHex(spanContext.getParentID()));
+      carrier.put(PARENT_SPAN_ID_NAME, HexCodec.toLowerHex(spanContext.getParentID()));
     }
-    carrier.put(SPAN_ID_NAME, Util.toLowerHex(spanContext.getSpanID()));
+    carrier.put(SPAN_ID_NAME, HexCodec.toLowerHex(spanContext.getSpanID()));
     carrier.put(SAMPLED_NAME, spanContext.isSampled() ? "1" : "0");
     if (spanContext.isDebug()) {
       carrier.put(FLAGS_NAME, "1");
@@ -81,11 +80,11 @@ public final class B3TextMapCodec implements Injector<TextMap>, Extractor<TextMa
           flags |= SAMPLED_FLAG;
         }
       } else if (entry.getKey().equalsIgnoreCase(TRACE_ID_NAME)) {
-        traceID = Util.lowerHexToUnsignedLong(entry.getValue());
+        traceID = HexCodec.lowerHexToUnsignedLong(entry.getValue());
       } else if (entry.getKey().equalsIgnoreCase(PARENT_SPAN_ID_NAME)) {
-        parentID = Util.lowerHexToUnsignedLong(entry.getValue());
+        parentID = HexCodec.lowerHexToUnsignedLong(entry.getValue());
       } else if (entry.getKey().equalsIgnoreCase(SPAN_ID_NAME)) {
-        spanID = Util.lowerHexToUnsignedLong(entry.getValue());
+        spanID = HexCodec.lowerHexToUnsignedLong(entry.getValue());
       } else if (entry.getKey().equalsIgnoreCase(FLAGS_NAME)) {
         if (entry.getValue().equals("1")) {
           flags |= DEBUG_FLAG;
