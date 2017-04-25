@@ -21,12 +21,12 @@
  */
 package com.uber.jaeger;
 
+import static org.junit.Assert.assertEquals;
+
 import com.uber.jaeger.exceptions.EmptyIPException;
 import com.uber.jaeger.exceptions.NotFourOctetsException;
 import com.uber.jaeger.utils.Utils;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 public class UtilsTest {
 

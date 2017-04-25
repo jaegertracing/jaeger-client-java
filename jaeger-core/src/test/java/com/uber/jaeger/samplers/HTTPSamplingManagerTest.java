@@ -31,10 +31,6 @@ import com.uber.jaeger.samplers.http.PerOperationSamplingParameters;
 import com.uber.jaeger.samplers.http.ProbabilisticSamplingStrategy;
 import com.uber.jaeger.samplers.http.RateLimitingSamplingStrategy;
 import com.uber.jaeger.samplers.http.SamplingStrategyResponse;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.test.JerseyTest;
-import org.junit.Test;
-
 import java.io.File;
 import java.net.URI;
 import java.net.URL;
@@ -42,6 +38,9 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.List;
 import javax.ws.rs.core.Application;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.test.JerseyTest;
+import org.junit.Test;
 
 public class HTTPSamplingManagerTest extends JerseyTest {
 
@@ -60,7 +59,7 @@ public class HTTPSamplingManagerTest extends JerseyTest {
     assertNotNull(response.getProbabilisticSampling());
   }
 
-  @Test (expected = SamplingStrategyErrorException.class)
+  @Test(expected = SamplingStrategyErrorException.class)
   public void testGetSamplingStrategyError() throws Exception {
     URI uri = target().getUri();
     undertest = new HTTPSamplingManager(uri.getHost() + ":" + uri.getPort());
@@ -70,7 +69,7 @@ public class HTTPSamplingManagerTest extends JerseyTest {
   @Test
   public void testParseProbabilisticSampling() throws Exception {
     SamplingStrategyResponse response =
-        undertest.parseJson(readFixture("probabilistic_sampling.json") );
+        undertest.parseJson(readFixture("probabilistic_sampling.json"));
     assertEquals(new ProbabilisticSamplingStrategy(0.01), response.getProbabilisticSampling());
     assertNull(response.getRateLimitingSampling());
   }
@@ -83,7 +82,7 @@ public class HTTPSamplingManagerTest extends JerseyTest {
     assertNull(response.getProbabilisticSampling());
   }
 
-  @Test (expected = SamplingStrategyErrorException.class)
+  @Test(expected = SamplingStrategyErrorException.class)
   public void testParseInvalidJson() throws Exception {
     undertest.parseJson("invalid json");
   }
@@ -94,15 +93,17 @@ public class HTTPSamplingManagerTest extends JerseyTest {
         undertest.parseJson(readFixture("per_operation_sampling.json"));
     OperationSamplingParameters actual = response.getOperationSampling();
     assertEquals(0.001, actual.getDefaultSamplingProbability(), 0.0001);
-    assertEquals(0.001666, actual.getDefaultLowerBoundTracesPerSecond(),0.0001);
+    assertEquals(0.001666, actual.getDefaultLowerBoundTracesPerSecond(), 0.0001);
 
-    List<PerOperationSamplingParameters> actualPerOperationStrategies = actual.getPerOperationStrategies();
+    List<PerOperationSamplingParameters> actualPerOperationStrategies =
+        actual.getPerOperationStrategies();
     assertEquals(2, actualPerOperationStrategies.size());
     assertEquals(
         new PerOperationSamplingParameters("GET:/search", new ProbabilisticSamplingStrategy(1.0)),
         actualPerOperationStrategies.get(0));
     assertEquals(
-        new PerOperationSamplingParameters("PUT:/pacifique", new ProbabilisticSamplingStrategy(0.8258308134813166)),
+        new PerOperationSamplingParameters(
+            "PUT:/pacifique", new ProbabilisticSamplingStrategy(0.8258308134813166)),
         actualPerOperationStrategies.get(1));
   }
 
@@ -111,5 +112,4 @@ public class HTTPSamplingManagerTest extends JerseyTest {
     File file = new File(resource.toURI());
     return new String(Files.readAllBytes(file.toPath()), Charset.defaultCharset());
   }
-
 }

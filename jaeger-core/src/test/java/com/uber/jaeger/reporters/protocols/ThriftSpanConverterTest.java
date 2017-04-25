@@ -31,11 +31,10 @@ import com.uber.jaeger.Tracer;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
 import io.opentracing.tag.Tags;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import org.junit.Before;
+import org.junit.Test;
 
 public class ThriftSpanConverterTest {
   Tracer tracer;

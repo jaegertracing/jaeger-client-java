@@ -27,7 +27,6 @@ import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
 import io.opentracing.tag.Tags;
-
 import java.io.IOException;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
@@ -45,8 +44,7 @@ public class ServerFilter implements ContainerRequestFilter, ContainerResponseFi
   private final Tracer tracer;
   private final TraceContext traceContext;
 
-  @Context
-  protected ResourceInfo resourceInfo;
+  @Context protected ResourceInfo resourceInfo;
 
   public ServerFilter(Tracer tracer, TraceContext traceContext) {
     this.tracer = tracer;
@@ -113,6 +111,7 @@ public class ServerFilter implements ContainerRequestFilter, ContainerResponseFi
 
   /**
    * An operation name to use for the span being reported. Uses the http method name by default.
+   *
    * @param containerRequestContext A class that holds request specific information
    * @return the operation name
    */

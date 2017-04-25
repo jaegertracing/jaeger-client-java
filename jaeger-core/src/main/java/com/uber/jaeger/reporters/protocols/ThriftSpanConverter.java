@@ -31,7 +31,6 @@ import com.uber.jaeger.LogData;
 import com.uber.jaeger.Span;
 import com.uber.jaeger.SpanContext;
 import com.uber.jaeger.Tracer;
-
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;

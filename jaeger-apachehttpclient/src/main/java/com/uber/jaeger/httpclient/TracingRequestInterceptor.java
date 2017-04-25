@@ -27,6 +27,8 @@ import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
 import io.opentracing.tag.Tags;
+import java.io.IOException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpException;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
@@ -35,16 +37,12 @@ import org.apache.http.RequestLine;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.protocol.HttpContext;
 
-import java.io.IOException;
-import lombok.extern.slf4j.Slf4j;
-
 /**
- * Apache http client request interceptor This is designed to be used along with
- * {@link TracingResponseInterceptor} to report tracing information.
+ * Apache http client request interceptor This is designed to be used along with {@link
+ * TracingResponseInterceptor} to report tracing information.
  *
- * In most cases you shouldn't be using this directly. Use the appropriate client builder from
+ * <p>In most cases you shouldn't be using this directly. Use the appropriate client builder from
  * {@link TracingInterceptors}
- *
  */
 @Slf4j
 public class TracingRequestInterceptor implements HttpRequestInterceptor {
@@ -88,9 +86,8 @@ public class TracingRequestInterceptor implements HttpRequestInterceptor {
   }
 
   /**
-   * onSpanStarted will be called right after the span is created.
-   * The subclasses can override this method to add additional information
-   * to the span, including tags and logs.
+   * onSpanStarted will be called right after the span is created. The subclasses can override this
+   * method to add additional information to the span, including tags and logs.
    *
    * @param clientSpan - the span that's being created
    * @param httpRequest - the http request for the operation
@@ -109,6 +106,4 @@ public class TracingRequestInterceptor implements HttpRequestInterceptor {
   protected String getOperationName(HttpRequest httpRequest) {
     return httpRequest.getRequestLine().getMethod();
   }
-
-
 }

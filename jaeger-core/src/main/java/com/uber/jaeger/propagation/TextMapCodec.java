@@ -23,14 +23,12 @@ package com.uber.jaeger.propagation;
 
 import com.uber.jaeger.Constants;
 import com.uber.jaeger.SpanContext;
-
+import io.opentracing.propagation.TextMap;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
-
-import io.opentracing.propagation.TextMap;
 
 public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
   /** Key used to store serialized span context representation */

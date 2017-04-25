@@ -23,7 +23,6 @@ package com.uber.jaeger;
 
 import com.uber.jaeger.exceptions.EmptyTracerStateStringException;
 import com.uber.jaeger.exceptions.MalformedTracerStateStringException;
-
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.HashMap;
@@ -147,11 +146,10 @@ public class SpanContext implements io.opentracing.SpanContext {
 
   /**
    * @return true when the instance of the context is only used to return the debug/correlation ID
-   * from extract() method. This happens in the situation when "jaeger-debug-id" header is passed in
-   * the carrier to the extract() method, but the request otherwise has no span context in it.
-   * Previously this would've returned null from the extract method, but now it returns a dummy
-   * context with only debugID filled in.
-   *
+   *     from extract() method. This happens in the situation when "jaeger-debug-id" header is
+   *     passed in the carrier to the extract() method, but the request otherwise has no span
+   *     context in it. Previously this would've returned null from the extract method, but now it
+   *     returns a dummy context with only debugID filled in.
    * @see Constants#DEBUG_ID_HEADER_KEY
    */
   boolean isDebugIDContainerOnly() {
@@ -165,9 +163,7 @@ public class SpanContext implements io.opentracing.SpanContext {
    * correlation ID.
    *
    * @param debugID arbitrary string used as correlation ID
-   *
    * @return new dummy SpanContext that serves as a container for debugID only.
-   *
    * @see Constants#DEBUG_ID_HEADER_KEY
    */
   public static SpanContext withDebugID(String debugID) {

@@ -24,12 +24,10 @@ package com.uber.jaeger.senders.zipkin;
 import com.twitter.zipkin.thriftjava.*;
 import com.uber.jaeger.exceptions.SenderException;
 import com.uber.jaeger.senders.Sender;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
 import lombok.ToString;
 import zipkin.Constants;
 import zipkin.reporter.Encoding;
@@ -40,8 +38,7 @@ import zipkin.reporter.urlconnection.URLConnectionSender;
  * This sends (TBinaryProtocol big-endian) encoded spans to a Zipkin Collector (usually a
  * zipkin-server).
  *
- * <p>
- * Example usage:
+ * <p>Example usage:
  *
  * <pre>{@code
  * reporter = new RemoteReporter(ZipkinSender.create("http://localhost:9411/api/v1/spans"));
@@ -49,15 +46,14 @@ import zipkin.reporter.urlconnection.URLConnectionSender;
  *                    ...
  * }</pre>
  *
- * <p>
- * See https://github.com/openzipkin/zipkin/tree/master/zipkin-server
+ * <p>See https://github.com/openzipkin/zipkin/tree/master/zipkin-server
  */
 @ToString(exclude = "spanBuffer")
 public final class ZipkinSender implements Sender {
 
   /**
    * @param endpoint The POST URL for zipkin's <a href="http://zipkin.io/zipkin-api/#/">v1 api</a>,
-   * usually "http://zipkinhost:9411/api/v1/spans"
+   *     usually "http://zipkinhost:9411/api/v1/spans"
    * @return new sender
    */
   public static ZipkinSender create(String endpoint) {
@@ -65,11 +61,10 @@ public final class ZipkinSender implements Sender {
   }
 
   /**
-   * Use this to dispatch to an existing Zipkin sender which is configured for
-   * {@link Encoding#THRIFT thrift encoding}.
+   * Use this to dispatch to an existing Zipkin sender which is configured for {@link
+   * Encoding#THRIFT thrift encoding}.
    *
-   * <p>
-   * Ex. for Kafka ("io.zipkin.reporter:zipkin-sender-kafka08")
+   * <p>Ex. for Kafka ("io.zipkin.reporter:zipkin-sender-kafka08")
    *
    * <pre>{@code
    * sender = ZipkinSender.create(KafkaSender.create("192.168.99.100:9092"));

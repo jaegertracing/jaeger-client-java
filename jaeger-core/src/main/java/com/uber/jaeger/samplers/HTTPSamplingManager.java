@@ -23,10 +23,8 @@ package com.uber.jaeger.samplers;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
-
 import com.uber.jaeger.exceptions.SamplingStrategyErrorException;
 import com.uber.jaeger.samplers.http.SamplingStrategyResponse;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -34,7 +32,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
-
 import lombok.ToString;
 
 @ToString

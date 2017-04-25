@@ -23,10 +23,9 @@ package com.uber.jaeger.propagation;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-import javax.ws.rs.ext.Provider;
 import java.util.ArrayList;
 import java.util.List;
+import javax.ws.rs.ext.Provider;
 
 /*
  * This class is used for presenting individual spans, and capturing the recursive

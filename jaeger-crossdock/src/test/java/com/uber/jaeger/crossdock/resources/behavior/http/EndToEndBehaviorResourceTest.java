@@ -21,17 +21,16 @@
  */
 package com.uber.jaeger.crossdock.resources.behavior.http;
 
+import static org.junit.Assert.*;
+
 import com.uber.jaeger.Span;
 import com.uber.jaeger.crossdock.api.*;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
 import io.opentracing.Tracer;
+import java.util.*;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.*;
-
-import static org.junit.Assert.*;
 
 public class EndToEndBehaviorResourceTest {
   private EndToEndBehaviorResource resource;
@@ -58,8 +57,7 @@ public class EndToEndBehaviorResourceTest {
   public void testCreateTraces() throws Exception {
     Map<String, String> tags = new HashMap<String, String>();
     tags.put("key", "value");
-    CreateTracesRequest request =
-        new CreateTracesRequest("const", "operation", 2, tags);
+    CreateTracesRequest request = new CreateTracesRequest("const", "operation", 2, tags);
 
     resource.createTraces(request);
     validateSpans(reporter.getSpans(), request);

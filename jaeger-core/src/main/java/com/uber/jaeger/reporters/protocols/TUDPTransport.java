@@ -21,9 +21,6 @@
  */
 package com.uber.jaeger.reporters.protocols;
 
-import org.apache.thrift.transport.TTransport;
-import org.apache.thrift.transport.TTransportException;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -32,8 +29,9 @@ import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-
 import lombok.ToString;
+import org.apache.thrift.transport.TTransport;
+import org.apache.thrift.transport.TTransportException;
 
 /*
  * A thrift transport for sending sending/receiving spans.

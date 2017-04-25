@@ -39,11 +39,10 @@ import io.opentracing.propagation.TextMap;
 import io.opentracing.propagation.TextMapExtractAdapter;
 import io.opentracing.propagation.TextMapInjectAdapter;
 import io.opentracing.tag.Tags;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.util.HashMap;
 import java.util.Map;
+import org.junit.Before;
+import org.junit.Test;
 
 public class TracerTest {
 
@@ -69,9 +68,12 @@ public class TracerTest {
 
   @Test
   public void testBuildServerSpan() {
-    Span span = (Span) tracer.buildSpan("flexo")
-                             .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
-                             .start();
+    Span span =
+        (Span)
+            tracer
+                .buildSpan("flexo")
+                .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
+                .start();
 
     assertTrue(span.isRPC());
     assertFalse(span.isRPCClient());
@@ -79,9 +81,12 @@ public class TracerTest {
 
   @Test
   public void testBuildClientSpan() {
-    Span span = (Span) tracer.buildSpan("bender")
-                             .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT)
-                             .start();
+    Span span =
+        (Span)
+            tracer
+                .buildSpan("bender")
+                .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT)
+                .start();
 
     assertTrue(span.isRPC());
     assertTrue(span.isRPCClient());
@@ -113,8 +118,10 @@ public class TracerTest {
                 .asChildOf(ctx)
                 .start();
 
-    assertEquals("client and server must have the same span ID",
-        client.context().getSpanID(), server.context().getSpanID());
+    assertEquals(
+        "client and server must have the same span ID",
+        client.context().getSpanID(),
+        server.context().getSpanID());
   }
 
   @Test
@@ -174,7 +181,7 @@ public class TracerTest {
   }
 
   @Test
-  public void testClose(){
+  public void testClose() {
     Reporter reporter = mock(Reporter.class);
     Sampler sampler = mock(Sampler.class);
     tracer = new Tracer.Builder("bonda", reporter, sampler).build();

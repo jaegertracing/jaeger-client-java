@@ -22,26 +22,23 @@
 package com.uber.jaeger.samplers;
 
 import com.uber.jaeger.Constants;
-import com.uber.jaeger.samplers.http.OperationSamplingParameters;
-import com.uber.jaeger.samplers.http.PerOperationSamplingParameters;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
- * {@link GuaranteedThroughputSampler} is a {@link Sampler} that guarantees a throughput by using
- * a {@link ProbabilisticSampler} and {@link RateLimitingSampler} in tandem.
+ * {@link GuaranteedThroughputSampler} is a {@link Sampler} that guarantees a throughput by using a
+ * {@link ProbabilisticSampler} and {@link RateLimitingSampler} in tandem.
  *
- * The RateLimitingSampler is used to establish a lowerBound so that every operation is sampled
+ * <p>The RateLimitingSampler is used to establish a lowerBound so that every operation is sampled
  * at least once in the time interval defined by the lowerBound.
  */
 @ToString
 @EqualsAndHashCode
-@AllArgsConstructor (access = AccessLevel.PACKAGE) // Visible for testing
+@AllArgsConstructor(access = AccessLevel.PACKAGE) // Visible for testing
 public final class GuaranteedThroughputSampler implements Sampler {
   public static final String TYPE = "lowerbound";
 
@@ -60,6 +57,7 @@ public final class GuaranteedThroughputSampler implements Sampler {
 
   /**
    * Updates the probabilistic and lowerBound samplers
+   *
    * @param samplingRate The sampling rate for probabilistic sampling
    * @param lowerBound The lower bound limit for lower bound sampling
    * @return true iff any samplers were updated
@@ -80,9 +78,10 @@ public final class GuaranteedThroughputSampler implements Sampler {
 
   /**
    * Calls {@link Sampler#sample(String, long)} (String, long)} on both samplers, returning true for
-   * {@link SamplingStatus#isSampled} if either samplers set #isSampled to true.
-   * The tags corresponding to the sampler that returned true are set on {@link SamplingStatus#tags}
-   * If both samplers return true, tags for {@link ProbabilisticSampler} is given priority.
+   * {@link SamplingStatus#isSampled} if either samplers set #isSampled to true. The tags
+   * corresponding to the sampler that returned true are set on {@link SamplingStatus#tags} If both
+   * samplers return true, tags for {@link ProbabilisticSampler} is given priority.
+   *
    * @param operation The operation name, which is ignored by this sampler
    * @param id The traceId on the span
    */

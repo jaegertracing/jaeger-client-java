@@ -25,17 +25,16 @@ import com.twitter.zipkin.thriftjava.Span;
 import com.uber.jaeger.agent.thrift.Agent;
 import com.uber.jaeger.exceptions.SenderException;
 import com.uber.jaeger.reporters.protocols.TUDPTransport;
+import java.util.ArrayList;
+import java.util.List;
+import lombok.ToString;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.transport.AutoExpandingBufferWriteTransport;
 
-import java.util.ArrayList;
-import java.util.List;
-import lombok.ToString;
-
 @ToString(exclude = {"spanBuffer", "udpClient", "memoryTransport"})
 public class UDPSender implements Sender {
-  final static int emitZipkinBatchOverhead = 22;
+  static final int emitZipkinBatchOverhead = 22;
   private static final String defaultUDPSpanServerHost = "localhost";
   private static final int defaultUDPSpanServerPort = 5775;
   private static final int defaultUDPPacketSize = 65000;

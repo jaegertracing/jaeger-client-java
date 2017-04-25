@@ -27,7 +27,6 @@ import com.uber.jaeger.samplers.http.OperationSamplingParameters;
 import com.uber.jaeger.samplers.http.ProbabilisticSamplingStrategy;
 import com.uber.jaeger.samplers.http.RateLimitingSamplingStrategy;
 import com.uber.jaeger.samplers.http.SamplingStrategyResponse;
-
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -50,6 +49,7 @@ public class RemoteControlledSampler implements Sampler {
   private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
   private final Metrics metrics;
   private final int pollingIntervalMs;
+
   @Getter(AccessLevel.PACKAGE)
   private Sampler sampler;
 
@@ -59,7 +59,11 @@ public class RemoteControlledSampler implements Sampler {
   }
 
   public RemoteControlledSampler(
-      String serviceName, SamplingManager manager, Sampler initial, Metrics metrics, int pollingIntervalMs) {
+      String serviceName,
+      SamplingManager manager,
+      Sampler initial,
+      Metrics metrics,
+      int pollingIntervalMs) {
     this.pollingIntervalMs = pollingIntervalMs;
     this.serviceName = serviceName;
     this.manager = manager;
@@ -87,9 +91,7 @@ public class RemoteControlledSampler implements Sampler {
     return lock;
   }
 
-  /**
-   * Updates {@link #sampler} to a new sampler when it is different.
-   */
+  /** Updates {@link #sampler} to a new sampler when it is different. */
   void updateSampler() {
     SamplingStrategyResponse response;
     try {
@@ -109,7 +111,9 @@ public class RemoteControlledSampler implements Sampler {
 
   /**
    * Replace {@link #sampler} with a new instance when parameters are updated.
-   * @param response which contains either a {@link ProbabilisticSampler} or {@link RateLimitingSampler}
+   *
+   * @param response which contains either a {@link ProbabilisticSampler} or {@link
+   *     RateLimitingSampler}
    */
   private void updateRateLimitingOrProbabilisticSampler(SamplingStrategyResponse response) {
     Sampler sampler;
@@ -133,7 +137,8 @@ public class RemoteControlledSampler implements Sampler {
     }
   }
 
-  private synchronized void updatePerOperationSampler(OperationSamplingParameters samplingParameters) {
+  private synchronized void updatePerOperationSampler(
+      OperationSamplingParameters samplingParameters) {
     if (sampler instanceof PerOperationSampler) {
       if (((PerOperationSampler) sampler).update(samplingParameters)) {
         metrics.samplerUpdated.inc(1);

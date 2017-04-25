@@ -35,7 +35,9 @@ import com.uber.jaeger.samplers.SamplingStatus;
 import com.uber.jaeger.utils.Clock;
 import com.uber.jaeger.utils.SystemClock;
 import com.uber.jaeger.utils.Utils;
-
+import io.opentracing.References;
+import io.opentracing.propagation.Format;
+import io.opentracing.tag.Tags;
 import java.io.InputStream;
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -44,10 +46,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-
-import io.opentracing.References;
-import io.opentracing.propagation.Format;
-import io.opentracing.tag.Tags;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
@@ -150,9 +148,7 @@ public class Tracer implements io.opentracing.Tracer {
     return extractor.extract(carrier);
   }
 
-  /**
-   * Shuts down the {@link Reporter} and {@link Sampler}
-   */
+  /** Shuts down the {@link Reporter} and {@link Sampler} */
   public void close() {
     reporter.close();
     sampler.close();
@@ -316,9 +312,7 @@ public class Tracer implements io.opentracing.Tracer {
     }
   }
 
-  /**
-   * Builds Jaeger Tracer with options.
-   */
+  /** Builds Jaeger Tracer with options. */
   public static final class Builder {
     private final Sampler sampler;
     private final Reporter reporter;

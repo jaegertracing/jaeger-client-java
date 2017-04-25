@@ -23,7 +23,6 @@ package com.uber.jaeger.dropwizard;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
-
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 

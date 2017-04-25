@@ -28,7 +28,6 @@ import com.uber.jaeger.SpanContext;
 import com.uber.jaeger.thriftjava.Log;
 import com.uber.jaeger.thriftjava.Tag;
 import com.uber.jaeger.thriftjava.TagType;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

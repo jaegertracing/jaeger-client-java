@@ -23,7 +23,6 @@ package com.uber.jaeger.filters.jaxrs2;
 
 import com.uber.jaeger.context.TraceContext;
 import io.opentracing.Tracer;
-
 import java.util.concurrent.ExecutorService;
 
 public class TracingUtils {

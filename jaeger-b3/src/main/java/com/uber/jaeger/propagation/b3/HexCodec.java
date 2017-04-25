@@ -94,14 +94,14 @@ final class HexCodec {
     writeHexByte(data, pos + 14, (byte) (v & 0xff));
   }
 
-  static final char[] HEX_DIGITS =
-      {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+  static final char[] HEX_DIGITS = {
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
+  };
 
   static void writeHexByte(char[] data, int pos, byte b) {
     data[pos + 0] = HEX_DIGITS[(b >> 4) & 0xf];
     data[pos + 1] = HEX_DIGITS[b & 0xf];
   }
 
-  HexCodec() {
-  }
+  HexCodec() {}
 }

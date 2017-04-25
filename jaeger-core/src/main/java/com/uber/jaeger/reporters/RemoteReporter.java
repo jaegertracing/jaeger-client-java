@@ -26,7 +26,6 @@ import com.uber.jaeger.exceptions.SenderException;
 import com.uber.jaeger.metrics.Metrics;
 import com.uber.jaeger.reporters.protocols.ThriftSpanConverter;
 import com.uber.jaeger.senders.Sender;
-
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -34,9 +33,7 @@ import java.util.concurrent.BlockingQueue;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * RemoteReporter buffers spans in memory and sends them out of process using Sender.
- */
+/** RemoteReporter buffers spans in memory and sends them out of process using Sender. */
 @ToString(exclude = {"commandQueue", "flushTimer", "queueProcessorThread", "metrics"})
 @Slf4j
 public class RemoteReporter implements Reporter {

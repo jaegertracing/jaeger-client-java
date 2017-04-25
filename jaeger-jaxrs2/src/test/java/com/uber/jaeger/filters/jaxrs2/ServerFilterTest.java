@@ -35,12 +35,6 @@ import com.uber.jaeger.propagation.FilterIntegrationTest;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
 import io.opentracing.tag.Tags;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
-
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
@@ -48,10 +42,15 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.UriInfo;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 /**
- * Tests that {@link ServerFilter} produces a span and sets tags correctly See also:
- * {@link FilterIntegrationTest} for a complete Client/Server filter integration test
+ * Tests that {@link ServerFilter} produces a span and sets tags correctly See also: {@link
+ * FilterIntegrationTest} for a complete Client/Server filter integration test
  */
 @RunWith(MockitoJUnitRunner.class)
 public class ServerFilterTest {

@@ -25,7 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uber.jaeger.crossdock.api.CreateTracesRequest;
 import com.uber.jaeger.crossdock.resources.behavior.EndToEndBehavior;
 import io.opentracing.Tracer;
-
+import java.util.Map;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -35,23 +35,15 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Map;
-
 /**
  * Handles creating traces from a http request.
  *
- * json: {
- *   "type": "remote"
- *   "operation": "operationName",
- *   "count": 2,
- *   "tags": {
- *     "key": "value"
- *   }
+ * <p>json: { "type": "remote" "operation": "operationName", "count": 2, "tags": { "key": "value" }
  * }
  *
- * Given the above json payload, the resource will use a tracer with the RemoteControlledSampler
- * to create 2 traces for the "operationName" operation with the tags: {"key":"value"}. These
- * traces are reported to the agent with the hostname "test_driver".
+ * <p>Given the above json payload, the resource will use a tracer with the RemoteControlledSampler
+ * to create 2 traces for the "operationName" operation with the tags: {"key":"value"}. These traces
+ * are reported to the agent with the hostname "test_driver".
  */
 @Path("")
 @Provider

@@ -22,12 +22,11 @@
 package com.uber.jaeger.filters.jaxrs2;
 
 import io.opentracing.propagation.TextMap;
-
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.MultivaluedMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.MultivaluedMap;
 
 public class ServerRequestCarrier implements TextMap {
   private final ContainerRequestContext requestContext;

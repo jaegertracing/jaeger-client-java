@@ -21,6 +21,8 @@
  */
 package com.uber.jaeger.senders;
 
+import static org.junit.Assert.assertEquals;
+
 import com.uber.jaeger.Span;
 import com.uber.jaeger.SpanContext;
 import com.uber.jaeger.Tracer;
@@ -32,16 +34,13 @@ import com.uber.jaeger.reporters.Reporter;
 import com.uber.jaeger.reporters.protocols.TestTServer;
 import com.uber.jaeger.reporters.protocols.ThriftSpanConverter;
 import com.uber.jaeger.samplers.ConstSampler;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.transport.AutoExpandingBufferWriteTransport;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
 
 public class UDPSenderTest {
   final String destHost = "localhost";

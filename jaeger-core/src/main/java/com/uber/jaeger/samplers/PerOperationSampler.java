@@ -23,7 +23,6 @@ package com.uber.jaeger.samplers;
 
 import com.uber.jaeger.samplers.http.OperationSamplingParameters;
 import com.uber.jaeger.samplers.http.PerOperationSamplingParameters;
-
 import java.util.HashMap;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -48,15 +47,17 @@ public class PerOperationSampler implements Sampler {
   private double lowerBound;
 
   public PerOperationSampler(int maxOperations, OperationSamplingParameters strategies) {
-    this(maxOperations,
-         new HashMap<String, GuaranteedThroughputSampler>(),
-         new ProbabilisticSampler(strategies.getDefaultSamplingProbability()),
-         strategies.getDefaultLowerBoundTracesPerSecond());
+    this(
+        maxOperations,
+        new HashMap<String, GuaranteedThroughputSampler>(),
+        new ProbabilisticSampler(strategies.getDefaultSamplingProbability()),
+        strategies.getDefaultLowerBoundTracesPerSecond());
     update(strategies);
   }
 
   /**
    * Updates the GuaranteedThroughputSampler for each operation
+   *
    * @param strategies The parameters for operation sampling
    * @return true iff any samplers were updated
    */
@@ -64,7 +65,8 @@ public class PerOperationSampler implements Sampler {
     boolean isUpdated = false;
 
     lowerBound = strategies.getDefaultLowerBoundTracesPerSecond();
-    ProbabilisticSampler defaultSampler = new ProbabilisticSampler(strategies.getDefaultSamplingProbability());
+    ProbabilisticSampler defaultSampler =
+        new ProbabilisticSampler(strategies.getDefaultSamplingProbability());
 
     if (!defaultSampler.equals(this.defaultSampler)) {
       this.defaultSampler = defaultSampler;
@@ -83,7 +85,8 @@ public class PerOperationSampler implements Sampler {
           operationNameToSampler.put(operation, sampler);
           isUpdated = true;
         } else {
-          log.info("Exceeded the maximum number of operations({}) for per operations sampling",
+          log.info(
+              "Exceeded the maximum number of operations({}) for per operations sampling",
               maxOperations);
         }
       }
