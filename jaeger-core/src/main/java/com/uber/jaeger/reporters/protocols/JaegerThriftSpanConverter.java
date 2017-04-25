@@ -64,8 +64,8 @@ public class JaegerThriftSpanConverter {
     for (Reference reference: references) {
       SpanRefType thriftRefType = References.CHILD_OF.equals(reference.getType()) ? SpanRefType.CHILD_OF :
               SpanRefType.FOLLOWS_FROM;
-      thriftReferences.add(new SpanRef(thriftRefType, reference.referencedContext().getTraceID(),
-              0, reference.referencedContext().getSpanID()));
+      thriftReferences.add(new SpanRef(thriftRefType, reference.getSpanContext().getTraceID(),
+              0, reference.getSpanContext().getSpanID()));
     }
 
     return thriftReferences;

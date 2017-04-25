@@ -103,7 +103,7 @@ public class TracerTagsTest {
   public void setUp() throws Exception {}
 
   @Test
-  public void testTracerTags() throws Exception {
+  public void testTracerTagsZipkin() throws Exception {
     InMemoryReporter spanReporter = new InMemoryReporter();
     Tracer tracer = new Tracer.Builder("x", spanReporter, new ConstSampler(true))
             .withZipkinSharedRPCSpan()

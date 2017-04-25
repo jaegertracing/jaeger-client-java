@@ -108,7 +108,7 @@ public class ThriftSpanConverter {
       byte[] componentName;
       Object componentTag = tags.get(Tags.COMPONENT.getKey());
       if (componentTag instanceof String) {
-        componentName = componentTag.toString().getBytes();
+        componentName = componentTag.toString().getBytes(UTF_8);
       } else {
         // spans always have associated tracers, and service names
         componentName = span.getTracer().getServiceName().getBytes(UTF_8);
@@ -163,20 +163,24 @@ public class ThriftSpanConverter {
    * @return null or peer endpoint
    */
   public static Endpoint extractPeerEndpoint(Map<String, Object> tags) {
-    Object tagValue = tags.get(Tags.PEER_HOST_IPV4.getKey());
-    Endpoint peerEndpoint = null;
-    if (tagValue instanceof Integer) {
-      peerEndpoint = new Endpoint((Integer) tagValue, (short) 0, "");
+    Object peerIpv4 = tags.get(Tags.PEER_HOST_IPV4.getKey());
+    Object peerPort = tags.get(Tags.PEER_PORT.getKey());
+    Object peerService = tags.get(Tags.PEER_SERVICE.getKey());
+
+    if (peerIpv4 == null && peerPort == null && peerService == null) {
+      return null;
     }
-    tagValue = tags.get(Tags.PEER_PORT.getKey());
-    if (tagValue instanceof Number) {
-      if (peerEndpoint == null) { peerEndpoint = new Endpoint(0, (short) 0, ""); }
-      peerEndpoint.setPort(((Number)tagValue).shortValue());
+
+    Endpoint peerEndpoint = new Endpoint(0, (short) 0, "");
+
+    if (peerIpv4 instanceof Integer) {
+      peerEndpoint.setIpv4((Integer) peerIpv4);
     }
-    tagValue = tags.get(Tags.PEER_SERVICE.getKey());
-    if (tagValue instanceof String) {
-      if (peerEndpoint == null) { peerEndpoint = new Endpoint(0, (short) 0, ""); }
-      peerEndpoint.setService_name((String) tagValue);
+    if (peerPort instanceof Number) {
+      peerEndpoint.setPort(((Number)peerPort).shortValue());
+    }
+    if (peerService instanceof String) {
+      peerEndpoint.setService_name((String) peerService);
     }
 
     return peerEndpoint;

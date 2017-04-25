@@ -297,10 +297,10 @@ public class Tracer implements io.opentracing.Tracer {
       SpanContext context;
       if (preferredParent == null) {
         context = createNewContext(null);
-      } else if (preferredParent.referencedContext().isDebugIDContainerOnly()) {
-        context = createNewContext(preferredParent.referencedContext().getDebugID());
+      } else if (preferredParent.getSpanContext().isDebugIDContainerOnly()) {
+        context = createNewContext(preferredParent.getSpanContext().getDebugID());
       } else {
-        context = createChildContext(preferredParent.referencedContext());
+        context = createChildContext(preferredParent.getSpanContext());
       }
 
       long startTimeNanoTicks = 0;
@@ -395,22 +395,22 @@ public class Tracer implements io.opentracing.Tracer {
       return this;
     }
 
-    Builder withMetrics(Metrics metrics) {
+    public Builder withMetrics(Metrics metrics) {
       this.metrics = metrics;
       return this;
     }
 
-    Builder withTag(String key, String value) {
+    public Builder withTag(String key, String value) {
       tags.put(key, value);
       return this;
     }
 
-    Builder withTag(String key, boolean value) {
+    public Builder withTag(String key, boolean value) {
       tags.put(key, value);
       return this;
     }
 
-    Builder withTag(String key, Number value) {
+    public Builder withTag(String key, Number value) {
       tags.put(key, value);
       return this;
     }

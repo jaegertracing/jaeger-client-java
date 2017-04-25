@@ -32,7 +32,7 @@ import com.uber.jaeger.thriftjava.Batch;
 
 class InMemorySpanServerHandler implements Agent.Iface {
   private List<Span> zipkinSpans;
-  private List<com.uber.jaeger.thriftjava.Span> spans;
+  private com.uber.jaeger.thriftjava.Batch batch;
 
   @Override
   public void emitZipkinBatch(List<Span> spans) throws TException {
@@ -44,7 +44,7 @@ class InMemorySpanServerHandler implements Agent.Iface {
   @Override
   public void emitBatch(Batch batch) throws TException {
     synchronized (this) {
-      this.spans = batch.getSpans();
+      this.batch = batch;
     }
   }
 
@@ -57,12 +57,12 @@ class InMemorySpanServerHandler implements Agent.Iface {
     }
   }
 
-  public List<com.uber.jaeger.thriftjava.Span> getSpans() {
+  public com.uber.jaeger.thriftjava.Batch getBatch() {
     synchronized (this) {
-      if (spans != null) {
-        return new ArrayList<>(spans);
+      if (batch != null) {
+        return batch;
       }
-      return new ArrayList<>();
+      return new Batch();
     }
   }
 }

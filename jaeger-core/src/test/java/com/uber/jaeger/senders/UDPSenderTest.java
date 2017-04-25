@@ -76,6 +76,7 @@ public class UDPSenderTest {
     tracer =
         new Tracer.Builder(SERVICE_NAME, reporter, new ConstSampler(true))
             .withStatsReporter(new InMemoryStatsReporter())
+            .withTag("foo", "bar")
             .build();
     sender = new UDPSender(destHost, destPort, maxPacketSize);
   }
@@ -144,16 +145,20 @@ public class UDPSenderTest {
     assertEquals(appendNum, 0);
     assertEquals(flushNum, 1);
 
-    List<com.uber.jaeger.thriftjava.Span> spans = server.getSpans(expectedNumSpans, timeout);
-    assertEquals(spans.size(), expectedNumSpans);
+    Batch batch = server.getBatch(expectedNumSpans, timeout);
+    assertEquals(batch.getSpans().size(), expectedNumSpans);
 
-    com.uber.jaeger.thriftjava.Span actualSpan = spans.get(0);
+    com.uber.jaeger.thriftjava.Span actualSpan = batch.getSpans().get(0);
     assertEquals(expectedSpan.context().getTraceID(), actualSpan.getTraceIdLow());
     assertEquals(0, actualSpan.getTraceIdHigh());
     assertEquals(expectedSpan.context().getSpanID(), actualSpan.getSpanId());
     assertEquals(0, actualSpan.getParentSpanId());
     assertTrue(actualSpan.references.isEmpty());
     assertEquals(expectedSpan.getOperationName(), actualSpan.getOperationName());
+    assertEquals(3, batch.getProcess().getTags().size());
+    assertEquals("jaeger.hostname", batch.getProcess().getTags().get(0).getKey());
+    assertEquals("jaeger.version", batch.getProcess().getTags().get(1).getKey());
+    assertEquals("bar", batch.getProcess().getTags().get(2).getVStr());
   }
 
   @Test
