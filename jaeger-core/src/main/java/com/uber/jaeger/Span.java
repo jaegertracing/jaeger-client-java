@@ -22,14 +22,12 @@
 package com.uber.jaeger;
 
 import com.twitter.zipkin.thriftjava.Endpoint;
-
+import io.opentracing.tag.Tags;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import io.opentracing.tag.Tags;
 
 public class Span implements io.opentracing.Span {
   private final Tracer tracer;
@@ -244,7 +242,7 @@ public class Span implements io.opentracing.Span {
   /**
    * Set a key:value tag on a span ONLY when the tag isn't special.
    *
-   * See {@link #handleSpecialTag(String, Object)}
+   * <p>See {@link #handleSpecialTag(String, Object)}
    */
   private Span setTagAsObject(String key, Object value) {
     if (key.equals(Tags.SAMPLING_PRIORITY.getKey()) && (value instanceof Number)) {

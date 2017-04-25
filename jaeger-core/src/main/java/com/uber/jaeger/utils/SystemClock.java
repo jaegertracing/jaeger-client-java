@@ -23,8 +23,8 @@ package com.uber.jaeger.utils;
 
 /**
  * Default implementation of a clock that delegates its calls to the system clock. The
- * microsecond-precision time is simulated by (millis * 1000), therefore the
- * {@link #isMicrosAccurate()} is false.
+ * microsecond-precision time is simulated by (millis * 1000), therefore the {@link
+ * #isMicrosAccurate()} is false.
  *
  * @see System#currentTimeMillis()
  * @see System#nanoTime()

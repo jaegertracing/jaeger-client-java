@@ -32,8 +32,6 @@ public interface Sampler {
    */
   SamplingStatus sample(String operation, long id);
 
-  /**
-   * Release any resources used by the sampler.
-   */
+  /** Release any resources used by the sampler. */
   void close();
 }

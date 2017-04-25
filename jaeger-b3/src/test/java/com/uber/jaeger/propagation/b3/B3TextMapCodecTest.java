@@ -21,21 +21,20 @@
  */
 package com.uber.jaeger.propagation.b3;
 
+import static com.uber.jaeger.propagation.b3.B3TextMapCodec.SPAN_ID_NAME;
+import static com.uber.jaeger.propagation.b3.B3TextMapCodec.TRACE_ID_NAME;
+import static org.junit.Assert.assertEquals;
+
 import com.github.kristofa.brave.SpanId;
 import com.github.kristofa.brave.TraceData;
 import com.github.kristofa.brave.http.*;
 import com.uber.jaeger.SpanContext;
 import io.opentracing.propagation.TextMap;
-import org.junit.Test;
-
 import java.net.URI;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
-import static com.uber.jaeger.propagation.b3.B3TextMapCodec.SPAN_ID_NAME;
-import static com.uber.jaeger.propagation.b3.B3TextMapCodec.TRACE_ID_NAME;
-import static org.junit.Assert.assertEquals;
+import org.junit.Test;
 
 public class B3TextMapCodecTest {
   static final byte SAMPLED = 1;

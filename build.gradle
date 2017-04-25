@@ -2,7 +2,7 @@ plugins {
     id "org.jruyi.thrift" version "0.3.1"
     id "jacoco"
     id "com.github.hierynomus.license" version "0.12.1"
-    id 'com.github.sherter.google-java-format' version '0.3.2'
+    id 'com.github.sherter.google-java-format' version '0.6'
     id "com.github.johnrengelman.shadow" version "1.2.3"
     id "net.ltgt.errorprone" version "0.0.9"
     id 'ru.vyarus.animalsniffer' version '1.2.0'
@@ -64,7 +64,7 @@ subprojects {
     task listJars(description: 'Display all compile jars.') << {
         configurations.compile.each { File file -> println file.name }
     }
-    
+
     task verifyFormatting(type: com.github.sherter.googlejavaformatgradleplugin.VerifyGoogleJavaFormat) {
         exclude '**/gen-java/**'
     }

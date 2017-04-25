@@ -21,6 +21,12 @@
  */
 package com.uber.jaeger.propagation;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uber.jaeger.Span;
 import com.uber.jaeger.context.ThreadLocalTraceContext;
@@ -33,11 +39,6 @@ import com.uber.jaeger.samplers.ConstSampler;
 import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
-import org.glassfish.jersey.jackson.JacksonFeature;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
@@ -45,12 +46,10 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.Response;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
+import org.glassfish.jersey.jackson.JacksonFeature;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 public class FilterIntegrationTest {
   private JerseyServer server;

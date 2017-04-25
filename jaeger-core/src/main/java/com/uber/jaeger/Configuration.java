@@ -36,30 +36,23 @@ import com.uber.jaeger.samplers.RateLimitingSampler;
 import com.uber.jaeger.samplers.RemoteControlledSampler;
 import com.uber.jaeger.samplers.Sampler;
 import com.uber.jaeger.senders.UDPSender;
-
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class Configuration {
   public static final double DEFAULT_SAMPLING_PROBABILITY = 0.001;
 
-  /**
-   * The serviceName that the tracer will use
-   */
+  /** The serviceName that the tracer will use */
   private final String serviceName;
 
   private final SamplerConfiguration samplerConfig;
 
   private final ReporterConfiguration reporterConfig;
 
-  /**
-   * A interface that wraps an underlying metrics generator in order to report Jaeger's metrics.
-   */
+  /** A interface that wraps an underlying metrics generator in order to report Jaeger's metrics. */
   private StatsFactory statsFactory;
 
-  /**
-   * lazy singleton Tracer initialized in getTracer() method
-   */
+  /** lazy singleton Tracer initialized in getTracer() method */
   private Tracer tracer;
 
   public Configuration(
@@ -92,7 +85,7 @@ public class Configuration {
     return new Tracer.Builder(serviceName, reporter, sampler).withMetrics(metrics);
   }
 
-  synchronized public io.opentracing.Tracer getTracer() {
+  public synchronized io.opentracing.Tracer getTracer() {
     if (tracer != null) {
       return tracer;
     }
@@ -102,15 +95,13 @@ public class Configuration {
     return tracer;
   }
 
-  synchronized public void closeTracer() {
+  public synchronized void closeTracer() {
     if (tracer != null) {
       tracer.close();
     }
   }
 
-  /**
-   * @deprecated Use {@link #setStatsFactory(StatsFactory)} instead
-   */
+  /** @deprecated Use {@link #setStatsFactory(StatsFactory)} instead */
   @Deprecated
   public void setStatsFactor(StatsFactory statsFactory) {
     this.statsFactory = statsFactory;
@@ -120,12 +111,10 @@ public class Configuration {
     this.statsFactory = statsFactory;
   }
 
-  /**
-   * SamplerConfiguration allows to configure which sampler the tracer will use.
-   */
+  /** SamplerConfiguration allows to configure which sampler the tracer will use. */
   public static class SamplerConfiguration {
 
-    private final static String defaultManagerHostPort = "localhost:5778";
+    private static final String defaultManagerHostPort = "localhost:5778";
 
     /**
      * The type of sampler to use in the tracer. Optional. Valid values: remote (default),
@@ -201,10 +190,10 @@ public class Configuration {
 
   public static class ReporterConfiguration {
 
-    private final static String defaultAgentHost = "localhost";
-    private final static int defaultAgentPort = 5775;
-    private final static int defaultFlushIntervalMs = 1000;
-    private final static int defaultMaxQueueSize = 100;
+    private static final String defaultAgentHost = "localhost";
+    private static final int defaultAgentPort = 5775;
+    private static final int defaultFlushIntervalMs = 1000;
+    private static final int defaultMaxQueueSize = 100;
 
     private final Boolean logSpans;
 

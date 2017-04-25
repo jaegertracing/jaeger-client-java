@@ -23,17 +23,16 @@ package com.uber.jaeger.httpclient;
 
 import io.opentracing.Span;
 import io.opentracing.tag.Tags;
+import java.io.IOException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpResponseInterceptor;
 import org.apache.http.protocol.HttpContext;
 
-import java.io.IOException;
-import lombok.extern.slf4j.Slf4j;
-
 /**
- * Apache http client response interceptor that works in conjunction with
- * {@link TracingRequestInterceptor} to report spans
+ * Apache http client response interceptor that works in conjunction with {@link
+ * TracingRequestInterceptor} to report spans
  */
 @Slf4j
 public class TracingResponseInterceptor implements HttpResponseInterceptor {
@@ -58,15 +57,15 @@ public class TracingResponseInterceptor implements HttpResponseInterceptor {
   }
 
   /**
-   * beforeSpanFinish will be called just before the span is closed.
-   * The subclasses can override this method to add additional information
-   * to the span, including tags and logs.
+   * beforeSpanFinish will be called just before the span is closed. The subclasses can override
+   * this method to add additional information to the span, including tags and logs.
    *
    * @param clientSpan the span that's going to be closed
    * @param httpResponse the http response returned from the http operation
    * @param httpContext the http context that the operation run on
    */
-  protected void beforeSpanFinish(Span clientSpan, HttpResponse httpResponse, HttpContext httpContext) {
+  protected void beforeSpanFinish(
+      Span clientSpan, HttpResponse httpResponse, HttpContext httpContext) {
     // no-op, can be overriden by subclasses
   }
 }

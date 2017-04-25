@@ -34,6 +34,9 @@ import com.uber.jaeger.crossdock.resources.health.HealthResource;
 import com.uber.jaeger.filters.jaxrs2.TracingUtils;
 import com.uber.jaeger.samplers.ConstSampler;
 import io.opentracing.Tracer;
+import java.net.URI;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
 import org.apache.log4j.BasicConfigurator;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
@@ -41,10 +44,6 @@ import org.glassfish.jersey.filter.LoggingFilter;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
-
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import java.net.URI;
 
 public class JerseyServer {
   public static final String SERVICE_NAME = "java";
@@ -121,7 +120,9 @@ public class JerseyServer {
 
   public static void main(String[] args) throws Exception {
     BasicConfigurator.configure();
-    JerseyServer server = new JerseyServer("0.0.0.0:8081", TraceBehaviorResource.class, EndToEndBehaviorResource.class);
+    JerseyServer server =
+        new JerseyServer(
+            "0.0.0.0:8081", TraceBehaviorResource.class, EndToEndBehaviorResource.class);
     TraceBehavior behavior = new TraceBehavior();
     new TChannelServer(8082, behavior, server.getTracer(), false).start();
     new JerseyServer("0.0.0.0:8080", HealthResource.class);

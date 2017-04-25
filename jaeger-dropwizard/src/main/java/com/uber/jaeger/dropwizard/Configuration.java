@@ -30,9 +30,7 @@ import io.opentracing.Tracer;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Configuration extends com.uber.jaeger.Configuration {
-  /**
-   * When set, getTracer returns a Noop tracer
-   */
+  /** When set, getTracer returns a Noop tracer */
   private final boolean disable;
 
   @JsonCreator
@@ -46,7 +44,7 @@ public class Configuration extends com.uber.jaeger.Configuration {
   }
 
   @Override
-  synchronized public Tracer getTracer() {
+  public synchronized Tracer getTracer() {
     if (disable) {
       return NoopTracerFactory.create();
     }

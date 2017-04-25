@@ -33,16 +33,15 @@ import static org.mockito.Mockito.when;
 import com.uber.jaeger.samplers.http.OperationSamplingParameters;
 import com.uber.jaeger.samplers.http.PerOperationSamplingParameters;
 import com.uber.jaeger.samplers.http.ProbabilisticSamplingStrategy;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 
 @RunWith(MockitoJUnitRunner.class)
 public class PerOperationSamplerTest {
@@ -60,9 +59,15 @@ public class PerOperationSamplerTest {
   private PerOperationSampler undertest;
 
   @Before
-  public void setUp(){
-    undertest = new PerOperationSampler(MAX_OPERATIONS, operationToSamplers, defaultProbabilisticSampler, DEFAULT_LOWER_BOUND_TRACES_PER_SECOND);
-    when(defaultProbabilisticSampler.sample(OPERATION, TRACE_ID)).thenReturn(SamplingStatus.of(true, new HashMap<String, Object>()));
+  public void setUp() {
+    undertest =
+        new PerOperationSampler(
+            MAX_OPERATIONS,
+            operationToSamplers,
+            defaultProbabilisticSampler,
+            DEFAULT_LOWER_BOUND_TRACES_PER_SECOND);
+    when(defaultProbabilisticSampler.sample(OPERATION, TRACE_ID))
+        .thenReturn(SamplingStatus.of(true, new HashMap<String, Object>()));
     when(defaultProbabilisticSampler.getSamplingRate()).thenReturn(DEFAULT_SAMPLING_PROBABILITY);
   }
 
@@ -73,7 +78,12 @@ public class PerOperationSamplerTest {
 
   @Test
   public void testFallbackToDefaultProbabilisticSampler() {
-    undertest = new PerOperationSampler(0, operationToSamplers, defaultProbabilisticSampler, DEFAULT_LOWER_BOUND_TRACES_PER_SECOND);
+    undertest =
+        new PerOperationSampler(
+            0,
+            operationToSamplers,
+            defaultProbabilisticSampler,
+            DEFAULT_LOWER_BOUND_TRACES_PER_SECOND);
     SamplingStatus samplingStatus = undertest.sample(OPERATION, TRACE_ID);
     assertTrue(samplingStatus.isSampled());
     verify(defaultProbabilisticSampler).sample(OPERATION, TRACE_ID);
@@ -83,9 +93,10 @@ public class PerOperationSamplerTest {
   public void testCreateGuaranteedSamplerOnUnseenOperation() {
     String newOperation = "new OPERATION";
     undertest.sample(newOperation, TRACE_ID);
-    assertEquals(new GuaranteedThroughputSampler(DEFAULT_SAMPLING_PROBABILITY,
-                                                 DEFAULT_LOWER_BOUND_TRACES_PER_SECOND),
-                 operationToSamplers.get(newOperation));
+    assertEquals(
+        new GuaranteedThroughputSampler(
+            DEFAULT_SAMPLING_PROBABILITY, DEFAULT_LOWER_BOUND_TRACES_PER_SECOND),
+        operationToSamplers.get(newOperation));
   }
 
   @Test
@@ -93,7 +104,8 @@ public class PerOperationSamplerTest {
     GuaranteedThroughputSampler sampler = mock(GuaranteedThroughputSampler.class);
     operationToSamplers.put(OPERATION, sampler);
 
-    when(sampler.sample(OPERATION, TRACE_ID)).thenReturn(SamplingStatus.of(true, new HashMap<String, Object>()));
+    when(sampler.sample(OPERATION, TRACE_ID))
+        .thenReturn(SamplingStatus.of(true, new HashMap<String, Object>()));
 
     SamplingStatus samplingStatus = undertest.sample(OPERATION, TRACE_ID);
     assertTrue(samplingStatus.isSampled());
@@ -102,77 +114,103 @@ public class PerOperationSamplerTest {
   }
 
   @Test
-  public void testUpdate(){
-    GuaranteedThroughputSampler guaranteedThroughputSampler = mock(GuaranteedThroughputSampler.class);
+  public void testUpdate() {
+    GuaranteedThroughputSampler guaranteedThroughputSampler =
+        mock(GuaranteedThroughputSampler.class);
     operationToSamplers.put(OPERATION, guaranteedThroughputSampler);
 
     PerOperationSamplingParameters perOperationSamplingParameters =
-        new PerOperationSamplingParameters(OPERATION, new ProbabilisticSamplingStrategy(SAMPLING_RATE));
+        new PerOperationSamplingParameters(
+            OPERATION, new ProbabilisticSamplingStrategy(SAMPLING_RATE));
     List<PerOperationSamplingParameters> parametersList = new ArrayList<>();
     parametersList.add(perOperationSamplingParameters);
 
     OperationSamplingParameters parameters =
-        new OperationSamplingParameters(DEFAULT_SAMPLING_PROBABILITY,
-            DEFAULT_LOWER_BOUND_TRACES_PER_SECOND, parametersList);
+        new OperationSamplingParameters(
+            DEFAULT_SAMPLING_PROBABILITY, DEFAULT_LOWER_BOUND_TRACES_PER_SECOND, parametersList);
 
     assertTrue(undertest.update(parameters));
-    verify(guaranteedThroughputSampler).update(SAMPLING_RATE, DEFAULT_LOWER_BOUND_TRACES_PER_SECOND);
+    verify(guaranteedThroughputSampler)
+        .update(SAMPLING_RATE, DEFAULT_LOWER_BOUND_TRACES_PER_SECOND);
     verifyNoMoreInteractions(guaranteedThroughputSampler);
   }
 
   @Test
-  public void testNoopUpdate(){
-    ProbabilisticSampler defaultProbabilisticSampler = new ProbabilisticSampler(DEFAULT_SAMPLING_PROBABILITY);
+  public void testNoopUpdate() {
+    ProbabilisticSampler defaultProbabilisticSampler =
+        new ProbabilisticSampler(DEFAULT_SAMPLING_PROBABILITY);
     double operationSamplingRate = 0.23;
-    operationToSamplers.put(OPERATION, new GuaranteedThroughputSampler(operationSamplingRate, DEFAULT_LOWER_BOUND_TRACES_PER_SECOND));
-    undertest = new PerOperationSampler(MAX_OPERATIONS, operationToSamplers, defaultProbabilisticSampler, DEFAULT_LOWER_BOUND_TRACES_PER_SECOND);
+    operationToSamplers.put(
+        OPERATION,
+        new GuaranteedThroughputSampler(
+            operationSamplingRate, DEFAULT_LOWER_BOUND_TRACES_PER_SECOND));
+    undertest =
+        new PerOperationSampler(
+            MAX_OPERATIONS,
+            operationToSamplers,
+            defaultProbabilisticSampler,
+            DEFAULT_LOWER_BOUND_TRACES_PER_SECOND);
 
     List<PerOperationSamplingParameters> parametersList = new ArrayList<>();
-    parametersList.add(new PerOperationSamplingParameters(OPERATION, new ProbabilisticSamplingStrategy(operationSamplingRate)));
-    OperationSamplingParameters parameters = new OperationSamplingParameters(DEFAULT_SAMPLING_PROBABILITY, DEFAULT_LOWER_BOUND_TRACES_PER_SECOND, parametersList);
+    parametersList.add(
+        new PerOperationSamplingParameters(
+            OPERATION, new ProbabilisticSamplingStrategy(operationSamplingRate)));
+    OperationSamplingParameters parameters =
+        new OperationSamplingParameters(
+            DEFAULT_SAMPLING_PROBABILITY, DEFAULT_LOWER_BOUND_TRACES_PER_SECOND, parametersList);
 
     assertFalse(undertest.update(parameters));
     assertEquals(operationToSamplers, undertest.getOperationNameToSampler());
     assertEquals(DEFAULT_LOWER_BOUND_TRACES_PER_SECOND, undertest.getLowerBound(), DELTA);
-    assertEquals(DEFAULT_SAMPLING_PROBABILITY, undertest.getDefaultSampler().getSamplingRate(), DELTA);
+    assertEquals(
+        DEFAULT_SAMPLING_PROBABILITY, undertest.getDefaultSampler().getSamplingRate(), DELTA);
   }
 
   @Test
-  public void testUpdateIgnoreGreaterThanMax(){
-    GuaranteedThroughputSampler guaranteedThroughputSampler = mock(GuaranteedThroughputSampler.class);
+  public void testUpdateIgnoreGreaterThanMax() {
+    GuaranteedThroughputSampler guaranteedThroughputSampler =
+        mock(GuaranteedThroughputSampler.class);
     operationToSamplers.put(OPERATION, guaranteedThroughputSampler);
 
-    PerOperationSampler undertest = new PerOperationSampler(1, operationToSamplers, defaultProbabilisticSampler, DEFAULT_LOWER_BOUND_TRACES_PER_SECOND);
+    PerOperationSampler undertest =
+        new PerOperationSampler(
+            1,
+            operationToSamplers,
+            defaultProbabilisticSampler,
+            DEFAULT_LOWER_BOUND_TRACES_PER_SECOND);
     PerOperationSamplingParameters perOperationSamplingParameters1 =
-        new PerOperationSamplingParameters(OPERATION, new ProbabilisticSamplingStrategy(SAMPLING_RATE));
+        new PerOperationSamplingParameters(
+            OPERATION, new ProbabilisticSamplingStrategy(SAMPLING_RATE));
     PerOperationSamplingParameters perOperationSamplingParameters2 =
-        new PerOperationSamplingParameters("second OPERATION", new ProbabilisticSamplingStrategy(SAMPLING_RATE));
+        new PerOperationSamplingParameters(
+            "second OPERATION", new ProbabilisticSamplingStrategy(SAMPLING_RATE));
     List<PerOperationSamplingParameters> parametersList = new ArrayList<>();
     parametersList.add(perOperationSamplingParameters1);
     parametersList.add(perOperationSamplingParameters2);
 
-    undertest.update(new OperationSamplingParameters(DEFAULT_SAMPLING_PROBABILITY,
-                                                     DEFAULT_LOWER_BOUND_TRACES_PER_SECOND, parametersList));
+    undertest.update(
+        new OperationSamplingParameters(
+            DEFAULT_SAMPLING_PROBABILITY, DEFAULT_LOWER_BOUND_TRACES_PER_SECOND, parametersList));
 
     assertEquals(1, operationToSamplers.size());
     assertNotNull(operationToSamplers.get(OPERATION));
   }
 
   @Test
-  public void testUpdateAddOperation(){
+  public void testUpdateAddOperation() {
     PerOperationSamplingParameters perOperationSamplingParameters1 =
-        new PerOperationSamplingParameters(OPERATION, new ProbabilisticSamplingStrategy(SAMPLING_RATE));
+        new PerOperationSamplingParameters(
+            OPERATION, new ProbabilisticSamplingStrategy(SAMPLING_RATE));
     List<PerOperationSamplingParameters> parametersList = new ArrayList<>();
     parametersList.add(perOperationSamplingParameters1);
 
-    undertest.update(new OperationSamplingParameters(DEFAULT_SAMPLING_PROBABILITY,
-                                                     DEFAULT_LOWER_BOUND_TRACES_PER_SECOND,
-                                                     parametersList));
+    undertest.update(
+        new OperationSamplingParameters(
+            DEFAULT_SAMPLING_PROBABILITY, DEFAULT_LOWER_BOUND_TRACES_PER_SECOND, parametersList));
 
     assertEquals(1, operationToSamplers.size());
-    assertEquals(new GuaranteedThroughputSampler(SAMPLING_RATE,
-                                                 DEFAULT_LOWER_BOUND_TRACES_PER_SECOND),
-                 operationToSamplers.get(OPERATION));
+    assertEquals(
+        new GuaranteedThroughputSampler(SAMPLING_RATE, DEFAULT_LOWER_BOUND_TRACES_PER_SECOND),
+        operationToSamplers.get(OPERATION));
   }
-
 }

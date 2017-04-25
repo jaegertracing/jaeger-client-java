@@ -25,9 +25,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uber.jaeger.context.TraceContext;
 import com.uber.jaeger.filters.jaxrs2.ClientFilter;
 import io.opentracing.Tracer;
-import org.glassfish.hk2.utilities.binding.AbstractBinder;
-import org.glassfish.jersey.jackson.JacksonFeature;
-
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -40,9 +40,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import org.glassfish.hk2.utilities.binding.AbstractBinder;
+import org.glassfish.jersey.jackson.JacksonFeature;
 
 @Path("jersey")
 public class JerseyHandler {

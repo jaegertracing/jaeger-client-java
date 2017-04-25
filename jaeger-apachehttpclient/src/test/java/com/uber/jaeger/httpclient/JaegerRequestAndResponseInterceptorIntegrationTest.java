@@ -30,6 +30,7 @@ import com.uber.jaeger.context.TracingUtils;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
 import com.uber.jaeger.samplers.Sampler;
+import java.util.List;
 import org.apache.http.HttpHost;
 import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -48,8 +49,6 @@ import org.mockserver.client.server.MockServerClient;
 import org.mockserver.junit.MockServerRule;
 import org.mockserver.model.HttpRequest;
 import org.mockserver.model.HttpResponse;
-
-import java.util.List;
 
 @RunWith(MockitoJUnitRunner.class)
 public class JaegerRequestAndResponseInterceptorIntegrationTest {

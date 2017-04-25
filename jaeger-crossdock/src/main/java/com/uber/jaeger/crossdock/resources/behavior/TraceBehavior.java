@@ -37,7 +37,6 @@ import com.uber.tchannel.api.SubChannel;
 import com.uber.tchannel.api.TFuture;
 import com.uber.tchannel.messages.ThriftRequest;
 import com.uber.tchannel.messages.ThriftResponse;
-
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;

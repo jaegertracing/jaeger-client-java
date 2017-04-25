@@ -22,11 +22,10 @@
 package com.uber.jaeger.senders.zipkin;
 
 import com.twitter.zipkin.thriftjava.Span;
+import java.io.ByteArrayOutputStream;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TIOStreamTransport;
-
-import java.io.ByteArrayOutputStream;
 import zipkin.reporter.Encoder;
 import zipkin.reporter.Encoding;
 

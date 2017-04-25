@@ -23,7 +23,6 @@ package com.uber.jaeger.utils;
 
 import com.uber.jaeger.exceptions.EmptyIPException;
 import com.uber.jaeger.exceptions.NotFourOctetsException;
-
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 

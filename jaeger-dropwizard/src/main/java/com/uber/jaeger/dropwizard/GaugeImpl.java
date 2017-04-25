@@ -23,7 +23,6 @@ package com.uber.jaeger.dropwizard;
 
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
-
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 

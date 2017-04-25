@@ -28,7 +28,6 @@ import com.uber.tchannel.api.TChannel;
 import com.uber.tchannel.tracing.TracingContext;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
-
 import java.net.InetAddress;
 import java.util.EmptyStackException;
 

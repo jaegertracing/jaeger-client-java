@@ -26,7 +26,6 @@ import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
 import io.opentracing.tag.Tags;
-
 import java.io.IOException;
 import javax.ws.rs.ConstrainedTo;
 import javax.ws.rs.RuntimeType;

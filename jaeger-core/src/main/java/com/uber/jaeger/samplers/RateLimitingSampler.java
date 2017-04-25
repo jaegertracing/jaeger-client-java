@@ -23,11 +23,9 @@ package com.uber.jaeger.samplers;
 
 import com.uber.jaeger.Constants;
 import com.uber.jaeger.utils.RateLimiter;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-
 import lombok.Getter;
 import lombok.ToString;
 
@@ -37,8 +35,7 @@ public class RateLimitingSampler implements Sampler {
   public static final String TYPE = "ratelimiting";
 
   private final RateLimiter rateLimiter;
-  @Getter
-  private final double maxTracesPerSecond;
+  @Getter private final double maxTracesPerSecond;
   private final Map<String, Object> tags;
 
   public RateLimitingSampler(double maxTracesPerSecond) {
@@ -66,9 +63,7 @@ public class RateLimitingSampler implements Sampler {
     return false;
   }
 
-  /**
-   * Only implemented to maintain compatibility with sampling interface.
-   */
+  /** Only implemented to maintain compatibility with sampling interface. */
   @Override
   public void close() {}
 }

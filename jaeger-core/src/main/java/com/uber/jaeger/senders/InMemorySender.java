@@ -23,7 +23,6 @@ package com.uber.jaeger.senders;
 
 import com.twitter.zipkin.thriftjava.Span;
 import com.uber.jaeger.exceptions.SenderException;
-
 import java.util.ArrayList;
 import java.util.List;
 import lombok.ToString;

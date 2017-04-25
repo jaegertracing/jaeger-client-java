@@ -21,12 +21,11 @@
  */
 package com.uber.jaeger.reporters.protocols;
 
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
-
-import java.net.SocketException;
-import java.net.UnknownHostException;
 
 public class TUDPServerTransport extends TServerTransport {
   private TUDPTransport transport;

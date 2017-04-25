@@ -21,12 +21,11 @@
  */
 package com.uber.jaeger.utils;
 
-import org.junit.Test;
-
-import java.util.concurrent.TimeUnit;
-
 import static junit.framework.TestCase.assertFalse;
 import static org.junit.Assert.assertTrue;
+
+import java.util.concurrent.TimeUnit;
+import org.junit.Test;
 
 public class RateLimiterTest {
   RateLimiter limiter;

@@ -22,9 +22,9 @@
 package com.uber.jaeger;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -33,11 +33,10 @@ import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
 import com.uber.jaeger.utils.Clock;
 import io.opentracing.tag.Tags;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.util.HashMap;
 import java.util.Map;
+import org.junit.Before;
+import org.junit.Test;
 
 public class SpanTest {
   private Clock clock;
@@ -194,7 +193,12 @@ public class SpanTest {
     final String expectedLog = "some-log";
     final String expectedEvent = "event";
     Object expectedPayload = new Object();
-    Map<String, String> expectedFields = new HashMap<String, String>() {{put(expectedEvent, expectedLog);}};
+    Map<String, String> expectedFields =
+        new HashMap<String, String>() {
+          {
+            put(expectedEvent, expectedLog);
+          }
+        };
 
     span.log(expectedTimestamp, expectedLog, expectedPayload);
     span.log(expectedTimestamp, expectedEvent);
@@ -228,7 +232,12 @@ public class SpanTest {
     final String expectedLog = "some-log";
     final String expectedEvent = "expectedEvent";
     final Object expectedPayload = new Object();
-    Map<String, String> expectedFields = new HashMap<String, String>() {{put(expectedEvent, expectedLog);}};
+    Map<String, String> expectedFields =
+        new HashMap<String, String>() {
+          {
+            put(expectedEvent, expectedLog);
+          }
+        };
 
     when(clock.currentTimeMicros()).thenReturn(expectedTimestamp);
 

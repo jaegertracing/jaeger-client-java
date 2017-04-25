@@ -22,7 +22,6 @@
 package com.uber.jaeger.context;
 
 import io.opentracing.Span;
-
 import java.util.EmptyStackException;
 import java.util.Stack;
 

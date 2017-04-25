@@ -22,7 +22,6 @@
 package com.uber.jaeger.reporters;
 
 import com.uber.jaeger.Span;
-
 import lombok.ToString;
 
 @ToString

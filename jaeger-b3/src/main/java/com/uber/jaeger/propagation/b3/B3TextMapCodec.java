@@ -25,14 +25,12 @@ import com.uber.jaeger.SpanContext;
 import com.uber.jaeger.propagation.Extractor;
 import com.uber.jaeger.propagation.Injector;
 import io.opentracing.propagation.TextMap;
-
 import java.util.Map;
 
 /**
  * This format is compatible with other trace libraries such as Brave, Wingtips, zipkin-js, etc.
  *
- * <p>
- * Example usage:
+ * <p>Example usage:
  *
  * <pre>{@code
  * b3Codec = new B3TextMapCodec();
@@ -42,8 +40,7 @@ import java.util.Map;
  *                    ...
  * }</pre>
  *
- * <p>
- * See <a href="http://zipkin.io/pages/instrumenting.html">Instrumenting a Library</a>
+ * <p>See <a href="http://zipkin.io/pages/instrumenting.html">Instrumenting a Library</a>
  */
 public final class B3TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
   static final String TRACE_ID_NAME = "X-B3-TraceId";

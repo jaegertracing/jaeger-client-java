@@ -24,7 +24,6 @@ package com.uber.jaeger.dropwizard;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.uber.jaeger.metrics.Counter;
-
 import java.util.Map;
 
 public class CounterImpl implements Counter {

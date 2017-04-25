@@ -21,13 +21,12 @@
  */
 package com.uber.jaeger.reporters.protocols;
 
+import com.twitter.zipkin.thriftjava.Span;
+import com.uber.jaeger.agent.thrift.Agent;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.twitter.zipkin.thriftjava.Span;
-import com.uber.jaeger.agent.thrift.Agent;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TSimpleServer;

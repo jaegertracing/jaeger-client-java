@@ -22,7 +22,6 @@
 package com.uber.jaeger.samplers;
 
 import com.uber.jaeger.Constants;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -47,7 +46,7 @@ public class ConstSampler implements Sampler {
 
   /**
    * @param id A long that represents the traceid used to make a sampling decision the command line
-   * arguments.
+   *     arguments.
    * @return A boolean that says whether to sample.
    */
   @Override
@@ -64,9 +63,7 @@ public class ConstSampler implements Sampler {
     return false;
   }
 
-  /**
-   * Only implemented to satisfy the sampler interface
-   */
+  /** Only implemented to satisfy the sampler interface */
   @Override
   public void close() {
     // nothing to do

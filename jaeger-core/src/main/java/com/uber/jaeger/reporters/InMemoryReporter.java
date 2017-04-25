@@ -22,7 +22,6 @@
 package com.uber.jaeger.reporters;
 
 import com.uber.jaeger.Span;
-
 import java.util.ArrayList;
 import java.util.List;
 import lombok.ToString;

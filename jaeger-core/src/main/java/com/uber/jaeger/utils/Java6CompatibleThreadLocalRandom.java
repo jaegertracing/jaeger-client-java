@@ -21,10 +21,9 @@
  */
 package com.uber.jaeger.utils;
 
-import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
-
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
+import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
 
 public final class Java6CompatibleThreadLocalRandom {
 
@@ -64,8 +63,8 @@ public final class Java6CompatibleThreadLocalRandom {
   }
 
   /**
-   * This class prevents that {@link ThreadLocalRandom} gets loaded unless
-   * {@link #getCurrentThreadLocalRandom()} is called
+   * This class prevents that {@link ThreadLocalRandom} gets loaded unless {@link
+   * #getCurrentThreadLocalRandom()} is called
    */
   private static class ThreadLocalRandomAccessor {
     @IgnoreJRERequirement

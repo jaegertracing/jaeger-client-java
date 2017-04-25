@@ -27,10 +27,6 @@ import static junit.framework.Assert.assertTrue;
 import com.uber.jaeger.Span;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.test.JerseyTest;
-import org.junit.Test;
-
 import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Map;
@@ -40,6 +36,9 @@ import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Response;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.test.JerseyTest;
+import org.junit.Test;
 
 public class JerseyServerFilterTest extends JerseyTest {
 
@@ -48,9 +47,12 @@ public class JerseyServerFilterTest extends JerseyTest {
 
   @Override
   protected Application configure() {
-    Configuration config = new Configuration("world service", false,
-                                             new com.uber.jaeger.Configuration.SamplerConfiguration(ConstSampler.TYPE, 1),
-                                             null);
+    Configuration config =
+        new Configuration(
+            "world service",
+            false,
+            new com.uber.jaeger.Configuration.SamplerConfiguration(ConstSampler.TYPE, 1),
+            null);
     reporter = new InMemoryReporter();
     com.uber.jaeger.Tracer tracer = (com.uber.jaeger.Tracer) config.getTracer();
     try {
@@ -61,8 +63,10 @@ public class JerseyServerFilterTest extends JerseyTest {
       throw new RuntimeException(e);
     }
 
-    ResourceConfig resourceConfig = new ResourceConfig(HelloResource.class, StormlordResource.class);
-    undertest = new JerseyServerFilter(tracer, com.uber.jaeger.context.TracingUtils.getTraceContext());
+    ResourceConfig resourceConfig =
+        new ResourceConfig(HelloResource.class, StormlordResource.class);
+    undertest =
+        new JerseyServerFilter(tracer, com.uber.jaeger.context.TracingUtils.getTraceContext());
     resourceConfig.register(undertest);
     return resourceConfig;
   }
@@ -111,7 +115,7 @@ public class JerseyServerFilterTest extends JerseyTest {
 
     Set<Map.Entry<JerseyServerFilter.CacheKey, String>> entries = undertest.getCache().entrySet();
     Set<String> valueSet = new HashSet<>(2);
-    for (Map.Entry<JerseyServerFilter.CacheKey, String> entry: entries) {
+    for (Map.Entry<JerseyServerFilter.CacheKey, String> entry : entries) {
       valueSet.add(entry.getValue());
     }
 
@@ -126,5 +130,4 @@ public class JerseyServerFilterTest extends JerseyTest {
     assertEquals("GET", key.getHttpMethod());
     assertEquals(methodName, key.getResourceMethod().getName());
   }
-
 }

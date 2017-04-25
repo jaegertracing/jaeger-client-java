@@ -25,9 +25,7 @@ import io.opentracing.Tracer;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 
-/**
- * Returns tracing enabled client builders for apache http clients.
- */
+/** Returns tracing enabled client builders for apache http clients. */
 public class TracingInterceptors {
   public static HttpAsyncClientBuilder addTo(HttpAsyncClientBuilder clientBuilder, Tracer tracer) {
     return clientBuilder

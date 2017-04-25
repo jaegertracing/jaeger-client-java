@@ -32,7 +32,6 @@ import com.uber.jaeger.samplers.*;
 import com.uber.jaeger.senders.UDPSender;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -52,7 +51,9 @@ public class EndToEndBehavior {
 
     tracers = new HashMap<String, Tracer>();
     tracers.put(RemoteControlledSampler.TYPE, getRemoteTracer(metrics, reporter));
-    tracers.put(ConstSampler.TYPE, new com.uber.jaeger.Tracer.Builder(SERVICE_NAME, reporter, constSampler).build());
+    tracers.put(
+        ConstSampler.TYPE,
+        new com.uber.jaeger.Tracer.Builder(SERVICE_NAME, reporter, constSampler).build());
   }
 
   private Reporter getReporter(Metrics metrics) {
@@ -64,9 +65,11 @@ public class EndToEndBehavior {
     Sampler initialSampler = new ProbabilisticSampler(1.0);
     HTTPSamplingManager manager = new HTTPSamplingManager(host + ":5778");
 
-    RemoteControlledSampler remoteSampler = new RemoteControlledSampler(SERVICE_NAME, manager, initialSampler, metrics, 5000);
+    RemoteControlledSampler remoteSampler =
+        new RemoteControlledSampler(SERVICE_NAME, manager, initialSampler, metrics, 5000);
 
-    com.uber.jaeger.Tracer.Builder remoteTracerBuilder = new com.uber.jaeger.Tracer.Builder(SERVICE_NAME, reporter, remoteSampler);
+    com.uber.jaeger.Tracer.Builder remoteTracerBuilder =
+        new com.uber.jaeger.Tracer.Builder(SERVICE_NAME, reporter, remoteSampler);
     return remoteTracerBuilder.build();
   }
 
@@ -81,7 +84,7 @@ public class EndToEndBehavior {
     for (int i = 0; i < request.getCount(); i++) {
       Tracer.SpanBuilder builder = tracer.buildSpan(request.getOperation());
       if (request.getTags() != null) {
-        for (Map.Entry<String, String> kv: request.getTags().entrySet()) {
+        for (Map.Entry<String, String> kv : request.getTags().entrySet()) {
           builder.withTag(kv.getKey(), kv.getValue());
         }
       }

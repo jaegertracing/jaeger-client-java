@@ -27,14 +27,10 @@ public class Constants {
 
   public static final int MAX_TAG_LENGTH = 256;
 
-  /**
-   * Span tag key to describe the type of sampler used on the root span.
-   */
+  /** Span tag key to describe the type of sampler used on the root span. */
   public static final String SAMPLER_TYPE_TAG_KEY = "sampler.type";
 
-  /**
-   * Span tag key to describe the parameter of the sampler used on the root span.
-   */
+  /** Span tag key to describe the parameter of the sampler used on the root span. */
   public static final String SAMPLER_PARAM_TAG_KEY = "sampler.param";
 
   /**

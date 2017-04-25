@@ -34,14 +34,13 @@ import com.uber.jaeger.thriftjava.Log;
 import com.uber.jaeger.thriftjava.Tag;
 import com.uber.jaeger.thriftjava.TagType;
 import io.opentracing.Span;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 @RunWith(DataProviderRunner.class)
 public class JaegerThriftSpanConverterTest {
@@ -58,15 +57,23 @@ public class JaegerThriftSpanConverterTest {
   public static Object[][] dataProviderBuildTag() {
     // @formatter:off
     return new Object[][] {
-        { "value", TagType.STRING, "value" },
-        { new Long(1), TagType.LONG, new Long(1) },
-        { new Integer(1), TagType.LONG, new Long(1) },
-        { new Short((short) 1), TagType.LONG, new Long(1) },
-        { new Double(1), TagType.DOUBLE, new Double(1) },
-        { new Float(1), TagType.DOUBLE, new Double(1) },
-        { new Byte((byte) 1), TagType.STRING, "1" },
-        { true, TagType.BOOL, true },
-        { new ArrayList<String>() {{add("hello");}}, TagType.STRING, "[hello]"}
+      {"value", TagType.STRING, "value"},
+      {new Long(1), TagType.LONG, new Long(1)},
+      {new Integer(1), TagType.LONG, new Long(1)},
+      {new Short((short) 1), TagType.LONG, new Long(1)},
+      {new Double(1), TagType.DOUBLE, new Double(1)},
+      {new Float(1), TagType.DOUBLE, new Double(1)},
+      {new Byte((byte) 1), TagType.STRING, "1"},
+      {true, TagType.BOOL, true},
+      {
+        new ArrayList<String>() {
+          {
+            add("hello");
+          }
+        },
+        TagType.STRING,
+        "[hello]"
+      }
     };
     // @formatter:on
   }
@@ -117,7 +124,8 @@ public class JaegerThriftSpanConverterTest {
     span = span.log(1, "key", "value");
     span = span.log(1, fields);
 
-    com.uber.jaeger.thriftjava.Span jSpan = JaegerThriftSpanConverter.convertSpan((com.uber.jaeger.Span) span);
+    com.uber.jaeger.thriftjava.Span jSpan =
+        JaegerThriftSpanConverter.convertSpan((com.uber.jaeger.Span) span);
 
     assertEquals("operation-name", jSpan.getOperationName());
     assertEquals(2, jSpan.getLogs().size());
@@ -142,21 +150,21 @@ public class JaegerThriftSpanConverterTest {
   @Test
   public void testTruncateString() {
     String testString =
-        "k9bHT50f9JNpPUggw3Qz\n" +
-        "Q1MUhMobIMPA5ItaB3KD\n" +
-        "vNUoBPRjOpJw2C46vgn3\n" +
-        "UisXI5KIIH8Wd8uqJ8Wn\n" +
-        "Z8NVmrcpIBwxc2Qje5d6\n" +
-        "1mJdQnPMc3VmX1v75As8\n" +
-        "pUyoicWVPeGEidRuhHpt\n" +
-        "R1sIR1YNjwtBIy9Swwdq\n" +
-        "LUIZXdLcPmCvQVPB3cYw\n" +
-        "VGAtFXG7D8ksLsKw94eY\n" +
-        "c7PNm74nEV3jIIvlJ217\n" +
-        "SLBfUBHW6SEjrHcz553i\n" +
-        "VSjpBvJYXR6CsoEMGce0\n" +
-        "LqSypCXJHDAzb0DL1w8B\n" +
-        "kS9g0wCgregSAlq63OIf";
+        "k9bHT50f9JNpPUggw3Qz\n"
+            + "Q1MUhMobIMPA5ItaB3KD\n"
+            + "vNUoBPRjOpJw2C46vgn3\n"
+            + "UisXI5KIIH8Wd8uqJ8Wn\n"
+            + "Z8NVmrcpIBwxc2Qje5d6\n"
+            + "1mJdQnPMc3VmX1v75As8\n"
+            + "pUyoicWVPeGEidRuhHpt\n"
+            + "R1sIR1YNjwtBIy9Swwdq\n"
+            + "LUIZXdLcPmCvQVPB3cYw\n"
+            + "VGAtFXG7D8ksLsKw94eY\n"
+            + "c7PNm74nEV3jIIvlJ217\n"
+            + "SLBfUBHW6SEjrHcz553i\n"
+            + "VSjpBvJYXR6CsoEMGce0\n"
+            + "LqSypCXJHDAzb0DL1w8B\n"
+            + "kS9g0wCgregSAlq63OIf";
     assertEquals(256, JaegerThriftSpanConverter.truncateString(testString).length());
   }
 }

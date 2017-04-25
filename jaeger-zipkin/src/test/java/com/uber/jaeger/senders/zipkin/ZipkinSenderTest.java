@@ -21,6 +21,8 @@
  */
 package com.uber.jaeger.senders.zipkin;
 
+import static org.junit.Assert.assertEquals;
+
 import com.uber.jaeger.Span;
 import com.uber.jaeger.SpanContext;
 import com.uber.jaeger.Tracer;
@@ -30,6 +32,8 @@ import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.reporters.Reporter;
 import com.uber.jaeger.reporters.protocols.ThriftSpanConverter;
 import com.uber.jaeger.samplers.ConstSampler;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.thrift.transport.AutoExpandingBufferWriteTransport;
 import org.junit.After;
 import org.junit.Before;
@@ -39,11 +43,6 @@ import zipkin.Annotation;
 import zipkin.BinaryAnnotation;
 import zipkin.junit.ZipkinRule;
 import zipkin.reporter.urlconnection.URLConnectionSender;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
 
 public class ZipkinSenderTest {
   final int messageMaxBytes = 1000;
