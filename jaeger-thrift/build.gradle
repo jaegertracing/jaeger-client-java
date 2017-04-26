@@ -32,6 +32,8 @@ javadoc {
     exclude '**/com/uber/jaeger/crossdock/thrift/**'
 }
 
+licenseMain.enabled = false
+
 sourceSets {
     main {
         java {

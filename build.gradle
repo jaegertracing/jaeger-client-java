@@ -1,13 +1,12 @@
 plugins {
     id "org.jruyi.thrift" version "0.3.1"
     id "jacoco"
-    id "com.github.hierynomus.license" version "0.12.1"
+    id "com.github.hierynomus.license" version "0.14.0"
     id 'com.github.sherter.google-java-format' version '0.3.2'
     id "com.github.johnrengelman.shadow" version "1.2.3"
-    id "net.ltgt.errorprone" version "0.0.9"
+    id "net.ltgt.errorprone" version "0.0.10"
     id 'ru.vyarus.animalsniffer' version '1.2.0'
 }
-
 
 ext.opentracingVersion = '0.21.0'
 ext.guavaVersion = '18.0'
@@ -21,6 +20,10 @@ ext.junitVersion = '4.12'
 ext.mockitoVersion = '2.2.28'
 ext.junitDataProviderVersion = '1.10.0'
 
+task wrapper(type: Wrapper) {
+    gradleVersion = '3.5'
+}
+
 allprojects {
     apply plugin: 'idea' // intellij support
     apply plugin: 'jacoco'
@@ -31,12 +34,7 @@ allprojects {
     repositories {
         mavenCentral()
     }
-
-    task wrapper(type: Wrapper) {
-        gradleVersion = '3.1.2' //version required
-    }
 }
-
 
 subprojects {
     apply plugin: 'ru.vyarus.animalsniffer'
@@ -61,8 +59,10 @@ subprojects {
 
     [compileJava, compileTestJava, javadoc]*.options*.encoding = 'UTF-8'
 
-    task listJars(description: 'Display all compile jars.') << {
-        configurations.compile.each { File file -> println file.name }
+    task listJars {
+        doLast {
+            configurations.compile.each { File file -> println file.name }
+        }
     }
     
     task verifyFormatting(type: com.github.sherter.googlejavaformatgradleplugin.VerifyGoogleJavaFormat) {
@@ -74,7 +74,6 @@ subprojects {
         skipExistingHeaders true
         strictCheck true
         include "**/*.java"
-        excludes(["**/gen-java/**"])
         ext.year = Calendar.getInstance().get(Calendar.YEAR)
         ext.name = 'Uber Technologies, Inc'
         ignoreFailures = false
