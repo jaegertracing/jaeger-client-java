@@ -41,11 +41,13 @@ jar {
     }
 }
 
-task jaegerVersion << {
-    def dirPath = 'src/main/resources/com/uber/jaeger/'
-    new File(projectDir, dirPath).mkdirs()
-    def propFile = new File(projectDir, "${dirPath}jaeger.properties").getAbsolutePath()
-    new File(propFile).write("jaeger.version=${project.version}")
+task jaegerVersion {
+    doLast {
+        def dirPath = 'src/main/resources/com/uber/jaeger/'
+        new File(projectDir, dirPath).mkdirs()
+        def propFile = new File(projectDir, "${dirPath}jaeger.properties").getAbsolutePath()
+        new File(propFile).write("jaeger.version=${project.version}")
+    }
 }
 
 compileJava.dependsOn jaegerVersion
