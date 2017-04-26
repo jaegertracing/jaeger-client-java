@@ -19,12 +19,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.uber.jaeger.utils;
 
-import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
+package com.uber.jaeger.utils;
 
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
+import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
 
 public final class Java6CompatibleThreadLocalRandom {
 

@@ -19,10 +19,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.samplers;
 
 import com.uber.jaeger.Constants;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -57,7 +57,9 @@ public class ConstSampler implements Sampler {
 
   @Override
   public boolean equals(Object other) {
-    if (this == other) return true;
+    if (this == other) {
+      return true;
+    }
     if (other instanceof ConstSampler) {
       return this.decision == ((ConstSampler) other).decision;
     }

@@ -30,6 +30,7 @@ import com.uber.jaeger.context.TracingUtils;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
 import com.uber.jaeger.samplers.Sampler;
+import java.util.List;
 import org.apache.http.HttpHost;
 import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -48,8 +49,6 @@ import org.mockserver.client.server.MockServerClient;
 import org.mockserver.junit.MockServerRule;
 import org.mockserver.model.HttpRequest;
 import org.mockserver.model.HttpResponse;
-
-import java.util.List;
 
 @RunWith(MockitoJUnitRunner.class)
 public class JaegerRequestAndResponseInterceptorIntegrationTest {
@@ -128,15 +127,15 @@ public class JaegerRequestAndResponseInterceptorIntegrationTest {
     assertEquals(2, spans.size());
     Span span = spans.get(1);
     assertEquals("GET", span.getOperationName());
-    assertEquals(parentSpan.context().getSpanID(), span.context().getParentID());
+    assertEquals(parentSpan.context().getSpanId(), span.context().getParentId());
 
     //Assert traces and baggage are propagated correctly to server
     HttpRequest[] httpRequests = mockServerClient.retrieveRecordedRequests(null);
     assertEquals(1, httpRequests.length);
     String traceData = httpRequests[0].getFirstHeader("uber-trace-id");
     String[] split = traceData.split("%3A");
-    assertEquals(Long.toHexString(span.context().getTraceID()), split[0]);
-    assertEquals(Long.toHexString(span.context().getSpanID()), split[1]);
+    assertEquals(Long.toHexString(span.context().getTraceId()), split[0]);
+    assertEquals(Long.toHexString(span.context().getSpanId()), split[1]);
     String baggage = httpRequests[0].getFirstHeader("uberctx-" + BAGGAGE_KEY);
     assertEquals(BAGGAGE_VALUE, baggage);
   }

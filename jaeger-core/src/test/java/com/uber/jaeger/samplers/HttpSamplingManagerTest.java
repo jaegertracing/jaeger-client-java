@@ -31,10 +31,6 @@ import com.uber.jaeger.samplers.http.PerOperationSamplingParameters;
 import com.uber.jaeger.samplers.http.ProbabilisticSamplingStrategy;
 import com.uber.jaeger.samplers.http.RateLimitingSamplingStrategy;
 import com.uber.jaeger.samplers.http.SamplingStrategyResponse;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.test.JerseyTest;
-import org.junit.Test;
-
 import java.io.File;
 import java.net.URI;
 import java.net.URL;
@@ -42,10 +38,13 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.List;
 import javax.ws.rs.core.Application;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.test.JerseyTest;
+import org.junit.Test;
 
-public class HTTPSamplingManagerTest extends JerseyTest {
+public class HttpSamplingManagerTest extends JerseyTest {
 
-  HTTPSamplingManager undertest = new HTTPSamplingManager(null);
+  HttpSamplingManager undertest = new HttpSamplingManager(null);
 
   @Override
   protected Application configure() {
@@ -55,7 +54,7 @@ public class HTTPSamplingManagerTest extends JerseyTest {
   @Test
   public void testGetSamplingStrategy() throws Exception {
     URI uri = target().getUri();
-    undertest = new HTTPSamplingManager(uri.getHost() + ":" + uri.getPort());
+    undertest = new HttpSamplingManager(uri.getHost() + ":" + uri.getPort());
     SamplingStrategyResponse response = undertest.getSamplingStrategy("clairvoyant");
     assertNotNull(response.getProbabilisticSampling());
   }
@@ -63,7 +62,7 @@ public class HTTPSamplingManagerTest extends JerseyTest {
   @Test (expected = SamplingStrategyErrorException.class)
   public void testGetSamplingStrategyError() throws Exception {
     URI uri = target().getUri();
-    undertest = new HTTPSamplingManager(uri.getHost() + ":" + uri.getPort());
+    undertest = new HttpSamplingManager(uri.getHost() + ":" + uri.getPort());
     undertest.getSamplingStrategy("");
   }
 

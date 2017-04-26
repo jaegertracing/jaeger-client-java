@@ -19,12 +19,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.uber.jaeger.senders.zipkin;
 
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+package com.uber.jaeger.senders.zipkin;
 
 import com.twitter.zipkin.thriftjava.Annotation;
 import com.twitter.zipkin.thriftjava.AnnotationType;
@@ -36,8 +32,11 @@ import com.uber.jaeger.LogData;
 import com.uber.jaeger.Span;
 import com.uber.jaeger.SpanContext;
 import com.uber.jaeger.Tracer;
-
 import io.opentracing.tag.Tags;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class ThriftSpanConverter {
 
@@ -45,16 +44,16 @@ public class ThriftSpanConverter {
 
   public static com.twitter.zipkin.thriftjava.Span convertSpan(Span span) {
     Tracer tracer = span.getTracer();
-    Endpoint host = new Endpoint(tracer.getIP(), (short) 0, tracer.getServiceName());
+    Endpoint host = new Endpoint(tracer.getIp(), (short) 0, tracer.getServiceName());
 
-  SpanContext context = span.context();
+    SpanContext context = span.context();
     return new com.twitter.zipkin.thriftjava.Span(
-            context.getTraceID(),
+            context.getTraceId(),
             span.getOperationName(),
-            context.getSpanID(),
+            context.getSpanId(),
             buildAnnotations(span, host),
             buildBinaryAnnotations(span, host))
-        .setParent_id(context.getParentID())
+        .setParent_id(context.getParentId())
         .setDebug(context.isDebug())
         .setTimestamp(span.getStart())
         .setDuration(span.getDuration());
@@ -63,10 +62,10 @@ public class ThriftSpanConverter {
   private static List<Annotation> buildAnnotations(Span span, Endpoint host) {
     List<Annotation> annotations = new ArrayList<Annotation>();
 
-    if (isRPC(span)) {
+    if (isRpc(span)) {
       String startLabel = zipkincoreConstants.SERVER_RECV;
       String endLabel = zipkincoreConstants.SERVER_SEND;
-      if (isRPCClient(span)) {
+      if (isRpcClient(span)) {
         startLabel = zipkincoreConstants.CLIENT_SEND;
         endLabel = zipkincoreConstants.CLIENT_RECV;
       }
@@ -88,8 +87,8 @@ public class ThriftSpanConverter {
   private static List<BinaryAnnotation> buildBinaryAnnotations(Span span, Endpoint host) {
     List<BinaryAnnotation> binaryAnnotations = new ArrayList<BinaryAnnotation>();
     Map<String, Object> tags = span.getTags();
-    boolean isRpc = isRPC(span);
-    boolean isClient = isRPCClient(span);
+    boolean isRpc = isRpc(span);
+    boolean isClient = isRpcClient(span);
 
     Endpoint peerEndpoint = extractPeerEndpoint(tags);
     if (peerEndpoint != null && isClient) {
@@ -146,13 +145,13 @@ public class ThriftSpanConverter {
     return banno;
   }
 
-  public static boolean isRPC(Span span) {
+  public static boolean isRpc(Span span) {
     Object spanKindValue = span.getTags().get(Tags.SPAN_KIND.getKey());
     return Tags.SPAN_KIND_CLIENT.equals(spanKindValue) || Tags.SPAN_KIND_SERVER.equals(spanKindValue);
 
   }
 
-  public static boolean isRPCClient(Span span) {
+  public static boolean isRpcClient(Span span) {
     return Tags.SPAN_KIND_CLIENT.equals(span.getTags().get(Tags.SPAN_KIND.getKey()));
   }
 

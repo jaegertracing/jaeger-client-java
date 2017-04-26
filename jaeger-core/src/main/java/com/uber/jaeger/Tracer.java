@@ -19,18 +19,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.uber.jaeger;
 
-import java.io.InputStream;
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+package com.uber.jaeger;
 
 import com.uber.jaeger.exceptions.UnsupportedFormatException;
 import com.uber.jaeger.metrics.Metrics;
@@ -46,10 +36,19 @@ import com.uber.jaeger.samplers.SamplingStatus;
 import com.uber.jaeger.utils.Clock;
 import com.uber.jaeger.utils.SystemClock;
 import com.uber.jaeger.utils.Utils;
-
 import io.opentracing.References;
 import io.opentracing.propagation.Format;
 import io.opentracing.tag.Tags;
+import java.io.InputStream;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
@@ -66,7 +65,7 @@ public class Tracer implements io.opentracing.Tracer {
   private final Metrics metrics;
   private final int ip;
   private final Map<String, ?> tags;
-  private final boolean zipkinSharedRPCSpan;
+  private final boolean zipkinSharedRpcSpan;
 
   private Tracer(
       String serviceName,
@@ -76,14 +75,14 @@ public class Tracer implements io.opentracing.Tracer {
       Clock clock,
       Metrics metrics,
       Map<String, Object> tags,
-      boolean zipkinSharedRPCSpan) {
+      boolean zipkinSharedRpcSpan) {
     this.serviceName = serviceName;
     this.reporter = reporter;
     this.sampler = sampler;
     this.registry = registry;
     this.clock = clock;
     this.metrics = metrics;
-    this.zipkinSharedRPCSpan = zipkinSharedRPCSpan;
+    this.zipkinSharedRpcSpan = zipkinSharedRpcSpan;
 
     int ip;
     try {
@@ -119,7 +118,7 @@ public class Tracer implements io.opentracing.Tracer {
     return tags;
   }
 
-  public int getIP() {
+  public int getIp() {
     return ip;
   }
 
@@ -198,8 +197,8 @@ public class Tracer implements io.opentracing.Tracer {
     @Override
     public io.opentracing.Tracer.SpanBuilder addReference(
         String referenceType, io.opentracing.SpanContext referencedContext) {
-      if (referencedContext instanceof SpanContext &&
-              (Utils.equals(referenceType, References.CHILD_OF)
+      if (referencedContext instanceof SpanContext
+          && (Utils.equals(referenceType, References.CHILD_OF)
                       || Utils.equals(referenceType, References .FOLLOWS_FROM))) {
         this.references.add(new Reference((SpanContext) referencedContext, referenceType));
         this.baggage.putAll(((SpanContext)referencedContext).baggage());
@@ -232,13 +231,13 @@ public class Tracer implements io.opentracing.Tracer {
       return this;
     }
 
-    private SpanContext createNewContext(String debugID) {
-      long id = Utils.uniqueID();
+    private SpanContext createNewContext(String debugId) {
+      long id = Utils.uniqueId();
 
       byte flags = 0;
-      if (debugID != null) {
+      if (debugId != null) {
         flags |= SpanContext.flagSampled | SpanContext.flagDebug;
-        tags.put(Constants.DEBUG_ID_HEADER_KEY, debugID);
+        tags.put(Constants.DEBUG_ID_HEADER_KEY, debugId);
         metrics.traceStartedSampled.inc(1);
       } else {
         //TODO(prithvi): Don't assume operationName is set on creation
@@ -256,7 +255,7 @@ public class Tracer implements io.opentracing.Tracer {
     }
 
     private SpanContext createChildContext(SpanContext preferredParent) {
-      if (isRPCServer()) {
+      if (isRpcServer()) {
         if (preferredParent.isSampled()) {
           metrics.tracesJoinedSampled.inc(1);
         } else {
@@ -264,21 +263,21 @@ public class Tracer implements io.opentracing.Tracer {
         }
 
         // Zipkin server compatibility
-        if (zipkinSharedRPCSpan) {
+        if (zipkinSharedRpcSpan) {
           return preferredParent;
         }
       }
       return new SpanContext(
-          preferredParent.getTraceID(),
-          Utils.uniqueID(),
-          preferredParent.getSpanID(),
+          preferredParent.getTraceId(),
+          Utils.uniqueId(),
+          preferredParent.getSpanId(),
           preferredParent.getFlags(),
           this.baggage,
           null);
     }
 
     //Visible for testing
-    boolean isRPCServer() {
+    boolean isRpcServer() {
       return Tags.SPAN_KIND_SERVER.equals(tags.get(Tags.SPAN_KIND.getKey()));
     }
 
@@ -287,8 +286,8 @@ public class Tracer implements io.opentracing.Tracer {
       // find preferredParent, it is first childOf
       Reference preferredParent = references.isEmpty() ? null : references.get(0);
       for (Reference reference: references) {
-        if (References.CHILD_OF.equals(reference.getType()) &&
-                !References.CHILD_OF.equals(preferredParent.getType())) {
+        if (References.CHILD_OF.equals(reference.getType())
+            && !References.CHILD_OF.equals(preferredParent.getType())) {
           preferredParent = reference;
           break;
         }
@@ -297,8 +296,8 @@ public class Tracer implements io.opentracing.Tracer {
       SpanContext context;
       if (preferredParent == null) {
         context = createNewContext(null);
-      } else if (preferredParent.getSpanContext().isDebugIDContainerOnly()) {
-        context = createNewContext(preferredParent.getSpanContext().getDebugID());
+      } else if (preferredParent.getSpanContext().isDebugIdContainerOnly()) {
+        context = createNewContext(preferredParent.getSpanContext().getDebugId());
       } else {
         context = createChildContext(preferredParent.getSpanContext());
       }
@@ -315,7 +314,7 @@ public class Tracer implements io.opentracing.Tracer {
       }
 
       // TODO add tracer tags to zipkin first span in process
-      if (zipkinSharedRPCSpan && (preferredParent == null || isRPCServer())) {
+      if (zipkinSharedRpcSpan && (preferredParent == null || isRpcServer())) {
         tags.putAll(Tracer.this.tags);
       }
 
@@ -350,7 +349,7 @@ public class Tracer implements io.opentracing.Tracer {
     private String serviceName;
     private Clock clock = new SystemClock();
     private Map<String, Object> tags = new HashMap<String, Object>();
-    private boolean zipkinSharedRPCSpan;
+    private boolean zipkinSharedRpcSpan;
 
     public Builder(String serviceName, Reporter reporter, Sampler sampler) {
       if (serviceName == null || serviceName.trim().length() == 0) {
@@ -390,8 +389,8 @@ public class Tracer implements io.opentracing.Tracer {
       return this;
     }
 
-    public Builder withZipkinSharedRPCSpan() {
-      zipkinSharedRPCSpan = true;
+    public Builder withZipkinSharedRpcSpan() {
+      zipkinSharedRpcSpan = true;
       return this;
     }
 
@@ -416,7 +415,8 @@ public class Tracer implements io.opentracing.Tracer {
     }
 
     public Tracer build() {
-      return new Tracer(this.serviceName, reporter, sampler, registry, clock, metrics, tags, zipkinSharedRPCSpan);
+      return new Tracer(this.serviceName, reporter, sampler, registry, clock, metrics, tags,
+          zipkinSharedRpcSpan);
     }
   }
 

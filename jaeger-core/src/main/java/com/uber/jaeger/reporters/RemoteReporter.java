@@ -19,18 +19,17 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.uber.jaeger.reporters;
 
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
+package com.uber.jaeger.reporters;
 
 import com.uber.jaeger.Span;
 import com.uber.jaeger.exceptions.SenderException;
 import com.uber.jaeger.metrics.Metrics;
 import com.uber.jaeger.senders.Sender;
-
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 

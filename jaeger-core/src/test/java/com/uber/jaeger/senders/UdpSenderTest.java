@@ -44,7 +44,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-public class UDPSenderTest {
+public class UdpSenderTest {
   final static String SERVICE_NAME = "test-sender";
   final String destHost = "localhost";
   int destPort;
@@ -53,7 +53,7 @@ public class UDPSenderTest {
 
   Tracer tracer;
   Reporter reporter;
-  UDPSender sender;
+  UdpSender sender;
   TestTServer server;
 
   private TestTServer startServer() throws Exception {
@@ -76,7 +76,7 @@ public class UDPSenderTest {
             .withStatsReporter(new InMemoryStatsReporter())
             .withTag("foo", "bar")
             .build();
-    sender = new UDPSender(destHost, destPort, maxPacketSize);
+    sender = new UdpSender(destHost, destPort, maxPacketSize);
   }
 
   @After
@@ -128,7 +128,7 @@ public class UDPSenderTest {
     int maxPacketSize = (spanSize * expectedNumSpans) + sender.emitBatchOverhead + processSize;
     int maxPacketSizeLeft = maxPacketSize - sender.emitBatchOverhead - processSize;
     // add enough spans to be under buffer limit
-    sender = new UDPSender(destHost, destPort, maxPacketSize);
+    sender = new UdpSender(destHost, destPort, maxPacketSize);
     while (spanSize < maxPacketSizeLeft) {
       sender.append(jaegerSpan);
       maxPacketSizeLeft -= spanSize;
@@ -154,9 +154,9 @@ public class UDPSenderTest {
     assertEquals(batch.getSpans().size(), expectedNumSpans);
 
     com.uber.jaeger.thriftjava.Span actualSpan = batch.getSpans().get(0);
-    assertEquals(expectedSpan.context().getTraceID(), actualSpan.getTraceIdLow());
+    assertEquals(expectedSpan.context().getTraceId(), actualSpan.getTraceIdLow());
     assertEquals(0, actualSpan.getTraceIdHigh());
-    assertEquals(expectedSpan.context().getSpanID(), actualSpan.getSpanId());
+    assertEquals(expectedSpan.context().getSpanId(), actualSpan.getSpanId());
     assertEquals(0, actualSpan.getParentSpanId());
     assertTrue(actualSpan.references.isEmpty());
     assertEquals(expectedSpan.getOperationName(), actualSpan.getOperationName());
@@ -175,7 +175,7 @@ public class UDPSenderTest {
     // If this test breaks it means we have changed our protocol, or
     // the protocol information has changed (likely due to a new version of thrift).
     assertEquals(a, b);
-    assertEquals(b, UDPSender.emitBatchOverhead);
+    assertEquals(b, UdpSender.emitBatchOverhead);
   }
 
   private int calculateBatchOverheadDifference(int numberOfSpans) throws Exception {

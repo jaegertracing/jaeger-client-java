@@ -19,10 +19,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.crossdock;
 
 public class Constants {
-  public final static String BAGGAGE_KEY = "crossdock-baggage-key";
-  public final static String TRANSPORT_HTTP = "HTTP";
-  public final static String TRANSPORT_TCHANNEL = "TCHANNEL";
+  public static final String BAGGAGE_KEY = "crossdock-baggage-key";
+  public static final String TRANSPORT_HTTP = "HTTP";
+  public static final String TRANSPORT_TCHANNEL = "TCHANNEL";
 }

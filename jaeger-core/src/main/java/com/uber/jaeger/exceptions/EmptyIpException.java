@@ -19,10 +19,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.exceptions;
 
-public class EmptyIPException extends RuntimeException {
-  public EmptyIPException() {
+public class EmptyIpException extends RuntimeException {
+  public EmptyIpException() {
     super("Empty string given for ip");
   }
 }

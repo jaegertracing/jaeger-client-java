@@ -21,15 +21,15 @@
  */
 package com.uber.jaeger.context;
 
-import io.opentracing.Span;
-import org.junit.Before;
-import org.junit.Test;
-
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+
+import io.opentracing.Span;
+import org.junit.Before;
+import org.junit.Test;
 
 public class CallableTest {
   TraceContext traceContext;

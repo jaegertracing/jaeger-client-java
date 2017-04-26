@@ -19,18 +19,16 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.samplers;
 
 import com.uber.jaeger.Constants;
-import com.uber.jaeger.samplers.http.OperationSamplingParameters;
-import com.uber.jaeger.samplers.http.PerOperationSamplingParameters;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * {@link GuaranteedThroughputSampler} is a {@link Sampler} that guarantees a throughput by using

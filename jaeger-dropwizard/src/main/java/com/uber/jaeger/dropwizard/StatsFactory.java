@@ -19,13 +19,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.dropwizard;
 
 import com.codahale.metrics.MetricRegistry;
 import com.uber.jaeger.metrics.Counter;
 import com.uber.jaeger.metrics.Gauge;
 import com.uber.jaeger.metrics.Timer;
-
 import java.util.Map;
 
 public class StatsFactory implements com.uber.jaeger.metrics.StatsFactory {

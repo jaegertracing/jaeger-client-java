@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.metrics;
 
 import java.lang.annotation.Annotation;
@@ -99,57 +100,57 @@ public class Metrics {
   }
 
   @Metric(
-    name = "traces",
-    tags = {@Tag(key = "state", value = "started"), @Tag(key = "sampled", value = "y")}
+      name = "traces",
+      tags = {@Tag(key = "state", value = "started"), @Tag(key = "sampled", value = "y")}
   )
   // Number of traces started by this tracer as sampled
   public Counter traceStartedSampled;
 
   @Metric(
-    name = "traces",
-    tags = {@Tag(key = "state", value = "started"), @Tag(key = "sampled", value = "n")}
+      name = "traces",
+      tags = {@Tag(key = "state", value = "started"), @Tag(key = "sampled", value = "n")}
   )
   // Number of traces started by this tracer as not sampled
   public Counter traceStartedNotSampled;
 
   @Metric(
-    name = "traces",
-    tags = {@Tag(key = "state", value = "joined"), @Tag(key = "sampled", value = "y")}
+      name = "traces",
+      tags = {@Tag(key = "state", value = "joined"), @Tag(key = "sampled", value = "y")}
   )
   // Number of externally started sampled traces this tracer joined
   public Counter tracesJoinedSampled;
 
   @Metric(
-    name = "traces",
-    tags = {@Tag(key = "state", value = "joined"), @Tag(key = "sampled", value = "n")}
+      name = "traces",
+      tags = {@Tag(key = "state", value = "joined"), @Tag(key = "sampled", value = "n")}
   )
   // Number of externally started not-sampled traces this tracer joined
   public Counter tracesJoinedNotSampled;
 
   @Metric(
-    name = "spans",
-    tags = {@Tag(key = "state", value = "started"), @Tag(key = "group", value = "lifecycle")}
+      name = "spans",
+      tags = {@Tag(key = "state", value = "started"), @Tag(key = "group", value = "lifecycle")}
   )
   // Number of sampled spans started by this tracer
   public Counter spansStarted;
 
   @Metric(
-    name = "spans",
-    tags = {@Tag(key = "state", value = "finished"), @Tag(key = "group", value = "lifecycle")}
+      name = "spans",
+      tags = {@Tag(key = "state", value = "finished"), @Tag(key = "group", value = "lifecycle")}
   )
   // Number of sampled spans started by this tracer
   public Counter spansFinished;
 
   @Metric(
-    name = "spans",
-    tags = {@Tag(key = "group", value = "sampling"), @Tag(key = "sampled", value = "y")}
+      name = "spans",
+      tags = {@Tag(key = "group", value = "sampling"), @Tag(key = "sampled", value = "y")}
   )
   // Number of sampled spans started by this tracer
   public Counter spansSampled;
 
   @Metric(
-    name = "spans",
-    tags = {@Tag(key = "group", value = "sampling"), @Tag(key = "sampled", value = "n")}
+      name = "spans",
+      tags = {@Tag(key = "group", value = "sampling"), @Tag(key = "sampled", value = "n")}
   )
   // Number of not-sampled spans started by this tracer
   public Counter spansNotSampled;
@@ -159,22 +160,22 @@ public class Metrics {
   public Counter decodingErrors;
 
   @Metric(
-    name = "reporter-spans",
-    tags = {@Tag(key = "state", value = "success")}
+      name = "reporter-spans",
+      tags = {@Tag(key = "state", value = "success")}
   )
   // Number of spans successfully reported
   public Counter reporterSuccess;
 
   @Metric(
-    name = "reporter-spans",
-    tags = {@Tag(key = "state", value = "failure")}
+      name = "reporter-spans",
+      tags = {@Tag(key = "state", value = "failure")}
   )
   // Number of spans in failed attempts to report
   public Counter reporterFailure;
 
   @Metric(
-    name = "spans",
-    tags = {@Tag(key = "state", value = "dropped")}
+      name = "spans",
+      tags = {@Tag(key = "state", value = "dropped")}
   )
   // Number of spans dropped due to internal queue overflow
   public Counter reporterDropped;
@@ -184,31 +185,29 @@ public class Metrics {
   public Gauge reporterQueueLength;
 
   @Metric(
-    name = "sampler",
-    tags = {@Tag(key = "state", value = "retrieved")}
+      name = "sampler",
+      tags = {@Tag(key = "state", value = "retrieved")}
   )
   // Number of times the Sampler succeeded to retrieve samping strategy
   public Counter samplerRetrieved;
 
   @Metric(
-    name = "sampler",
-    tags = {
-      @Tag(key = "state", value = "updated"),
-    }
+      name = "sampler",
+      tags = {@Tag(key = "state", value = "updated")}
   )
   // Number of times the Sampler succeeded to retrieve and updateGauge sampling strategy
   public Counter samplerUpdated;
 
   @Metric(
-    name = "sampler",
-    tags = {@Tag(key = "state", value = "failure"), @Tag(key = "phase", value = "query")}
+      name = "sampler",
+      tags = {@Tag(key = "state", value = "failure"), @Tag(key = "phase", value = "query")}
   )
   // Number of times the Sampler failed to retrieve the sampling strategy
   public Counter samplerQueryFailure;
 
   @Metric(
-    name = "sampler",
-    tags = {@Tag(key = "state", value = "failure"), @Tag(key = "phase", value = "parsing")}
+      name = "sampler",
+      tags = {@Tag(key = "state", value = "failure"), @Tag(key = "phase", value = "parsing")}
   )
   // Number of times the Sampler failed to parse retrieved sampling strategy
   public Counter samplerParsingFailure;

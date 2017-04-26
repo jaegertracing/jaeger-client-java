@@ -19,24 +19,27 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.propagation;
 
 import com.uber.jaeger.Constants;
 import com.uber.jaeger.SpanContext;
-
+import io.opentracing.propagation.TextMap;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.opentracing.propagation.TextMap;
-
 public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
-  /** Key used to store serialized span context representation */
+  /**
+   * Key used to store serialized span context representation
+   */
   private static final String SPAN_CONTEXT_KEY = "uber-trace-id";
 
-  /** Key prefix used for baggage items */
+  /**
+   * Key prefix used for baggage items
+   */
   private static final String BAGGAGE_KEY_PREFIX = "uberctx-";
 
   private static final PrefixedKeys keys = new PrefixedKeys();
@@ -48,7 +51,7 @@ public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
   private final boolean urlEncoding;
 
   public TextMapCodec(boolean urlEncoding) {
-    this(builder().withURLEncoding(urlEncoding));
+    this(builder().withUrlEncoding(urlEncoding));
   }
 
   private TextMapCodec(Builder builder) {
@@ -69,14 +72,14 @@ public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
   public SpanContext extract(TextMap carrier) {
     SpanContext context = null;
     Map<String, String> baggage = null;
-    String debugID = null;
+    String debugId = null;
     for (Map.Entry<String, String> entry : carrier) {
       // TODO there should be no lower-case here
       String key = entry.getKey().toLowerCase();
       if (key.equals(contextKey)) {
         context = SpanContext.contextFromString(decodedValue(entry.getValue()));
       } else if (key.equals(Constants.DEBUG_ID_HEADER_KEY)) {
-        debugID = decodedValue(entry.getValue());
+        debugId = decodedValue(entry.getValue());
       } else if (key.startsWith(baggagePrefix)) {
         if (baggage == null) {
           baggage = new HashMap<String, String>();
@@ -85,8 +88,8 @@ public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
       }
     }
     if (context == null) {
-      if (debugID != null) {
-        return SpanContext.withDebugID(debugID);
+      if (debugId != null) {
+        return SpanContext.withDebugId(debugId);
       }
       return null;
     }
@@ -138,7 +141,7 @@ public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
   }
 
   /**
-   * Returns a builder for TextMapCodec
+   * Returns a builder for TextMapCodec.
    *
    * @return Builder
    */
@@ -152,7 +155,7 @@ public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
     private String spanContextKey = SPAN_CONTEXT_KEY;
     private String baggagePrefix = BAGGAGE_KEY_PREFIX;
 
-    public Builder withURLEncoding(boolean urlEncoding) {
+    public Builder withUrlEncoding(boolean urlEncoding) {
       this.urlEncoding = urlEncoding;
       return this;
     }

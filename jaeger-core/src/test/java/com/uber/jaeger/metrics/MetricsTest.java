@@ -21,11 +21,11 @@
  */
 package com.uber.jaeger.metrics;
 
+import static org.junit.Assert.assertEquals;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 public class MetricsTest {
   InMemoryStatsReporter metricsReporter;

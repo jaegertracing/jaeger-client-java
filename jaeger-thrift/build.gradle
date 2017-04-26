@@ -32,8 +32,6 @@ javadoc {
     exclude '**/com/uber/jaeger/crossdock/thrift/**'
 }
 
-licenseMain.enabled = false
-
 sourceSets {
     main {
         java {
@@ -52,6 +50,10 @@ jar {
         attributes('Implementation-Title': 'jaeger-thrift', 'Implementation-Version': project.version)
     }
 }
+
+licenseMain.enabled = false
+checkstyleMain.enabled = false
+checkstyleTest.enabled = false
 
 shadowJar {
     baseName = 'jaeger-thrift'

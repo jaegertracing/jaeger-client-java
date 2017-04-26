@@ -19,13 +19,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.propagation.b3;
 
 import com.uber.jaeger.SpanContext;
 import com.uber.jaeger.propagation.Extractor;
 import com.uber.jaeger.propagation.Injector;
 import io.opentracing.propagation.TextMap;
-
 import java.util.Map;
 
 /**
@@ -57,11 +57,11 @@ public final class B3TextMapCodec implements Injector<TextMap>, Extractor<TextMa
 
   @Override
   public void inject(SpanContext spanContext, TextMap carrier) {
-    carrier.put(TRACE_ID_NAME, HexCodec.toLowerHex(spanContext.getTraceID()));
-    if (spanContext.getParentID() != 0L) { // Conventionally, parent id == 0 means the root span
-      carrier.put(PARENT_SPAN_ID_NAME, HexCodec.toLowerHex(spanContext.getParentID()));
+    carrier.put(TRACE_ID_NAME, HexCodec.toLowerHex(spanContext.getTraceId()));
+    if (spanContext.getParentId() != 0L) { // Conventionally, parent id == 0 means the root span
+      carrier.put(PARENT_SPAN_ID_NAME, HexCodec.toLowerHex(spanContext.getParentId()));
     }
-    carrier.put(SPAN_ID_NAME, HexCodec.toLowerHex(spanContext.getSpanID()));
+    carrier.put(SPAN_ID_NAME, HexCodec.toLowerHex(spanContext.getSpanId()));
     carrier.put(SAMPLED_NAME, spanContext.isSampled() ? "1" : "0");
     if (spanContext.isDebug()) {
       carrier.put(FLAGS_NAME, "1");
@@ -70,9 +70,9 @@ public final class B3TextMapCodec implements Injector<TextMap>, Extractor<TextMa
 
   @Override
   public SpanContext extract(TextMap carrier) {
-    Long traceID = null;
-    Long spanID = null;
-    long parentID = 0L; // Conventionally, parent id == 0 means the root span
+    Long traceId = null;
+    Long spanId = null;
+    long parentId = 0L; // Conventionally, parent id == 0 means the root span
     byte flags = 0;
     for (Map.Entry<String, String> entry : carrier) {
       if (entry.getKey().equalsIgnoreCase(SAMPLED_NAME)) {
@@ -80,11 +80,11 @@ public final class B3TextMapCodec implements Injector<TextMap>, Extractor<TextMa
           flags |= SAMPLED_FLAG;
         }
       } else if (entry.getKey().equalsIgnoreCase(TRACE_ID_NAME)) {
-        traceID = HexCodec.lowerHexToUnsignedLong(entry.getValue());
+        traceId = HexCodec.lowerHexToUnsignedLong(entry.getValue());
       } else if (entry.getKey().equalsIgnoreCase(PARENT_SPAN_ID_NAME)) {
-        parentID = HexCodec.lowerHexToUnsignedLong(entry.getValue());
+        parentId = HexCodec.lowerHexToUnsignedLong(entry.getValue());
       } else if (entry.getKey().equalsIgnoreCase(SPAN_ID_NAME)) {
-        spanID = HexCodec.lowerHexToUnsignedLong(entry.getValue());
+        spanId = HexCodec.lowerHexToUnsignedLong(entry.getValue());
       } else if (entry.getKey().equalsIgnoreCase(FLAGS_NAME)) {
         if (entry.getValue().equals("1")) {
           flags |= DEBUG_FLAG;
@@ -92,8 +92,8 @@ public final class B3TextMapCodec implements Injector<TextMap>, Extractor<TextMa
       }
     }
 
-    if (traceID != null && spanID != null) {
-      return new SpanContext(traceID, spanID, parentID, flags);
+    if (traceId != null && spanId != null) {
+      return new SpanContext(traceId, spanId, parentId, flags);
     }
     return null;
   }

@@ -19,10 +19,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.uber.jaeger.crossdock.resources.behavior;
 
-import java.util.HashMap;
-import java.util.Map;
+package com.uber.jaeger.crossdock.resources.behavior;
 
 import com.uber.jaeger.crossdock.api.CreateTracesRequest;
 import com.uber.jaeger.metrics.Metrics;
@@ -32,14 +30,15 @@ import com.uber.jaeger.metrics.StatsFactoryImpl;
 import com.uber.jaeger.reporters.RemoteReporter;
 import com.uber.jaeger.reporters.Reporter;
 import com.uber.jaeger.samplers.ConstSampler;
-import com.uber.jaeger.samplers.HTTPSamplingManager;
+import com.uber.jaeger.samplers.HttpSamplingManager;
 import com.uber.jaeger.samplers.ProbabilisticSampler;
 import com.uber.jaeger.samplers.RemoteControlledSampler;
 import com.uber.jaeger.samplers.Sampler;
-import com.uber.jaeger.senders.UDPSender;
-
+import com.uber.jaeger.senders.UdpSender;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
+import java.util.HashMap;
+import java.util.Map;
 
 public class EndToEndBehavior {
   private static final String SERVICE_NAME = "crossdock-java";
@@ -61,17 +60,19 @@ public class EndToEndBehavior {
   }
 
   private Reporter getReporter(Metrics metrics) {
-    UDPSender sender = new UDPSender(host, 5775, 0);
+    UdpSender sender = new UdpSender(host, 5775, 0);
     return new RemoteReporter(sender, 1000, 100, metrics);
   }
 
   private Tracer getRemoteTracer(Metrics metrics, Reporter reporter) {
     Sampler initialSampler = new ProbabilisticSampler(1.0);
-    HTTPSamplingManager manager = new HTTPSamplingManager(host + ":5778");
+    HttpSamplingManager manager = new HttpSamplingManager(host + ":5778");
 
-    RemoteControlledSampler remoteSampler = new RemoteControlledSampler(SERVICE_NAME, manager, initialSampler, metrics, 5000);
+    RemoteControlledSampler remoteSampler = new RemoteControlledSampler(SERVICE_NAME, manager, initialSampler,
+        metrics, 5000);
 
-    com.uber.jaeger.Tracer.Builder remoteTracerBuilder = new com.uber.jaeger.Tracer.Builder(SERVICE_NAME, reporter, remoteSampler);
+    com.uber.jaeger.Tracer.Builder remoteTracerBuilder = new com.uber.jaeger.Tracer.Builder(SERVICE_NAME, reporter,
+        remoteSampler);
     return remoteTracerBuilder.build();
   }
 
@@ -80,7 +81,7 @@ public class EndToEndBehavior {
     this.tracers = tracers;
   }
 
-  public void GenerateTraces(CreateTracesRequest request) {
+  public void generateTraces(CreateTracesRequest request) {
     String samplerType = request.getType();
     Tracer tracer = tracers.get(samplerType);
     for (int i = 0; i < request.getCount(); i++) {

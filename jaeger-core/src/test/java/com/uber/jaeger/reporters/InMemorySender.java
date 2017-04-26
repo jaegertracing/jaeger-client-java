@@ -19,15 +19,15 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.uber.jaeger.reporters;
 
-import java.util.ArrayList;
-import java.util.List;
+package com.uber.jaeger.reporters;
 
 import com.uber.jaeger.exceptions.SenderException;
 import com.uber.jaeger.reporters.protocols.JaegerThriftSpanConverter;
 import com.uber.jaeger.senders.Sender;
 import com.uber.jaeger.thriftjava.Span;
+import java.util.ArrayList;
+import java.util.List;
 
 public class InMemorySender implements Sender {
   private List<Span> appended;

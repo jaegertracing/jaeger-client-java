@@ -23,15 +23,6 @@ package com.uber.jaeger.senders.zipkin;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.thrift.transport.AutoExpandingBufferWriteTransport;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-
 import com.uber.jaeger.Span;
 import com.uber.jaeger.SpanContext;
 import com.uber.jaeger.Tracer;
@@ -40,7 +31,13 @@ import com.uber.jaeger.metrics.InMemoryStatsReporter;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.reporters.Reporter;
 import com.uber.jaeger.samplers.ConstSampler;
-
+import java.util.ArrayList;
+import java.util.List;
+import org.apache.thrift.transport.AutoExpandingBufferWriteTransport;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import zipkin.Annotation;
 import zipkin.BinaryAnnotation;
 import zipkin.junit.ZipkinRule;
@@ -132,9 +129,9 @@ public class ZipkinSenderTest {
     zipkin.Span actualSpan = traces.get(0).get(0);
     SpanContext context = expectedSpan.context();
 
-    assertEquals(context.getTraceID(), actualSpan.traceId);
-    assertEquals(context.getSpanID(), actualSpan.id);
-    assertEquals(context.getParentID(), (long) actualSpan.parentId);
+    assertEquals(context.getTraceId(), actualSpan.traceId);
+    assertEquals(context.getSpanId(), actualSpan.id);
+    assertEquals(context.getParentId(), (long) actualSpan.parentId);
     assertEquals(expectedSpan.getOperationName(), actualSpan.name);
     for (BinaryAnnotation binaryAnnotation : actualSpan.binaryAnnotations) {
       assertEquals(tracer.getServiceName(), binaryAnnotation.endpoint.serviceName);

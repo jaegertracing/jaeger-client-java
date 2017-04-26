@@ -19,14 +19,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.httpclient;
 
 import io.opentracing.propagation.TextMap;
-import org.apache.http.HttpRequest;
-import org.apache.http.message.BasicHeader;
-
 import java.util.Iterator;
 import java.util.Map;
+import org.apache.http.HttpRequest;
+import org.apache.http.message.BasicHeader;
 
 /**
  * This is used propagate spans from the apache http client to servers that it is interacting with.

@@ -48,7 +48,7 @@ class SpanInfo {
 
   public SpanInfo(Span span) {
     SpanContext spanContext = span.context();
-    traceID = Long.toHexString(spanContext.getTraceID());
+    traceID = Long.toHexString(spanContext.getTraceId());
     baggage = span.getBaggageItem(FilterIntegrationTest.BAGGAGE_KEY);
     sampled = spanContext.isSampled();
   }

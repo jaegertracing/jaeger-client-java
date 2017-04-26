@@ -27,10 +27,6 @@ import static junit.framework.Assert.assertTrue;
 import com.uber.jaeger.Span;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.test.JerseyTest;
-import org.junit.Test;
-
 import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Map;
@@ -40,6 +36,9 @@ import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Response;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.test.JerseyTest;
+import org.junit.Test;
 
 public class JerseyServerFilterTest extends JerseyTest {
 

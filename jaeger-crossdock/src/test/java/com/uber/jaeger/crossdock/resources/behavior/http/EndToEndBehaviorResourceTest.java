@@ -21,17 +21,20 @@
  */
 package com.uber.jaeger.crossdock.resources.behavior.http;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import com.uber.jaeger.Span;
-import com.uber.jaeger.crossdock.api.*;
+import com.uber.jaeger.crossdock.api.CreateTracesRequest;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
 import io.opentracing.Tracer;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.*;
-
-import static org.junit.Assert.*;
 
 public class EndToEndBehaviorResourceTest {
   private EndToEndBehaviorResource resource;

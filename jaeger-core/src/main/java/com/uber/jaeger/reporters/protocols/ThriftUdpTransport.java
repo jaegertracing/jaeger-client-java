@@ -19,10 +19,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.uber.jaeger.reporters.protocols;
 
-import org.apache.thrift.transport.TTransport;
-import org.apache.thrift.transport.TTransportException;
+package com.uber.jaeger.reporters.protocols;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -32,14 +30,15 @@ import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-
 import lombok.ToString;
+import org.apache.thrift.transport.TTransport;
+import org.apache.thrift.transport.TTransportException;
 
 /*
  * A thrift transport for sending sending/receiving spans.
  */
 @ToString(exclude = {"writeBuffer"})
-public class TUDPTransport extends TTransport implements Closeable {
+public class ThriftUdpTransport extends TTransport implements Closeable {
   public static final int MAX_PACKET_SIZE = 65000;
 
   public final DatagramSocket socket;
@@ -49,10 +48,10 @@ public class TUDPTransport extends TTransport implements Closeable {
   public ByteBuffer writeBuffer;
 
   // Create a UDP client for sending data to specific host and port
-  public static TUDPTransport NewTUDPClient(String host, int port) {
-    TUDPTransport t;
+  public static ThriftUdpTransport newThriftUdpClient(String host, int port) {
+    ThriftUdpTransport t;
     try {
-      t = new TUDPTransport();
+      t = new ThriftUdpTransport();
       t.socket.connect(new InetSocketAddress(host, port));
     } catch (SocketException e) {
       throw new RuntimeException("TUDPTransport cannot connect: ", e);
@@ -61,14 +60,14 @@ public class TUDPTransport extends TTransport implements Closeable {
   }
 
   // Create a UDP server for receiving data on specific host and port
-  public static TUDPTransport NewTUDPServer(String host, int port)
+  public static ThriftUdpTransport newThriftUdpServer(String host, int port)
       throws SocketException, UnknownHostException {
-    TUDPTransport t = new TUDPTransport();
+    ThriftUdpTransport t = new ThriftUdpTransport();
     t.socket.bind(new InetSocketAddress(host, port));
     return t;
   }
 
-  private TUDPTransport() throws SocketException {
+  private ThriftUdpTransport() throws SocketException {
     this.socket = new DatagramSocket(null);
   }
 

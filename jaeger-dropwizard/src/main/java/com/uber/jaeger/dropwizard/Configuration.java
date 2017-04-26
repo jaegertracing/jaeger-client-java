@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.dropwizard;
 
 import com.codahale.metrics.MetricRegistry;
@@ -46,7 +47,7 @@ public class Configuration extends com.uber.jaeger.Configuration {
   }
 
   @Override
-  synchronized public Tracer getTracer() {
+  public synchronized Tracer getTracer() {
     if (disable) {
       return NoopTracerFactory.create();
     }

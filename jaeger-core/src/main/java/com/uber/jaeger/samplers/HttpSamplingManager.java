@@ -19,14 +19,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.samplers;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
-
 import com.uber.jaeger.exceptions.SamplingStrategyErrorException;
 import com.uber.jaeger.samplers.http.SamplingStrategyResponse;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -34,16 +33,15 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
-
 import lombok.ToString;
 
 @ToString
-public class HTTPSamplingManager implements SamplingManager {
+public class HttpSamplingManager implements SamplingManager {
   private static final String defaultSamplingServerHostPort = "localhost:5778";
   private String hostPort = defaultSamplingServerHostPort;
   private Gson gson = new Gson();
 
-  public HTTPSamplingManager(String hostPort) {
+  public HttpSamplingManager(String hostPort) {
     if (hostPort != null) {
       this.hostPort = hostPort;
     }

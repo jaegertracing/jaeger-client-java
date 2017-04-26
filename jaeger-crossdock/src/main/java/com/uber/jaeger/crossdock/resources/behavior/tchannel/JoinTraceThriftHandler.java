@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.crossdock.resources.behavior.tchannel;
 
 import com.uber.jaeger.crossdock.api.Downstream;
@@ -29,7 +30,6 @@ import com.uber.jaeger.crossdock.thrift.TracedService;
 import com.uber.tchannel.api.handlers.ThriftRequestHandler;
 import com.uber.tchannel.messages.ThriftRequest;
 import com.uber.tchannel.messages.ThriftResponse;
-
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

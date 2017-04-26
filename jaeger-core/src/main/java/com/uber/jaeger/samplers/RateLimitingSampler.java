@@ -19,15 +19,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.samplers;
 
 import com.uber.jaeger.Constants;
 import com.uber.jaeger.utils.RateLimiter;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-
 import lombok.Getter;
 import lombok.ToString;
 
@@ -59,7 +58,9 @@ public class RateLimitingSampler implements Sampler {
 
   @Override
   public boolean equals(Object other) {
-    if (this == other) return true;
+    if (this == other) {
+      return true;
+    }
     if (other instanceof RateLimitingSampler) {
       return this.maxTracesPerSecond == ((RateLimitingSampler) other).maxTracesPerSecond;
     }
