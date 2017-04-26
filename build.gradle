@@ -82,7 +82,7 @@ subprojects {
         }
     }
 
-    classes.dependsOn tasks.licenseFormat
+    check.dependsOn tasks.license
     classes.dependsOn tasks.verifyFormatting
 
     apply from: '../gradle/publish.gradle'
