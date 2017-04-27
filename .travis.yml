@@ -2,6 +2,16 @@ sudo: required
 
 language: java
 
+dist: trusty
+
+matrix:
+  include:
+  - env:
+    - TESTS=true
+    - COVERAGE=true
+  - env:
+    - CROSSDOCK=true
+
 services:
 - docker
 
@@ -28,32 +38,16 @@ cache:
   - $HOME/.gradle/wrapper/
 
 before_install:
-- docker version
-- sudo rm -rf /usr/local/bin/docker-compose
-- curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname
-  -s`-`uname -m` > docker-compose
-- chmod +x docker-compose
-- sudo mv docker-compose /usr/local/bin
-- docker-compose version
+- if [ "$CROSSDOCK" == true ]; then bash ./travis/install-crossdock-deps.sh ; fi
 - sudo rm -rf /usr/local/bin/thrift
 - sudo cp travis/docker-thrift/thrift /usr/local/bin/
 
+
 script:
-- make test
-- make crossdock-fresh
-- ./gradlew codeCoverageReport
+- if [ "$TESTS" == true ]; then make test ; else echo 'skipping tests'; fi
+- if [ "$COVERAGE" == true ]; then ./gradlew codeCoverageReport ; else echo 'skipping coverage'; fi
+- if [ "$CROSSDOCK" == true ]; then bash ./travis/build-crossdock.sh ; else echo 'skipping crossdock'; fi
 
 after_success:
-- bash <(curl -s https://codecov.io/bash)
-- ./gradlew uploadArchives -PossrhUsername="${SONATYPE_USERNAME}" -PossrhPassword="${SONATYPE_PASSWORD}"
-- pushd 'jaeger-crossdock'
-- docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
-- export REPO=jaegertracing/xdock-java
-- export BRANCH=$(if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then echo $TRAVIS_BRANCH; else echo $TRAVIS_PULL_REQUEST_BRANCH; fi)
-- export TAG=`if [ "$BRANCH" == "master" ]; then echo "latest"; else echo $BRANCH; fi`
-- echo "TRAVIS_BRANCH=$TRAVIS_BRANCH, REPO=$REPO, PR=$PR, BRANCH=$BRANCH, TAG=$TAG"
-- docker build -f Dockerfile -t $REPO:$COMMIT .
-- docker tag $REPO:$COMMIT $REPO:$TAG
-- docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
-- docker push $REPO
-- popd
+- if [ "$COVERAGE" == true ]; then bash <(curl -s https://codecov.io/bash) ; fi
+- if [ "$CROSSDOCK" == true ]; then ./gradlew uploadArchives -PossrhUsername="${SONATYPE_USERNAME}" -PossrhPassword="${SONATYPE_PASSWORD}" ; fi
