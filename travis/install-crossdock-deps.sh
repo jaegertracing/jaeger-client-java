@@ -10,6 +10,3 @@ curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VER
 chmod +x docker-compose
 sudo mv docker-compose /usr/local/bin
 docker-compose version
-
-sudo rm -rf /usr/local/bin/thrift
-sudo cp travis/docker-thrift/thrift /usr/local/bin/

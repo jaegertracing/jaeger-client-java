@@ -16,7 +16,9 @@ docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
 
 set -x
 
-docker build -f jaeger-crossdock/Dockerfile -t $REPO:$COMMIT .
+pushd 'jaeger-crossdock'
+docker build -f Dockerfile -t $REPO:$COMMIT .
+popd
 docker tag $REPO:$COMMIT $REPO:$TAG
 docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
 docker push $REPO

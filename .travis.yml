@@ -39,6 +39,9 @@ cache:
 
 before_install:
 - if [ "$CROSSDOCK" == true ]; then bash ./travis/install-crossdock-deps.sh ; fi
+- sudo rm -rf /usr/local/bin/thrift
+- sudo cp travis/docker-thrift/thrift /usr/local/bin/
+
 
 script:
 - if [ "$TESTS" == true ]; then make test ; else echo 'skipping tests'; fi
