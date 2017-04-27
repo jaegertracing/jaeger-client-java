@@ -21,19 +21,14 @@
  */
 package com.uber.jaeger;
 
-import lombok.Getter;
+import lombok.Value;
 
 /**
  * @author Pavol Loffay
  */
-@Getter
+@Value
 public class Reference {
 
     private final SpanContext spanContext;
     private final String type;
-
-    public Reference(SpanContext spanContext, String type) {
-        this.spanContext = spanContext;
-        this.type = type;
-    }
 }
