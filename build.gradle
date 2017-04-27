@@ -127,8 +127,6 @@ task codeCoverageReport(type: JacocoReport, group: 'Coverage reports') {
                               '**/thriftjava/**',
                     ])
         })
-        println "hobbit"
-        println classDirectories.asFileTree.files
     }
 }
 
