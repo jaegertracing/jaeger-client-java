@@ -30,7 +30,7 @@ allprojects {
 
     group = 'com.uber.jaeger'
     version = '0.19.0-SNAPSHOT'
-    
+
     repositories {
         mavenCentral()
     }
@@ -114,9 +114,21 @@ task codeCoverageReport(type: JacocoReport, group: 'Coverage reports') {
     }
 
     reports {
-        html.enabled = false
+        html.enabled = true
         xml.enabled = true
         xml.destination = "${buildDir}/reports/jacoco/report.xml"
+    }
+
+    afterEvaluate {
+        classDirectories = files(classDirectories.files.collect {
+            fileTree(dir: it,
+                    exclude: ['**/crossdock/**',
+                              '**/thrift/**',
+                              '**/thriftjava/**',
+                    ])
+        })
+        println "hobbit"
+        println classDirectories.asFileTree.files
     }
 }
 
