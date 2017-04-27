@@ -1,0 +1,7 @@
+ignore:
+ - "jaeger-thrift"
+ - "jaeger-crossdock"
+ - "**/gen-java/**"
+
+coverage:
+ precision: 2
