@@ -27,8 +27,6 @@ import com.uber.jaeger.utils.RateLimiter;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-
-import lombok.Getter;
 import lombok.ToString;
 
 @SuppressWarnings("EqualsHashCode")
@@ -37,7 +35,6 @@ public class RateLimitingSampler implements Sampler {
   public static final String TYPE = "ratelimiting";
 
   private final RateLimiter rateLimiter;
-  @Getter
   private final double maxTracesPerSecond;
   private final Map<String, Object> tags;
 

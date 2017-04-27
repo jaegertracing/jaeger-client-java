@@ -21,16 +21,10 @@
  */
 package com.uber.jaeger.samplers;
 
-import com.uber.jaeger.Constants;
-import com.uber.jaeger.samplers.http.OperationSamplingParameters;
-import com.uber.jaeger.samplers.http.PerOperationSamplingParameters;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * {@link GuaranteedThroughputSampler} is a {@link Sampler} that guarantees a throughput by using
@@ -43,39 +37,11 @@ import java.util.Map;
 @EqualsAndHashCode
 @AllArgsConstructor (access = AccessLevel.PACKAGE) // Visible for testing
 public final class GuaranteedThroughputSampler implements Sampler {
-  public static final String TYPE = "lowerbound";
-
-  private ProbabilisticSampler probabilisticSampler;
-  private RateLimitingSampler lowerBoundSampler;
-  private Map<String, Object> tags;
+  private final ProbabilisticSampler probabilisticSampler;
+  private final RateLimitingSampler lowerBoundSampler;
 
   GuaranteedThroughputSampler(double samplingRate, double lowerBound) {
-    tags = new HashMap<String, Object>();
-    tags.put(Constants.SAMPLER_TYPE_TAG_KEY, TYPE);
-    tags.put(Constants.SAMPLER_PARAM_TAG_KEY, samplingRate);
-
-    probabilisticSampler = new ProbabilisticSampler(samplingRate);
-    lowerBoundSampler = new RateLimitingSampler(lowerBound);
-  }
-
-  /**
-   * Updates the probabilistic and lowerBound samplers
-   * @param samplingRate The sampling rate for probabilistic sampling
-   * @param lowerBound The lower bound limit for lower bound sampling
-   * @return true iff any samplers were updated
-   */
-  public synchronized boolean update(double samplingRate, double lowerBound) {
-    boolean isUpdated = false;
-    if (samplingRate != probabilisticSampler.getSamplingRate()) {
-      probabilisticSampler = new ProbabilisticSampler(samplingRate);
-      tags.put(Constants.SAMPLER_PARAM_TAG_KEY, samplingRate);
-      isUpdated = true;
-    }
-    if (lowerBound != lowerBoundSampler.getMaxTracesPerSecond()) {
-      lowerBoundSampler = new RateLimitingSampler(lowerBound);
-      isUpdated = true;
-    }
-    return isUpdated;
+    this(new ProbabilisticSampler(samplingRate), new RateLimitingSampler(lowerBound));
   }
 
   /**
@@ -87,7 +53,7 @@ public final class GuaranteedThroughputSampler implements Sampler {
    * @param id The traceId on the span
    */
   @Override
-  public synchronized SamplingStatus sample(String operation, long id) {
+  public SamplingStatus sample(String operation, long id) {
     SamplingStatus probabilisticSamplingStatus = probabilisticSampler.sample(operation, id);
     SamplingStatus lowerBoundSamplingStatus = lowerBoundSampler.sample(operation, id);
 
@@ -95,11 +61,11 @@ public final class GuaranteedThroughputSampler implements Sampler {
       return probabilisticSamplingStatus;
     }
 
-    return SamplingStatus.of(lowerBoundSamplingStatus.isSampled(), tags);
+    return lowerBoundSamplingStatus;
   }
 
   @Override
-  public synchronized void close() {
+  public void close() {
     probabilisticSampler.close();
     lowerBoundSampler.close();
   }
