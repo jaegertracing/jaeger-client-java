@@ -172,7 +172,7 @@ public class Tracer implements io.opentracing.Tracer {
 
     private String operationName = null;
     private long startTimeMicroseconds;
-    private List<Reference> references = new ArrayList<Reference>();
+    private final List<Reference> references = new ArrayList<Reference>();
     private final Map<String, Object> tags = new HashMap<String, Object>();
     private final Map<String, String> baggage = new HashMap<String, String>();
 
