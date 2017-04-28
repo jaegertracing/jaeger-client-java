@@ -24,15 +24,6 @@ package com.uber.jaeger.senders;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.transport.AutoExpandingBufferWriteTransport;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import com.uber.jaeger.Span;
 import com.uber.jaeger.Tracer;
 import com.uber.jaeger.agent.thrift.Agent;
@@ -45,6 +36,13 @@ import com.uber.jaeger.reporters.protocols.TestTServer;
 import com.uber.jaeger.samplers.ConstSampler;
 import com.uber.jaeger.thriftjava.Batch;
 import com.uber.jaeger.thriftjava.Process;
+import java.util.ArrayList;
+import java.util.List;
+import org.apache.thrift.protocol.TCompactProtocol;
+import org.apache.thrift.transport.AutoExpandingBufferWriteTransport;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 public class UDPSenderTest {
   final static String SERVICE_NAME = "test-sender";
@@ -113,7 +111,7 @@ public class UDPSenderTest {
     Span jaegerSpan = (Span)tracer.buildSpan("raza").start();
     com.uber.jaeger.thriftjava.Span span =
             JaegerThriftSpanConverter.convertSpan(jaegerSpan);
-    span.write(new TBinaryProtocol((memoryTransport)));
+    span.write(new TCompactProtocol((memoryTransport)));
     int spanSize = memoryTransport.getPos();
 
     // create a sender thats a multiple of the span size (accounting for span overhead)
@@ -176,7 +174,7 @@ public class UDPSenderTest {
   private int calculateBatchOverheadDifference(int numberOfSpans) throws Exception {
     AutoExpandingBufferWriteTransport memoryTransport =
         new AutoExpandingBufferWriteTransport(maxPacketSize, 2);
-    Agent.Client memoryClient = new Agent.Client(new TBinaryProtocol(memoryTransport));
+    Agent.Client memoryClient = new Agent.Client(new TCompactProtocol((memoryTransport)));
     Span jaegerSpan = (Span) tracer.buildSpan("raza").start();
     com.uber.jaeger.thriftjava.Span span = JaegerThriftSpanConverter.convertSpan(jaegerSpan);
     List<com.uber.jaeger.thriftjava.Span> spans = new ArrayList<>();
@@ -189,7 +187,7 @@ public class UDPSenderTest {
 
     memoryTransport.reset();
     for (int j = 0; j < numberOfSpans; j++) {
-      span.write(new TBinaryProtocol(memoryTransport));
+      span.write(new TCompactProtocol(memoryTransport));
     }
     int writeBatchOverheadMultipleSpans = memoryTransport.getPos();
 

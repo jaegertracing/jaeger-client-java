@@ -21,13 +21,6 @@
  */
 package com.uber.jaeger.senders;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.thrift.TException;
-import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.transport.AutoExpandingBufferWriteTransport;
-
 import com.uber.jaeger.Span;
 import com.uber.jaeger.agent.thrift.Agent;
 import com.uber.jaeger.exceptions.SenderException;
@@ -35,12 +28,16 @@ import com.uber.jaeger.reporters.protocols.JaegerThriftSpanConverter;
 import com.uber.jaeger.reporters.protocols.TUDPTransport;
 import com.uber.jaeger.thriftjava.Batch;
 import com.uber.jaeger.thriftjava.Process;
-
+import java.util.ArrayList;
+import java.util.List;
 import lombok.ToString;
+import org.apache.thrift.TException;
+import org.apache.thrift.protocol.TCompactProtocol;
+import org.apache.thrift.transport.AutoExpandingBufferWriteTransport;
 
 @ToString(exclude = {"spanBuffer", "udpClient", "memoryTransport"})
 public class UDPSender implements Sender {
-  final static int emitBatchOverhead = 56;
+  final static int emitBatchOverhead = 33;
   private static final String defaultUDPSpanServerHost = "localhost";
   private static final int defaultUDPSpanServerPort = 6832;
   private static final int defaultUDPPacketSize = 65000;
@@ -69,7 +66,7 @@ public class UDPSender implements Sender {
     memoryTransport = new AutoExpandingBufferWriteTransport(maxPacketSize, 2);
 
     udpTransport = TUDPTransport.NewTUDPClient(host, port);
-    udpClient = new Agent.Client(new TBinaryProtocol(udpTransport));
+    udpClient = new Agent.Client(new TCompactProtocol(udpTransport));
     maxSpanBytes = maxPacketSize - emitBatchOverhead;
     spanBuffer = new ArrayList<com.uber.jaeger.thriftjava.Span>();
   }
@@ -77,7 +74,7 @@ public class UDPSender implements Sender {
   int getSizeOfSerializedSpan(com.uber.jaeger.thriftjava.Span span) throws SenderException {
     memoryTransport.reset();
     try {
-      span.write(new TBinaryProtocol((memoryTransport)));
+      span.write(new TCompactProtocol((memoryTransport)));
     } catch (TException e) {
       throw new SenderException("UDPSender failed writing to memory buffer.", e, 1);
     }

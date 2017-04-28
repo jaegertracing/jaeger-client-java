@@ -21,17 +21,15 @@
  */
 package com.uber.jaeger.reporters.protocols;
 
-import java.net.SocketException;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-
-import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.server.TServer;
-import org.apache.thrift.server.TSimpleServer;
-
 import com.uber.jaeger.agent.thrift.Agent;
 import com.uber.jaeger.thriftjava.Batch;
 import com.uber.jaeger.thriftjava.Span;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import org.apache.thrift.protocol.TCompactProtocol;
+import org.apache.thrift.server.TServer;
+import org.apache.thrift.server.TSimpleServer;
 
 public class TestTServer implements Runnable {
   TServer server;
@@ -44,7 +42,7 @@ public class TestTServer implements Runnable {
     server =
         new TSimpleServer(
             new TServer.Args(transport)
-                .protocolFactory(new TBinaryProtocol.Factory())
+                .protocolFactory(new TCompactProtocol.Factory())
                 .processor(new Agent.Processor<>(handler)));
   }
 
