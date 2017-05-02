@@ -23,7 +23,6 @@ package com.uber.jaeger;
 
 import com.uber.jaeger.exceptions.EmptyTracerStateStringException;
 import com.uber.jaeger.exceptions.MalformedTracerStateStringException;
-
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.HashMap;
@@ -64,7 +63,7 @@ public class SpanContext implements io.opentracing.SpanContext {
 
   @Override
   public Iterable<Map.Entry<String, String>> baggageItems() {
-    return baggage.entrySet();
+    return new HashMap<String, String>(baggage).entrySet();
   }
 
   public String getBaggageItem(String key) {

@@ -22,6 +22,7 @@
 package com.uber.jaeger;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -36,8 +37,10 @@ import com.uber.jaeger.metrics.InMemoryStatsReporter;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
 import com.uber.jaeger.utils.Clock;
-
 import io.opentracing.tag.Tags;
+import java.util.Iterator;
+import java.util.Map.Entry;
+
 
 public class SpanTest {
   private Clock clock;
@@ -274,5 +277,20 @@ public class SpanTest {
     assertEquals(span.context().getFlags() & SpanContext.flagSampled, SpanContext.flagSampled);
     Tags.SAMPLING_PRIORITY.set(span, (short) -1);
     assertEquals(span.context().getFlags() & SpanContext.flagSampled, 0);
+  }
+
+  @Test
+  public void testImmutableBaggage() {
+    io.opentracing.Span span = tracer.buildSpan("foo").start();
+    span.setBaggageItem("foo", "bar");
+    {
+      Iterator<Entry<String, String>> baggageIter = span.context().baggageItems().iterator();
+      baggageIter.next();
+      baggageIter.remove();
+    }
+
+    Iterator<Entry<String, String>> baggageIter = span.context().baggageItems().iterator();
+    baggageIter.next();
+    assertFalse(baggageIter.hasNext());
   }
 }
