@@ -21,18 +21,17 @@
  */
 package com.uber.jaeger.reporters.protocols;
 
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
-import java.net.SocketException;
-import java.net.UnknownHostException;
-
 public class TUDPServerTransport extends TServerTransport {
-  private TUDPTransport transport;
+  private ThriftUdpTransport transport;
 
   public TUDPServerTransport(int localPort) throws SocketException, UnknownHostException {
-    transport = TUDPTransport.NewTUDPServer("localhost", localPort);
+    transport = ThriftUdpTransport.newThriftUdpServer("localhost", localPort);
   }
 
   int getPort() {

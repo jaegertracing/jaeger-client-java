@@ -19,13 +19,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.senders;
 
 import com.uber.jaeger.Span;
 import com.uber.jaeger.agent.thrift.Agent;
 import com.uber.jaeger.exceptions.SenderException;
 import com.uber.jaeger.reporters.protocols.JaegerThriftSpanConverter;
-import com.uber.jaeger.reporters.protocols.TUDPTransport;
+import com.uber.jaeger.reporters.protocols.ThriftUdpTransport;
 import com.uber.jaeger.thriftjava.Batch;
 import com.uber.jaeger.thriftjava.Process;
 import java.util.ArrayList;
@@ -37,8 +38,8 @@ import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.transport.AutoExpandingBufferWriteTransport;
 
 @ToString(exclude = {"spanBuffer", "udpClient", "memoryTransport"})
-public class UDPSender implements Sender {
-  final static int emitBatchOverhead = 33;
+public class UdpSender implements Sender {
+  static final int emitBatchOverhead = 33;
   private static final String defaultUDPSpanServerHost = "localhost";
   private static final int defaultUDPSpanServerPort = 6832;
   private static final int defaultUDPPacketSize = 65000;
@@ -48,11 +49,11 @@ public class UDPSender implements Sender {
   private List<com.uber.jaeger.thriftjava.Span> spanBuffer;
   private int byteBufferSize;
   private AutoExpandingBufferWriteTransport memoryTransport;
-  private TUDPTransport udpTransport;
+  private ThriftUdpTransport udpTransport;
   private Process process;
   private int processBytesSize;
 
-  public UDPSender(String host, int port, int maxPacketSize) {
+  public UdpSender(String host, int port, int maxPacketSize) {
     if (host == null || host.length() == 0) {
       host = defaultUDPSpanServerHost;
     }
@@ -67,7 +68,7 @@ public class UDPSender implements Sender {
 
     memoryTransport = new AutoExpandingBufferWriteTransport(maxPacketSize, 2);
 
-    udpTransport = TUDPTransport.NewTUDPClient(host, port);
+    udpTransport = ThriftUdpTransport.newThriftUdpClient(host, port);
     udpClient = new Agent.Client(new TCompactProtocol(udpTransport));
     maxSpanBytes = maxPacketSize - emitBatchOverhead;
     spanBuffer = new ArrayList<com.uber.jaeger.thriftjava.Span>();

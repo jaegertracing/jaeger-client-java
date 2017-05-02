@@ -21,18 +21,9 @@
  */
 package com.uber.jaeger.senders.zipkin;
 
+import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-
-import static junit.framework.TestCase.assertTrue;
-
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.junit.Before;
-import org.junit.Test;
 
 import com.twitter.zipkin.thriftjava.Annotation;
 import com.twitter.zipkin.thriftjava.zipkincoreConstants;
@@ -41,12 +32,17 @@ import com.uber.jaeger.SpanContext;
 import com.uber.jaeger.Tracer;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
-
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
 import io.opentracing.propagation.TextMapExtractAdapter;
 import io.opentracing.propagation.TextMapInjectAdapter;
 import io.opentracing.tag.Tags;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.junit.Before;
+import org.junit.Test;
 
 public class ThriftSpanConverterTest {
   Tracer tracer;
@@ -55,7 +51,7 @@ public class ThriftSpanConverterTest {
   public void setUp() {
     tracer =
         new Tracer.Builder("test-service-name", new InMemoryReporter(), new ConstSampler(true))
-                .withZipkinSharedRPCSpan()
+                .withZipkinSharedRpcSpan()
             .build();
   }
 
@@ -139,8 +135,8 @@ public class ThriftSpanConverterTest {
     Span span = (Span) tracer.buildSpan("test-service-operation").start();
     Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
 
-    assertTrue(ThriftSpanConverter.isRPC(span));
-    assertTrue(ThriftSpanConverter.isRPCClient(span));
+    assertTrue(ThriftSpanConverter.isRpc(span));
+    assertTrue(ThriftSpanConverter.isRpcClient(span));
   }
 
   @Test
@@ -148,8 +144,8 @@ public class ThriftSpanConverterTest {
     Span span = (Span) tracer.buildSpan("test-service-operation").start();
     Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_SERVER);
 
-    assertTrue(ThriftSpanConverter.isRPC(span));
-    assertFalse(ThriftSpanConverter.isRPCClient(span));
+    assertTrue(ThriftSpanConverter.isRpc(span));
+    assertFalse(ThriftSpanConverter.isRpcClient(span));
   }
 
    @Test
@@ -165,7 +161,7 @@ public class ThriftSpanConverterTest {
 
      carrier = new TextMapExtractAdapter(map);
      SpanContext ctx = (SpanContext) tracer.extract(Format.Builtin.TEXT_MAP, carrier);
-     assertEquals(client.context().getSpanID(), ctx.getSpanID());
+     assertEquals(client.context().getSpanId(), ctx.getSpanId());
 
      Span server = (Span)tracer.buildSpan("child")
              .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
@@ -173,6 +169,6 @@ public class ThriftSpanConverterTest {
              .start();
 
      assertEquals("client and server must have the same span ID",
-             client.context().getSpanID(), server.context().getSpanID());
+             client.context().getSpanId(), server.context().getSpanId());
    }
 }

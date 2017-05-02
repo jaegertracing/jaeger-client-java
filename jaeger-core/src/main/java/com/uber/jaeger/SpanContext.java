@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger;
 
 import com.uber.jaeger.exceptions.EmptyTracerStateStringException;
@@ -32,33 +33,33 @@ public class SpanContext implements io.opentracing.SpanContext {
   protected static final byte flagSampled = 1;
   protected static final byte flagDebug = 2;
 
-  private final long traceID;
-  private final long spanID;
-  private final long parentID;
+  private final long traceId;
+  private final long spanId;
+  private final long parentId;
   private final byte flags;
   private final Map<String, String> baggage;
-  private final String debugID;
+  private final String debugId;
 
-  public SpanContext(long traceID, long spanID, long parentID, byte flags) {
-    this(traceID, spanID, parentID, flags, Collections.<String, String>emptyMap(), null);
+  public SpanContext(long traceId, long spanId, long parentId, byte flags) {
+    this(traceId, spanId, parentId, flags, Collections.<String, String>emptyMap(), null);
   }
 
   SpanContext(
-      long traceID,
-      long spanID,
-      long parentID,
+      long traceId,
+      long spanId,
+      long parentId,
       byte flags,
       Map<String, String> baggage,
-      String debugID) {
+      String debugId) {
     if (baggage == null) {
       throw new NullPointerException();
     }
-    this.traceID = traceID;
-    this.spanID = spanID;
-    this.parentID = parentID;
+    this.traceId = traceId;
+    this.spanId = spanId;
+    this.parentId = parentId;
     this.flags = flags;
     this.baggage = baggage;
-    this.debugID = debugID;
+    this.debugId = debugId;
   }
 
   @Override
@@ -74,16 +75,16 @@ public class SpanContext implements io.opentracing.SpanContext {
     return this.baggage;
   }
 
-  public long getTraceID() {
-    return traceID;
+  public long getTraceId() {
+    return traceId;
   }
 
-  public long getSpanID() {
-    return spanID;
+  public long getSpanId() {
+    return spanId;
   }
 
-  public long getParentID() {
-    return parentID;
+  public long getParentId() {
+    return parentId;
   }
 
   public byte getFlags() {
@@ -100,7 +101,7 @@ public class SpanContext implements io.opentracing.SpanContext {
 
   public String contextAsString() {
     // TODO(oibe) profile, and make sure this is fast enough
-    return String.format("%x:%x:%x:%x", traceID, spanID, parentID, flags);
+    return String.format("%x:%x:%x:%x", traceId, spanId, parentId, flags);
   }
 
   @Override
@@ -133,15 +134,15 @@ public class SpanContext implements io.opentracing.SpanContext {
   public SpanContext withBaggageItem(String key, String val) {
     Map<String, String> newBaggage = new HashMap<String, String>(this.baggage);
     newBaggage.put(key, val);
-    return new SpanContext(traceID, spanID, parentID, flags, newBaggage, debugID);
+    return new SpanContext(traceId, spanId, parentId, flags, newBaggage, debugId);
   }
 
   public SpanContext withBaggage(Map<String, String> newBaggage) {
-    return new SpanContext(traceID, spanID, parentID, flags, newBaggage, debugID);
+    return new SpanContext(traceId, spanId, parentId, flags, newBaggage, debugId);
   }
 
   public SpanContext withFlags(byte flags) {
-    return new SpanContext(traceID, spanID, parentID, flags, baggage, debugID);
+    return new SpanContext(traceId, spanId, parentId, flags, baggage, debugId);
   }
 
   /**
@@ -149,31 +150,31 @@ public class SpanContext implements io.opentracing.SpanContext {
    * from extract() method. This happens in the situation when "jaeger-debug-id" header is passed in
    * the carrier to the extract() method, but the request otherwise has no span context in it.
    * Previously this would've returned null from the extract method, but now it returns a dummy
-   * context with only debugID filled in.
+   * context with only debugId filled in.
    *
    * @see Constants#DEBUG_ID_HEADER_KEY
    */
-  boolean isDebugIDContainerOnly() {
-    return traceID == 0 && debugID != null;
+  boolean isDebugIdContainerOnly() {
+    return traceId == 0 && debugId != null;
   }
 
   /**
-   * Create a new dummy SpanContext as a container for debugID string. This is used when
+   * Create a new dummy SpanContext as a container for debugId string. This is used when
    * "jaeger-debug-id" header is passed in the request headers and forces the trace to be sampled as
    * debug trace, and the value of header recorded as a span tag to serve as a searchable
    * correlation ID.
    *
-   * @param debugID arbitrary string used as correlation ID
+   * @param debugId arbitrary string used as correlation ID
    *
-   * @return new dummy SpanContext that serves as a container for debugID only.
+   * @return new dummy SpanContext that serves as a container for debugId only.
    *
    * @see Constants#DEBUG_ID_HEADER_KEY
    */
-  public static SpanContext withDebugID(String debugID) {
-    return new SpanContext(0, 0, 0, (byte) 0, Collections.<String, String>emptyMap(), debugID);
+  public static SpanContext withDebugId(String debugId) {
+    return new SpanContext(0, 0, 0, (byte) 0, Collections.<String, String>emptyMap(), debugId);
   }
 
-  String getDebugID() {
-    return debugID;
+  String getDebugId() {
+    return debugId;
   }
 }

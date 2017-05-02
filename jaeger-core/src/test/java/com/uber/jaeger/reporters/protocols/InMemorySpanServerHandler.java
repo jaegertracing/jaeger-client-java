@@ -21,14 +21,12 @@
  */
 package com.uber.jaeger.reporters.protocols;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.thrift.TException;
-
 import com.twitter.zipkin.thriftjava.Span;
 import com.uber.jaeger.agent.thrift.Agent;
 import com.uber.jaeger.thriftjava.Batch;
+import java.util.ArrayList;
+import java.util.List;
+import org.apache.thrift.TException;
 
 class InMemorySpanServerHandler implements Agent.Iface {
   private List<Span> zipkinSpans;

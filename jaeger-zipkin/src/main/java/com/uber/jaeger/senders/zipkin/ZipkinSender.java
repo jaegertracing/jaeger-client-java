@@ -19,12 +19,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.uber.jaeger.senders.zipkin;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+package com.uber.jaeger.senders.zipkin;
 
 import com.twitter.zipkin.thriftjava.Annotation;
 import com.twitter.zipkin.thriftjava.BinaryAnnotation;
@@ -33,7 +29,10 @@ import com.twitter.zipkin.thriftjava.Span;
 import com.twitter.zipkin.thriftjava.zipkincoreConstants;
 import com.uber.jaeger.exceptions.SenderException;
 import com.uber.jaeger.senders.Sender;
-
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import lombok.ToString;
 import zipkin.Constants;
 import zipkin.reporter.Encoding;

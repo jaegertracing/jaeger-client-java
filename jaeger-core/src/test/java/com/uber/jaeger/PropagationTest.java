@@ -21,18 +21,17 @@
  */
 package com.uber.jaeger;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
 import io.opentracing.propagation.TextMapExtractAdapter;
-import org.junit.Test;
-
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
 public class PropagationTest {
   @Test
@@ -43,8 +42,8 @@ public class PropagationTest {
     headers.put(Constants.DEBUG_ID_HEADER_KEY, "Coraline");
     TextMap carrier = new TextMapExtractAdapter(headers);
     SpanContext spanContext = (SpanContext) tracer.extract(Format.Builtin.TEXT_MAP, carrier);
-    assertTrue(spanContext.isDebugIDContainerOnly());
-    assertEquals("Coraline", spanContext.getDebugID());
+    assertTrue(spanContext.isDebugIdContainerOnly());
+    assertEquals("Coraline", spanContext.getDebugId());
     Span span = (Span) tracer.buildSpan("span").asChildOf(spanContext).start();
     spanContext = (SpanContext) span.context();
     assertTrue(spanContext.isSampled());

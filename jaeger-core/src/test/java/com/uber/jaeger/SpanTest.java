@@ -27,20 +27,17 @@ import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import org.junit.Before;
-import org.junit.Test;
-
 import com.uber.jaeger.metrics.InMemoryStatsReporter;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
 import com.uber.jaeger.utils.Clock;
 import io.opentracing.tag.Tags;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
-
+import org.junit.Before;
+import org.junit.Test;
 
 public class SpanTest {
   private Clock clock;
@@ -178,9 +175,9 @@ public class SpanTest {
     SpanContext expectedContext = span.context();
     SpanContext actualContext = SpanContext.contextFromString(span.context().contextAsString());
 
-    assertEquals(expectedContext.getTraceID(), actualContext.getTraceID());
-    assertEquals(expectedContext.getSpanID(), actualContext.getSpanID());
-    assertEquals(expectedContext.getParentID(), actualContext.getParentID());
+    assertEquals(expectedContext.getTraceId(), actualContext.getTraceId());
+    assertEquals(expectedContext.getSpanId(), actualContext.getSpanId());
+    assertEquals(expectedContext.getParentId(), actualContext.getParentId());
     assertEquals(expectedContext.getFlags(), actualContext.getFlags());
   }
 

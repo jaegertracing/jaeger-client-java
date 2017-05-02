@@ -19,13 +19,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.crossdock.resources.behavior.http;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uber.jaeger.crossdock.api.CreateTracesRequest;
 import com.uber.jaeger.crossdock.resources.behavior.EndToEndBehavior;
 import io.opentracing.Tracer;
-
+import java.util.Map;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -34,8 +35,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.Map;
 
 /**
  * Handles creating traces from a http request.
@@ -79,7 +78,7 @@ public class EndToEndBehaviorResource {
   @Produces(MediaType.APPLICATION_JSON)
   public Response createTraces(CreateTracesRequest request) throws Exception {
     log.info("http:create_traces request: {}", mapper.writeValueAsString(request));
-    behavior.GenerateTraces(request);
+    behavior.generateTraces(request);
     return Response.ok("OK").build();
   }
 }

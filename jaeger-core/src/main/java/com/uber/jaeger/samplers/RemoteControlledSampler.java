@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.samplers;
 
 import com.uber.jaeger.exceptions.SamplingStrategyErrorException;
@@ -27,7 +28,6 @@ import com.uber.jaeger.samplers.http.OperationSamplingParameters;
 import com.uber.jaeger.samplers.http.ProbabilisticSamplingStrategy;
 import com.uber.jaeger.samplers.http.RateLimitingSamplingStrategy;
 import com.uber.jaeger.samplers.http.SamplingStrategyResponse;
-
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -152,7 +152,9 @@ public class RemoteControlledSampler implements Sampler {
 
   @Override
   public boolean equals(Object sampler) {
-    if (this == sampler) return true;
+    if (this == sampler) {
+      return true;
+    }
     if (sampler instanceof RemoteControlledSampler) {
       RemoteControlledSampler remoteSampler = ((RemoteControlledSampler) sampler);
       synchronized (this) {

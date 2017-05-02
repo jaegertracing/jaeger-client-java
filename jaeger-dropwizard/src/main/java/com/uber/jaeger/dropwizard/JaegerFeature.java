@@ -19,12 +19,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.dropwizard;
 
 import com.uber.jaeger.filters.jaxrs2.TracingUtils;
-
 import io.opentracing.Tracer;
-
 import javax.ws.rs.core.Feature;
 import javax.ws.rs.core.FeatureContext;
 
@@ -47,6 +46,7 @@ public class JaegerFeature implements Feature {
             new JerseyServerFilter(tracer, com.uber.jaeger.context.TracingUtils.getTraceContext()));
         break;
       case CLIENT:
+      default:
         featureContext.register(TracingUtils.clientFilter(tracer));
         break;
     }

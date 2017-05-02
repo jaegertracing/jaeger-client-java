@@ -21,12 +21,12 @@
  */
 package com.uber.jaeger;
 
-import com.uber.jaeger.exceptions.EmptyIPException;
+import static org.junit.Assert.assertEquals;
+
+import com.uber.jaeger.exceptions.EmptyIpException;
 import com.uber.jaeger.exceptions.NotFourOctetsException;
 import com.uber.jaeger.utils.Utils;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 public class UtilsTest {
 
@@ -42,7 +42,7 @@ public class UtilsTest {
     Utils.ipToInt(":19");
   }
 
-  @Test(expected = EmptyIPException.class)
+  @Test(expected = EmptyIpException.class)
   public void testIPToInt32EmptyIPException() {
     Utils.ipToInt("");
   }

@@ -31,7 +31,7 @@ public class TextMapCodecTest {
     @Test
     public void testBuilder()  {
         TextMapCodec codec = TextMapCodec.builder()
-                .withURLEncoding(true)
+                .withUrlEncoding(true)
                 .withSpanContextKey("jaeger-trace-id")
                 .withBaggagePrefix("jaeger-baggage-")
                 .build();

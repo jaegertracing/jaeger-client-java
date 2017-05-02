@@ -42,6 +42,7 @@ subprojects {
     apply plugin: 'java'
     apply plugin: 'maven'
     apply plugin: 'signing'
+    apply plugin: 'checkstyle'
 
     compileJava {
         sourceCompatibility = 1.6
@@ -64,10 +65,14 @@ subprojects {
             configurations.compile.each { File file -> println file.name }
         }
     }
-    
-    task verifyFormatting(type: com.github.sherter.googlejavaformatgradleplugin.VerifyGoogleJavaFormat) {
-        exclude '**/gen-java/**'
+
+    checkstyle {
+        configFile = rootProject.file('config/checkstyle/checkstyle.xml')
+        toolVersion = "7.6.1"
     }
+
+    // TODO fix tests
+    checkstyleTest.enabled = false
 
     license {
         header rootProject.file('license-template')
@@ -83,7 +88,6 @@ subprojects {
     }
 
     check.dependsOn tasks.license
-    classes.dependsOn tasks.verifyFormatting
 
     apply from: '../gradle/publish.gradle'
     test {

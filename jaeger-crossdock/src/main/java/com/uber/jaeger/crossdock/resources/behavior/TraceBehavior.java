@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.crossdock.resources.behavior;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,7 +38,6 @@ import com.uber.tchannel.api.SubChannel;
 import com.uber.tchannel.api.TFuture;
 import com.uber.tchannel.messages.ThriftRequest;
 import com.uber.tchannel.messages.ThriftResponse;
-
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -71,7 +71,7 @@ public class TraceBehavior {
     String transport = downstream.getTransport();
     switch (transport) {
       case Constants.TRANSPORT_HTTP:
-        return callDownstreamHTTP(downstream);
+        return callDownstreamHttp(downstream);
       case Constants.TRANSPORT_TCHANNEL:
         return callDownstreamTChannel(downstream);
       default:
@@ -79,14 +79,14 @@ public class TraceBehavior {
     }
   }
 
-  private TraceResponse callDownstreamHTTP(Downstream downstream) throws IOException {
-    String downstreamURL =
+  private TraceResponse callDownstreamHttp(Downstream downstream) throws IOException {
+    String downstreamUrl =
         String.format("http://%s:%s/join_trace", downstream.getHost(), downstream.getPort());
-    log.info("Calling downstream http {} at {}", downstream.getServiceName(), downstreamURL);
+    log.info("Calling downstream http {} at {}", downstream.getServiceName(), downstreamUrl);
 
     Response resp =
         JerseyServer.client
-            .target(downstreamURL)
+            .target(downstreamUrl)
             .request(MediaType.APPLICATION_JSON)
             .post(
                 Entity.json(
@@ -138,10 +138,10 @@ public class TraceBehavior {
     }
 
     SpanContext context = span.context();
-    String traceID = String.format("%x", context.getTraceID());
+    String traceId = String.format("%x", context.getTraceId());
     boolean sampled = context.isSampled();
     String baggage = span.getBaggageItem(Constants.BAGGAGE_KEY);
-    return new ObservedSpan(traceID, sampled, baggage);
+    return new ObservedSpan(traceId, sampled, baggage);
   }
 
   private InetAddress host(Downstream downstream) {

@@ -42,9 +42,9 @@ public class SpanContextTest {
   @Test
   public void testContextFromString() throws Exception {
     SpanContext context = SpanContext.contextFromString("ff:dd:cc:4");
-    assertEquals(context.getTraceID(), 255);
-    assertEquals(context.getSpanID(), 221);
-    assertEquals(context.getParentID(), 204);
+    assertEquals(context.getTraceId(), 255);
+    assertEquals(context.getSpanId(), 221);
+    assertEquals(context.getParentId(), 204);
     assertEquals(context.getFlags(), 4);
   }
 
@@ -64,9 +64,9 @@ public class SpanContextTest {
     assertEquals(
         "fffffffffffffff6:fffffffffffffff6:fffffffffffffff6:81", context.contextAsString());
     SpanContext contextFromStr = SpanContext.contextFromString(context.contextAsString());
-    assertEquals(traceID, contextFromStr.getTraceID());
-    assertEquals(spanID, contextFromStr.getSpanID());
-    assertEquals(parentID, contextFromStr.getParentID());
+    assertEquals(traceID, contextFromStr.getTraceId());
+    assertEquals(spanID, contextFromStr.getSpanId());
+    assertEquals(parentID, contextFromStr.getParentId());
     assertEquals(flags, contextFromStr.getFlags());
   }
 }

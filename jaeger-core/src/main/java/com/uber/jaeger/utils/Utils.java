@@ -19,11 +19,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.utils;
 
-import com.uber.jaeger.exceptions.EmptyIPException;
+import com.uber.jaeger.exceptions.EmptyIpException;
 import com.uber.jaeger.exceptions.NotFourOctetsException;
-
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
@@ -32,9 +32,9 @@ public class Utils {
     return key.replaceAll("_", "-").toLowerCase();
   }
 
-  public static int ipToInt(String ip) throws EmptyIPException, NotFourOctetsException {
+  public static int ipToInt(String ip) throws EmptyIpException, NotFourOctetsException {
     if (ip.equals("")) {
-      throw new EmptyIPException();
+      throw new EmptyIpException();
     }
 
     if (ip.equals("localhost")) {
@@ -48,14 +48,14 @@ public class Utils {
       throw new NotFourOctetsException();
     }
 
-    int intIP = 0;
+    int intIp = 0;
     for (byte octet : octets.getAddress()) {
-      intIP = (intIP << 8) | (octet);
+      intIp = (intIp << 8) | (octet);
     }
-    return intIP;
+    return intIp;
   }
 
-  public static long uniqueID() {
+  public static long uniqueId() {
     long val = 0;
     while (val == 0) {
       val = Java6CompatibleThreadLocalRandom.current().nextLong();

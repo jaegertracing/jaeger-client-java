@@ -19,18 +19,18 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.crossdock.resources.behavior.http;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uber.jaeger.Span;
 import com.uber.jaeger.context.TracingUtils;
 import com.uber.jaeger.crossdock.Constants;
-import com.uber.jaeger.crossdock.resources.behavior.TraceBehavior;
 import com.uber.jaeger.crossdock.api.JoinTraceRequest;
 import com.uber.jaeger.crossdock.api.StartTraceRequest;
 import com.uber.jaeger.crossdock.api.TraceResponse;
+import com.uber.jaeger.crossdock.resources.behavior.TraceBehavior;
 import io.opentracing.tag.Tags;
-
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;

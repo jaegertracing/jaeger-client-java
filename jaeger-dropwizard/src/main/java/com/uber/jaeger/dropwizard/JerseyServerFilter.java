@@ -19,32 +19,28 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.dropwizard;
 
 import com.google.common.annotations.VisibleForTesting;
-
 import com.uber.jaeger.context.TraceContext;
 import com.uber.jaeger.filters.jaxrs2.ServerFilter;
-
-import org.glassfish.jersey.server.ContainerRequest;
-import org.glassfish.jersey.server.ExtendedUriInfo;
-import org.glassfish.jersey.server.internal.routing.UriRoutingContext;
-import org.glassfish.jersey.uri.UriTemplate;
-
+import io.opentracing.Tracer;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
 import javax.inject.Singleton;
 import javax.ws.rs.Path;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.ext.Provider;
-
-import io.opentracing.Tracer;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.glassfish.jersey.server.ContainerRequest;
+import org.glassfish.jersey.server.ExtendedUriInfo;
+import org.glassfish.jersey.server.internal.routing.UriRoutingContext;
+import org.glassfish.jersey.uri.UriTemplate;
 
 /**
  * A {@link ServerFilter} that provides a Jersey specific {@link #getOperationName} implementation.

@@ -19,10 +19,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.reporters;
 
 import com.uber.jaeger.Span;
-
 import lombok.ToString;
 
 @ToString

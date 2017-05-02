@@ -19,17 +19,17 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.httpclient;
 
 import io.opentracing.Span;
 import io.opentracing.tag.Tags;
+import java.io.IOException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpResponseInterceptor;
 import org.apache.http.protocol.HttpContext;
-
-import java.io.IOException;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Apache http client response interceptor that works in conjunction with

@@ -24,14 +24,13 @@ package com.uber.jaeger.propagation;
 import com.uber.jaeger.context.TraceContext;
 import com.uber.jaeger.filters.jaxrs2.ServerFilter;
 import io.opentracing.Tracer;
+import java.io.IOException;
+import java.net.URI;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
-
-import java.io.IOException;
-import java.net.URI;
 
 public class JerseyServer {
   // Base URI the Grizzly HTTP server will listen on

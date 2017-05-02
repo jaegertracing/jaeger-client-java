@@ -24,21 +24,18 @@ package com.uber.jaeger;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
+import com.uber.jaeger.reporters.InMemoryReporter;
+import com.uber.jaeger.samplers.ConstSampler;
+import io.opentracing.tag.Tags;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
-import com.uber.jaeger.reporters.InMemoryReporter;
-import com.uber.jaeger.samplers.ConstSampler;
-
-import io.opentracing.tag.Tags;
 
 @RunWith(Parameterized.class)
 public class TracerTagsTest {
@@ -106,7 +103,7 @@ public class TracerTagsTest {
   public void testTracerTagsZipkin() throws Exception {
     InMemoryReporter spanReporter = new InMemoryReporter();
     Tracer tracer = new Tracer.Builder("x", spanReporter, new ConstSampler(true))
-            .withZipkinSharedRPCSpan()
+            .withZipkinSharedRpcSpan()
             .withTag("tracer.tag.str", "y")
             .withTag("tracer.tag.bool", true)
             .withTag("tracer.tag.num", 1)

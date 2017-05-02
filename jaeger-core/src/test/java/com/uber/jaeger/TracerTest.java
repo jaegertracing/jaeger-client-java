@@ -28,19 +28,20 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-import org.junit.Before;
-import org.junit.Test;
-
 import com.uber.jaeger.metrics.InMemoryStatsReporter;
 import com.uber.jaeger.propagation.Injector;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.reporters.Reporter;
 import com.uber.jaeger.samplers.ConstSampler;
 import com.uber.jaeger.samplers.Sampler;
-
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
 import io.opentracing.tag.Tags;
+import java.util.HashMap;
+import java.util.Map;
+import org.junit.Before;
+import org.junit.Test;
+
 
 public class TracerTest {
 
@@ -109,7 +110,7 @@ public class TracerTest {
     Tracer.SpanBuilder spanBuilder = (Tracer.SpanBuilder) tracer.buildSpan("ndnd");
     spanBuilder.withTag(Tags.SPAN_KIND.getKey(), "server");
 
-    assertTrue(spanBuilder.isRPCServer());
+    assertTrue(spanBuilder.isRpcServer());
   }
 
   @Test
@@ -117,7 +118,7 @@ public class TracerTest {
     Tracer.SpanBuilder spanBuilder = (Tracer.SpanBuilder) tracer.buildSpan("Lrrr");
     spanBuilder.withTag(Tags.SPAN_KIND.getKey(), "peachy");
 
-    assertFalse(spanBuilder.isRPCServer());
+    assertFalse(spanBuilder.isRpcServer());
   }
 
   @Test

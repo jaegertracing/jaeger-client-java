@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.crossdock.resources.behavior.tchannel;
 
 import com.uber.jaeger.context.TracingUtils;
@@ -28,7 +29,6 @@ import com.uber.tchannel.api.TChannel;
 import com.uber.tchannel.tracing.TracingContext;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
-
 import java.net.InetAddress;
 import java.util.EmptyStackException;
 

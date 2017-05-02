@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger;
 
 import com.uber.jaeger.metrics.Metrics;
@@ -30,13 +31,12 @@ import com.uber.jaeger.reporters.LoggingReporter;
 import com.uber.jaeger.reporters.RemoteReporter;
 import com.uber.jaeger.reporters.Reporter;
 import com.uber.jaeger.samplers.ConstSampler;
-import com.uber.jaeger.samplers.HTTPSamplingManager;
+import com.uber.jaeger.samplers.HttpSamplingManager;
 import com.uber.jaeger.samplers.ProbabilisticSampler;
 import com.uber.jaeger.samplers.RateLimitingSampler;
 import com.uber.jaeger.samplers.RemoteControlledSampler;
 import com.uber.jaeger.samplers.Sampler;
-import com.uber.jaeger.senders.UDPSender;
-
+import com.uber.jaeger.senders.UdpSender;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -92,7 +92,7 @@ public class Configuration {
     return new Tracer.Builder(serviceName, reporter, sampler).withMetrics(metrics);
   }
 
-  synchronized public io.opentracing.Tracer getTracer() {
+  public synchronized io.opentracing.Tracer getTracer() {
     if (tracer != null) {
       return tracer;
     }
@@ -102,7 +102,7 @@ public class Configuration {
     return tracer;
   }
 
-  synchronized public void closeTracer() {
+  public synchronized void closeTracer() {
     if (tracer != null) {
       tracer.close();
     }
@@ -125,7 +125,7 @@ public class Configuration {
    */
   public static class SamplerConfiguration {
 
-    private final static String defaultManagerHostPort = "localhost:5778";
+    private static final String defaultManagerHostPort = "localhost:5778";
 
     /**
      * The type of sampler to use in the tracer. Optional. Valid values: remote (default),
@@ -178,7 +178,7 @@ public class Configuration {
       if (samplerType.equals(RemoteControlledSampler.TYPE)) {
         Sampler initialSampler = new ProbabilisticSampler(samplerParam.doubleValue());
 
-        HTTPSamplingManager manager = new HTTPSamplingManager(hostPort);
+        HttpSamplingManager manager = new HttpSamplingManager(hostPort);
 
         return new RemoteControlledSampler(serviceName, manager, initialSampler, metrics);
       }
@@ -201,10 +201,10 @@ public class Configuration {
 
   public static class ReporterConfiguration {
 
-    private final static String defaultAgentHost = "localhost";
-    private final static int defaultAgentPort = 5775;
-    private final static int defaultFlushIntervalMs = 1000;
-    private final static int defaultMaxQueueSize = 100;
+    private static final String defaultAgentHost = "localhost";
+    private static final int defaultAgentPort = 5775;
+    private static final int defaultFlushIntervalMs = 1000;
+    private static final int defaultMaxQueueSize = 100;
 
     private final Boolean logSpans;
 
@@ -234,8 +234,8 @@ public class Configuration {
     }
 
     private Reporter getReporter(Metrics metrics) {
-      UDPSender sender =
-          new UDPSender(
+      UdpSender sender =
+          new UdpSender(
               stringOrDefault(this.agentHost, defaultAgentHost),
               numberOrDefault(this.agentPort, defaultAgentPort).intValue(),
               0 /* max packet size */);

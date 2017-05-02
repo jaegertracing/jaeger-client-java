@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger;
 
 import lombok.Value;
@@ -29,6 +30,6 @@ import lombok.Value;
 @Value
 public class Reference {
 
-    private final SpanContext spanContext;
-    private final String type;
+  private final SpanContext spanContext;
+  private final String type;
 }
