@@ -22,8 +22,6 @@
 package com.uber.jaeger.samplers;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 import com.uber.jaeger.Constants;
 import org.junit.Assert;
@@ -50,8 +48,8 @@ public class GuaranteedThroughputSamplerTest {
     Assert.assertTrue(samplingStatus.isSampled());
     Map<String, Object> tags = samplingStatus.getTags();
 
-    assertEquals(tags.get(Constants.SAMPLER_TYPE_TAG_KEY), GuaranteedThroughputSampler.TYPE);
-    assertEquals(tags.get(Constants.SAMPLER_PARAM_TAG_KEY), 0.0001);
+    assertEquals(tags.get(Constants.SAMPLER_TYPE_TAG_KEY), RateLimitingSampler.TYPE);
+    assertEquals(tags.get(Constants.SAMPLER_PARAM_TAG_KEY), 1.0);
   }
 
   @Test
@@ -64,35 +62,5 @@ public class GuaranteedThroughputSamplerTest {
 
     assertEquals(tags.get(Constants.SAMPLER_TYPE_TAG_KEY), ProbabilisticSampler.TYPE);
     assertEquals(tags.get(Constants.SAMPLER_PARAM_TAG_KEY), 0.999);
-  }
-
-  @Test
-  public void testUpdate_probabilisticSampler() {
-    undertest = new GuaranteedThroughputSampler(0.001, 1);
-
-    assertFalse(undertest.update(0.001, 1));
-    assertTrue(undertest.update(0.002, 1));
-
-    SamplingStatus samplingStatus = undertest.sample("test", Long.MAX_VALUE);
-    Assert.assertTrue(samplingStatus.isSampled());
-    Map<String, Object> tags = samplingStatus.getTags();
-
-    assertEquals(tags.get(Constants.SAMPLER_TYPE_TAG_KEY), GuaranteedThroughputSampler.TYPE);
-    assertEquals(tags.get(Constants.SAMPLER_PARAM_TAG_KEY), 0.002);
-  }
-
-  @Test
-  public void testUpdate_rateLimitingSampler() {
-    undertest = new GuaranteedThroughputSampler(0.001, 1);
-
-    assertFalse(undertest.update(0.001, 1));
-    assertTrue(undertest.update(0.001, 0));
-
-    SamplingStatus samplingStatus = undertest.sample("test", 0L);
-    Assert.assertTrue(samplingStatus.isSampled());
-    Map<String, Object> tags = samplingStatus.getTags();
-
-    assertEquals(tags.get(Constants.SAMPLER_TYPE_TAG_KEY), ProbabilisticSampler.TYPE);
-    assertEquals(tags.get(Constants.SAMPLER_PARAM_TAG_KEY), 0.001);
   }
 }

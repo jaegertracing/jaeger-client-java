@@ -56,7 +56,7 @@ public class PerOperationSamplerTest {
   private final String OPERATION = "some OPERATION";
 
   @Mock private ProbabilisticSampler defaultProbabilisticSampler;
-  private HashMap<String, GuaranteedThroughputSampler> operationToSamplers = new HashMap<>();
+  private HashMap<String, GuaranteedThroughputSampler>  operationToSamplers = new HashMap<>();
   private PerOperationSampler undertest;
 
   @Before
@@ -113,11 +113,11 @@ public class PerOperationSamplerTest {
 
     OperationSamplingParameters parameters =
         new OperationSamplingParameters(DEFAULT_SAMPLING_PROBABILITY,
-            DEFAULT_LOWER_BOUND_TRACES_PER_SECOND, parametersList);
+                                        DEFAULT_LOWER_BOUND_TRACES_PER_SECOND, parametersList);
 
     assertTrue(undertest.update(parameters));
-    verify(guaranteedThroughputSampler).update(SAMPLING_RATE, DEFAULT_LOWER_BOUND_TRACES_PER_SECOND);
-    verifyNoMoreInteractions(guaranteedThroughputSampler);
+    //Checks that creating a new instance with the given parameters is the same as updating an existing instance
+    assertEquals(new PerOperationSampler(MAX_OPERATIONS, parameters), undertest);
   }
 
   @Test
