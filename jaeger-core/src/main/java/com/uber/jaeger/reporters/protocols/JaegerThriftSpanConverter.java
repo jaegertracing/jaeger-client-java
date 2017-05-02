@@ -21,19 +21,26 @@
  */
 package com.uber.jaeger.reporters.protocols;
 
-import com.uber.jaeger.Constants;
-import com.uber.jaeger.LogData;
-import com.uber.jaeger.Span;
-import com.uber.jaeger.SpanContext;
-import com.uber.jaeger.thriftjava.Log;
-import com.uber.jaeger.thriftjava.Tag;
-import com.uber.jaeger.thriftjava.TagType;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.uber.jaeger.Constants;
+import com.uber.jaeger.LogData;
+import com.uber.jaeger.Reference;
+import com.uber.jaeger.Span;
+import com.uber.jaeger.SpanContext;
+import com.uber.jaeger.thriftjava.Log;
+import com.uber.jaeger.thriftjava.SpanRef;
+import com.uber.jaeger.thriftjava.SpanRefType;
+import com.uber.jaeger.thriftjava.Tag;
+import com.uber.jaeger.thriftjava.TagType;
+
+import io.opentracing.References;
+
 public class JaegerThriftSpanConverter {
+
+  private JaegerThriftSpanConverter() {}
 
   public static com.uber.jaeger.thriftjava.Span convertSpan(Span span) {
     SpanContext context = span.context();
@@ -47,11 +54,24 @@ public class JaegerThriftSpanConverter {
             context.getFlags(),
             span.getStart(),
             span.getDuration())
+            .setReferences(buildReferences(span.getReferences()))
         .setTags(buildTags(span.getTags()))
         .setLogs(buildLogs(span.getLogs()));
   }
 
-  protected static List<Log> buildLogs(List<LogData> logs) {
+  static List<SpanRef> buildReferences(List<Reference> references) {
+    List<SpanRef> thriftReferences = new ArrayList<SpanRef>(references.size());
+    for (Reference reference: references) {
+      SpanRefType thriftRefType = References.CHILD_OF.equals(reference.getType()) ? SpanRefType.CHILD_OF :
+              SpanRefType.FOLLOWS_FROM;
+      thriftReferences.add(new SpanRef(thriftRefType, reference.getSpanContext().getTraceID(),
+              0, reference.getSpanContext().getSpanID()));
+    }
+
+    return thriftReferences;
+  }
+
+  static List<Log> buildLogs(List<LogData> logs) {
     List<Log> jLogs = new ArrayList<Log>();
     if (logs != null) {
       for (LogData logData : logs) {
@@ -75,7 +95,7 @@ public class JaegerThriftSpanConverter {
     return jLogs;
   }
 
-  protected static List<Tag> buildTags(Map<String, ?> tags) {
+  public static List<Tag> buildTags(Map<String, ?> tags) {
     List<Tag> jTags = new ArrayList<Tag>();
     if (tags != null) {
       for (Map.Entry<String, ?> entry : tags.entrySet()) {
@@ -87,7 +107,7 @@ public class JaegerThriftSpanConverter {
     return jTags;
   }
 
-  protected static Tag buildTag(String tagKey, Object tagValue) {
+  static Tag buildTag(String tagKey, Object tagValue) {
     Tag tag = new Tag();
     tag.setKey(tagKey);
     if (tagValue instanceof Integer || tagValue instanceof Short || tagValue instanceof Long) {
@@ -105,7 +125,7 @@ public class JaegerThriftSpanConverter {
     return tag;
   }
 
-  protected static void buildStringTag(Tag tag, Object tagValue) {
+  static void buildStringTag(Tag tag, Object tagValue) {
     tag.setVType(TagType.STRING);
     String stringTagValue = String.valueOf(tagValue);
     tag.setVStr(truncateString(stringTagValue));

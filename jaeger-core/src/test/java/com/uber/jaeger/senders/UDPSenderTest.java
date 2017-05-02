@@ -21,29 +21,31 @@
  */
 package com.uber.jaeger.senders;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import com.uber.jaeger.Span;
-import com.uber.jaeger.SpanContext;
 import com.uber.jaeger.Tracer;
 import com.uber.jaeger.agent.thrift.Agent;
 import com.uber.jaeger.exceptions.SenderException;
 import com.uber.jaeger.metrics.InMemoryStatsReporter;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.reporters.Reporter;
+import com.uber.jaeger.reporters.protocols.JaegerThriftSpanConverter;
 import com.uber.jaeger.reporters.protocols.TestTServer;
-import com.uber.jaeger.reporters.protocols.ThriftSpanConverter;
 import com.uber.jaeger.samplers.ConstSampler;
+import com.uber.jaeger.thriftjava.Batch;
+import com.uber.jaeger.thriftjava.Process;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.transport.AutoExpandingBufferWriteTransport;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-
 public class UDPSenderTest {
+  final static String SERVICE_NAME = "test-sender";
   final String destHost = "localhost";
   int destPort;
   int localPort = 0;
@@ -53,7 +55,6 @@ public class UDPSenderTest {
   Reporter reporter;
   UDPSender sender;
   TestTServer server;
-  ThriftSpanConverter converter;
 
   private TestTServer startServer() throws Exception {
     TestTServer server = new TestTServer(localPort);
@@ -71,11 +72,11 @@ public class UDPSenderTest {
     server = startServer();
     reporter = new InMemoryReporter();
     tracer =
-        new Tracer.Builder("test-sender", reporter, new ConstSampler(true))
+        new Tracer.Builder(SERVICE_NAME, reporter, new ConstSampler(true))
             .withStatsReporter(new InMemoryStatsReporter())
+            .withTag("foo", "bar")
             .build();
     sender = new UDPSender(destHost, destPort, maxPacketSize);
-    converter = new ThriftSpanConverter();
   }
 
   @After
@@ -89,14 +90,13 @@ public class UDPSenderTest {
   public void testAppendSpanTooLarge() throws Exception {
     Span jaegerSpan = (Span) tracer.buildSpan("raza").start();
     String msg = "";
-    for (int i = 0; i < 1001; i++) {
+    for (int i = 0; i < 10001; i++) {
       msg += ".";
+      jaegerSpan.log(msg, new Object());
     }
 
-    jaegerSpan.log(msg, new Object());
-    com.twitter.zipkin.thriftjava.Span span = ThriftSpanConverter.convertSpan(jaegerSpan);
     try {
-      sender.append(span);
+      sender.append(jaegerSpan);
     } catch (SenderException e) {
       assertEquals(e.getDroppedSpanCount(), 1);
       throw e;
@@ -106,28 +106,36 @@ public class UDPSenderTest {
   @Test
   public void testAppend() throws Exception {
     // find size of the initial span
+    Span jaegerSpan = (Span)tracer.buildSpan("raza").start();
+    com.uber.jaeger.thriftjava.Span span =
+            JaegerThriftSpanConverter.convertSpan(jaegerSpan);
+
+    Process process = new Process(tracer.getServiceName())
+        .setTags(JaegerThriftSpanConverter.buildTags(tracer.tags()));
+
     AutoExpandingBufferWriteTransport memoryTransport =
         new AutoExpandingBufferWriteTransport(maxPacketSize, 2);
-    com.twitter.zipkin.thriftjava.Span span =
-        ThriftSpanConverter.convertSpan((Span) tracer.buildSpan("raza").start());
-    span.write(new TCompactProtocol(memoryTransport));
+
+    process.write(new TCompactProtocol(memoryTransport));
+    int processSize = memoryTransport.getPos();
+    memoryTransport.reset();
+    span.write(new TCompactProtocol((memoryTransport)));
     int spanSize = memoryTransport.getPos();
 
     // create a sender thats a multiple of the span size (accounting for span overhead)
     // this allows us to test the boundary conditions of writing spans.
     int expectedNumSpans = 11;
-    int maxPacketSize = (spanSize * expectedNumSpans) + sender.emitZipkinBatchOverhead;
-    sender = new UDPSender(destHost, destPort, maxPacketSize);
-
-    int maxPacketSizeLeft = maxPacketSize - sender.emitZipkinBatchOverhead;
+    int maxPacketSize = (spanSize * expectedNumSpans) + sender.emitBatchOverhead + processSize;
+    int maxPacketSizeLeft = maxPacketSize - sender.emitBatchOverhead - processSize;
     // add enough spans to be under buffer limit
+    sender = new UDPSender(destHost, destPort, maxPacketSize);
     while (spanSize < maxPacketSizeLeft) {
-      sender.append(span);
+      sender.append(jaegerSpan);
       maxPacketSizeLeft -= spanSize;
     }
 
     // add a span that overflows the limit to hit the last branch
-    int result = sender.append(span);
+    int result = sender.append(jaegerSpan);
 
     assertEquals(expectedNumSpans, result);
   }
@@ -137,56 +145,59 @@ public class UDPSenderTest {
     int timeout = 50; // in milliseconds
     int expectedNumSpans = 1;
     Span expectedSpan = (Span) tracer.buildSpan("raza").start();
-    com.twitter.zipkin.thriftjava.Span span = ThriftSpanConverter.convertSpan(expectedSpan);
-    int appendNum = sender.append(span);
+    int appendNum = sender.append(expectedSpan);
     int flushNum = sender.flush();
     assertEquals(appendNum, 0);
     assertEquals(flushNum, 1);
 
-    List<com.twitter.zipkin.thriftjava.Span> spans = server.getSpans(expectedNumSpans, timeout);
-    assertEquals(spans.size(), expectedNumSpans);
+    Batch batch = server.getBatch(expectedNumSpans, timeout);
+    assertEquals(batch.getSpans().size(), expectedNumSpans);
 
-    com.twitter.zipkin.thriftjava.Span actualSpan = spans.get(0);
-    SpanContext context = expectedSpan.context();
-
-    assertEquals(context.getTraceID(), actualSpan.getTrace_id());
-    assertEquals(context.getSpanID(), actualSpan.getId());
-    assertEquals(context.getParentID(), actualSpan.getParent_id());
-    assertEquals(expectedSpan.getOperationName(), actualSpan.getName());
+    com.uber.jaeger.thriftjava.Span actualSpan = batch.getSpans().get(0);
+    assertEquals(expectedSpan.context().getTraceID(), actualSpan.getTraceIdLow());
+    assertEquals(0, actualSpan.getTraceIdHigh());
+    assertEquals(expectedSpan.context().getSpanID(), actualSpan.getSpanId());
+    assertEquals(0, actualSpan.getParentSpanId());
+    assertTrue(actualSpan.references.isEmpty());
+    assertEquals(expectedSpan.getOperationName(), actualSpan.getOperationName());
+    assertEquals(3, batch.getProcess().getTags().size());
+    assertEquals("jaeger.hostname", batch.getProcess().getTags().get(0).getKey());
+    assertEquals("jaeger.version", batch.getProcess().getTags().get(1).getKey());
+    assertEquals("bar", batch.getProcess().getTags().get(2).getVStr());
   }
 
   @Test
-  public void testEmitZipkinBatchOverhead() throws Exception {
-    int a = calculateZipkinBatchOverheadDifference(1);
-    int b = calculateZipkinBatchOverheadDifference(2);
+  public void testEmitBatchOverhead() throws Exception {
+    int a = calculateBatchOverheadDifference(1);
+    int b = calculateBatchOverheadDifference(2);
 
-    // This value has been empirically observed to be 22.
+    // This value has been empirically observed to be 56.
     // If this test breaks it means we have changed our protocol, or
     // the protocol information has changed (likely due to a new version of thrift).
     assertEquals(a, b);
-    assertEquals(b, UDPSender.emitZipkinBatchOverhead);
+    assertEquals(b, UDPSender.emitBatchOverhead);
   }
 
-  private int calculateZipkinBatchOverheadDifference(int numberOfSpans) throws Exception {
+  private int calculateBatchOverheadDifference(int numberOfSpans) throws Exception {
     AutoExpandingBufferWriteTransport memoryTransport =
         new AutoExpandingBufferWriteTransport(maxPacketSize, 2);
-    Agent.Client memoryClient = new Agent.Client(new TCompactProtocol(memoryTransport));
+    Agent.Client memoryClient = new Agent.Client(new TCompactProtocol((memoryTransport)));
     Span jaegerSpan = (Span) tracer.buildSpan("raza").start();
-    com.twitter.zipkin.thriftjava.Span span = ThriftSpanConverter.convertSpan(jaegerSpan);
-    List<com.twitter.zipkin.thriftjava.Span> spans = new ArrayList<>();
+    com.uber.jaeger.thriftjava.Span span = JaegerThriftSpanConverter.convertSpan(jaegerSpan);
+    List<com.uber.jaeger.thriftjava.Span> spans = new ArrayList<>();
     for (int i = 0; i < numberOfSpans; i++) {
       spans.add(span);
     }
 
-    memoryClient.emitZipkinBatch(spans);
-    int emitZipkinBatchOverheadMultipleSpans = memoryTransport.getPos();
+    memoryClient.emitBatch(new Batch(new Process(SERVICE_NAME), spans));
+    int emitBatchOverheadMultipleSpans = memoryTransport.getPos();
 
     memoryTransport.reset();
     for (int j = 0; j < numberOfSpans; j++) {
       span.write(new TCompactProtocol(memoryTransport));
     }
-    int writeZipkinBatchOverheadMultipleSpans = memoryTransport.getPos();
+    int writeBatchOverheadMultipleSpans = memoryTransport.getPos();
 
-    return emitZipkinBatchOverheadMultipleSpans - writeZipkinBatchOverheadMultipleSpans;
+    return emitBatchOverheadMultipleSpans - writeBatchOverheadMultipleSpans;
   }
 }

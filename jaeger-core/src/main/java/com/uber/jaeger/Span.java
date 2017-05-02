@@ -21,8 +21,6 @@
  */
 package com.uber.jaeger;
 
-import com.twitter.zipkin.thriftjava.Endpoint;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -39,12 +37,9 @@ public class Span implements io.opentracing.Span {
   private final Map<String, Object> tags;
   private long durationMicroseconds; // span durationMicroseconds
   private String operationName;
+  private final List<Reference> references;
   private SpanContext context;
-  private Endpoint peer;
   private List<LogData> logs;
-  private String localComponent;
-  private boolean isClient;
-  private boolean isRPC;
 
   Span(
       Tracer tracer,
@@ -53,7 +48,8 @@ public class Span implements io.opentracing.Span {
       long startTimeMicroseconds,
       long startTimeNanoTicks,
       boolean computeDurationViaNanoTicks,
-      Map<String, Object> tags) {
+      Map<String, Object> tags,
+      List<Reference> references) {
     this.tracer = tracer;
     this.operationName = operationName;
     this.context = context;
@@ -61,14 +57,11 @@ public class Span implements io.opentracing.Span {
     this.startTimeNanoTicks = startTimeNanoTicks;
     this.computeDurationViaNanoTicks = computeDurationViaNanoTicks;
     this.tags = new HashMap<String, Object>();
+    this.references = new ArrayList<Reference>(references);
 
     for (Map.Entry<String, Object> tag : tags.entrySet()) {
       setTagAsObject(tag.getKey(), tag.getValue());
     }
-  }
-
-  public String getLocalComponent() {
-    return localComponent;
   }
 
   public long getStart() {
@@ -85,18 +78,9 @@ public class Span implements io.opentracing.Span {
     return tracer;
   }
 
-  public Endpoint getPeer() {
+  public List<Reference> getReferences() {
     synchronized (this) {
-      return peer;
-    }
-  }
-
-  private Endpoint getOrMakePeer() {
-    synchronized (this) {
-      if (peer == null) {
-        peer = new Endpoint(0, (short) 0, "");
-      }
-      return peer;
+      return Collections.unmodifiableList(references);
     }
   }
 
@@ -204,48 +188,6 @@ public class Span implements io.opentracing.Span {
     return setTagAsObject(key, value);
   }
 
-  /**
-   * Sets various fields on the {@link Span} when certain {@link Tags} are encountered
-   *
-   * @return true iff a special tag is handled
-   */
-  private boolean handleSpecialTag(String key, Object value) {
-    // TODO use a map of handlers for special tags, instead of if/then
-    if (key.equals(Tags.COMPONENT.getKey()) && value instanceof String) {
-      localComponent = (String) value;
-      return true;
-    }
-
-    if (key.equals(Tags.PEER_HOST_IPV4.getKey()) && value instanceof Integer) {
-      getOrMakePeer().setIpv4((Integer) value);
-      return true;
-    }
-
-    if (key.equals(Tags.PEER_PORT.getKey()) && value instanceof Number) {
-      getOrMakePeer().setPort(((Number) value).shortValue());
-      return true;
-    }
-
-    if (key.equals(Tags.PEER_SERVICE.getKey()) && value instanceof String) {
-      getOrMakePeer().setService_name((String) value);
-      return true;
-    }
-
-    if (key.equals(Tags.SPAN_KIND.getKey()) && value instanceof String) {
-      isClient = Tags.SPAN_KIND_CLIENT.equals(value);
-      boolean isServer = Tags.SPAN_KIND_SERVER.equals(value);
-      isRPC = isClient || isServer;
-      return true;
-    }
-
-    return false;
-  }
-
-  /**
-   * Set a key:value tag on a span ONLY when the tag isn't special.
-   *
-   * See {@link #handleSpecialTag(String, Object)}
-   */
   private Span setTagAsObject(String key, Object value) {
     if (key.equals(Tags.SAMPLING_PRIORITY.getKey()) && (value instanceof Number)) {
       int priority = ((Number) value).intValue();
@@ -260,9 +202,7 @@ public class Span implements io.opentracing.Span {
     }
 
     if (context.isSampled()) {
-      if (!handleSpecialTag(key, value)) {
-        tags.put(key, value);
-      }
+      tags.put(key, value);
     }
 
     return this;
@@ -318,13 +258,5 @@ public class Span implements io.opentracing.Span {
       }
       return this;
     }
-  }
-
-  public boolean isRPC() {
-    return isRPC;
-  }
-
-  public boolean isRPCClient() {
-    return isClient;
   }
 }

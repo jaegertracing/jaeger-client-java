@@ -19,16 +19,16 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.uber.jaeger.senders;
-
-import com.twitter.zipkin.thriftjava.Span;
-import com.uber.jaeger.exceptions.SenderException;
+package com.uber.jaeger.reporters;
 
 import java.util.ArrayList;
 import java.util.List;
-import lombok.ToString;
 
-@ToString
+import com.uber.jaeger.exceptions.SenderException;
+import com.uber.jaeger.reporters.protocols.JaegerThriftSpanConverter;
+import com.uber.jaeger.senders.Sender;
+import com.uber.jaeger.thriftjava.Span;
+
 public class InMemorySender implements Sender {
   private List<Span> appended;
   private List<Span> flushed;
@@ -53,9 +53,10 @@ public class InMemorySender implements Sender {
   }
 
   @Override
-  public int append(Span span) throws SenderException {
-    appended.add(span);
-    received.add(span);
+  public int append(com.uber.jaeger.Span span) throws SenderException {
+    com.uber.jaeger.thriftjava.Span thriftSpan = JaegerThriftSpanConverter.convertSpan(span);
+    appended.add(thriftSpan);
+    received.add(thriftSpan);
     return 0;
   }
 

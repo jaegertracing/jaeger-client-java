@@ -22,9 +22,23 @@
 package com.uber.jaeger.filters.jaxrs2;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+
+import java.net.URI;
+import java.util.List;
+import java.util.Map;
+
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.container.ContainerResponseContext;
+import javax.ws.rs.core.MultivaluedHashMap;
+import javax.ws.rs.core.UriInfo;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import com.uber.jaeger.Constants;
 import com.uber.jaeger.Span;
@@ -34,20 +48,8 @@ import com.uber.jaeger.context.TraceContext;
 import com.uber.jaeger.propagation.FilterIntegrationTest;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
-import io.opentracing.tag.Tags;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 
-import java.net.URI;
-import java.util.List;
-import java.util.Map;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerResponseContext;
-import javax.ws.rs.core.MultivaluedHashMap;
-import javax.ws.rs.core.UriInfo;
+import io.opentracing.tag.Tags;
 
 /**
  * Tests that {@link ServerFilter} produces a span and sets tags correctly See also:
@@ -97,8 +99,8 @@ public class ServerFilterTest {
     Span span = spans.get(0);
     Map<String, Object> tags = span.getTags();
 
-    assertTrue(span.isRPC() && !span.isRPCClient());
-    assertEquals(source, span.getPeer().getService_name());
+    assertEquals(method, span.getOperationName());
+    assertEquals(Tags.SPAN_KIND_SERVER, tags.get(Tags.SPAN_KIND.getKey()));
     assertEquals(uri.toString(), tags.get(Tags.HTTP_URL.getKey()));
     assertEquals("localhost", tags.get(Tags.PEER_HOSTNAME.getKey()));
   }

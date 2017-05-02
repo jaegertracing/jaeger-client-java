@@ -21,13 +21,12 @@
  */
 package com.uber.jaeger.reporters.protocols;
 
+import com.uber.jaeger.agent.thrift.Agent;
+import com.uber.jaeger.thriftjava.Batch;
+import com.uber.jaeger.thriftjava.Span;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.List;
-
-import com.twitter.zipkin.thriftjava.Span;
-import com.uber.jaeger.agent.thrift.Agent;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TSimpleServer;
@@ -60,23 +59,24 @@ public class TestTServer implements Runnable {
     server.stop();
   }
 
-  public List<Span> getSpans(int expectedSpans, int timeout) throws Exception {
+  public Batch getBatch(int expectedSpans, int timeout) throws Exception {
 
-    List<Span> spans = new ArrayList<>();
+    Batch batch = new Batch().setSpans(new ArrayList<Span>());
     long expire = timeout + System.currentTimeMillis();
     while (System.currentTimeMillis() < expire) {
-      List<Span> receivedSpans = handler.getSpans();
-      if (receivedSpans != null) {
-        spans.addAll(receivedSpans);
+      Batch receivedBatch = handler.getBatch();
+      if (receivedBatch != null && receivedBatch.getSpans() != null) {
+        batch.getSpans().addAll(receivedBatch.getSpans());
+        batch.setProcess(receivedBatch.getProcess());
       }
 
-      if (spans.size() >= expectedSpans) {
-        return spans;
+      if (batch.spans.size() >= expectedSpans) {
+        return batch;
       }
 
       Thread.sleep(1);
     }
 
-    return spans;
+    return batch;
   }
 }

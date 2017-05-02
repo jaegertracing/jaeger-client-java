@@ -24,6 +24,15 @@ package com.uber.jaeger.reporters.protocols;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
@@ -33,15 +42,8 @@ import com.uber.jaeger.samplers.ConstSampler;
 import com.uber.jaeger.thriftjava.Log;
 import com.uber.jaeger.thriftjava.Tag;
 import com.uber.jaeger.thriftjava.TagType;
-import io.opentracing.Span;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import io.opentracing.Span;
 
 @RunWith(DataProviderRunner.class)
 public class JaegerThriftSpanConverterTest {

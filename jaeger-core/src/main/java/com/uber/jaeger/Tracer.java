@@ -21,6 +21,17 @@
  */
 package com.uber.jaeger;
 
+import java.io.InputStream;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+
 import com.uber.jaeger.exceptions.UnsupportedFormatException;
 import com.uber.jaeger.metrics.Metrics;
 import com.uber.jaeger.metrics.NullStatsReporter;
@@ -35,15 +46,6 @@ import com.uber.jaeger.samplers.SamplingStatus;
 import com.uber.jaeger.utils.Clock;
 import com.uber.jaeger.utils.SystemClock;
 import com.uber.jaeger.utils.Utils;
-
-import java.io.InputStream;
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
 
 import io.opentracing.References;
 import io.opentracing.propagation.Format;
@@ -63,7 +65,8 @@ public class Tracer implements io.opentracing.Tracer {
   private final Clock clock;
   private final Metrics metrics;
   private final int ip;
-  private final Map<String, Object> tags;
+  private final Map<String, ?> tags;
+  private final boolean zipkinSharedRPCSpan;
 
   private Tracer(
       String serviceName,
@@ -72,13 +75,15 @@ public class Tracer implements io.opentracing.Tracer {
       PropagationRegistry registry,
       Clock clock,
       Metrics metrics,
-      Map<String, Object> tags) {
+      Map<String, Object> tags,
+      boolean zipkinSharedRPCSpan) {
     this.serviceName = serviceName;
     this.reporter = reporter;
     this.sampler = sampler;
     this.registry = registry;
     this.clock = clock;
     this.metrics = metrics;
+    this.zipkinSharedRPCSpan = zipkinSharedRPCSpan;
 
     int ip;
     try {
@@ -108,6 +113,10 @@ public class Tracer implements io.opentracing.Tracer {
 
   public String getServiceName() {
     return serviceName;
+  }
+
+  public Map<String, ?> tags() {
+    return tags;
   }
 
   public int getIP() {
@@ -163,8 +172,9 @@ public class Tracer implements io.opentracing.Tracer {
 
     private String operationName = null;
     private long startTimeMicroseconds;
-    private SpanContext parent;
+    private final List<Reference> references = new ArrayList<Reference>();
     private final Map<String, Object> tags = new HashMap<String, Object>();
+    private final Map<String, String> baggage = new HashMap<String, String>();
 
     SpanBuilder(String operationName) {
       this.operationName = operationName;
@@ -172,10 +182,7 @@ public class Tracer implements io.opentracing.Tracer {
 
     @Override
     public Iterable<Map.Entry<String, String>> baggageItems() {
-      if (parent == null) {
-        return Collections.emptyList();
-      }
-      return parent.baggageItems();
+      return baggage.entrySet();
     }
 
     @Override
@@ -191,11 +198,13 @@ public class Tracer implements io.opentracing.Tracer {
     @Override
     public io.opentracing.Tracer.SpanBuilder addReference(
         String referenceType, io.opentracing.SpanContext referencedContext) {
-      if (parent == null
-          && (Utils.equals(referenceType, References.CHILD_OF)
-              || Utils.equals(referenceType, References.FOLLOWS_FROM))) {
-        this.parent = (SpanContext) referencedContext;
+      if (referencedContext instanceof SpanContext &&
+              (Utils.equals(referenceType, References.CHILD_OF)
+                      || Utils.equals(referenceType, References .FOLLOWS_FROM))) {
+        this.references.add(new Reference((SpanContext) referencedContext, referenceType));
+        this.baggage.putAll(((SpanContext)referencedContext).baggage());
       }
+
       return this;
     }
 
@@ -246,22 +255,25 @@ public class Tracer implements io.opentracing.Tracer {
       return new SpanContext(id, id, 0, flags);
     }
 
-    private SpanContext createChildContext() {
-      // For server-side RPC spans we reuse spanID per Zipkin convention
+    private SpanContext createChildContext(SpanContext preferredParent) {
       if (isRPCServer()) {
-        if (parent.isSampled()) {
+        if (preferredParent.isSampled()) {
           metrics.tracesJoinedSampled.inc(1);
         } else {
           metrics.tracesJoinedNotSampled.inc(1);
         }
-        return parent;
+
+        // Zipkin server compatibility
+        if (zipkinSharedRPCSpan) {
+          return preferredParent;
+        }
       }
       return new SpanContext(
-          parent.getTraceID(),
+          preferredParent.getTraceID(),
           Utils.uniqueID(),
-          parent.getSpanID(),
-          parent.getFlags(),
-          parent.baggage(),
+          preferredParent.getSpanID(),
+          preferredParent.getFlags(),
+          this.baggage,
           null);
     }
 
@@ -272,13 +284,23 @@ public class Tracer implements io.opentracing.Tracer {
 
     @Override
     public io.opentracing.Span start() {
+      // find preferredParent, it is first childOf
+      Reference preferredParent = references.isEmpty() ? null : references.get(0);
+      for (Reference reference: references) {
+        if (References.CHILD_OF.equals(reference.getType()) &&
+                !References.CHILD_OF.equals(preferredParent.getType())) {
+          preferredParent = reference;
+          break;
+        }
+      }
+
       SpanContext context;
-      if (parent == null) {
+      if (preferredParent == null) {
         context = createNewContext(null);
-      } else if (parent.isDebugIDContainerOnly()) {
-        context = createNewContext(parent.getDebugID());
+      } else if (preferredParent.getSpanContext().isDebugIDContainerOnly()) {
+        context = createNewContext(preferredParent.getSpanContext().getDebugID());
       } else {
-        context = createChildContext();
+        context = createChildContext(preferredParent.getSpanContext());
       }
 
       long startTimeNanoTicks = 0;
@@ -292,8 +314,8 @@ public class Tracer implements io.opentracing.Tracer {
         }
       }
 
-      if (parent == null || isRPCServer()) {
-        // add tracer tags only to first span in the process
+      // TODO add tracer tags to zipkin first span in process
+      if (zipkinSharedRPCSpan && (preferredParent == null || isRPCServer())) {
         tags.putAll(Tracer.this.tags);
       }
 
@@ -305,7 +327,8 @@ public class Tracer implements io.opentracing.Tracer {
               startTimeMicroseconds,
               startTimeNanoTicks,
               computeDurationViaNanoTicks,
-              tags);
+              tags,
+              references);
       if (context.isSampled()) {
         metrics.spansSampled.inc(1);
       } else {
@@ -327,6 +350,7 @@ public class Tracer implements io.opentracing.Tracer {
     private String serviceName;
     private Clock clock = new SystemClock();
     private Map<String, Object> tags = new HashMap<String, Object>();
+    private boolean zipkinSharedRPCSpan;
 
     public Builder(String serviceName, Reporter reporter, Sampler sampler) {
       if (serviceName == null || serviceName.trim().length() == 0) {
@@ -366,28 +390,33 @@ public class Tracer implements io.opentracing.Tracer {
       return this;
     }
 
-    Builder withMetrics(Metrics metrics) {
+    public Builder withZipkinSharedRPCSpan() {
+      zipkinSharedRPCSpan = true;
+      return this;
+    }
+
+    public Builder withMetrics(Metrics metrics) {
       this.metrics = metrics;
       return this;
     }
 
-    Builder withTag(String key, String value) {
+    public Builder withTag(String key, String value) {
       tags.put(key, value);
       return this;
     }
 
-    Builder withTag(String key, boolean value) {
+    public Builder withTag(String key, boolean value) {
       tags.put(key, value);
       return this;
     }
 
-    Builder withTag(String key, Number value) {
+    public Builder withTag(String key, Number value) {
       tags.put(key, value);
       return this;
     }
 
     public Tracer build() {
-      return new Tracer(this.serviceName, reporter, sampler, registry, clock, metrics, tags);
+      return new Tracer(this.serviceName, reporter, sampler, registry, clock, metrics, tags, zipkinSharedRPCSpan);
     }
   }
 
