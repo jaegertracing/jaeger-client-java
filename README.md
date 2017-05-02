@@ -133,28 +133,16 @@ This allows using Jaeger UI to find the trace by this tag.
 ## Developing
 
  1. `git submodule init update`
- 2. `./gradlew googleJavaFormat clean test`
+ 2. `./gradlew clean check`
  
 ### Code Style
 
-This project uses [google java style](https://google.github.io/styleguide/javaguide.html).
-It is recommended to set up a git precommit hook as follows.
-```
-cat>.git/hooks/pre-commit
-#!/bin/sh
-#
-# Pre-commit hooks
-# Format code using the google formatter
-echo "pre-commit code format"
-./gradlew googleJavaFormat
-^D
-```
-```
-chmod a+x .git/hooks/pre-commit
-```
+This project uses [google java style](https://google.github.io/styleguide/javaguide.html) configured 
+via [checkstyle/google_checks.xml](https://github.com/checkstyle/checkstyle/blob/master/src/main/resources/google_checks.xml)
 
 You can also setup the [IntelliJ plugin](https://plugins.jetbrains.com/plugin/8527)
-to reformat code from within your IDE
+to reformat code from within your IDE or import code style settings from 
+[google/intellij-java-google-style](https://github.com/google/styleguide/blob/gh-pages/intellij-java-google-style.xml)
 
 ### Lombok
 This project uses [Lombok](https://projectlombok.org/) to reduce boilerplate. You can setup
