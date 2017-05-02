@@ -74,7 +74,7 @@ public class UDPSender implements Sender {
   int getSizeOfSerializedSpan(com.uber.jaeger.thriftjava.Span span) throws SenderException {
     memoryTransport.reset();
     try {
-      span.write(new TCompactProtocol((memoryTransport)));
+      span.write(new TCompactProtocol(memoryTransport));
     } catch (TException e) {
       throw new SenderException("UDPSender failed writing to memory buffer.", e, 1);
     }
