@@ -31,6 +31,7 @@ import com.uber.jaeger.thriftjava.Process;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.ToString;
+import org.apache.thrift.TBase;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.transport.AutoExpandingBufferWriteTransport;
@@ -42,13 +43,14 @@ public class UDPSender implements Sender {
   private static final int defaultUDPSpanServerPort = 6832;
   private static final int defaultUDPPacketSize = 65000;
 
-  private int maxSpanBytes;
+  private final int maxSpanBytes;
   private Agent.Client udpClient;
   private List<com.uber.jaeger.thriftjava.Span> spanBuffer;
   private int byteBufferSize;
   private AutoExpandingBufferWriteTransport memoryTransport;
   private TUDPTransport udpTransport;
   private Process process;
+  private int processBytesSize;
 
   public UDPSender(String host, int port, int maxPacketSize) {
     if (host == null || host.length() == 0) {
@@ -71,10 +73,10 @@ public class UDPSender implements Sender {
     spanBuffer = new ArrayList<com.uber.jaeger.thriftjava.Span>();
   }
 
-  int getSizeOfSerializedSpan(com.uber.jaeger.thriftjava.Span span) throws SenderException {
+  int getSizeOfSerializedThrift(TBase thriftBase) throws SenderException {
     memoryTransport.reset();
     try {
-      span.write(new TCompactProtocol(memoryTransport));
+      thriftBase.write(new TCompactProtocol(memoryTransport));
     } catch (TException e) {
       throw new SenderException("UDPSender failed writing to memory buffer.", e, 1);
     }
@@ -91,10 +93,12 @@ public class UDPSender implements Sender {
     if (process == null) {
       process = new Process(span.getTracer().getServiceName());
       process.setTags(JaegerThriftSpanConverter.buildTags(span.getTracer().tags()));
+      processBytesSize = getSizeOfSerializedThrift(process);
+      byteBufferSize += processBytesSize;
     }
 
     com.uber.jaeger.thriftjava.Span thriftSpan = JaegerThriftSpanConverter.convertSpan(span);
-    int spanSize = getSizeOfSerializedSpan(thriftSpan);
+    int spanSize = getSizeOfSerializedThrift(thriftSpan);
     if (spanSize > maxSpanBytes) {
       throw new SenderException("UDPSender received a span that was too large", null, 1);
     }
@@ -117,7 +121,7 @@ public class UDPSender implements Sender {
     }
 
     spanBuffer.add(thriftSpan);
-    byteBufferSize = spanSize;
+    byteBufferSize = processBytesSize + spanSize;
     return n;
   }
 
@@ -134,7 +138,7 @@ public class UDPSender implements Sender {
       throw new SenderException("Failed to flush spans.", e, n);
     } finally {
       spanBuffer.clear();
-      byteBufferSize = 0;
+      byteBufferSize = processBytesSize;
     }
     return n;
   }

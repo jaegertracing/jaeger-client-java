@@ -106,22 +106,29 @@ public class UDPSenderTest {
   @Test
   public void testAppend() throws Exception {
     // find size of the initial span
-    AutoExpandingBufferWriteTransport memoryTransport =
-        new AutoExpandingBufferWriteTransport(maxPacketSize, 2);
     Span jaegerSpan = (Span)tracer.buildSpan("raza").start();
     com.uber.jaeger.thriftjava.Span span =
             JaegerThriftSpanConverter.convertSpan(jaegerSpan);
+
+    Process process = new Process(tracer.getServiceName())
+        .setTags(JaegerThriftSpanConverter.buildTags(tracer.tags()));
+
+    AutoExpandingBufferWriteTransport memoryTransport =
+        new AutoExpandingBufferWriteTransport(maxPacketSize, 2);
+
+    process.write(new TCompactProtocol(memoryTransport));
+    int processSize = memoryTransport.getPos();
+    memoryTransport.reset();
     span.write(new TCompactProtocol((memoryTransport)));
     int spanSize = memoryTransport.getPos();
 
     // create a sender thats a multiple of the span size (accounting for span overhead)
     // this allows us to test the boundary conditions of writing spans.
     int expectedNumSpans = 11;
-    int maxPacketSize = (spanSize * expectedNumSpans) + sender.emitBatchOverhead;
-    sender = new UDPSender(destHost, destPort, maxPacketSize);
-
-    int maxPacketSizeLeft = maxPacketSize - sender.emitBatchOverhead;
+    int maxPacketSize = (spanSize * expectedNumSpans) + sender.emitBatchOverhead + processSize;
+    int maxPacketSizeLeft = maxPacketSize - sender.emitBatchOverhead - processSize;
     // add enough spans to be under buffer limit
+    sender = new UDPSender(destHost, destPort, maxPacketSize);
     while (spanSize < maxPacketSizeLeft) {
       sender.append(jaegerSpan);
       maxPacketSizeLeft -= spanSize;
