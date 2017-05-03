@@ -171,9 +171,12 @@ public class Tracer implements io.opentracing.Tracer {
 
     private String operationName = null;
     private long startTimeMicroseconds;
-    private final List<Reference> references = new ArrayList<Reference>();
+    /**
+     * In 99% situations there is only one parent (childOf), so we do not want to allocate
+     * a collection of references.
+     */
+    private List<Reference> references = Collections.emptyList();
     private final Map<String, Object> tags = new HashMap<String, Object>();
-    private final Map<String, String> baggage = new HashMap<String, String>();
 
     SpanBuilder(String operationName) {
       this.operationName = operationName;
@@ -192,11 +195,25 @@ public class Tracer implements io.opentracing.Tracer {
     @Override
     public io.opentracing.Tracer.SpanBuilder addReference(
         String referenceType, io.opentracing.SpanContext referencedContext) {
-      if (referencedContext instanceof SpanContext
-          && (Utils.equals(referenceType, References.CHILD_OF)
-                      || Utils.equals(referenceType, References .FOLLOWS_FROM))) {
-        this.references.add(new Reference((SpanContext) referencedContext, referenceType));
-        this.baggage.putAll(((SpanContext)referencedContext).baggage());
+
+      if (!(referencedContext instanceof SpanContext)) {
+        return this;
+      }
+
+      // Jaeger thrift currently does not support other reference types
+      if (!References.CHILD_OF.equals(referenceType)
+          && !References.FOLLOWS_FROM.equals(referenceType)) {
+        return this;
+      }
+
+      if (references.isEmpty()) {
+        // Optimization for 99% situations, when there is only one parent
+        references = Collections.singletonList(new Reference((SpanContext) referencedContext, referenceType));
+      } else {
+        if (references.size() == 1) {
+          references = new ArrayList<Reference>(references);
+        }
+        references.add(new Reference((SpanContext) referencedContext, referenceType));
       }
 
       return this;
@@ -249,9 +266,31 @@ public class Tracer implements io.opentracing.Tracer {
       return new SpanContext(id, id, 0, flags);
     }
 
-    private SpanContext createChildContext(SpanContext preferredParent) {
+    private Map<String, String> createChildBaggage() {
+      Map<String, String> baggage = null;
+
+      // optimization for 99% use cases, when there is only one parent
+      if (references.size() == 1) {
+        return references.get(0).getSpanContext().baggage();
+      }
+
+      for (Reference reference: references) {
+        if (reference.getSpanContext().baggage() != null) {
+          if (baggage == null) {
+            baggage = new HashMap<String, String>();
+          }
+          baggage.putAll(reference.getSpanContext().baggage());
+        }
+      }
+
+      return baggage;
+    }
+
+    private SpanContext createChildContext() {
+      SpanContext preferredReference = preferredReference();
+
       if (isRpcServer()) {
-        if (preferredParent.isSampled()) {
+        if (isSampled()) {
           metrics.tracesJoinedSampled.inc(1);
         } else {
           metrics.tracesJoinedNotSampled.inc(1);
@@ -259,15 +298,17 @@ public class Tracer implements io.opentracing.Tracer {
 
         // Zipkin server compatibility
         if (zipkinSharedRpcSpan) {
-          return preferredParent;
+          return preferredReference;
         }
       }
+
       return new SpanContext(
-          preferredParent.getTraceId(),
+          preferredReference.getTraceId(),
           Utils.uniqueId(),
-          preferredParent.getSpanId(),
-          preferredParent.getFlags(),
-          this.baggage,
+          preferredReference.getSpanId(),
+          // should we do OR across passed references?
+          preferredReference.getFlags(),
+          createChildBaggage(),
           null);
     }
 
@@ -276,25 +317,48 @@ public class Tracer implements io.opentracing.Tracer {
       return Tags.SPAN_KIND_SERVER.equals(tags.get(Tags.SPAN_KIND.getKey()));
     }
 
-    @Override
-    public io.opentracing.Span start() {
-      // find preferredParent, it is first childOf
-      Reference preferredParent = references.isEmpty() ? null : references.get(0);
+    private SpanContext preferredReference() {
+      Reference preferredReference = references.get(0);
       for (Reference reference: references) {
+        // childOf takes precedence as a preferred parent
         if (References.CHILD_OF.equals(reference.getType())
-            && !References.CHILD_OF.equals(preferredParent.getType())) {
-          preferredParent = reference;
+            && !References.CHILD_OF.equals(preferredReference.getType())) {
+          preferredReference = reference;
           break;
         }
       }
+      return preferredReference.getSpanContext();
+    }
 
+    private boolean isSampled() {
+      if (references != null) {
+        for (Reference reference : references) {
+          if (reference.getSpanContext().isSampled()) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    private String debugId() {
+      if (references.size() == 1 && references.get(0).getSpanContext().isDebugIdContainerOnly()) {
+        return references.get(0).getSpanContext().getDebugId();
+      }
+      return null;
+    }
+
+    @Override
+    public io.opentracing.Span start() {
       SpanContext context;
-      if (preferredParent == null) {
+
+      String debugId = debugId();
+      if (references.isEmpty()) {
         context = createNewContext(null);
-      } else if (preferredParent.getSpanContext().isDebugIdContainerOnly()) {
-        context = createNewContext(preferredParent.getSpanContext().getDebugId());
+      } else if (debugId != null) {
+        context = createNewContext(debugId);
       } else {
-        context = createChildContext(preferredParent.getSpanContext());
+        context = createChildContext();
       }
 
       long startTimeNanoTicks = 0;
@@ -308,8 +372,8 @@ public class Tracer implements io.opentracing.Tracer {
         }
       }
 
-      // TODO add tracer tags to zipkin first span in process
-      if (zipkinSharedRpcSpan && (preferredParent == null || isRpcServer())) {
+      // TODO move this to jaeger-zipkin, this adds tracer tags to zipkin first span in a process
+      if (zipkinSharedRpcSpan && (references.isEmpty() || isRpcServer())) {
         tags.putAll(Tracer.this.tags);
       }
 
