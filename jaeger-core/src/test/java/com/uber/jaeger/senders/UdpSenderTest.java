@@ -125,8 +125,8 @@ public class UdpSenderTest {
     // create a sender thats a multiple of the span size (accounting for span overhead)
     // this allows us to test the boundary conditions of writing spans.
     int expectedNumSpans = 11;
-    int maxPacketSize = (spanSize * expectedNumSpans) + sender.emitBatchOverhead + processSize;
-    int maxPacketSizeLeft = maxPacketSize - sender.emitBatchOverhead - processSize;
+    int maxPacketSize = (spanSize * expectedNumSpans) + sender.EMIT_BATCH_OVERHEAD + processSize;
+    int maxPacketSizeLeft = maxPacketSize - sender.EMIT_BATCH_OVERHEAD - processSize;
     // add enough spans to be under buffer limit
     sender = new UdpSender(destHost, destPort, maxPacketSize);
     while (spanSize < maxPacketSizeLeft) {
@@ -175,7 +175,7 @@ public class UdpSenderTest {
     // If this test breaks it means we have changed our protocol, or
     // the protocol information has changed (likely due to a new version of thrift).
     assertEquals(a, b);
-    assertEquals(b, UdpSender.emitBatchOverhead);
+    assertEquals(b, UdpSender.EMIT_BATCH_OVERHEAD);
   }
 
   private int calculateBatchOverheadDifference(int numberOfSpans) throws Exception {
