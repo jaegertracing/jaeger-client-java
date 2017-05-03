@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.reporters.protocols;
 
 import static org.junit.Assert.assertEquals;
@@ -65,7 +66,11 @@ public class JaegerThriftSpanConverterTest {
         { new Float(1), TagType.DOUBLE, new Double(1) },
         { new Byte((byte) 1), TagType.STRING, "1" },
         { true, TagType.BOOL, true },
-        { new ArrayList<String>() {{add("hello");}}, TagType.STRING, "[hello]"}
+        { new ArrayList<String>() {
+            {
+              add("hello");
+            }
+          }, TagType.STRING, "[hello]" }
     };
     // @formatter:on
   }
@@ -78,6 +83,7 @@ public class JaegerThriftSpanConverterTest {
     assertEquals("key", tag.getKey());
     switch (tagType) {
       case STRING:
+      default:
         assertEquals(expected, tag.getVStr());
         break;
       case BOOL:
@@ -99,12 +105,12 @@ public class JaegerThriftSpanConverterTest {
     Map<String, Object> tags = new HashMap<String, Object>();
     tags.put("key", "value");
 
-    List<Tag> jTags = JaegerThriftSpanConverter.buildTags(tags);
-    assertNotNull(jTags);
-    assertEquals(1, jTags.size());
-    assertEquals("key", jTags.get(0).getKey());
-    assertEquals("value", jTags.get(0).getVStr());
-    assertEquals(TagType.STRING, jTags.get(0).getVType());
+    List<Tag> thriftTags = JaegerThriftSpanConverter.buildTags(tags);
+    assertNotNull(thriftTags);
+    assertEquals(1, thriftTags.size());
+    assertEquals("key", thriftTags.get(0).getKey());
+    assertEquals("value", thriftTags.get(0).getVStr());
+    assertEquals(TagType.STRING, thriftTags.get(0).getVType());
   }
 
   @Test
@@ -116,46 +122,46 @@ public class JaegerThriftSpanConverterTest {
     span = span.log(1, "key", "value");
     span = span.log(1, fields);
 
-    com.uber.jaeger.thriftjava.Span jSpan = JaegerThriftSpanConverter.convertSpan((com.uber.jaeger.Span) span);
+    com.uber.jaeger.thriftjava.Span thriftSpan = JaegerThriftSpanConverter.convertSpan((com.uber.jaeger.Span) span);
 
-    assertEquals("operation-name", jSpan.getOperationName());
-    assertEquals(2, jSpan.getLogs().size());
-    Log jLog = jSpan.getLogs().get(0);
-    assertEquals(1, jLog.getTimestamp());
-    assertEquals(2, jLog.getFields().size());
-    Tag jTag = jLog.getFields().get(0);
-    assertEquals("event", jTag.getKey());
-    assertEquals("key", jTag.getVStr());
-    jTag = jLog.getFields().get(1);
-    assertEquals("payload", jTag.getKey());
-    assertEquals("value", jTag.getVStr());
+    assertEquals("operation-name", thriftSpan.getOperationName());
+    assertEquals(2, thriftSpan.getLogs().size());
+    Log thriftLog = thriftSpan.getLogs().get(0);
+    assertEquals(1, thriftLog.getTimestamp());
+    assertEquals(2, thriftLog.getFields().size());
+    Tag thriftTag = thriftLog.getFields().get(0);
+    assertEquals("event", thriftTag.getKey());
+    assertEquals("key", thriftTag.getVStr());
+    thriftTag = thriftLog.getFields().get(1);
+    assertEquals("payload", thriftTag.getKey());
+    assertEquals("value", thriftTag.getVStr());
 
-    jLog = jSpan.getLogs().get(1);
-    assertEquals(1, jLog.getTimestamp());
-    assertEquals(1, jLog.getFields().size());
-    jTag = jLog.getFields().get(0);
-    assertEquals("k", jTag.getKey());
-    assertEquals("v", jTag.getVStr());
+    thriftLog = thriftSpan.getLogs().get(1);
+    assertEquals(1, thriftLog.getTimestamp());
+    assertEquals(1, thriftLog.getFields().size());
+    thriftTag = thriftLog.getFields().get(0);
+    assertEquals("k", thriftTag.getKey());
+    assertEquals("v", thriftTag.getVStr());
   }
 
   @Test
   public void testTruncateString() {
     String testString =
-        "k9bHT50f9JNpPUggw3Qz\n" +
-        "Q1MUhMobIMPA5ItaB3KD\n" +
-        "vNUoBPRjOpJw2C46vgn3\n" +
-        "UisXI5KIIH8Wd8uqJ8Wn\n" +
-        "Z8NVmrcpIBwxc2Qje5d6\n" +
-        "1mJdQnPMc3VmX1v75As8\n" +
-        "pUyoicWVPeGEidRuhHpt\n" +
-        "R1sIR1YNjwtBIy9Swwdq\n" +
-        "LUIZXdLcPmCvQVPB3cYw\n" +
-        "VGAtFXG7D8ksLsKw94eY\n" +
-        "c7PNm74nEV3jIIvlJ217\n" +
-        "SLBfUBHW6SEjrHcz553i\n" +
-        "VSjpBvJYXR6CsoEMGce0\n" +
-        "LqSypCXJHDAzb0DL1w8B\n" +
-        "kS9g0wCgregSAlq63OIf";
+        "k9bHT50f9JNpPUggw3Qz\n"
+        + "Q1MUhMobIMPA5ItaB3KD\n"
+        + "vNUoBPRjOpJw2C46vgn3\n"
+        + "UisXI5KIIH8Wd8uqJ8Wn\n"
+        + "Z8NVmrcpIBwxc2Qje5d6\n"
+        + "1mJdQnPMc3VmX1v75As8\n"
+        + "pUyoicWVPeGEidRuhHpt\n"
+        + "R1sIR1YNjwtBIy9Swwdq\n"
+        + "LUIZXdLcPmCvQVPB3cYw\n"
+        + "VGAtFXG7D8ksLsKw94eY\n"
+        + "c7PNm74nEV3jIIvlJ217\n"
+        + "SLBfUBHW6SEjrHcz553i\n"
+        + "VSjpBvJYXR6CsoEMGce0\n"
+        + "LqSypCXJHDAzb0DL1w8B\n"
+        + "kS9g0wCgregSAlq63OIf";
     assertEquals(256, JaegerThriftSpanConverter.truncateString(testString).length());
   }
 }

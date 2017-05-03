@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger;
 
 import static org.junit.Assert.assertEquals;
@@ -50,23 +51,23 @@ public class SpanContextTest {
 
   @Test
   public void testToStringFormatsPositiveFields() {
-    long traceID = -10L;
-    long spanID = -10L;
-    long parentID = -10L;
+    long traceId = -10L;
+    long spanId = -10L;
+    long parentId = -10L;
     byte flags = (byte) 129;
 
     // I use MIN_VALUE because the most significant bit, and thats when
     // we want to make sure the hex number is positive.
-    SpanContext context = new SpanContext(traceID, spanID, parentID, flags);
+    SpanContext context = new SpanContext(traceId, spanId, parentId, flags);
 
     context.contextAsString().split(":");
 
     assertEquals(
         "fffffffffffffff6:fffffffffffffff6:fffffffffffffff6:81", context.contextAsString());
     SpanContext contextFromStr = SpanContext.contextFromString(context.contextAsString());
-    assertEquals(traceID, contextFromStr.getTraceId());
-    assertEquals(spanID, contextFromStr.getSpanId());
-    assertEquals(parentID, contextFromStr.getParentId());
+    assertEquals(traceId, contextFromStr.getTraceId());
+    assertEquals(spanId, contextFromStr.getSpanId());
+    assertEquals(parentId, contextFromStr.getParentId());
     assertEquals(flags, contextFromStr.getFlags());
   }
 }

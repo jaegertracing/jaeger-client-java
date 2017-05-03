@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.dropwizard;
 
 import static junit.framework.Assert.assertEquals;
@@ -48,8 +49,8 @@ public class JerseyServerFilterTest extends JerseyTest {
   @Override
   protected Application configure() {
     Configuration config = new Configuration("world service", false,
-                                             new com.uber.jaeger.Configuration.SamplerConfiguration(ConstSampler.TYPE, 1),
-                                             null);
+        new com.uber.jaeger.Configuration.SamplerConfiguration(ConstSampler.TYPE, 1),
+        null);
     reporter = new InMemoryReporter();
     com.uber.jaeger.Tracer tracer = (com.uber.jaeger.Tracer) config.getTracer();
     try {

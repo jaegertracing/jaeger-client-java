@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.senders;
 
 import static org.junit.Assert.assertEquals;
@@ -45,7 +46,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class UdpSenderTest {
-  final static String SERVICE_NAME = "test-sender";
+  static final String SERVICE_NAME = "test-sender";
   final String destHost = "localhost";
   int destPort;
   int localPort = 0;
