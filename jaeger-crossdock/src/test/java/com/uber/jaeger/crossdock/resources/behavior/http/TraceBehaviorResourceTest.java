@@ -129,7 +129,7 @@ public class TraceBehaviorResourceTest {
     String expectedBaggage = "baggage-example";
     span.setBaggageItem(Constants.BAGGAGE_KEY, expectedBaggage);
     if (expectedSampled) {
-      Tags.SAMPLING_PRIORITY.set(span, (short) 1);
+      Tags.SAMPLING_PRIORITY.set(span, 1);
     }
 
     Downstream bottomDownstream =
@@ -164,7 +164,7 @@ public class TraceBehaviorResourceTest {
     String expectedBaggage = "baggage-example";
     span.setBaggageItem(Constants.BAGGAGE_KEY, expectedBaggage);
     if (expectedSampled) {
-      Tags.SAMPLING_PRIORITY.set(span, (short) 1);
+      Tags.SAMPLING_PRIORITY.set(span, 1);
     }
 
     TraceResponse response =

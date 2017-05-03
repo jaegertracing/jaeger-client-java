@@ -180,11 +180,6 @@ public class Tracer implements io.opentracing.Tracer {
     }
 
     @Override
-    public Iterable<Map.Entry<String, String>> baggageItems() {
-      return baggage.entrySet();
-    }
-
-    @Override
     public io.opentracing.Tracer.SpanBuilder asChildOf(io.opentracing.SpanContext parent) {
       return addReference(References.CHILD_OF, parent);
     }

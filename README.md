@@ -106,7 +106,7 @@ can be used to affect the sampling of a span and its children:
 ```java
 import io.opentracing.tag.Tags;
 
-Tags.SAMPLING_PRIORITY.set(span, (short) 1);
+Tags.SAMPLING_PRIORITY.set(span, 1);
 ```
 
 #### Via HTTP Headers
