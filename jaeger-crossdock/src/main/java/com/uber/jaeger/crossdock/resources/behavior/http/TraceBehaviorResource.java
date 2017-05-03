@@ -61,7 +61,7 @@ public class TraceBehaviorResource {
     String baggage = startRequest.getBaggage();
     span.setBaggageItem(Constants.BAGGAGE_KEY, baggage);
     if (startRequest.isSampled()) {
-      Tags.SAMPLING_PRIORITY.set(span, (short) 1);
+      Tags.SAMPLING_PRIORITY.set(span, 1);
     }
     TraceResponse response = behavior.prepareResponse(startRequest.getDownstream());
     log.info("http:start_trace response: {}", mapper.writeValueAsString(response));

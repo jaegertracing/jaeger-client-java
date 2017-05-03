@@ -271,7 +271,7 @@ public class SpanTest {
   @Test
   public void testSpanDetectsSamplingPriorityGreaterThanZero() {
     Span span = (Span) tracer.buildSpan("test-service-operation").start();
-    Tags.SAMPLING_PRIORITY.set(span, (short) 1);
+    Tags.SAMPLING_PRIORITY.set(span, 1);
 
     assertEquals(span.context().getFlags() & SpanContext.flagSampled, SpanContext.flagSampled);
     assertEquals(span.context().getFlags() & SpanContext.flagDebug, SpanContext.flagDebug);
@@ -282,7 +282,7 @@ public class SpanTest {
     Span span = (Span) tracer.buildSpan("test-service-operation").start();
 
     assertEquals(span.context().getFlags() & SpanContext.flagSampled, SpanContext.flagSampled);
-    Tags.SAMPLING_PRIORITY.set(span, (short) -1);
+    Tags.SAMPLING_PRIORITY.set(span, -1);
     assertEquals(span.context().getFlags() & SpanContext.flagSampled, 0);
   }
 
