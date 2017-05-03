@@ -21,10 +21,13 @@
  */
 package com.uber.jaeger.filters.jaxrs2;
 
+import static com.uber.jaeger.filters.jaxrs2.Constants.CURRENT_SPAN_CONTEXT_KEY;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.when;
 
-import com.uber.jaeger.Span;
+import com.uber.jaeger.*;
 import com.uber.jaeger.context.ThreadLocalTraceContext;
 import com.uber.jaeger.context.TraceContext;
 import com.uber.jaeger.propagation.FilterIntegrationTest;
@@ -83,6 +86,8 @@ public class ClientFilterTest {
 
     undertest.filter(clientRequestContext);
 
+    assertNull(clientRequestContext.getProperty(CURRENT_SPAN_CONTEXT_KEY));
+
     ArgumentCaptor<String> stringCaptor = ArgumentCaptor.forClass(String.class);
     ArgumentCaptor<Object> objectCaptor = ArgumentCaptor.forClass(Object.class);
 
@@ -92,6 +97,8 @@ public class ClientFilterTest {
         .thenReturn(objectCaptor.getValue());
 
     undertest.filter(clientRequestContext, clientResponseContext);
+
+    assertNotNull(clientRequestContext.getProperty(CURRENT_SPAN_CONTEXT_KEY));
 
     List<Span> spans = reporter.getSpans();
     Map<String, Object> tags = spans.get(0).getTags();
