@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.reporters.protocols;
 
 import com.uber.jaeger.agent.thrift.Agent;
@@ -34,11 +35,11 @@ import org.apache.thrift.server.TSimpleServer;
 public class TestTServer implements Runnable {
   TServer server;
   InMemorySpanServerHandler handler;
-  TUDPServerTransport transport;
+  ThriftUdpServerTransport transport;
 
   public TestTServer(int port) throws SocketException, UnknownHostException {
     handler = new InMemorySpanServerHandler();
-    transport = new TUDPServerTransport(port);
+    transport = new ThriftUdpServerTransport(port);
     server =
         new TSimpleServer(
             new TServer.Args(transport)

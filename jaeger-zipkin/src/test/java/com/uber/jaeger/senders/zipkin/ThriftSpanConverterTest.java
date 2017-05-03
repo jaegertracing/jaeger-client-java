@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.senders.zipkin;
 
 import static junit.framework.TestCase.assertTrue;
@@ -148,27 +149,27 @@ public class ThriftSpanConverterTest {
     assertFalse(ThriftSpanConverter.isRpcClient(span));
   }
 
-   @Test
-  public void testRPCChildSpanHasTheSameID() {
+  @Test
+  public void testRpcChildSpanHasTheSameId() {
     String expectedOperation = "parent";
-     Span client = (Span) tracer.buildSpan(expectedOperation)
-             .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT)
-             .start();
+    Span client = (Span) tracer.buildSpan(expectedOperation)
+        .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT)
+        .start();
 
-     Map<String, String> map = new HashMap<>();
-     TextMap carrier = new TextMapInjectAdapter(map);
-     tracer.inject(client.context(), Format.Builtin.TEXT_MAP, carrier);
+    Map<String, String> map = new HashMap<>();
+    TextMap carrier = new TextMapInjectAdapter(map);
+    tracer.inject(client.context(), Format.Builtin.TEXT_MAP, carrier);
 
-     carrier = new TextMapExtractAdapter(map);
-     SpanContext ctx = (SpanContext) tracer.extract(Format.Builtin.TEXT_MAP, carrier);
-     assertEquals(client.context().getSpanId(), ctx.getSpanId());
+    carrier = new TextMapExtractAdapter(map);
+    SpanContext ctx = (SpanContext) tracer.extract(Format.Builtin.TEXT_MAP, carrier);
+    assertEquals(client.context().getSpanId(), ctx.getSpanId());
 
-     Span server = (Span)tracer.buildSpan("child")
-             .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
-             .asChildOf(ctx)
-             .start();
+    Span server = (Span)tracer.buildSpan("child")
+        .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
+        .asChildOf(ctx)
+        .start();
 
-     assertEquals("client and server must have the same span ID",
-             client.context().getSpanId(), server.context().getSpanId());
-   }
+    assertEquals("client and server must have the same span ID",
+        client.context().getSpanId(), server.context().getSpanId());
+  }
 }

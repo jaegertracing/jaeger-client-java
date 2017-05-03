@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.propagation.b3;
 
 import static com.uber.jaeger.propagation.b3.B3TextMapCodec.SPAN_ID_NAME;

@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger;
 
 import static org.junit.Assert.assertEquals;
@@ -194,7 +195,11 @@ public class SpanTest {
     final String expectedLog = "some-log";
     final String expectedEvent = "event";
     Object expectedPayload = new Object();
-    Map<String, String> expectedFields = new HashMap<String, String>() {{put(expectedEvent, expectedLog);}};
+    Map<String, String> expectedFields = new HashMap<String, String>() {
+      {
+        put(expectedEvent, expectedLog);
+      }
+    };
 
     span.log(expectedTimestamp, expectedLog, expectedPayload);
     span.log(expectedTimestamp, expectedEvent);
@@ -228,12 +233,17 @@ public class SpanTest {
     final String expectedLog = "some-log";
     final String expectedEvent = "expectedEvent";
     final Object expectedPayload = new Object();
-    Map<String, String> expectedFields = new HashMap<String, String>() {{put(expectedEvent, expectedLog);}};
 
     when(clock.currentTimeMicros()).thenReturn(expectedTimestamp);
 
     span.log(expectedLog, expectedPayload);
     span.log(expectedEvent);
+
+    Map<String, String> expectedFields = new HashMap<String, String>() {
+      {
+        put(expectedEvent, expectedLog);
+      }
+    };
     span.log(expectedFields);
     span.log((String) null);
     span.log((Map<String, ?>) null);

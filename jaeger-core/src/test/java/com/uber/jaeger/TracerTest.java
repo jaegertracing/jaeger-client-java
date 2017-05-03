@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger;
 
 import static org.junit.Assert.assertEquals;
@@ -37,8 +38,6 @@ import com.uber.jaeger.samplers.Sampler;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
 import io.opentracing.tag.Tags;
-import java.util.HashMap;
-import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -106,7 +105,7 @@ public class TracerTest {
   }
 
   @Test
-  public void testBuilderIsServerRPC() {
+  public void testBuilderIsServerRpc() {
     Tracer.SpanBuilder spanBuilder = (Tracer.SpanBuilder) tracer.buildSpan("ndnd");
     spanBuilder.withTag(Tags.SPAN_KIND.getKey(), "server");
 
@@ -114,7 +113,7 @@ public class TracerTest {
   }
 
   @Test
-  public void testBuilderIsNotServerRPC() {
+  public void testBuilderIsNotServerRpc() {
     Tracer.SpanBuilder spanBuilder = (Tracer.SpanBuilder) tracer.buildSpan("Lrrr");
     spanBuilder.withTag(Tags.SPAN_KIND.getKey(), "peachy");
 
@@ -122,7 +121,7 @@ public class TracerTest {
   }
 
   @Test
-  public void testClose(){
+  public void testClose() {
     Reporter reporter = mock(Reporter.class);
     Sampler sampler = mock(Sampler.class);
     tracer = new Tracer.Builder("bonda", reporter, sampler).build();

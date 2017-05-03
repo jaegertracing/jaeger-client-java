@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.senders.zipkin;
 
 import static org.junit.Assert.assertEquals;
@@ -96,8 +97,9 @@ public class ZipkinSenderTest {
 
     int expectedNumSpans = 11;
     List<byte[]> spansToSend = new ArrayList(expectedNumSpans);
-    for (int i = 0; i < expectedNumSpans; i++)
+    for (int i = 0; i < expectedNumSpans; i++) {
       spansToSend.add(new ThriftSpanEncoder().encode(sender.backFillHostOnAnnotations(span)));
+    }
 
     // create a sender thats a multiple of the span size (accounting for span overhead)
     // this allows us to test the boundary conditions of writing spans.

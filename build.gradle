@@ -71,9 +71,6 @@ subprojects {
         toolVersion = "7.6.1"
     }
 
-    // TODO fix tests
-    checkstyleTest.enabled = false
-
     license {
         header rootProject.file('license-template')
         skipExistingHeaders true

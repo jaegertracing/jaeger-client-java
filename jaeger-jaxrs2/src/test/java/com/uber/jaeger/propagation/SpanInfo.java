@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.propagation;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -28,7 +29,7 @@ import com.uber.jaeger.SpanContext;
 
 class SpanInfo {
   @JsonProperty("trace_id")
-  String traceID;
+  String traceId;
 
   @JsonProperty("baggage")
   String baggage;
@@ -38,23 +39,23 @@ class SpanInfo {
 
   @JsonCreator
   public SpanInfo(
-      @JsonProperty("trace_id") String traceID,
+      @JsonProperty("trace_id") String traceId,
       @JsonProperty("baggage") String baggage,
       @JsonProperty("sampled") boolean sampled) {
-    this.traceID = traceID;
+    this.traceId = traceId;
     this.baggage = baggage;
     this.sampled = sampled;
   }
 
   public SpanInfo(Span span) {
     SpanContext spanContext = span.context();
-    traceID = Long.toHexString(spanContext.getTraceId());
+    traceId = Long.toHexString(spanContext.getTraceId());
     baggage = span.getBaggageItem(FilterIntegrationTest.BAGGAGE_KEY);
     sampled = spanContext.isSampled();
   }
 
-  public String getTraceID() {
-    return traceID;
+  public String getTraceId() {
+    return traceId;
   }
 
   public String getBaggage() {
