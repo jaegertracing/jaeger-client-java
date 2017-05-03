@@ -27,7 +27,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.when;
 
-import com.uber.jaeger.*;
+import com.uber.jaeger.Span;
 import com.uber.jaeger.context.ThreadLocalTraceContext;
 import com.uber.jaeger.context.TraceContext;
 import com.uber.jaeger.propagation.FilterIntegrationTest;
