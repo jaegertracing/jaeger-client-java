@@ -16,8 +16,11 @@
  -->
 
 <module name = "Checker">
-    <property name="charset" value="UTF-8"/>
+    <module name="SuppressionFilter">
+        <property name="file" value="${checkstyleSuppressions}" />
+    </module>
 
+    <property name="charset" value="UTF-8"/>
     <property name="severity" value="error"/>
 
     <property name="fileExtensions" value="java, properties, xml"/>

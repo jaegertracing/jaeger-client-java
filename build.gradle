@@ -69,6 +69,7 @@ subprojects {
     checkstyle {
         configFile = rootProject.file('config/checkstyle/checkstyle.xml')
         toolVersion = "7.6.1"
+        configProperties.checkstyleSuppressions = "${rootProject.rootDir}/config/checkstyle/suppressions.xml"
     }
 
     license {
