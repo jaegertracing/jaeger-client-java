@@ -58,12 +58,12 @@ public class JaegerThriftSpanConverterTest {
   public static Object[][] dataProviderBuildTag() {
     return new Object[][] {
         { "value", TagType.STRING, "value" },
-        { new Long(1), TagType.LONG, new Long(1) },
-        { new Integer(1), TagType.LONG, new Long(1) },
-        { new Short((short) 1), TagType.LONG, new Long(1) },
-        { new Double(1), TagType.DOUBLE, new Double(1) },
-        { new Float(1), TagType.DOUBLE, new Double(1) },
-        { new Byte((byte) 1), TagType.STRING, "1" },
+        { (long) 1, TagType.LONG, (long) 1 },
+        { 1, TagType.LONG, (long) 1 },
+        { (short) 1, TagType.LONG, (long) 1 },
+        { (double) 1, TagType.DOUBLE, (double) 1 },
+        { (float) 1, TagType.DOUBLE, (double) 1 },
+        { (byte) 1, TagType.STRING, "1" },
         { true, TagType.BOOL, true },
         { new ArrayList<String>() {
             {
