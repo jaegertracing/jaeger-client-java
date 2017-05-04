@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.crossdock.resources.behavior.http;
 
 import static org.junit.Assert.assertEquals;
@@ -125,11 +126,10 @@ public class TraceBehaviorResourceTest {
     Span span = (Span) server.getTracer().buildSpan("root").start();
     TracingUtils.getTraceContext().push(span);
 
-    String expectedTraceId = String.format("%x", span.context().getTraceId());
     String expectedBaggage = "baggage-example";
     span.setBaggageItem(Constants.BAGGAGE_KEY, expectedBaggage);
     if (expectedSampled) {
-      Tags.SAMPLING_PRIORITY.set(span, (short) 1);
+      Tags.SAMPLING_PRIORITY.set(span, 1);
     }
 
     Downstream bottomDownstream =
@@ -149,7 +149,7 @@ public class TraceBehaviorResourceTest {
     TraceResponse traceResponse = resp.readEntity(TraceResponse.class);
 
     assertNotNull(traceResponse.getDownstream());
-    validateTraceResponse(traceResponse, expectedTraceId, expectedBaggage, 2);
+    validateTraceResponse(traceResponse, String.format("%x", span.context().getTraceId()), expectedBaggage, 2);
   }
 
   @Test
@@ -160,11 +160,10 @@ public class TraceBehaviorResourceTest {
     Span span = (Span) server.getTracer().buildSpan("root").start();
     TracingUtils.getTraceContext().push(span);
 
-    String expectedTraceId = String.format("%x", span.context().getTraceId());
     String expectedBaggage = "baggage-example";
     span.setBaggageItem(Constants.BAGGAGE_KEY, expectedBaggage);
     if (expectedSampled) {
-      Tags.SAMPLING_PRIORITY.set(span, (short) 1);
+      Tags.SAMPLING_PRIORITY.set(span, 1);
     }
 
     TraceResponse response =
@@ -183,7 +182,7 @@ public class TraceBehaviorResourceTest {
                     "s3",
                     null)));
     assertNotNull(response);
-    validateTraceResponse(response, expectedTraceId, expectedBaggage, 1);
+    validateTraceResponse(response, String.format("%x", span.context().getTraceId()), expectedBaggage, 1);
 
     tchannel.shutdown();
   }

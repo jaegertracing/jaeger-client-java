@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger;
 
 import static org.junit.Assert.assertEquals;
@@ -38,19 +39,19 @@ public class UtilsTest {
   }
 
   @Test(expected = NotFourOctetsException.class)
-  public void testIPToInt32NotFourOctets() {
+  public void testIpToInt32NotFourOctets() {
     Utils.ipToInt(":19");
   }
 
   @Test(expected = EmptyIpException.class)
-  public void testIPToInt32EmptyIPException() {
+  public void testIpToInt32EmptyIpException() {
     Utils.ipToInt("");
   }
 
   @Test
-  public void testIPToInt32() {
-    int expectedIP = (127 << 24) | 1;
-    int actualIP = Utils.ipToInt("127.0.0.1");
-    assertEquals(expectedIP, actualIP);
+  public void testIpToInt32() {
+    int expectedIp = (127 << 24) | 1;
+    int actualIp = Utils.ipToInt("127.0.0.1");
+    assertEquals(expectedIp, actualIp);
   }
 }

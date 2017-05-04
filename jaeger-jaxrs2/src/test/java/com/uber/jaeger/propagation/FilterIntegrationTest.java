@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.propagation;
 
 import static org.junit.Assert.assertEquals;
@@ -104,11 +105,11 @@ public class FilterIntegrationTest {
     CallTreeNode callTree = mapper.readValue(responseStr, CallTreeNode.class);
 
     String strContext = span.context().contextAsString();
-    String traceID = strContext.substring(0, strContext.indexOf(':'));
+    String traceId = strContext.substring(0, strContext.indexOf(':'));
     boolean isSampled = true;
 
     assertEquals(6, reporter.getSpans().size());
-    assertTrue(callTree.validateTraceIds(traceID, isSampled));
+    assertTrue(callTree.validateTraceIds(traceId, isSampled));
 
     assertEquals(
         3L, metricsReporter.counters.get("jaeger.traces.sampled=y.state=joined").longValue());

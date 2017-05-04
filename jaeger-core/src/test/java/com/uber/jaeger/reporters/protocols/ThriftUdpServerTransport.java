@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.reporters.protocols;
 
 import java.net.SocketException;
@@ -27,10 +28,10 @@ import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
-public class TUDPServerTransport extends TServerTransport {
+public class ThriftUdpServerTransport extends TServerTransport {
   private ThriftUdpTransport transport;
 
-  public TUDPServerTransport(int localPort) throws SocketException, UnknownHostException {
+  public ThriftUdpServerTransport(int localPort) throws SocketException, UnknownHostException {
     transport = ThriftUdpTransport.newThriftUdpServer("localhost", localPort);
   }
 

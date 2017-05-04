@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.propagation;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -78,9 +79,9 @@ public class CallTreeNode {
     return leaf;
   }
 
-  public boolean validateTraceIds(String traceID, boolean sampled) {
+  public boolean validateTraceIds(String traceId, boolean sampled) {
     boolean valid =
-        span.getTraceID().equals(traceID)
+        span.getTraceId().equals(traceId)
             && span.getBaggage().equals(FilterIntegrationTest.BAGGAGE_VALUE)
             && span.getSampled() == sampled;
 
@@ -93,7 +94,7 @@ public class CallTreeNode {
       }
 
       for (CallTreeNode downStreamTreeNode : downstream) {
-        valid = valid && downStreamTreeNode.validateTraceIds(traceID, sampled);
+        valid = valid && downStreamTreeNode.validateTraceIds(traceId, sampled);
 
         if (!valid) {
           return false;

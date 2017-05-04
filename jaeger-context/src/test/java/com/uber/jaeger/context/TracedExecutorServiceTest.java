@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.context;
 
 import static org.junit.Assert.assertFalse;
@@ -41,7 +42,7 @@ import org.junit.Test;
 
 public class TracedExecutorServiceTest {
 
-  TimeUnit TIME_UNIT = TimeUnit.MILLISECONDS;
+  private static final TimeUnit TIME_UNIT = TimeUnit.MILLISECONDS;
   TracedExecutorService tracedExecutorService;
   ExecutorService wrappedExecutorService;
   Span span;

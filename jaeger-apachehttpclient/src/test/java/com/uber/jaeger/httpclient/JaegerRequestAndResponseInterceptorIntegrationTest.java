@@ -19,13 +19,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.httpclient;
 
 import static org.junit.Assert.assertEquals;
 
 import com.uber.jaeger.Span;
 import com.uber.jaeger.Tracer;
-import com.uber.jaeger.context.TraceContext;
 import com.uber.jaeger.context.TracingUtils;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
@@ -61,8 +61,8 @@ public class JaegerRequestAndResponseInterceptorIntegrationTest {
   @SuppressWarnings("unused")
   private MockServerClient mockServerClient;
 
-  private String BAGGAGE_KEY = "Bag_End";
-  private String BAGGAGE_VALUE = "smial_at_the_end_of_Bagshot_Row";
+  private static final String BAGGAGE_KEY = "Bag_End";
+  private static final String BAGGAGE_VALUE = "smial_at_the_end_of_Bagshot_Row";
 
   @Before
   public void setUp() {
@@ -73,12 +73,11 @@ public class JaegerRequestAndResponseInterceptorIntegrationTest {
     Sampler sampler = new ConstSampler(true);
     tracer = new Tracer.Builder("test_service", reporter, sampler).build();
 
-    //Set up a parent span context
-    TraceContext parentTraceContext = TracingUtils.getTraceContext();
     parentSpan = (Span) tracer.buildSpan("parent_operation").start();
     parentSpan.setBaggageItem(BAGGAGE_KEY, BAGGAGE_VALUE);
     parentSpan.finish();
-    parentTraceContext.push(parentSpan);
+    //Set up a parent span context
+    TracingUtils.getTraceContext().push(parentSpan);
   }
 
   @Test
