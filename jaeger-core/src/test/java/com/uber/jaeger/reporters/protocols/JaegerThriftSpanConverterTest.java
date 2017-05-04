@@ -56,7 +56,6 @@ public class JaegerThriftSpanConverterTest {
 
   @DataProvider
   public static Object[][] dataProviderBuildTag() {
-    // @formatter:off
     return new Object[][] {
         { "value", TagType.STRING, "value" },
         { new Long(1), TagType.LONG, new Long(1) },
@@ -72,7 +71,6 @@ public class JaegerThriftSpanConverterTest {
             }
           }, TagType.STRING, "[hello]" }
     };
-    // @formatter:on
   }
 
   @Test
