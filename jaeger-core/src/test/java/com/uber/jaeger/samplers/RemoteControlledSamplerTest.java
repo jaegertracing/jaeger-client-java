@@ -95,7 +95,7 @@ public class RemoteControlledSamplerTest {
     List<PerOperationSamplingParameters> operationToSampler = new ArrayList<>();
     operationToSampler.add(new PerOperationSamplingParameters("operation",
         new ProbabilisticSamplingStrategy(0.1)));
-    OperationSamplingParameters parameters = new OperationSamplingParameters(0.11, 0.22, operationToSampler);
+    OperationSamplingParameters parameters = new OperationSamplingParameters(0.11,0.22, 1.0, operationToSampler);
     SamplingStrategyResponse response = new SamplingStrategyResponse(null,
         null, parameters);
     when(samplingManager.getSamplingStrategy(SERVICE_NAME)).thenReturn(response);

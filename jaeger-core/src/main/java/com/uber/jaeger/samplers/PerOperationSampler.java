@@ -55,7 +55,7 @@ public class PerOperationSampler implements Sampler {
          new HashMap<String, GuaranteedThroughputSampler>(),
          new ProbabilisticSampler(strategies.getDefaultSamplingProbability()),
          strategies.getDefaultLowerBoundTracesPerSecond(),
-         DEFAULT_MAX_SAMPLES_PER_SECOND);
+         strategies.getDefaultUpperBoundTracesPerSecond());
     update(strategies);
   }
 
@@ -68,7 +68,8 @@ public class PerOperationSampler implements Sampler {
     boolean isUpdated = false;
 
     minSamplesPerSecond = strategies.getDefaultLowerBoundTracesPerSecond();
-    maxSamplesPerSecond = 2; // TODO
+    maxSamplesPerSecond = strategies.getDefaultUpperBoundTracesPerSecond() == 0 ?
+        DEFAULT_MAX_SAMPLES_PER_SECOND : strategies.getDefaultUpperBoundTracesPerSecond();
     ProbabilisticSampler defaultSampler = new ProbabilisticSampler(strategies.getDefaultSamplingProbability());
 
     if (!defaultSampler.equals(this.defaultSampler)) {

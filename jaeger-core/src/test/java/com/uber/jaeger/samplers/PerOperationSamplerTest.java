@@ -118,7 +118,7 @@ public class PerOperationSamplerTest {
 
     OperationSamplingParameters parameters =
         new OperationSamplingParameters(DEFAULT_SAMPLING_PROBABILITY,
-            DEFAULT_MIN_SAMPLES_PER_SECOND, parametersList);
+            DEFAULT_MIN_SAMPLES_PER_SECOND, DEFAULT_MAX_SAMPLES_PER_SECOND, parametersList);
 
     assertTrue(undertest.update(parameters));
     verify(guaranteedThroughputSampler).update(SAMPLING_RATE, DEFAULT_MIN_SAMPLES_PER_SECOND, DEFAULT_MAX_SAMPLES_PER_SECOND);
@@ -138,11 +138,12 @@ public class PerOperationSamplerTest {
     parametersList.add(new PerOperationSamplingParameters(OPERATION,
         new ProbabilisticSamplingStrategy(operationSamplingRate)));
     OperationSamplingParameters parameters = new OperationSamplingParameters(DEFAULT_SAMPLING_PROBABILITY,
-        DEFAULT_MIN_SAMPLES_PER_SECOND, parametersList);
+        DEFAULT_MIN_SAMPLES_PER_SECOND, DEFAULT_MAX_SAMPLES_PER_SECOND, parametersList);
 
     assertFalse(undertest.update(parameters));
     assertEquals(operationToSamplers, undertest.getOperationNameToSampler());
     assertEquals(DEFAULT_MIN_SAMPLES_PER_SECOND, undertest.getMinSamplesPerSecond(), DELTA);
+    assertEquals(DEFAULT_MAX_SAMPLES_PER_SECOND, undertest.getMaxSamplesPerSecond(), DELTA);
     assertEquals(DEFAULT_SAMPLING_PROBABILITY, undertest.getDefaultSampler().getSamplingRate(), DELTA);
   }
 
@@ -162,7 +163,8 @@ public class PerOperationSamplerTest {
     parametersList.add(perOperationSamplingParameters2);
 
     undertest.update(new OperationSamplingParameters(DEFAULT_SAMPLING_PROBABILITY,
-                                                     DEFAULT_MIN_SAMPLES_PER_SECOND, parametersList));
+                                                     DEFAULT_MIN_SAMPLES_PER_SECOND, DEFAULT_MAX_SAMPLES_PER_SECOND,
+                                                     parametersList));
 
     assertEquals(1, operationToSamplers.size());
     assertNotNull(operationToSamplers.get(OPERATION));
@@ -177,6 +179,7 @@ public class PerOperationSamplerTest {
 
     undertest.update(new OperationSamplingParameters(DEFAULT_SAMPLING_PROBABILITY,
                                                      DEFAULT_MIN_SAMPLES_PER_SECOND,
+                                                     DEFAULT_MAX_SAMPLES_PER_SECOND,
                                                      parametersList));
 
     assertEquals(1, operationToSamplers.size());

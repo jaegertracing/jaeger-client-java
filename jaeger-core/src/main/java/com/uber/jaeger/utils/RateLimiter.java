@@ -59,4 +59,13 @@ public class RateLimiter {
     }
     return false;
   }
+
+  @Override
+  public boolean equals(Object other) {
+    if (this == other) {
+      return true;
+    }
+    return other instanceof RateLimiter && this.creditsPerSecond == ((RateLimiter) other).creditsPerSecond &&
+        this.maxBalance == ((RateLimiter) other).maxBalance;
+  }
 }
