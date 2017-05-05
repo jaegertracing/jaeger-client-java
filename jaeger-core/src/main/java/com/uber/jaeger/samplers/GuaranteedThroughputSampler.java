@@ -23,10 +23,10 @@
 package com.uber.jaeger.samplers;
 
 import com.uber.jaeger.Constants;
+import com.uber.jaeger.utils.RateLimiter;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.uber.jaeger.utils.RateLimiter;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;

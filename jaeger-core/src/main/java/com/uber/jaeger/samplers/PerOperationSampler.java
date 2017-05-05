@@ -68,8 +68,8 @@ public class PerOperationSampler implements Sampler {
     boolean isUpdated = false;
 
     minSamplesPerSecond = strategies.getDefaultLowerBoundTracesPerSecond();
-    maxSamplesPerSecond = strategies.getDefaultUpperBoundTracesPerSecond() == 0 ?
-        DEFAULT_MAX_SAMPLES_PER_SECOND : strategies.getDefaultUpperBoundTracesPerSecond();
+    maxSamplesPerSecond = strategies.getDefaultUpperBoundTracesPerSecond() == 0
+        ? DEFAULT_MAX_SAMPLES_PER_SECOND : strategies.getDefaultUpperBoundTracesPerSecond();
     ProbabilisticSampler defaultSampler = new ProbabilisticSampler(strategies.getDefaultSamplingProbability());
 
     if (!defaultSampler.equals(this.defaultSampler)) {
@@ -105,7 +105,8 @@ public class PerOperationSampler implements Sampler {
     }
 
     if (operationNameToSampler.size() < maxOperations) {
-      sampler = new GuaranteedThroughputSampler(defaultSampler.getSamplingRate(), minSamplesPerSecond, maxSamplesPerSecond);
+      sampler = new GuaranteedThroughputSampler(
+          defaultSampler.getSamplingRate(), minSamplesPerSecond, maxSamplesPerSecond);
       operationNameToSampler.put(operation, sampler);
       return sampler.sample(operation, id);
     }

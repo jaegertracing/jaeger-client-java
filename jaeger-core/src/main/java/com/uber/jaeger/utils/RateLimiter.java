@@ -24,6 +24,7 @@ package com.uber.jaeger.utils;
 
 import lombok.Getter;
 
+@SuppressWarnings("EqualsHashCode")
 public class RateLimiter {
   @Getter
   private final double creditsPerSecond;
@@ -65,7 +66,7 @@ public class RateLimiter {
     if (this == other) {
       return true;
     }
-    return other instanceof RateLimiter && this.creditsPerSecond == ((RateLimiter) other).creditsPerSecond &&
-        this.maxBalance == ((RateLimiter) other).maxBalance;
+    return other instanceof RateLimiter && this.creditsPerSecond == ((RateLimiter) other).creditsPerSecond
+        && this.maxBalance == ((RateLimiter) other).maxBalance;
   }
 }
