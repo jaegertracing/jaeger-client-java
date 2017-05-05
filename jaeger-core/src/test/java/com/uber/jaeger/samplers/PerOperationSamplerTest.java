@@ -121,7 +121,8 @@ public class PerOperationSamplerTest {
             DEFAULT_MIN_SAMPLES_PER_SECOND, DEFAULT_MAX_SAMPLES_PER_SECOND, parametersList);
 
     assertTrue(undertest.update(parameters));
-    verify(guaranteedThroughputSampler).update(SAMPLING_RATE, DEFAULT_MIN_SAMPLES_PER_SECOND, DEFAULT_MAX_SAMPLES_PER_SECOND);
+    verify(guaranteedThroughputSampler).update(SAMPLING_RATE, DEFAULT_MIN_SAMPLES_PER_SECOND,
+        DEFAULT_MAX_SAMPLES_PER_SECOND);
     verifyNoMoreInteractions(guaranteedThroughputSampler);
   }
 
