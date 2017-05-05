@@ -22,7 +22,11 @@
 
 package com.uber.jaeger.utils;
 
+import lombok.Getter;
+
 public class RateLimiter {
+  @Getter
+  private final double creditsPerSecond;
   private final double creditsPerNanosecond;
   private final Clock clock;
   private double balance;
@@ -34,6 +38,7 @@ public class RateLimiter {
   }
 
   public RateLimiter(double creditsPerSecond, double maxBalance, Clock clock) {
+    this.creditsPerSecond = creditsPerSecond;
     this.clock = clock;
     this.balance = maxBalance;
     this.maxBalance = maxBalance;
