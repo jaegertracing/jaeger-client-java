@@ -28,14 +28,19 @@ import static org.junit.Assert.assertNotNull;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
+import com.uber.jaeger.Reference;
+import com.uber.jaeger.SpanContext;
 import com.uber.jaeger.Tracer;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
 import com.uber.jaeger.thriftjava.Log;
+import com.uber.jaeger.thriftjava.SpanRef;
 import com.uber.jaeger.thriftjava.Tag;
 import com.uber.jaeger.thriftjava.TagType;
+import io.opentracing.References;
 import io.opentracing.Span;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -140,5 +145,61 @@ public class JaegerThriftSpanConverterTest {
     thriftTag = thriftLog.getFields().get(0);
     assertEquals("k", thriftTag.getKey());
     assertEquals("v", thriftTag.getVStr());
+  }
+
+  @Test
+  public void testConvertSpanOneReferenceChildOf() {
+    Span parent = tracer.buildSpan("foo").start();
+
+    Span child = tracer.buildSpan("foo")
+        .asChildOf(parent)
+        .start();
+
+    com.uber.jaeger.thriftjava.Span span = JaegerThriftSpanConverter.convertSpan((com.uber.jaeger.Span) child);
+
+    assertEquals(((com.uber.jaeger.SpanContext)child.context()).getParentId(), span.getParentSpanId());
+    assertEquals(0, span.getReferences().size());
+  }
+
+  @Test
+  public void testConvertSpanTwoReferencesChildOf() {
+    Span parent = tracer.buildSpan("foo").start();
+    Span parent2 = tracer.buildSpan("foo").start();
+
+    Span child = tracer.buildSpan("foo")
+        .asChildOf(parent)
+        .asChildOf(parent2)
+        .start();
+
+    com.uber.jaeger.thriftjava.Span span = JaegerThriftSpanConverter.convertSpan((com.uber.jaeger.Span) child);
+
+    assertEquals(0, span.getParentSpanId());
+    assertEquals(2, span.getReferences().size());
+    assertEquals(buildReference((SpanContext) parent.context(), References.CHILD_OF),span.getReferences().get(0));
+    assertEquals(buildReference((SpanContext) parent2.context(), References.CHILD_OF),span.getReferences().get(1));
+  }
+
+  @Test
+  public void testConvertSpanMixedReferences() {
+    Span parent = tracer.buildSpan("foo").start();
+    Span parent2 = tracer.buildSpan("foo").start();
+
+    Span child = tracer.buildSpan("foo")
+        .addReference(References.FOLLOWS_FROM, parent.context())
+        .asChildOf(parent2)
+        .start();
+
+    com.uber.jaeger.thriftjava.Span span = JaegerThriftSpanConverter.convertSpan((com.uber.jaeger.Span) child);
+
+    assertEquals(0, span.getParentSpanId());
+    assertEquals(2, span.getReferences().size());
+    assertEquals(buildReference((SpanContext) parent.context(), References.FOLLOWS_FROM),span.getReferences().get(0));
+    assertEquals(buildReference((SpanContext) parent2.context(), References.CHILD_OF),span.getReferences().get(1));
+  }
+
+  private static SpanRef buildReference(SpanContext context, String referenceType) {
+    return JaegerThriftSpanConverter.buildReferences(
+        Collections.singletonList(new Reference(context, referenceType)))
+        .get(0);
   }
 }

@@ -33,6 +33,7 @@ import com.uber.jaeger.thriftjava.Tag;
 import com.uber.jaeger.thriftjava.TagType;
 import io.opentracing.References;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -43,16 +44,19 @@ public class JaegerThriftSpanConverter {
   public static com.uber.jaeger.thriftjava.Span convertSpan(Span span) {
     SpanContext context = span.context();
 
+    boolean oneChildOfParent = span.getReferences().size() == 1
+        && References.CHILD_OF.equals(span.getReferences().get(0).getType());
+
     return new com.uber.jaeger.thriftjava.Span(
             context.getTraceId(),
             0, // TraceIdHigh is currently not supported
             context.getSpanId(),
-            context.getParentId(),
+            oneChildOfParent ? context.getParentId() : 0,
             span.getOperationName(),
             context.getFlags(),
             span.getStart(),
             span.getDuration())
-            .setReferences(buildReferences(span.getReferences()))
+            .setReferences(oneChildOfParent ? Collections.<SpanRef>emptyList() : buildReferences(span.getReferences()))
         .setTags(buildTags(span.getTags()))
         .setLogs(buildLogs(span.getLogs()));
   }
