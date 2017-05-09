@@ -141,25 +141,4 @@ public class JaegerThriftSpanConverterTest {
     assertEquals("k", thriftTag.getKey());
     assertEquals("v", thriftTag.getVStr());
   }
-
-  @Test
-  public void testTruncateString() {
-    String testString =
-        "k9bHT50f9JNpPUggw3Qz\n"
-        + "Q1MUhMobIMPA5ItaB3KD\n"
-        + "vNUoBPRjOpJw2C46vgn3\n"
-        + "UisXI5KIIH8Wd8uqJ8Wn\n"
-        + "Z8NVmrcpIBwxc2Qje5d6\n"
-        + "1mJdQnPMc3VmX1v75As8\n"
-        + "pUyoicWVPeGEidRuhHpt\n"
-        + "R1sIR1YNjwtBIy9Swwdq\n"
-        + "LUIZXdLcPmCvQVPB3cYw\n"
-        + "VGAtFXG7D8ksLsKw94eY\n"
-        + "c7PNm74nEV3jIIvlJ217\n"
-        + "SLBfUBHW6SEjrHcz553i\n"
-        + "VSjpBvJYXR6CsoEMGce0\n"
-        + "LqSypCXJHDAzb0DL1w8B\n"
-        + "kS9g0wCgregSAlq63OIf";
-    assertEquals(256, JaegerThriftSpanConverter.truncateString(testString).length());
-  }
 }

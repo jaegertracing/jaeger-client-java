@@ -27,7 +27,6 @@ import com.twitter.zipkin.thriftjava.AnnotationType;
 import com.twitter.zipkin.thriftjava.BinaryAnnotation;
 import com.twitter.zipkin.thriftjava.Endpoint;
 import com.twitter.zipkin.thriftjava.zipkincoreConstants;
-import com.uber.jaeger.Constants;
 import com.uber.jaeger.LogData;
 import com.uber.jaeger.Span;
 import com.uber.jaeger.SpanContext;
@@ -134,14 +133,7 @@ public class ThriftSpanConverter {
 
   private static BinaryAnnotation buildBinaryAnnotation(String tagKey, Object tagValue) {
     BinaryAnnotation banno = new BinaryAnnotation().setKey(tagKey);
-
-    String stringTagValue = tagValue.toString();
-    if (stringTagValue.length() > Constants.MAX_TAG_LENGTH) {
-      tagValue = stringTagValue.substring(0, Constants.MAX_TAG_LENGTH);
-    }
-
-    banno.setValue(stringTagValue.getBytes(UTF_8)).setAnnotation_type(AnnotationType.STRING);
-
+    banno.setValue(String.valueOf(tagValue).getBytes(UTF_8)).setAnnotation_type(AnnotationType.STRING);
     return banno;
   }
 
