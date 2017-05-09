@@ -1,0 +1,34 @@
+description = 'TracerResolver implementation for Jaeger Tracer'
+
+dependencies {
+    compile project(':jaeger-core')
+    compile group: 'io.opentracing.contrib', name: 'opentracing-tracerresolver', version: tracerResolverVersion
+ 
+    testCompile group: 'junit', name: 'junit', version: junitVersion
+
+    signature 'org.codehaus.mojo.signature:java16:1.1@signature'
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main/java'
+        }
+        resources {
+            srcDir 'src/main/resources'
+        }
+    }
+
+    test {
+        java {
+            srcDir 'src/test/java'
+        }
+    }
+}
+
+jar {
+    from sourceSets.main.output
+    manifest {
+        attributes('Implementation-Title': 'jaeger-tracerresolver', 'Implementation-Version': project.version)
+    }
+}
