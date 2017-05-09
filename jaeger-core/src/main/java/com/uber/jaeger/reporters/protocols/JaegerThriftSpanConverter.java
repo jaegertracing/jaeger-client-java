@@ -22,7 +22,6 @@
 
 package com.uber.jaeger.reporters.protocols;
 
-import com.uber.jaeger.Constants;
 import com.uber.jaeger.LogData;
 import com.uber.jaeger.Reference;
 import com.uber.jaeger.Span;
@@ -126,14 +125,6 @@ public class JaegerThriftSpanConverter {
 
   static void buildStringTag(Tag tag, Object tagValue) {
     tag.setVType(TagType.STRING);
-    String stringTagValue = String.valueOf(tagValue);
-    tag.setVStr(truncateString(stringTagValue));
-  }
-
-  protected static String truncateString(String s) {
-    if (s.length() > Constants.MAX_TAG_LENGTH) {
-      return s.substring(0, Constants.MAX_TAG_LENGTH);
-    }
-    return s;
+    tag.setVStr(String.valueOf(tagValue));
   }
 }
