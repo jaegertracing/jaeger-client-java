@@ -9,23 +9,6 @@ dependencies {
     signature 'org.codehaus.mojo.signature:java16:1.1@signature'
 }
 
-sourceSets {
-    main {
-        java {
-            srcDir 'src/main/java'
-        }
-        resources {
-            srcDir 'src/main/resources'
-        }
-    }
-
-    test {
-        java {
-            srcDir 'src/test/java'
-        }
-    }
-}
-
 jar {
     from sourceSets.main.output
     manifest {

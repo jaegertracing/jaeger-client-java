@@ -38,13 +38,40 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class JaegerTracerResolver extends TracerResolver {
 
-  static final String JAEGER_PREFIX = "JAEGER_";
-  static final String JAEGER_AGENT_UDP_MAX_PACKET_SIZE = JAEGER_PREFIX + "AGENT_UDP_MAX_PACKET_SIZE";
-  static final String JAEGER_AGENT_UDP_PORT = JAEGER_PREFIX + "AGENT_UDP_PORT";
-  static final String JAEGER_AGENT_UDP_HOST = JAEGER_PREFIX + "AGENT_UDP_HOST";
-  static final String JAEGER_REPORTER_MAX_QUEUE_SIZE = JAEGER_PREFIX + "REPORTER_MAX_QUEUE_SIZE";
-  static final String JAEGER_REPORTER_FLUSH_INTERVAL = JAEGER_PREFIX + "REPORTER_FLUSH_INTERVAL";
-  static final String JAEGER_SERVICE_NAME = JAEGER_PREFIX + "SERVICE_NAME";
+  /**
+   * Prefix for all properties used to configure the {@link TracerResolver}.
+   */
+  public static final String JAEGER_PREFIX = "JAEGER_";
+
+  /**
+   * The UDP maximum packet size used when communicating with the agent.
+   */
+  public static final String JAEGER_AGENT_UDP_MAX_PACKET_SIZE = JAEGER_PREFIX + "AGENT_UDP_MAX_PACKET_SIZE";
+
+  /**
+   * The UDP port used to locate the agent.
+   */
+  public static final String JAEGER_AGENT_UDP_PORT = JAEGER_PREFIX + "AGENT_UDP_PORT";
+
+  /**
+   * The UDP host used to locate the agent.
+   */
+  public static final String JAEGER_AGENT_UDP_HOST = JAEGER_PREFIX + "AGENT_UDP_HOST";
+
+  /**
+   * The maximum queue size for use when reporting spans remotely.
+   */
+  public static final String JAEGER_REPORTER_MAX_QUEUE_SIZE = JAEGER_PREFIX + "REPORTER_MAX_QUEUE_SIZE";
+
+  /**
+   * The flush interval when reporting spans remotely.
+   */
+  public static final String JAEGER_REPORTER_FLUSH_INTERVAL = JAEGER_PREFIX + "REPORTER_FLUSH_INTERVAL";
+
+  /**
+   * The service name.
+   */
+  public static final String JAEGER_SERVICE_NAME = JAEGER_PREFIX + "SERVICE_NAME";
 
   static final int DEFAULT_REPORTER_FLUSH_INTERVAL = 500;
   static final int DEFAULT_REPORTER_MAX_QUEUE_SIZE = 1000;

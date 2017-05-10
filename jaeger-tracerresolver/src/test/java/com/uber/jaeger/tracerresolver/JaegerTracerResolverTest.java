@@ -35,8 +35,6 @@ import com.uber.jaeger.senders.UdpSender;
 import io.opentracing.Tracer;
 import io.opentracing.contrib.tracerresolver.TracerResolver;
 
-import java.util.Enumeration;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -44,13 +42,13 @@ public class JaegerTracerResolverTest {
 
   @Before
   public void clearProperties() {
-    Enumeration<?> iter = System.getProperties().propertyNames();
-    while (iter.hasMoreElements()) {
-      String propName = (String)iter.nextElement();
-      if (propName.startsWith(JaegerTracerResolver.JAEGER_PREFIX)) {
-        System.clearProperty(propName);
-      }
-    }
+    // Explicitly clear all TracerResolver properties
+    System.clearProperty(JaegerTracerResolver.JAEGER_AGENT_UDP_HOST);
+    System.clearProperty(JaegerTracerResolver.JAEGER_AGENT_UDP_MAX_PACKET_SIZE);
+    System.clearProperty(JaegerTracerResolver.JAEGER_AGENT_UDP_PORT);
+    System.clearProperty(JaegerTracerResolver.JAEGER_REPORTER_FLUSH_INTERVAL);
+    System.clearProperty(JaegerTracerResolver.JAEGER_REPORTER_MAX_QUEUE_SIZE);
+    System.clearProperty(JaegerTracerResolver.JAEGER_SERVICE_NAME);
   }
 
   @Test
