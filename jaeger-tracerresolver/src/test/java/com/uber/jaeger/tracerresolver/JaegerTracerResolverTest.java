@@ -35,12 +35,14 @@ import com.uber.jaeger.senders.UdpSender;
 import io.opentracing.Tracer;
 import io.opentracing.contrib.tracerresolver.TracerResolver;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 public class JaegerTracerResolverTest {
 
   @Before
+  @After
   public void clearProperties() {
     // Explicitly clear all TracerResolver properties
     System.clearProperty(JaegerTracerResolver.JAEGER_AGENT_UDP_HOST);
