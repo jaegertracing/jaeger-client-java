@@ -37,17 +37,6 @@ sourceSets {
         java {
             srcDir 'src/main/gen-java'
         }
-        resources {
-            srcDirs = ['src/main/gen-java']
-        }
-    }
-
-}
-
-jar {
-    from sourceSets.main.output
-    manifest {
-        attributes('Implementation-Title': 'jaeger-thrift', 'Implementation-Version': project.version)
     }
 }
 

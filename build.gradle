@@ -44,14 +44,22 @@ subprojects {
     apply plugin: 'signing'
     apply plugin: 'checkstyle'
 
+
     compileJava {
         sourceCompatibility = 1.6
         targetCompatibility = 1.6
     }
 
     compileTestJava {
-        sourceCompatibility = 1.7
-        targetCompatibility = 1.7
+        sourceCompatibility = 1.8
+        targetCompatibility = 1.8
+    }
+
+    jar {
+        from sourceSets.main.output
+        manifest {
+            attributes('Implementation-Title': project.name, 'Implementation-Version': project.version)
+        }
     }
 
     animalsniffer {

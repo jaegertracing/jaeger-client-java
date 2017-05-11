@@ -6,8 +6,8 @@ ext.jacksonVersion = '2.7.4'
 shadowJar.archiveName = 'jaeger-crossdock.jar'
 
 compileJava {
-    sourceCompatibility = 1.7
-    targetCompatibility = 1.7
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
 }
 
 dependencies {
@@ -29,25 +29,10 @@ dependencies {
     signature 'org.codehaus.mojo.signature:java17:1.0@signature'
 }
 
-sourceSets {
-    main {
-        java {
-            srcDir 'src/main/java'
-        }
-    }
-
-    test {
-        java {
-            srcDir 'src/test/java'
-        }
-    }
-}
-
 jar {
     from sourceSets.main.output
     from sourceSets.test.output
     manifest {
-        attributes('Implementation-Title': 'jaeger-crossdock', 'Implementation-Version': project.version)
         attributes 'Main-Class': 'com.uber.jaeger.crossdock.JerseyServer'
     }
 }
