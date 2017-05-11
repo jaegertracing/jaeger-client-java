@@ -22,6 +22,9 @@
 
 package com.uber.jaeger.tracerresolver;
 
+import com.uber.jaeger.Configuration;
+import com.uber.jaeger.Configuration.ReporterConfiguration;
+import com.uber.jaeger.Configuration.SamplerConfiguration;
 import com.uber.jaeger.Tracer;
 import com.uber.jaeger.metrics.Metrics;
 import com.uber.jaeger.metrics.NullStatsReporter;
@@ -33,6 +36,10 @@ import com.uber.jaeger.senders.Sender;
 import com.uber.jaeger.senders.UdpSender;
 
 import io.opentracing.contrib.tracerresolver.TracerResolver;
+
+import java.text.NumberFormat;
+import java.text.ParseException;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -44,19 +51,19 @@ public class JaegerTracerResolver extends TracerResolver {
   public static final String JAEGER_PREFIX = "JAEGER_";
 
   /**
-   * The UDP maximum packet size used when communicating with the agent.
+   * The host name used to locate the agent.
    */
-  public static final String JAEGER_AGENT_UDP_MAX_PACKET_SIZE = JAEGER_PREFIX + "AGENT_UDP_MAX_PACKET_SIZE";
+  public static final String JAEGER_AGENT_HOST = JAEGER_PREFIX + "AGENT_HOST";
 
   /**
-   * The UDP port used to locate the agent.
+   * The port used to locate the agent.
    */
-  public static final String JAEGER_AGENT_UDP_PORT = JAEGER_PREFIX + "AGENT_UDP_PORT";
+  public static final String JAEGER_AGENT_PORT = JAEGER_PREFIX + "AGENT_PORT";
 
   /**
-   * The UDP host used to locate the agent.
+   * Whether the reporter should log the spans.
    */
-  public static final String JAEGER_AGENT_UDP_HOST = JAEGER_PREFIX + "AGENT_UDP_HOST";
+  public static final String JAEGER_REPORTER_LOG_SPANS = JAEGER_PREFIX + "REPORTER_LOG_SPANS";
 
   /**
    * The maximum queue size for use when reporting spans remotely.
@@ -69,48 +76,54 @@ public class JaegerTracerResolver extends TracerResolver {
   public static final String JAEGER_REPORTER_FLUSH_INTERVAL = JAEGER_PREFIX + "REPORTER_FLUSH_INTERVAL";
 
   /**
+   * The sampler type.
+   */
+  public static final String JAEGER_SAMPLER_TYPE = JAEGER_PREFIX + "SAMPLER_TYPE";
+
+  /**
+   * The sampler parameter (number).
+   */
+  public static final String JAEGER_SAMPLER_PARAM = "JAEGER_SAMPLER_PARAM";
+
+  /**
+   * The sampler manager host:port.
+   */
+  public static final String JAEGER_SAMPLER_MANAGER_HOST_PORT = JAEGER_PREFIX + "SAMPLER_MANAGER_HOST_PORT";
+
+  /**
    * The service name.
    */
   public static final String JAEGER_SERVICE_NAME = JAEGER_PREFIX + "SERVICE_NAME";
 
-  static final int DEFAULT_REPORTER_FLUSH_INTERVAL = 500;
-  static final int DEFAULT_REPORTER_MAX_QUEUE_SIZE = 1000;
-
   @Override
   protected io.opentracing.Tracer resolve() {
-    String serviceName = getProperty(JAEGER_SERVICE_NAME);
+    Configuration config = new Configuration(getProperty(JAEGER_SERVICE_NAME),
+        getSamplerConfiguration(), getReporterConfiguration());
 
-    return new Tracer.Builder(serviceName, getReporter(), getSampler()).build();
+    return config.getTracer();
   }
 
-  protected static Reporter getReporter() {
-    return new RemoteReporter(getSender(),
-        getPropertyAsInt(JAEGER_REPORTER_FLUSH_INTERVAL, DEFAULT_REPORTER_FLUSH_INTERVAL),
-        getPropertyAsInt(JAEGER_REPORTER_MAX_QUEUE_SIZE, DEFAULT_REPORTER_MAX_QUEUE_SIZE),
-        getMetrics());
+  protected static ReporterConfiguration getReporterConfiguration() {
+    return new ReporterConfiguration(
+        getPropertyAsBoolean(JAEGER_REPORTER_LOG_SPANS),
+        getProperty(JAEGER_AGENT_HOST),
+        getPropertyAsInt(JAEGER_AGENT_PORT),
+        getPropertyAsInt(JAEGER_REPORTER_FLUSH_INTERVAL),
+        getPropertyAsInt(JAEGER_REPORTER_MAX_QUEUE_SIZE));
   }
 
-  protected static Sender getSender() {
-    return new UdpSender(getProperty(JAEGER_AGENT_UDP_HOST),
-        getPropertyAsInt(JAEGER_AGENT_UDP_PORT, 0),
-        getPropertyAsInt(JAEGER_AGENT_UDP_MAX_PACKET_SIZE, 0));
-  }
-
-  protected static Metrics getMetrics() {
-    // TODO: Support other stats reporters
-    return Metrics.fromStatsReporter(new NullStatsReporter());
-  }
-
-  protected static Sampler getSampler() {
-    // TODO: Support other samplers
-    return new ConstSampler(true);
+  protected static SamplerConfiguration getSamplerConfiguration() {
+    return new SamplerConfiguration(
+        getProperty(JAEGER_SAMPLER_TYPE),
+        getPropertyAsNum(JAEGER_SAMPLER_PARAM),
+        getProperty(JAEGER_SAMPLER_MANAGER_HOST_PORT));
   }
 
   private static String getProperty(String name) {
     return System.getProperty(name, System.getenv(name));
   }
 
-  private static int getPropertyAsInt(String name, int def) {
+  private static Integer getPropertyAsInt(String name) {
     String value = getProperty(name);
     if (value != null) {
       try {
@@ -119,7 +132,27 @@ public class JaegerTracerResolver extends TracerResolver {
         log.error("Failed to parse integer for property '" + name + "' with value '" + value + "'", e);
       }
     }
-    return def;
+    return null;
+  }
+
+  private static Number getPropertyAsNum(String name) {
+    String value = getProperty(name);
+    if (value != null) {
+      try {
+        return NumberFormat.getInstance().parse(value);
+      } catch (ParseException e) {
+        log.error("Failed to parse number for property '" + name + "' with value '" + value + "'", e);
+      }
+    }
+    return null;
+  }
+
+  private static Boolean getPropertyAsBoolean(String name) {
+    String value = getProperty(name);
+    if (value != null) {
+      return Boolean.valueOf(value);
+    }
+    return null;
   }
 
 }

@@ -75,10 +75,6 @@ public class RemoteReporter implements Reporter {
         flushInterval);
   }
 
-  public int getMaxQueueSize() {
-    return maxQueueSize;
-  }
-
   @Override
   public void report(Span span) {
     // Its better to drop spans, than to block here
