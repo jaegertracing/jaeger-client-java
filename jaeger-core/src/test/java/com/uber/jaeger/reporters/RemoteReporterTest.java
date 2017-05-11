@@ -62,10 +62,11 @@ public class RemoteReporterTest {
   public void testRemoteReporterReport() throws Exception {
     Span span = (Span) tracer.buildSpan("raza").start();
     reporter.report(span);
-    Thread.sleep(5);
+    // do sleep until automatic flush happens on 'reporter'
+    Thread.sleep(flushInterval + 20); // added 20ms on top of 'flushInterval' to avoid corner cases
     List<com.uber.jaeger.thriftjava.Span> received = sender.getReceived();
 
-    assertEquals(received.size(), 1);
+    assertEquals(1, received.size());
   }
 
   @Test
@@ -77,8 +78,8 @@ public class RemoteReporterTest {
     }
     reporter.close();
 
-    assertEquals(sender.getAppended().size(), 0);
-    assertEquals(sender.getFlushed().size(), numberOfSpans);
+    assertEquals(0, sender.getAppended().size());
+    assertEquals(numberOfSpans, sender.getFlushed().size());
 
     assertEquals(
         100L, metricsReporter.counters.get("jaeger.spans.group=sampling.sampled=y").longValue());
