@@ -22,15 +22,11 @@
 
 package com.uber.jaeger.tracerresolver;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import com.uber.jaeger.Configuration.ReporterConfiguration;
-import com.uber.jaeger.Configuration.SamplerConfiguration;
-import com.uber.jaeger.samplers.ConstSampler;
+import com.uber.jaeger.Configuration;
 
 import io.opentracing.Tracer;
 import io.opentracing.contrib.tracerresolver.TracerResolver;
@@ -45,15 +41,7 @@ public class JaegerTracerResolverTest {
   @After
   public void clearProperties() {
     // Explicitly clear all TracerResolver properties
-    System.clearProperty(JaegerTracerResolver.JAEGER_AGENT_HOST);
-    System.clearProperty(JaegerTracerResolver.JAEGER_AGENT_PORT);
-    System.clearProperty(JaegerTracerResolver.JAEGER_REPORTER_LOG_SPANS);
-    System.clearProperty(JaegerTracerResolver.JAEGER_REPORTER_MAX_QUEUE_SIZE);
-    System.clearProperty(JaegerTracerResolver.JAEGER_REPORTER_FLUSH_INTERVAL);
-    System.clearProperty(JaegerTracerResolver.JAEGER_SAMPLER_TYPE);
-    System.clearProperty(JaegerTracerResolver.JAEGER_SAMPLER_PARAM);
-    System.clearProperty(JaegerTracerResolver.JAEGER_SAMPLER_MANAGER_HOST_PORT);
-    System.clearProperty(JaegerTracerResolver.JAEGER_SERVICE_NAME);
+    System.clearProperty(Configuration.JAEGER_SERVICE_NAME);
   }
 
   @Test
@@ -63,57 +51,10 @@ public class JaegerTracerResolverTest {
 
   @Test
   public void testResolveTracerDefault() {
-    System.setProperty(JaegerTracerResolver.JAEGER_SERVICE_NAME, "MyService");
+    System.setProperty(Configuration.JAEGER_SERVICE_NAME, "MyService");
     Tracer tracer = TracerResolver.resolveTracer();
     assertNotNull(tracer);
     assertTrue(tracer instanceof com.uber.jaeger.Tracer);
-  }
-
-  @Test
-  public void testSamplerConst() {
-    System.setProperty(JaegerTracerResolver.JAEGER_SAMPLER_TYPE, ConstSampler.TYPE);
-    System.setProperty(JaegerTracerResolver.JAEGER_SAMPLER_PARAM, "1");
-    SamplerConfiguration samplerConfig = JaegerTracerResolver.getSamplerConfiguration();
-    assertEquals(ConstSampler.TYPE, samplerConfig.getType());
-    assertEquals(1, samplerConfig.getParam().intValue());
-  }
-
-  @Test
-  public void testSamplerConstInvalidParam() {
-    System.setProperty(JaegerTracerResolver.JAEGER_SAMPLER_TYPE, ConstSampler.TYPE);
-    System.setProperty(JaegerTracerResolver.JAEGER_SAMPLER_PARAM, "X");
-    SamplerConfiguration samplerConfig = JaegerTracerResolver.getSamplerConfiguration();
-    assertEquals(ConstSampler.TYPE, samplerConfig.getType());
-    assertNull(samplerConfig.getParam());
-  }
-
-  @Test
-  public void testReporterConfiguration() {
-    System.setProperty(JaegerTracerResolver.JAEGER_REPORTER_LOG_SPANS, "true");
-    System.setProperty(JaegerTracerResolver.JAEGER_AGENT_HOST, "MyHost");
-    System.setProperty(JaegerTracerResolver.JAEGER_AGENT_PORT, "1234");
-    System.setProperty(JaegerTracerResolver.JAEGER_REPORTER_FLUSH_INTERVAL, "500");
-    System.setProperty(JaegerTracerResolver.JAEGER_REPORTER_MAX_QUEUE_SIZE, "1000");
-    ReporterConfiguration reporterConfig = JaegerTracerResolver.getReporterConfiguration();
-    assertTrue(reporterConfig.getLogSpans());
-    assertEquals("MyHost", reporterConfig.getAgentHost());
-    assertEquals(1234, reporterConfig.getAgentPort().intValue());
-    assertEquals(500, reporterConfig.getFlushIntervalMs().intValue());
-    assertEquals(1000, reporterConfig.getMaxQueueSize().intValue());
-  }
-
-  @Test
-  public void testReporterConfigurationInvalidFlushInterval() {
-    System.setProperty(JaegerTracerResolver.JAEGER_REPORTER_FLUSH_INTERVAL, "X");
-    ReporterConfiguration reporterConfig = JaegerTracerResolver.getReporterConfiguration();
-    assertNull(reporterConfig.getFlushIntervalMs());
-  }
-
-  @Test
-  public void testReporterConfigurationInvalidLogSpans() {
-    System.setProperty(JaegerTracerResolver.JAEGER_REPORTER_LOG_SPANS, "X");
-    ReporterConfiguration reporterConfig = JaegerTracerResolver.getReporterConfiguration();
-    assertFalse(reporterConfig.getLogSpans());
   }
 
 }
