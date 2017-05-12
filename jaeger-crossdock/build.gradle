@@ -30,8 +30,6 @@ dependencies {
 }
 
 jar {
-    from sourceSets.main.output
-    from sourceSets.test.output
     manifest {
         attributes 'Main-Class': 'com.uber.jaeger.crossdock.JerseyServer'
     }
