@@ -78,12 +78,11 @@ public class RemoteReporter implements Reporter {
   @Override
   public void report(Span span) {
     // Its better to drop spans, than to block here
-    if (commandQueue.size() == maxQueueSize) {
-      metrics.reporterDropped.inc(1);
-      return;
-    }
+    boolean added = commandQueue.offer(new AppendCommand(span));
 
-    commandQueue.add(new AppendCommand(span));
+    if (!added) {
+      metrics.reporterDropped.inc(1);
+    }
   }
 
   @Override

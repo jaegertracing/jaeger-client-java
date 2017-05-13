@@ -32,7 +32,10 @@ import com.uber.jaeger.metrics.InMemoryStatsReporter;
 import com.uber.jaeger.metrics.Metrics;
 import com.uber.jaeger.metrics.StatsFactoryImpl;
 import com.uber.jaeger.samplers.ConstSampler;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -62,7 +65,7 @@ public class RemoteReporterTest {
   public void testRemoteReporterReport() throws Exception {
     Span span = (Span) tracer.buildSpan("raza").start();
     reporter.report(span);
-    Thread.sleep(5);
+    Thread.sleep(50);
     List<com.uber.jaeger.thriftjava.Span> received = sender.getReceived();
 
     assertEquals(received.size(), 1);
@@ -102,5 +105,49 @@ public class RemoteReporterTest {
       assertTrue(thread.isDaemon());
     }
     assertFalse(flushTimerThreadCount == 0);
+  }
+
+  // Starts a number of threads. Each can fill the queue on its own, so they will exceed its
+  // capacity many times over
+  @Test
+  public void testReportDoesntThrowWhenQueueFull() throws Exception {
+    final AtomicBoolean exceptionWasThrown = new AtomicBoolean(false);
+
+    int threadsCount = 10;
+    final CyclicBarrier barrier = new CyclicBarrier(threadsCount);
+    List<Thread> threads = new ArrayList<>();
+    for (int i = 0; i < threadsCount; i++) {
+      Thread t = createSpanReportingThread(exceptionWasThrown, barrier);
+      threads.add(t);
+      t.start();
+    }
+
+    for(Thread t : threads) {
+      t.join();
+    }
+
+    assertFalse(exceptionWasThrown.get());
+  }
+
+  private Thread createSpanReportingThread(final AtomicBoolean exceptionWasThrown,
+      final CyclicBarrier barrier) {
+    return new Thread(new Runnable() {
+          @Override
+          public void run() {
+            for (int x = 0; x < maxQueueSize; x++) {
+              try {
+                barrier.await();
+                reporter.report(newSpan());
+              } catch (Throwable e) {
+                e.printStackTrace();
+                exceptionWasThrown.set(true);
+              }
+            }
+          }
+        });
+  }
+
+  private Span newSpan() {
+    return (Span) tracer.buildSpan("x").start();
   }
 }
