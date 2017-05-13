@@ -22,8 +22,11 @@
 
 package com.uber.jaeger.reporters;
 
+import static org.hamcrest.CoreMatchers.anyOf;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import com.uber.jaeger.Span;
@@ -145,6 +148,55 @@ public class RemoteReporterTest {
             }
           }
         });
+  }
+
+  @Test
+  public void testAppendWhenQueueFull() {
+    // change sender to blocking mode
+    sender.permitAppend(0);
+
+    for (int i = 0; i < maxQueueSize; i++) {
+      reporter.report(newSpan());
+    }
+
+    // When: at this point queue is full or the is one slot (if worker thread picked up some command)
+    // We add two spans to make sure we overfill the queue
+    reporter.report(newSpan());
+    reporter.report(newSpan());
+
+    // Then: one or both spans should be dropped
+    Long droppedCount = metricsReporter.counters.get("jaeger.spans.state=dropped");
+    assertThat(droppedCount, anyOf(equalTo(1L), equalTo(2L)));
+  }
+
+  @Test
+  public void testCloseWhenQueueFull() throws Exception {
+    // change sender to blocking mode
+    sender.permitAppend(0);
+
+    // fill the queue
+    for (int i = 0; i < maxQueueSize + 10; i++) {
+      reporter.report(newSpan());
+    }
+
+    reporter.close();
+
+    // expect no exception thrown
+  }
+
+  @Test
+  public void testFlushWhenQueueFull() throws Exception {
+    // change sender to blocking mode
+    sender.permitAppend(0);
+
+    // fill the queue
+    for (int i = 0; i < maxQueueSize + 10; i++) {
+      reporter.report(newSpan());
+    }
+
+    ((RemoteReporter) reporter).flush();
+
+    // expect no exception thrown
   }
 
   private Span newSpan() {

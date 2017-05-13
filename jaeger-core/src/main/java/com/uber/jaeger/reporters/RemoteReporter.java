@@ -30,6 +30,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
@@ -39,6 +40,7 @@ import lombok.extern.slf4j.Slf4j;
 @ToString(exclude = {"commandQueue", "flushTimer", "queueProcessorThread", "metrics"})
 @Slf4j
 public class RemoteReporter implements Reporter {
+  private static final int CLOSE_ENQUEUE_TIMEOUT_MILLIS = 100;
   private final BlockingQueue<Command> commandQueue;
   private final Timer flushTimer;
   private final Thread queueProcessorThread;
@@ -68,7 +70,7 @@ public class RemoteReporter implements Reporter {
         new TimerTask() {
           @Override
           public void run() {
-            commandQueue.add(new FlushCommand());
+            flush();
           }
         },
         0,
@@ -87,10 +89,22 @@ public class RemoteReporter implements Reporter {
 
   @Override
   public void close() {
-    commandQueue.add(new CloseCommand());
+    boolean closeCommandAdded = false;
+    try {
+      // best-effort: if we can't add CloseCommand in this time then it probably will never happen
+      closeCommandAdded = commandQueue
+          .offer(new CloseCommand(), CLOSE_ENQUEUE_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+    } catch (InterruptedException e) {
+      // ignore
+    }
 
     try {
-      queueProcessorThread.join();
+      if (closeCommandAdded) {
+        queueProcessorThread.join();
+      } else {
+        log.warn("Unable to cleanly close RemoteReporter, command queue is full - probably the"
+            + " sender is stuck");
+      }
     } catch (InterruptedException e) {
       return;
     } finally {
@@ -102,6 +116,12 @@ public class RemoteReporter implements Reporter {
       }
       flushTimer.cancel();
     }
+  }
+
+  void flush() {
+    // We can safely drop FlushCommand when the queue is full - sender should take care of flushing
+    // in such case
+    commandQueue.offer(new FlushCommand());
   }
 
   /*

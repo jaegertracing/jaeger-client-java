@@ -28,11 +28,18 @@ import com.uber.jaeger.senders.Sender;
 import com.uber.jaeger.thriftjava.Span;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Semaphore;
 
+/**
+ * InMemorySender "appends" span only earlier "append" was permitted. Appending is a blocking
+ * operation unless "permitted". By default Integer.MAX_VALUE of "appends" is permitted.
+ */
 public class InMemorySender implements Sender {
+
   private List<Span> appended;
   private List<Span> flushed;
   private List<Span> received;
+  private Semaphore semaphore = new Semaphore(Integer.MAX_VALUE);
 
   public InMemorySender() {
     appended = new ArrayList<Span>();
@@ -54,6 +61,11 @@ public class InMemorySender implements Sender {
 
   @Override
   public int append(com.uber.jaeger.Span span) throws SenderException {
+    try {
+      semaphore.acquire();
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
     com.uber.jaeger.thriftjava.Span thriftSpan = JaegerThriftSpanConverter.convertSpan(span);
     appended.add(thriftSpan);
     received.add(thriftSpan);
@@ -72,5 +84,19 @@ public class InMemorySender implements Sender {
   @Override
   public int close() throws SenderException {
     return flush();
+  }
+
+  /**
+   * InMemorySender "appends" span only if the "append" was permitted. Otherwise append blocks
+   * until it it permitted.
+   *
+   * <code>permitAppend</code> removes previously granted "append" permits and grants
+   * a new number of permits
+   *
+   * @param number number of "appends" to permit
+   */
+  public void permitAppend(int number) {
+    semaphore.drainPermits();
+    semaphore.release(number);
   }
 }
