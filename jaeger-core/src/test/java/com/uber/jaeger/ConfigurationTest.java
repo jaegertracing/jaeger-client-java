@@ -63,7 +63,7 @@ public class ConfigurationTest {
   public void testSamplerConst() {
     System.setProperty(Configuration.JAEGER_SAMPLER_TYPE, ConstSampler.TYPE);
     System.setProperty(Configuration.JAEGER_SAMPLER_PARAM, "1");
-    SamplerConfiguration samplerConfig = Configuration.getSamplerConfiguration();
+    SamplerConfiguration samplerConfig = Configuration.getSamplerConfigurationFromEnv();
     assertEquals(ConstSampler.TYPE, samplerConfig.getType());
     assertEquals(1, samplerConfig.getParam().intValue());
   }
@@ -72,7 +72,7 @@ public class ConfigurationTest {
   public void testSamplerConstInvalidParam() {
     System.setProperty(Configuration.JAEGER_SAMPLER_TYPE, ConstSampler.TYPE);
     System.setProperty(Configuration.JAEGER_SAMPLER_PARAM, "X");
-    SamplerConfiguration samplerConfig = Configuration.getSamplerConfiguration();
+    SamplerConfiguration samplerConfig = Configuration.getSamplerConfigurationFromEnv();
     assertEquals(ConstSampler.TYPE, samplerConfig.getType());
     assertNull(samplerConfig.getParam());
   }
@@ -84,7 +84,7 @@ public class ConfigurationTest {
     System.setProperty(Configuration.JAEGER_AGENT_PORT, "1234");
     System.setProperty(Configuration.JAEGER_REPORTER_FLUSH_INTERVAL, "500");
     System.setProperty(Configuration.JAEGER_REPORTER_MAX_QUEUE_SIZE, "1000");
-    ReporterConfiguration reporterConfig = Configuration.getReporterConfiguration();
+    ReporterConfiguration reporterConfig = Configuration.getReporterConfigurationFromEnv();
     assertTrue(reporterConfig.getLogSpans());
     assertEquals("MyHost", reporterConfig.getAgentHost());
     assertEquals(1234, reporterConfig.getAgentPort().intValue());
@@ -95,14 +95,14 @@ public class ConfigurationTest {
   @Test
   public void testReporterConfigurationInvalidFlushInterval() {
     System.setProperty(Configuration.JAEGER_REPORTER_FLUSH_INTERVAL, "X");
-    ReporterConfiguration reporterConfig = Configuration.getReporterConfiguration();
+    ReporterConfiguration reporterConfig = Configuration.getReporterConfigurationFromEnv();
     assertNull(reporterConfig.getFlushIntervalMs());
   }
 
   @Test
   public void testReporterConfigurationInvalidLogSpans() {
     System.setProperty(Configuration.JAEGER_REPORTER_LOG_SPANS, "X");
-    ReporterConfiguration reporterConfig = Configuration.getReporterConfiguration();
+    ReporterConfiguration reporterConfig = Configuration.getReporterConfigurationFromEnv();
     assertFalse(reporterConfig.getLogSpans());
   }
 

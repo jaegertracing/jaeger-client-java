@@ -141,10 +141,10 @@ public class Configuration {
 
   public static Configuration fromEnv() {
     return new Configuration(getProperty(JAEGER_SERVICE_NAME),
-        getSamplerConfiguration(), getReporterConfiguration());
+        getSamplerConfigurationFromEnv(), getReporterConfigurationFromEnv());
   }
 
-  protected static ReporterConfiguration getReporterConfiguration() {
+  static ReporterConfiguration getReporterConfigurationFromEnv() {
     return new ReporterConfiguration(
         getPropertyAsBoolean(JAEGER_REPORTER_LOG_SPANS),
         getProperty(JAEGER_AGENT_HOST),
@@ -153,7 +153,7 @@ public class Configuration {
         getPropertyAsInt(JAEGER_REPORTER_MAX_QUEUE_SIZE));
   }
 
-  protected static SamplerConfiguration getSamplerConfiguration() {
+  static SamplerConfiguration getSamplerConfigurationFromEnv() {
     return new SamplerConfiguration(
         getProperty(JAEGER_SAMPLER_TYPE),
         getPropertyAsNum(JAEGER_SAMPLER_PARAM),
