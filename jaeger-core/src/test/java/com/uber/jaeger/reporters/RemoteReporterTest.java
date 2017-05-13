@@ -125,7 +125,7 @@ public class RemoteReporterTest {
       t.start();
     }
 
-    for(Thread t : threads) {
+    for (Thread t : threads) {
       t.join();
     }
 
@@ -159,8 +159,8 @@ public class RemoteReporterTest {
       reporter.report(newSpan());
     }
 
-    // When: at this point queue is full or the is one slot (if worker thread picked up some command)
-    // We add two spans to make sure we overfill the queue
+    // When: at this point the queue is full or there is one slot empty (if the worker thread has
+    // already picked up some command). We add two spans to make sure that we overfill the queue
     reporter.report(newSpan());
     reporter.report(newSpan());
 
