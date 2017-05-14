@@ -116,6 +116,10 @@ public class Configuration {
    */
   private Tracer tracer;
 
+  public Configuration(String serviceName) {
+    this(serviceName, null, null);
+  }
+
   public Configuration(
       String serviceName,
       SamplerConfiguration samplerConfig,
@@ -140,24 +144,10 @@ public class Configuration {
   }
 
   public static Configuration fromEnv() {
-    return new Configuration(getProperty(JAEGER_SERVICE_NAME),
-        getSamplerConfigurationFromEnv(), getReporterConfigurationFromEnv());
-  }
-
-  static ReporterConfiguration getReporterConfigurationFromEnv() {
-    return new ReporterConfiguration(
-        getPropertyAsBoolean(JAEGER_REPORTER_LOG_SPANS),
-        getProperty(JAEGER_AGENT_HOST),
-        getPropertyAsInt(JAEGER_AGENT_PORT),
-        getPropertyAsInt(JAEGER_REPORTER_FLUSH_INTERVAL),
-        getPropertyAsInt(JAEGER_REPORTER_MAX_QUEUE_SIZE));
-  }
-
-  static SamplerConfiguration getSamplerConfigurationFromEnv() {
-    return new SamplerConfiguration(
-        getProperty(JAEGER_SAMPLER_TYPE),
-        getPropertyAsNum(JAEGER_SAMPLER_PARAM),
-        getProperty(JAEGER_SAMPLER_MANAGER_HOST_PORT));
+    return new Configuration(
+        getProperty(JAEGER_SERVICE_NAME),
+        SamplerConfiguration.fromEnv(),
+        ReporterConfiguration.fromEnv());
   }
 
   public Tracer.Builder getTracerBuilder() {
@@ -233,6 +223,14 @@ public class Configuration {
       this.managerHostPort = managerHostPort;
     }
 
+    public static SamplerConfiguration fromEnv() {
+      return new SamplerConfiguration(
+          getProperty(JAEGER_SAMPLER_TYPE),
+          getPropertyAsNum(JAEGER_SAMPLER_PARAM),
+          getProperty(JAEGER_SAMPLER_MANAGER_HOST_PORT));
+    }
+
+
     private Sampler createSampler(String serviceName, Metrics metrics) {
       String samplerType = stringOrDefault(this.getType(), RemoteControlledSampler.TYPE);
       Number samplerParam = numberOrDefault(this.getParam(), DEFAULT_SAMPLING_PROBABILITY);
@@ -306,6 +304,15 @@ public class Configuration {
       this.agentPort = agentPort;
       this.flushIntervalMs = flushIntervalMs;
       this.maxQueueSize = maxQueueSize;
+    }
+
+    public static ReporterConfiguration fromEnv() {
+      return new ReporterConfiguration(
+          getPropertyAsBoolean(JAEGER_REPORTER_LOG_SPANS),
+          getProperty(JAEGER_AGENT_HOST),
+          getPropertyAsInt(JAEGER_AGENT_PORT),
+          getPropertyAsInt(JAEGER_REPORTER_FLUSH_INTERVAL),
+          getPropertyAsInt(JAEGER_REPORTER_MAX_QUEUE_SIZE));
     }
 
     private Reporter getReporter(Metrics metrics) {
