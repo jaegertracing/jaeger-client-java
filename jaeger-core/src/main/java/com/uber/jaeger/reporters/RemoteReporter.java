@@ -40,7 +40,7 @@ import lombok.extern.slf4j.Slf4j;
 @ToString(exclude = {"commandQueue", "flushTimer", "queueProcessorThread", "metrics"})
 @Slf4j
 public class RemoteReporter implements Reporter {
-  private static final int CLOSE_ENQUEUE_TIMEOUT_MILLIS = 100;
+  private static final int CLOSE_ENQUEUE_TIMEOUT_MILLIS = 1000;
   private final BlockingQueue<Command> commandQueue;
   private final Timer flushTimer;
   private final Thread queueProcessorThread;

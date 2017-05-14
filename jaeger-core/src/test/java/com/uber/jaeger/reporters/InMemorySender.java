@@ -31,8 +31,8 @@ import java.util.List;
 import java.util.concurrent.Semaphore;
 
 /**
- * InMemorySender "appends" span only earlier "append" was permitted. Appending is a blocking
- * operation unless "permitted". By default Integer.MAX_VALUE of "appends" is permitted.
+ * Sender which stores spans in memory. Appending a new span is a blocking operation unless
+ * "permitted". By default Integer.MAX_VALUE "appends" are permitted.
  */
 public class InMemorySender implements Sender {
 
@@ -87,10 +87,7 @@ public class InMemorySender implements Sender {
   }
 
   /**
-   * InMemorySender "appends" span only if the "append" was permitted. Otherwise append blocks
-   * until it it permitted.
-   *
-   * <code>permitAppend</code> removes previously granted "append" permits and grants
+   * Removes previously granted "append" permits and grants
    * a new number of permits
    *
    * @param number number of "appends" to permit
