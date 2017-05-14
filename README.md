@@ -1,10 +1,10 @@
 [![Build Status][ci-img]][ci] [![Coverage Status][cov-img]][cov] [![Released Version][maven-img]][maven]
 
-# Jaeger Bindings for Java OpenTracing API
+# Jaeger's Tracing Instrumentation Library for Java
 
-This is a client side library that implements
-[Java OpenTracing API](https://github.com/opentracing/opentracing-java),
-with Zipkin-compatible data model.
+ * Intended to be used with [Jaeger](https://github.com/uber/jaeger) backend, but can also be configured to send traces to Zipkin.
+ * Implement [Java OpenTracing API](https://github.com/opentracing/opentracing-java).
+ * Supports Java 1.6 and above
 
 ## Core Modules
 

@@ -37,11 +37,65 @@ import com.uber.jaeger.samplers.RateLimitingSampler;
 import com.uber.jaeger.samplers.RemoteControlledSampler;
 import com.uber.jaeger.samplers.Sampler;
 import com.uber.jaeger.senders.UdpSender;
+
+import java.text.NumberFormat;
+import java.text.ParseException;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class Configuration {
   public static final double DEFAULT_SAMPLING_PROBABILITY = 0.001;
+
+  /**
+   * Prefix for all properties used to configure the Jaeger tracer.
+   */
+  public static final String JAEGER_PREFIX = "JAEGER_";
+
+  /**
+   * The host name used to locate the agent.
+   */
+  public static final String JAEGER_AGENT_HOST = JAEGER_PREFIX + "AGENT_HOST";
+
+  /**
+   * The port used to locate the agent.
+   */
+  public static final String JAEGER_AGENT_PORT = JAEGER_PREFIX + "AGENT_PORT";
+
+  /**
+   * Whether the reporter should log the spans.
+   */
+  public static final String JAEGER_REPORTER_LOG_SPANS = JAEGER_PREFIX + "REPORTER_LOG_SPANS";
+
+  /**
+   * The maximum queue size for use when reporting spans remotely.
+   */
+  public static final String JAEGER_REPORTER_MAX_QUEUE_SIZE = JAEGER_PREFIX + "REPORTER_MAX_QUEUE_SIZE";
+
+  /**
+   * The flush interval when reporting spans remotely.
+   */
+  public static final String JAEGER_REPORTER_FLUSH_INTERVAL = JAEGER_PREFIX + "REPORTER_FLUSH_INTERVAL";
+
+  /**
+   * The sampler type.
+   */
+  public static final String JAEGER_SAMPLER_TYPE = JAEGER_PREFIX + "SAMPLER_TYPE";
+
+  /**
+   * The sampler parameter (number).
+   */
+  public static final String JAEGER_SAMPLER_PARAM = "JAEGER_SAMPLER_PARAM";
+
+  /**
+   * The sampler manager host:port.
+   */
+  public static final String JAEGER_SAMPLER_MANAGER_HOST_PORT = JAEGER_PREFIX + "SAMPLER_MANAGER_HOST_PORT";
+
+  /**
+   * The service name.
+   */
+  public static final String JAEGER_SERVICE_NAME = JAEGER_PREFIX + "SERVICE_NAME";
 
   /**
    * The serviceName that the tracer will use
@@ -61,6 +115,10 @@ public class Configuration {
    * lazy singleton Tracer initialized in getTracer() method
    */
   private Tracer tracer;
+
+  public Configuration(String serviceName) {
+    this(serviceName, null, null);
+  }
 
   public Configuration(
       String serviceName,
@@ -83,6 +141,13 @@ public class Configuration {
     this.reporterConfig = reporterConfig;
 
     statsFactory = new StatsFactoryImpl(new NullStatsReporter());
+  }
+
+  public static Configuration fromEnv() {
+    return new Configuration(
+        getProperty(JAEGER_SERVICE_NAME),
+        SamplerConfiguration.fromEnv(),
+        ReporterConfiguration.fromEnv());
   }
 
   public Tracer.Builder getTracerBuilder() {
@@ -157,6 +222,14 @@ public class Configuration {
       this.param = param;
       this.managerHostPort = managerHostPort;
     }
+
+    public static SamplerConfiguration fromEnv() {
+      return new SamplerConfiguration(
+          getProperty(JAEGER_SAMPLER_TYPE),
+          getPropertyAsNum(JAEGER_SAMPLER_PARAM),
+          getProperty(JAEGER_SAMPLER_MANAGER_HOST_PORT));
+    }
+
 
     private Sampler createSampler(String serviceName, Metrics metrics) {
       String samplerType = stringOrDefault(this.getType(), RemoteControlledSampler.TYPE);
@@ -233,6 +306,15 @@ public class Configuration {
       this.maxQueueSize = maxQueueSize;
     }
 
+    public static ReporterConfiguration fromEnv() {
+      return new ReporterConfiguration(
+          getPropertyAsBoolean(JAEGER_REPORTER_LOG_SPANS),
+          getProperty(JAEGER_AGENT_HOST),
+          getPropertyAsInt(JAEGER_AGENT_PORT),
+          getPropertyAsInt(JAEGER_REPORTER_FLUSH_INTERVAL),
+          getPropertyAsInt(JAEGER_REPORTER_MAX_QUEUE_SIZE));
+    }
+
     private Reporter getReporter(Metrics metrics) {
       UdpSender sender =
           new UdpSender(
@@ -282,4 +364,41 @@ public class Configuration {
   private static Number numberOrDefault(Number value, Number defaultValue) {
     return value != null ? value : defaultValue;
   }
+
+  private static String getProperty(String name) {
+    return System.getProperty(name, System.getenv(name));
+  }
+
+  private static Integer getPropertyAsInt(String name) {
+    String value = getProperty(name);
+    if (value != null) {
+      try {
+        return Integer.parseInt(value);
+      } catch (NumberFormatException e) {
+        log.error("Failed to parse integer for property '" + name + "' with value '" + value + "'", e);
+      }
+    }
+    return null;
+  }
+
+  private static Number getPropertyAsNum(String name) {
+    String value = getProperty(name);
+    if (value != null) {
+      try {
+        return NumberFormat.getInstance().parse(value);
+      } catch (ParseException e) {
+        log.error("Failed to parse number for property '" + name + "' with value '" + value + "'", e);
+      }
+    }
+    return null;
+  }
+
+  private static Boolean getPropertyAsBoolean(String name) {
+    String value = getProperty(name);
+    if (value != null) {
+      return Boolean.valueOf(value);
+    }
+    return null;
+  }
+
 }
