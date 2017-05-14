@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.reporters.protocols;
 
 import static org.junit.Assert.assertEquals;
@@ -27,14 +28,19 @@ import static org.junit.Assert.assertNotNull;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
+import com.uber.jaeger.Reference;
+import com.uber.jaeger.SpanContext;
 import com.uber.jaeger.Tracer;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
 import com.uber.jaeger.thriftjava.Log;
+import com.uber.jaeger.thriftjava.SpanRef;
 import com.uber.jaeger.thriftjava.Tag;
 import com.uber.jaeger.thriftjava.TagType;
+import io.opentracing.References;
 import io.opentracing.Span;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,19 +61,21 @@ public class JaegerThriftSpanConverterTest {
 
   @DataProvider
   public static Object[][] dataProviderBuildTag() {
-    // @formatter:off
     return new Object[][] {
         { "value", TagType.STRING, "value" },
-        { new Long(1), TagType.LONG, new Long(1) },
-        { new Integer(1), TagType.LONG, new Long(1) },
-        { new Short((short) 1), TagType.LONG, new Long(1) },
-        { new Double(1), TagType.DOUBLE, new Double(1) },
-        { new Float(1), TagType.DOUBLE, new Double(1) },
-        { new Byte((byte) 1), TagType.STRING, "1" },
+        { (long) 1, TagType.LONG, (long) 1 },
+        { 1, TagType.LONG, (long) 1 },
+        { (short) 1, TagType.LONG, (long) 1 },
+        { (double) 1, TagType.DOUBLE, (double) 1 },
+        { (float) 1, TagType.DOUBLE, (double) 1 },
+        { (byte) 1, TagType.STRING, "1" },
         { true, TagType.BOOL, true },
-        { new ArrayList<String>() {{add("hello");}}, TagType.STRING, "[hello]"}
+        { new ArrayList<String>() {
+            {
+              add("hello");
+            }
+          }, TagType.STRING, "[hello]" }
     };
-    // @formatter:on
   }
 
   @Test
@@ -78,6 +86,7 @@ public class JaegerThriftSpanConverterTest {
     assertEquals("key", tag.getKey());
     switch (tagType) {
       case STRING:
+      default:
         assertEquals(expected, tag.getVStr());
         break;
       case BOOL:
@@ -99,12 +108,12 @@ public class JaegerThriftSpanConverterTest {
     Map<String, Object> tags = new HashMap<String, Object>();
     tags.put("key", "value");
 
-    List<Tag> jTags = JaegerThriftSpanConverter.buildTags(tags);
-    assertNotNull(jTags);
-    assertEquals(1, jTags.size());
-    assertEquals("key", jTags.get(0).getKey());
-    assertEquals("value", jTags.get(0).getVStr());
-    assertEquals(TagType.STRING, jTags.get(0).getVType());
+    List<Tag> thriftTags = JaegerThriftSpanConverter.buildTags(tags);
+    assertNotNull(thriftTags);
+    assertEquals(1, thriftTags.size());
+    assertEquals("key", thriftTags.get(0).getKey());
+    assertEquals("value", thriftTags.get(0).getVStr());
+    assertEquals(TagType.STRING, thriftTags.get(0).getVType());
   }
 
   @Test
@@ -116,46 +125,81 @@ public class JaegerThriftSpanConverterTest {
     span = span.log(1, "key", "value");
     span = span.log(1, fields);
 
-    com.uber.jaeger.thriftjava.Span jSpan = JaegerThriftSpanConverter.convertSpan((com.uber.jaeger.Span) span);
+    com.uber.jaeger.thriftjava.Span thriftSpan = JaegerThriftSpanConverter.convertSpan((com.uber.jaeger.Span) span);
 
-    assertEquals("operation-name", jSpan.getOperationName());
-    assertEquals(2, jSpan.getLogs().size());
-    Log jLog = jSpan.getLogs().get(0);
-    assertEquals(1, jLog.getTimestamp());
-    assertEquals(2, jLog.getFields().size());
-    Tag jTag = jLog.getFields().get(0);
-    assertEquals("event", jTag.getKey());
-    assertEquals("key", jTag.getVStr());
-    jTag = jLog.getFields().get(1);
-    assertEquals("payload", jTag.getKey());
-    assertEquals("value", jTag.getVStr());
+    assertEquals("operation-name", thriftSpan.getOperationName());
+    assertEquals(2, thriftSpan.getLogs().size());
+    Log thriftLog = thriftSpan.getLogs().get(0);
+    assertEquals(1, thriftLog.getTimestamp());
+    assertEquals(2, thriftLog.getFields().size());
+    Tag thriftTag = thriftLog.getFields().get(0);
+    assertEquals("event", thriftTag.getKey());
+    assertEquals("key", thriftTag.getVStr());
+    thriftTag = thriftLog.getFields().get(1);
+    assertEquals("payload", thriftTag.getKey());
+    assertEquals("value", thriftTag.getVStr());
 
-    jLog = jSpan.getLogs().get(1);
-    assertEquals(1, jLog.getTimestamp());
-    assertEquals(1, jLog.getFields().size());
-    jTag = jLog.getFields().get(0);
-    assertEquals("k", jTag.getKey());
-    assertEquals("v", jTag.getVStr());
+    thriftLog = thriftSpan.getLogs().get(1);
+    assertEquals(1, thriftLog.getTimestamp());
+    assertEquals(1, thriftLog.getFields().size());
+    thriftTag = thriftLog.getFields().get(0);
+    assertEquals("k", thriftTag.getKey());
+    assertEquals("v", thriftTag.getVStr());
   }
 
   @Test
-  public void testTruncateString() {
-    String testString =
-        "k9bHT50f9JNpPUggw3Qz\n" +
-        "Q1MUhMobIMPA5ItaB3KD\n" +
-        "vNUoBPRjOpJw2C46vgn3\n" +
-        "UisXI5KIIH8Wd8uqJ8Wn\n" +
-        "Z8NVmrcpIBwxc2Qje5d6\n" +
-        "1mJdQnPMc3VmX1v75As8\n" +
-        "pUyoicWVPeGEidRuhHpt\n" +
-        "R1sIR1YNjwtBIy9Swwdq\n" +
-        "LUIZXdLcPmCvQVPB3cYw\n" +
-        "VGAtFXG7D8ksLsKw94eY\n" +
-        "c7PNm74nEV3jIIvlJ217\n" +
-        "SLBfUBHW6SEjrHcz553i\n" +
-        "VSjpBvJYXR6CsoEMGce0\n" +
-        "LqSypCXJHDAzb0DL1w8B\n" +
-        "kS9g0wCgregSAlq63OIf";
-    assertEquals(256, JaegerThriftSpanConverter.truncateString(testString).length());
+  public void testConvertSpanOneReferenceChildOf() {
+    Span parent = tracer.buildSpan("foo").start();
+
+    Span child = tracer.buildSpan("foo")
+        .asChildOf(parent)
+        .start();
+
+    com.uber.jaeger.thriftjava.Span span = JaegerThriftSpanConverter.convertSpan((com.uber.jaeger.Span) child);
+
+    assertEquals(((com.uber.jaeger.SpanContext)child.context()).getParentId(), span.getParentSpanId());
+    assertEquals(0, span.getReferences().size());
+  }
+
+  @Test
+  public void testConvertSpanTwoReferencesChildOf() {
+    Span parent = tracer.buildSpan("foo").start();
+    Span parent2 = tracer.buildSpan("foo").start();
+
+    Span child = tracer.buildSpan("foo")
+        .asChildOf(parent)
+        .asChildOf(parent2)
+        .start();
+
+    com.uber.jaeger.thriftjava.Span span = JaegerThriftSpanConverter.convertSpan((com.uber.jaeger.Span) child);
+
+    assertEquals(0, span.getParentSpanId());
+    assertEquals(2, span.getReferences().size());
+    assertEquals(buildReference((SpanContext) parent.context(), References.CHILD_OF),span.getReferences().get(0));
+    assertEquals(buildReference((SpanContext) parent2.context(), References.CHILD_OF),span.getReferences().get(1));
+  }
+
+  @Test
+  public void testConvertSpanMixedReferences() {
+    Span parent = tracer.buildSpan("foo").start();
+    Span parent2 = tracer.buildSpan("foo").start();
+
+    Span child = tracer.buildSpan("foo")
+        .addReference(References.FOLLOWS_FROM, parent.context())
+        .asChildOf(parent2)
+        .start();
+
+    com.uber.jaeger.thriftjava.Span span = JaegerThriftSpanConverter.convertSpan((com.uber.jaeger.Span) child);
+
+    assertEquals(0, span.getParentSpanId());
+    assertEquals(2, span.getReferences().size());
+    assertEquals(buildReference((SpanContext) parent.context(), References.FOLLOWS_FROM),span.getReferences().get(0));
+    assertEquals(buildReference((SpanContext) parent2.context(), References.CHILD_OF),span.getReferences().get(1));
+  }
+
+  private static SpanRef buildReference(SpanContext context, String referenceType) {
+    return JaegerThriftSpanConverter.buildReferences(
+        Collections.singletonList(new Reference(context, referenceType)))
+        .get(0);
   }
 }

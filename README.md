@@ -39,7 +39,7 @@ For e.g, to depend on the core jaeger library, you'd include the following
 </dependency>
 ```
 
-###Thrift version conflicts
+### Thrift version conflicts
 Jaeger client uses `org.apache.thrift:libthrift:0.9.2`. If your project depends on a different
 version of `libthrift`, it is recommended that you use the shaded `jaeger-thrift` jar we publish
 which packages it's own `libthrift`.
@@ -58,6 +58,10 @@ Note that this is only supported for a jaeger version >= 0.15.0
   </dependencies>
 </dependencyManagement>
 ```
+
+## Instantiating the Tracer
+
+Please see [jaeger-core/README](./jaeger-core/README.md).
 
 ## In-process Context Propagation
 `jaeger-context` defines
@@ -106,7 +110,7 @@ can be used to affect the sampling of a span and its children:
 ```java
 import io.opentracing.tag.Tags;
 
-Tags.SAMPLING_PRIORITY.set(span, (short) 1);
+Tags.SAMPLING_PRIORITY.set(span, 1);
 ```
 
 #### Via HTTP Headers

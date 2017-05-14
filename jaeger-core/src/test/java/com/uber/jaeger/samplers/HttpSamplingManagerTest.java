@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.samplers;
 
 import static org.junit.Assert.assertEquals;
@@ -69,7 +70,7 @@ public class HttpSamplingManagerTest extends JerseyTest {
   @Test
   public void testParseProbabilisticSampling() throws Exception {
     SamplingStrategyResponse response =
-        undertest.parseJson(readFixture("probabilistic_sampling.json") );
+        undertest.parseJson(readFixture("probabilistic_sampling.json"));
     assertEquals(new ProbabilisticSamplingStrategy(0.01), response.getProbabilisticSampling());
     assertNull(response.getRateLimitingSampling());
   }

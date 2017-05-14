@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger;
 
 import static org.junit.Assert.assertEquals;
@@ -31,6 +32,7 @@ import com.uber.jaeger.metrics.InMemoryStatsReporter;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
 import com.uber.jaeger.utils.Clock;
+import io.opentracing.References;
 import io.opentracing.tag.Tags;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -194,7 +196,11 @@ public class SpanTest {
     final String expectedLog = "some-log";
     final String expectedEvent = "event";
     Object expectedPayload = new Object();
-    Map<String, String> expectedFields = new HashMap<String, String>() {{put(expectedEvent, expectedLog);}};
+    Map<String, String> expectedFields = new HashMap<String, String>() {
+      {
+        put(expectedEvent, expectedLog);
+      }
+    };
 
     span.log(expectedTimestamp, expectedLog, expectedPayload);
     span.log(expectedTimestamp, expectedEvent);
@@ -228,12 +234,17 @@ public class SpanTest {
     final String expectedLog = "some-log";
     final String expectedEvent = "expectedEvent";
     final Object expectedPayload = new Object();
-    Map<String, String> expectedFields = new HashMap<String, String>() {{put(expectedEvent, expectedLog);}};
 
     when(clock.currentTimeMicros()).thenReturn(expectedTimestamp);
 
     span.log(expectedLog, expectedPayload);
     span.log(expectedEvent);
+
+    Map<String, String> expectedFields = new HashMap<String, String>() {
+      {
+        put(expectedEvent, expectedLog);
+      }
+    };
     span.log(expectedFields);
     span.log((String) null);
     span.log((Map<String, ?>) null);
@@ -261,7 +272,7 @@ public class SpanTest {
   @Test
   public void testSpanDetectsSamplingPriorityGreaterThanZero() {
     Span span = (Span) tracer.buildSpan("test-service-operation").start();
-    Tags.SAMPLING_PRIORITY.set(span, (short) 1);
+    Tags.SAMPLING_PRIORITY.set(span, 1);
 
     assertEquals(span.context().getFlags() & SpanContext.flagSampled, SpanContext.flagSampled);
     assertEquals(span.context().getFlags() & SpanContext.flagDebug, SpanContext.flagDebug);
@@ -272,8 +283,45 @@ public class SpanTest {
     Span span = (Span) tracer.buildSpan("test-service-operation").start();
 
     assertEquals(span.context().getFlags() & SpanContext.flagSampled, SpanContext.flagSampled);
-    Tags.SAMPLING_PRIORITY.set(span, (short) -1);
+    Tags.SAMPLING_PRIORITY.set(span, -1);
     assertEquals(span.context().getFlags() & SpanContext.flagSampled, 0);
+  }
+
+  @Test
+  public void testBaggageOneReference() {
+    io.opentracing.Span parent = tracer.buildSpan("foo").start();
+    parent.setBaggageItem("foo", "bar");
+
+    io.opentracing.Span child = tracer.buildSpan("foo")
+        .asChildOf(parent)
+        .start();
+
+    child.setBaggageItem("a", "a");
+
+    assertNull(parent.getBaggageItem("a"));
+    assertEquals("a", child.getBaggageItem("a"));
+    assertEquals("bar", child.getBaggageItem("foo"));
+  }
+
+  @Test
+  public void testBaggageMultipleReferences() {
+    io.opentracing.Span parent1 = tracer.buildSpan("foo").start();
+    parent1.setBaggageItem("foo", "bar");
+    io.opentracing.Span parent2 = tracer.buildSpan("foo").start();
+    parent2.setBaggageItem("foo2", "bar");
+
+    io.opentracing.Span child = tracer.buildSpan("foo")
+        .asChildOf(parent1)
+        .addReference(References.FOLLOWS_FROM, parent2.context())
+        .start();
+
+    child.setBaggageItem("a", "a");
+
+    assertNull(parent1.getBaggageItem("a"));
+    assertNull(parent2.getBaggageItem("a"));
+    assertEquals("a", child.getBaggageItem("a"));
+    assertEquals("bar", child.getBaggageItem("foo"));
+    assertEquals("bar", child.getBaggageItem("foo2"));
   }
 
   @Test

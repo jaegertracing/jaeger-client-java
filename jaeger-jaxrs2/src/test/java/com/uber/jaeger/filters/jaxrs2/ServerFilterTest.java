@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger.filters.jaxrs2;
 
 import static org.junit.Assert.assertEquals;
@@ -74,7 +75,6 @@ public class ServerFilterTest {
   @Test
   public void filter() throws Exception {
     String method = "GET";
-    String source = "source";
     URI uri = new URI("http://localhost/path");
     when(containerRequestContext.getMethod()).thenReturn(method);
     UriInfo uriInfo = mock(UriInfo.class);
@@ -82,7 +82,7 @@ public class ServerFilterTest {
     when(uriInfo.getBaseUri()).thenReturn(uri);
     when(containerRequestContext.getUriInfo()).thenReturn(uriInfo);
     MultivaluedHashMap<String, String> headers = new MultivaluedHashMap<>();
-    headers.add(Constants.X_UBER_SOURCE, source);
+    headers.add(Constants.X_UBER_SOURCE, "source");
     when(containerRequestContext.getHeaders()).thenReturn(headers);
 
     when(containerResponseContext.getStatus()).thenReturn(200);

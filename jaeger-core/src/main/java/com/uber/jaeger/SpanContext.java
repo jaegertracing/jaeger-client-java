@@ -177,4 +177,28 @@ public class SpanContext implements io.opentracing.SpanContext {
   String getDebugId() {
     return debugId;
   }
+
+  /**
+   * @deprecated use {@link SpanContext#getTraceId()} instead.
+   */
+  @Deprecated
+  public long getTraceID() {
+    return traceId;
+  }
+
+  /**
+   * @deprecated use {@link SpanContext#getSpanID()} instead.
+   */
+  @Deprecated
+  public long getSpanID() {
+    return spanId;
+  }
+
+  /**
+   * @deprecated use {@link SpanContext#getParentID()} instead.
+   */
+  @Deprecated
+  public long getParentID() {
+    return parentId;
+  }
 }

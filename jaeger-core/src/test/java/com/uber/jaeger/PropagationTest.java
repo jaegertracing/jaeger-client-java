@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package com.uber.jaeger;
 
 import static org.junit.Assert.assertEquals;
@@ -35,7 +36,7 @@ import org.junit.Test;
 
 public class PropagationTest {
   @Test
-  public void testDebugCorrelationID() {
+  public void testDebugCorrelationId() {
     Tracer tracer =
         new Tracer.Builder("test", new InMemoryReporter(), new ConstSampler(true)).build();
     Map<String, String> headers = new HashMap<>();

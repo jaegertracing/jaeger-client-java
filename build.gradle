@@ -8,13 +8,14 @@ plugins {
     id 'ru.vyarus.animalsniffer' version '1.2.0'
 }
 
-ext.opentracingVersion = '0.21.0'
+ext.opentracingVersion = '0.22.0'
 ext.guavaVersion = '18.0'
 ext.apacheThriftVersion = '0.9.2'
 ext.jerseyVersion = '2.22.2'
 ext.slf4jVersion = '1.7.16'
 ext.apacheHttpComponentsVersion = '4.1.2'
 ext.gsonVersion = '2.8.0'
+ext.tracerResolverVersion = '0.1.0'
 
 ext.junitVersion = '4.12'
 ext.mockitoVersion = '2.2.28'
@@ -69,10 +70,8 @@ subprojects {
     checkstyle {
         configFile = rootProject.file('config/checkstyle/checkstyle.xml')
         toolVersion = "7.6.1"
+        configProperties.checkstyleSuppressions = "${rootProject.rootDir}/config/checkstyle/suppressions.xml"
     }
-
-    // TODO fix tests
-    checkstyleTest.enabled = false
 
     license {
         header rootProject.file('license-template')

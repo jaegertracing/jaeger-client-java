@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Uber Technologies, Inc
+ * Copyright (c) 2017, Uber Technologies, Inc
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,42 +19,18 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.uber.jaeger.reporters.protocols;
 
-import java.net.SocketException;
-import java.net.UnknownHostException;
-import org.apache.thrift.transport.TServerTransport;
-import org.apache.thrift.transport.TTransport;
-import org.apache.thrift.transport.TTransportException;
+package com.uber.jaeger.tracerresolver;
 
-public class TUDPServerTransport extends TServerTransport {
-  private ThriftUdpTransport transport;
+import com.uber.jaeger.Configuration;
 
-  public TUDPServerTransport(int localPort) throws SocketException, UnknownHostException {
-    transport = ThriftUdpTransport.newThriftUdpServer("localhost", localPort);
-  }
+import io.opentracing.contrib.tracerresolver.TracerResolver;
 
-  int getPort() {
-    return transport.getPort();
-  }
+public class JaegerTracerResolver extends TracerResolver {
 
   @Override
-  public void listen() throws TTransportException {}
-
-  @Override
-  public void close() {
-    if (transport.isOpen()) {
-      transport.close();
-    }
+  protected io.opentracing.Tracer resolve() {
+    return Configuration.fromEnv().getTracer();
   }
 
-  @Override
-  protected TTransport acceptImpl() throws TTransportException {
-    return transport;
-  }
-
-  @Override
-  public void interrupt() {
-    this.close();
-  }
 }
