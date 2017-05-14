@@ -30,6 +30,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
@@ -39,6 +40,7 @@ import lombok.extern.slf4j.Slf4j;
 @ToString(exclude = {"commandQueue", "flushTimer", "queueProcessorThread", "metrics"})
 @Slf4j
 public class RemoteReporter implements Reporter {
+  private static final int CLOSE_ENQUEUE_TIMEOUT_MILLIS = 1000;
   private final BlockingQueue<Command> commandQueue;
   private final Timer flushTimer;
   private final Thread queueProcessorThread;
@@ -68,7 +70,7 @@ public class RemoteReporter implements Reporter {
         new TimerTask() {
           @Override
           public void run() {
-            commandQueue.add(new FlushCommand());
+            flush();
           }
         },
         0,
@@ -78,20 +80,25 @@ public class RemoteReporter implements Reporter {
   @Override
   public void report(Span span) {
     // Its better to drop spans, than to block here
-    if (commandQueue.size() == maxQueueSize) {
-      metrics.reporterDropped.inc(1);
-      return;
-    }
+    boolean added = commandQueue.offer(new AppendCommand(span));
 
-    commandQueue.add(new AppendCommand(span));
+    if (!added) {
+      metrics.reporterDropped.inc(1);
+    }
   }
 
   @Override
   public void close() {
-    commandQueue.add(new CloseCommand());
-
     try {
-      queueProcessorThread.join();
+      // best-effort: if we can't add CloseCommand in this time then it probably will never happen
+      boolean added = commandQueue
+          .offer(new CloseCommand(), CLOSE_ENQUEUE_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+      if (added) {
+        queueProcessorThread.join();
+      } else {
+        log.warn("Unable to cleanly close RemoteReporter, command queue is full - probably the"
+            + " sender is stuck");
+      }
     } catch (InterruptedException e) {
       return;
     } finally {
@@ -103,6 +110,15 @@ public class RemoteReporter implements Reporter {
       }
       flushTimer.cancel();
     }
+  }
+
+  void flush() {
+    // to reduce the number of updateGauge stats, we only emit queue length on flush
+    metrics.reporterQueueLength.update(commandQueue.size());
+
+    // We can safely drop FlushCommand when the queue is full - sender should take care of flushing
+    // in such case
+    commandQueue.offer(new FlushCommand());
   }
 
   /*
@@ -140,8 +156,6 @@ public class RemoteReporter implements Reporter {
     public void execute() throws SenderException {
       int n = sender.flush();
       metrics.reporterSuccess.inc(n);
-      // to reduce the number of updateGauge stats, we only emit queue length on flush
-      metrics.reporterQueueLength.update(commandQueue.size());
     }
   }
 

@@ -28,11 +28,18 @@ import com.uber.jaeger.senders.Sender;
 import com.uber.jaeger.thriftjava.Span;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Semaphore;
 
+/**
+ * Sender which stores spans in memory. Appending a new span is a blocking operation unless
+ * "permitted". By default Integer.MAX_VALUE "appends" are permitted.
+ */
 public class InMemorySender implements Sender {
+
   private List<Span> appended;
   private List<Span> flushed;
   private List<Span> received;
+  private Semaphore semaphore = new Semaphore(Integer.MAX_VALUE);
 
   public InMemorySender() {
     appended = new ArrayList<Span>();
@@ -54,6 +61,11 @@ public class InMemorySender implements Sender {
 
   @Override
   public int append(com.uber.jaeger.Span span) throws SenderException {
+    try {
+      semaphore.acquire();
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
     com.uber.jaeger.thriftjava.Span thriftSpan = JaegerThriftSpanConverter.convertSpan(span);
     appended.add(thriftSpan);
     received.add(thriftSpan);
@@ -72,5 +84,16 @@ public class InMemorySender implements Sender {
   @Override
   public int close() throws SenderException {
     return flush();
+  }
+
+  /**
+   * Removes previously granted "append" permits and grants
+   * a new number of permits
+   *
+   * @param number number of "appends" to permit
+   */
+  public void permitAppend(int number) {
+    semaphore.drainPermits();
+    semaphore.release(number);
   }
 }
