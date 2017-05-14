@@ -170,7 +170,7 @@ public class RemoteReporterTest {
   }
 
   @Test
-  public void testCloseWhenQueueFull() throws Exception {
+  public void testCloseWhenQueueFull() {
     // change sender to blocking mode
     sender.permitAppend(0);
 
@@ -185,7 +185,7 @@ public class RemoteReporterTest {
   }
 
   @Test
-  public void testFlushWhenQueueFull() throws Exception {
+  public void testFlushWhenQueueFull() {
     // change sender to blocking mode
     sender.permitAppend(0);
 
@@ -197,6 +197,24 @@ public class RemoteReporterTest {
     ((RemoteReporter) reporter).flush();
 
     // expect no exception thrown
+  }
+
+  @Test
+  public void testFlushUpdatesQueueLength() throws Exception {
+    // change sender to blocking mode
+    sender.permitAppend(0);
+    RemoteReporter remoteReporter = (RemoteReporter) reporter;
+    remoteReporter.flush();
+
+    for (int i = 0; i < 10; i++) {
+      reporter.report(newSpan());
+    }
+
+    assertEquals(0, metricsReporter.gauges.get("jaeger.reporter-queue").longValue());
+
+    remoteReporter.flush();
+
+    assertTrue(metricsReporter.gauges.get("jaeger.reporter-queue") > 5);
   }
 
   private Span newSpan() {

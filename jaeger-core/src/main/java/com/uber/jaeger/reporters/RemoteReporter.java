@@ -119,6 +119,9 @@ public class RemoteReporter implements Reporter {
   }
 
   void flush() {
+    // to reduce the number of updateGauge stats, we only emit queue length on flush
+    metrics.reporterQueueLength.update(commandQueue.size());
+
     // We can safely drop FlushCommand when the queue is full - sender should take care of flushing
     // in such case
     commandQueue.offer(new FlushCommand());
@@ -159,8 +162,6 @@ public class RemoteReporter implements Reporter {
     public void execute() throws SenderException {
       int n = sender.flush();
       metrics.reporterSuccess.inc(n);
-      // to reduce the number of updateGauge stats, we only emit queue length on flush
-      metrics.reporterQueueLength.update(commandQueue.size());
     }
   }
 
