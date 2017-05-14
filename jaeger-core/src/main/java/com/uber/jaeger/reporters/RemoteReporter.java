@@ -89,17 +89,11 @@ public class RemoteReporter implements Reporter {
 
   @Override
   public void close() {
-    boolean closeCommandAdded = false;
     try {
       // best-effort: if we can't add CloseCommand in this time then it probably will never happen
-      closeCommandAdded = commandQueue
+      boolean added = commandQueue
           .offer(new CloseCommand(), CLOSE_ENQUEUE_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-    } catch (InterruptedException e) {
-      // ignore
-    }
-
-    try {
-      if (closeCommandAdded) {
+      if (added) {
         queueProcessorThread.join();
       } else {
         log.warn("Unable to cleanly close RemoteReporter, command queue is full - probably the"
