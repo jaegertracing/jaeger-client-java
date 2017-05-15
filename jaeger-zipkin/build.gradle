@@ -12,24 +12,3 @@ dependencies {
 
     signature 'org.codehaus.mojo.signature:java16:1.1@signature'
 }
-
-sourceSets {
-    main {
-        java {
-            srcDir 'src/main/java'
-        }
-    }
-
-    test {
-        java {
-            srcDir 'src/test/java'
-        }
-    }
-}
-
-jar {
-    from sourceSets.main.output
-    manifest {
-        attributes('Implementation-Title': 'jaeger-zipkin', 'Implementation-Version': project.version)
-    }
-}

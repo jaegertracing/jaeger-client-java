@@ -17,30 +17,6 @@ dependencies {
     signature 'org.codehaus.mojo.signature:java16:1.1@signature'
 }
 
-sourceSets {
-    main {
-        java {
-            srcDir 'src/main/java'
-        }
-        resources {
-            includes = ["**/jaeger.properties"]
-        }
-    }
-
-    test {
-        java {
-            srcDir 'src/test/java'
-        }
-    }
-}
-
-jar {
-    from sourceSets.main.output
-    manifest {
-        attributes('Implementation-Title': 'jaeger-core', 'Implementation-Version': project.version)
-    }
-}
-
 task jaegerVersion {
     doLast {
         def dirPath = 'src/main/resources/com/uber/jaeger/'
