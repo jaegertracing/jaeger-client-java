@@ -8,10 +8,3 @@ dependencies {
 
     signature 'org.codehaus.mojo.signature:java16:1.1@signature'
 }
-
-jar {
-    from sourceSets.main.output
-    manifest {
-        attributes('Implementation-Title': 'jaeger-tracerresolver', 'Implementation-Version': project.version)
-    }
-}
