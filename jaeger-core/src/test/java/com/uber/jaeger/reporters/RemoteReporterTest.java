@@ -214,7 +214,10 @@ public class RemoteReporterTest {
     // change sender to blocking mode
     sender.permitAppend(0);
     RemoteReporter remoteReporter = (RemoteReporter) reporter;
-    remoteReporter.flush();
+
+    await("flush() execution via TimerTask").atMost(5, TimeUnit.SECONDS).until(
+        () -> metricsReporter.gauges.get("jaeger.reporter-queue") != null
+    );
 
     for (int i = 0; i < 10; i++) {
       reporter.report(newSpan());
