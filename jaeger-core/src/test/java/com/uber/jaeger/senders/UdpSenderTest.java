@@ -68,9 +68,12 @@ public class UdpSenderTest {
     Thread t = new Thread(server);
     t.start();
 
-    // wait up to 5000ms to get this thread started
-    await().with().pollDelay(5, TimeUnit.MILLISECONDS).pollInterval(5, TimeUnit.MILLISECONDS).atMost(
-            5000, TimeUnit.MILLISECONDS).until(() -> t.isAlive());
+    // wait up to 5 seconds to get this thread started
+    await()
+        .with()
+        .pollInterval(1, TimeUnit.MILLISECONDS)
+        .atMost(5, TimeUnit.SECONDS)
+        .until(() -> t.isAlive());
     return server;
   }
 

@@ -74,8 +74,11 @@ public class RemoteReporterTest {
     reporter.report(span);
     // do sleep until automatic flush happens on 'reporter'
     // added 20ms on top of 'flushInterval' to avoid corner cases
-    await().with().pollInterval(50, TimeUnit.MILLISECONDS).atMost(
-            flushInterval + 20, TimeUnit.MILLISECONDS).until(() -> sender.getReceived().size() > 0);
+    await()
+        .with()
+        .pollInterval(1, TimeUnit.MILLISECONDS)
+        .atMost(flushInterval + 20, TimeUnit.MILLISECONDS)
+        .until(() -> sender.getReceived().size() > 0);
     List<com.uber.jaeger.thriftjava.Span> received = sender.getReceived();
 
     assertEquals(1, received.size());
