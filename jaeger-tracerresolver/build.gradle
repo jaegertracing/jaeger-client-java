@@ -1,10 +1,10 @@
-description = 'Integration library for B3 Propagation'
+description = 'TracerResolver implementation for Jaeger Tracer'
 
 dependencies {
     compile project(':jaeger-core')
-
+    compile group: 'io.opentracing.contrib', name: 'opentracing-tracerresolver', version: tracerResolverVersion
+ 
     testCompile group: 'junit', name: 'junit', version: junitVersion
-    testCompile group: 'io.zipkin.brave', name: 'brave-http', version: '4.1.1'
 
     signature 'org.codehaus.mojo.signature:java16:1.1@signature'
 }

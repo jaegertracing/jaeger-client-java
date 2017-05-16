@@ -99,5 +99,13 @@ public class ServerFilterTest {
     assertEquals(Tags.SPAN_KIND_SERVER, tags.get(Tags.SPAN_KIND.getKey()));
     assertEquals(uri.toString(), tags.get(Tags.HTTP_URL.getKey()));
     assertEquals("localhost", tags.get(Tags.PEER_HOSTNAME.getKey()));
+
+
+    // Exercise catch blocks on filter methods for code coverage
+    undertest.filter(null);
+
+    // For filter(requestContext, responseContext) we first need to make sure there's something in the traceContext
+    undertest.filter(containerRequestContext);
+    undertest.filter(containerRequestContext, null);
   }
 }

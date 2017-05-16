@@ -15,10 +15,12 @@ ext.jerseyVersion = '2.22.2'
 ext.slf4jVersion = '1.7.16'
 ext.apacheHttpComponentsVersion = '4.1.2'
 ext.gsonVersion = '2.8.0'
+ext.tracerResolverVersion = '0.1.0'
 
 ext.junitVersion = '4.12'
 ext.mockitoVersion = '2.2.28'
 ext.junitDataProviderVersion = '1.10.0'
+ext.awaitilityVersion = '3.0.0'
 
 task wrapper(type: Wrapper) {
     gradleVersion = '3.5'
@@ -44,14 +46,22 @@ subprojects {
     apply plugin: 'signing'
     apply plugin: 'checkstyle'
 
+
     compileJava {
         sourceCompatibility = 1.6
         targetCompatibility = 1.6
     }
 
     compileTestJava {
-        sourceCompatibility = 1.7
-        targetCompatibility = 1.7
+        sourceCompatibility = 1.8
+        targetCompatibility = 1.8
+    }
+
+    jar {
+        from sourceSets.main.output
+        manifest {
+            attributes('Implementation-Title': project.name, 'Implementation-Version': project.version)
+        }
     }
 
     animalsniffer {
