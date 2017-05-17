@@ -213,7 +213,6 @@ public class RemoteReporterTest {
   public void testFlushUpdatesQueueLength() throws Exception {
     // change sender to blocking mode
     sender.permitAppend(0);
-    RemoteReporter remoteReporter = (RemoteReporter) reporter;
 
     await("flush() execution via TimerTask").atMost(5, TimeUnit.SECONDS).until(
         () -> metricsReporter.gauges.get("jaeger.reporter-queue") != null
@@ -225,6 +224,7 @@ public class RemoteReporterTest {
 
     assertEquals(0, metricsReporter.gauges.get("jaeger.reporter-queue").longValue());
 
+    RemoteReporter remoteReporter = (RemoteReporter) reporter;
     remoteReporter.flush();
 
     assertTrue(metricsReporter.gauges.get("jaeger.reporter-queue") > 5);
