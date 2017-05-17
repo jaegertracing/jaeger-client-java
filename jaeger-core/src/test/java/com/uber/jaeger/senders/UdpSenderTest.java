@@ -22,6 +22,7 @@
 
 package com.uber.jaeger.senders;
 
+import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -37,8 +38,11 @@ import com.uber.jaeger.reporters.protocols.TestTServer;
 import com.uber.jaeger.samplers.ConstSampler;
 import com.uber.jaeger.thriftjava.Batch;
 import com.uber.jaeger.thriftjava.Process;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.transport.AutoExpandingBufferWriteTransport;
 import org.junit.After;
@@ -64,7 +68,12 @@ public class UdpSenderTest {
     Thread t = new Thread(server);
     t.start();
 
-    Thread.sleep(5);
+    // wait up to 5 seconds to get this thread started
+    await()
+        .with()
+        .pollInterval(1, TimeUnit.MILLISECONDS)
+        .atMost(5, TimeUnit.SECONDS)
+        .until(() -> t.isAlive());
     return server;
   }
 

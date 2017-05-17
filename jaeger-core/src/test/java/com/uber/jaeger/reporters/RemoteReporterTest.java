@@ -22,6 +22,7 @@
 
 package com.uber.jaeger.reporters;
 
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
@@ -35,10 +36,13 @@ import com.uber.jaeger.metrics.InMemoryStatsReporter;
 import com.uber.jaeger.metrics.Metrics;
 import com.uber.jaeger.metrics.StatsFactoryImpl;
 import com.uber.jaeger.samplers.ConstSampler;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -68,10 +72,16 @@ public class RemoteReporterTest {
   public void testRemoteReporterReport() throws Exception {
     Span span = (Span) tracer.buildSpan("raza").start();
     reporter.report(span);
-    Thread.sleep(50);
+    // do sleep until automatic flush happens on 'reporter'
+    // added 20ms on top of 'flushInterval' to avoid corner cases
+    await()
+        .with()
+        .pollInterval(1, TimeUnit.MILLISECONDS)
+        .atMost(flushInterval + 20, TimeUnit.MILLISECONDS)
+        .until(() -> sender.getReceived().size() > 0);
     List<com.uber.jaeger.thriftjava.Span> received = sender.getReceived();
 
-    assertEquals(received.size(), 1);
+    assertEquals(1, received.size());
   }
 
   @Test
@@ -83,8 +93,8 @@ public class RemoteReporterTest {
     }
     reporter.close();
 
-    assertEquals(sender.getAppended().size(), 0);
-    assertEquals(sender.getFlushed().size(), numberOfSpans);
+    assertEquals(0, sender.getAppended().size());
+    assertEquals(numberOfSpans, sender.getFlushed().size());
 
     assertEquals(
         100L, metricsReporter.counters.get("jaeger.spans.group=sampling.sampled=y").longValue());
