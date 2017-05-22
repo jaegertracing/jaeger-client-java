@@ -40,23 +40,30 @@ import lombok.extern.slf4j.Slf4j;
 @ToString(exclude = {"commandQueue", "flushTimer", "queueProcessorThread", "metrics"})
 @Slf4j
 public class RemoteReporter implements Reporter {
-  private static final int CLOSE_ENQUEUE_TIMEOUT_MILLIS = 1000;
+  private static final int DEFAULT_CLOSE_ENQUEUE_TIMEOUT_MILLIS = 1000;
   private final BlockingQueue<Command> commandQueue;
   private final Timer flushTimer;
   private final Thread queueProcessorThread;
   private final QueueProcessor queueProcessor;
   private final Sender sender;
   private final int maxQueueSize;
+  private final int closeEnqueueTimeout;
   private final Metrics metrics;
 
   /*
    * RemoteReporter takes a Sender object, and sends spans for a specific protocol, and transport.
    * At this point in time the protocol (thrift) is tightly-coupled to  Reporter, but in the future it may not be.
    * */
-  public RemoteReporter(final Sender sender, int flushInterval, int maxQueueSize, Metrics metrics) {
+  public RemoteReporter(Sender sender, int flushInterval, int maxQueueSize, Metrics metrics) {
+    this(sender, flushInterval, maxQueueSize, DEFAULT_CLOSE_ENQUEUE_TIMEOUT_MILLIS, metrics);
+  }
+
+  RemoteReporter(Sender sender, int flushInterval, int maxQueueSize, int closeEnqueueTimeout,
+      Metrics metrics) {
     this.sender = sender;
     this.maxQueueSize = maxQueueSize;
     this.metrics = metrics;
+    this.closeEnqueueTimeout = closeEnqueueTimeout;
     commandQueue = new ArrayBlockingQueue<Command>(maxQueueSize);
 
     // start a thread to append spans
@@ -92,7 +99,7 @@ public class RemoteReporter implements Reporter {
     try {
       // best-effort: if we can't add CloseCommand in this time then it probably will never happen
       boolean added = commandQueue
-          .offer(new CloseCommand(), CLOSE_ENQUEUE_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+          .offer(new CloseCommand(), closeEnqueueTimeout, TimeUnit.MILLISECONDS);
       if (added) {
         queueProcessorThread.join();
       } else {

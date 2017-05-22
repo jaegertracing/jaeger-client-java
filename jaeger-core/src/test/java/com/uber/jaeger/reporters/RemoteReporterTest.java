@@ -182,6 +182,11 @@ public class RemoteReporterTest {
 
   @Test
   public void testCloseWhenQueueFull() {
+    int closeTimeoutMillis = 5;
+    reporter = new RemoteReporter(sender, Integer.MAX_VALUE, maxQueueSize, closeTimeoutMillis, metrics);
+    tracer = new Tracer.Builder("test-remote-reporter", reporter, new ConstSampler(true))
+        .withStatsReporter(metricsReporter)
+        .build();
     // change sender to blocking mode
     sender.permitAppend(0);
 
