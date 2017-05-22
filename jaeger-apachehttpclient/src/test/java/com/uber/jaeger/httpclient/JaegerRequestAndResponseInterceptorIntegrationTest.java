@@ -73,7 +73,7 @@ public class JaegerRequestAndResponseInterceptorIntegrationTest {
     Sampler sampler = new ConstSampler(true);
     tracer = new Tracer.Builder("test_service", reporter, sampler).build();
 
-    parentSpan = (Span) tracer.buildSpan("parent_operation").start();
+    parentSpan = (Span) tracer.buildSpan("parent_operation").startManual();
     parentSpan.setBaggageItem(BAGGAGE_KEY, BAGGAGE_VALUE);
     parentSpan.finish();
     //Set up a parent span context

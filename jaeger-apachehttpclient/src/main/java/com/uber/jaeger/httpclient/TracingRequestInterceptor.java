@@ -66,7 +66,7 @@ public class TracingRequestInterceptor implements HttpRequestInterceptor {
         clientSpanBuilder.asChildOf(parentContext.getCurrentSpan());
       }
 
-      Span clientSpan = clientSpanBuilder.start();
+      Span clientSpan = clientSpanBuilder.startManual();
       Tags.SPAN_KIND.set(clientSpan, Tags.SPAN_KIND_CLIENT);
       Tags.HTTP_URL.set(clientSpan, requestLine.getUri());
 

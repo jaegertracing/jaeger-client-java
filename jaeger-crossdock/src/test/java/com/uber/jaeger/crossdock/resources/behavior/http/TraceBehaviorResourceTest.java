@@ -98,7 +98,7 @@ public class TraceBehaviorResourceTest {
 
   @Test
   public void testStartTraceHttp() throws Exception {
-    Span span = (Span) server.getTracer().buildSpan("root").start();
+    Span span = (Span) server.getTracer().buildSpan("root").startManual();
     TracingUtils.getTraceContext().push(span);
 
     String expectedTraceId = String.format("%x", span.context().getTraceId());
@@ -123,7 +123,7 @@ public class TraceBehaviorResourceTest {
 
   @Test
   public void testJoinTraceHttp() throws Exception {
-    Span span = (Span) server.getTracer().buildSpan("root").start();
+    Span span = (Span) server.getTracer().buildSpan("root").startManual();
     TracingUtils.getTraceContext().push(span);
 
     String expectedBaggage = "baggage-example";
@@ -157,7 +157,7 @@ public class TraceBehaviorResourceTest {
     TChannelServer tchannel = new TChannelServer(8081, behavior, server.getTracer(), true);
     tchannel.start();
 
-    Span span = (Span) server.getTracer().buildSpan("root").start();
+    Span span = (Span) server.getTracer().buildSpan("root").startManual();
     TracingUtils.getTraceContext().push(span);
 
     String expectedBaggage = "baggage-example";

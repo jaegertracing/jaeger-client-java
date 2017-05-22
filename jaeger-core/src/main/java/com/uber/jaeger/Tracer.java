@@ -36,9 +36,15 @@ import com.uber.jaeger.samplers.SamplingStatus;
 import com.uber.jaeger.utils.Clock;
 import com.uber.jaeger.utils.SystemClock;
 import com.uber.jaeger.utils.Utils;
+
+import io.opentracing.ActiveSpan;
+import io.opentracing.ActiveSpanSource;
+import io.opentracing.BaseSpan;
 import io.opentracing.References;
 import io.opentracing.propagation.Format;
 import io.opentracing.tag.Tags;
+import io.opentracing.util.ThreadLocalActiveSpanSource;
+
 import java.io.InputStream;
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -52,7 +58,7 @@ import java.util.Properties;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
-@ToString(exclude = {"registry", "clock", "metrics"})
+@ToString(exclude = {"registry", "clock", "metrics", "activeSpanSource"})
 @Slf4j
 public class Tracer implements io.opentracing.Tracer {
 
@@ -66,6 +72,7 @@ public class Tracer implements io.opentracing.Tracer {
   private final int ip;
   private final Map<String, ?> tags;
   private final boolean zipkinSharedRpcSpan;
+  private final ActiveSpanSource activeSpanSource;
 
   private Tracer(
       String serviceName,
@@ -75,7 +82,8 @@ public class Tracer implements io.opentracing.Tracer {
       Clock clock,
       Metrics metrics,
       Map<String, Object> tags,
-      boolean zipkinSharedRpcSpan) {
+      boolean zipkinSharedRpcSpan,
+      ActiveSpanSource activeSpanSource) {
     this.serviceName = serviceName;
     this.reporter = reporter;
     this.sampler = sampler;
@@ -83,6 +91,7 @@ public class Tracer implements io.opentracing.Tracer {
     this.clock = clock;
     this.metrics = metrics;
     this.zipkinSharedRpcSpan = zipkinSharedRpcSpan;
+    this.activeSpanSource = activeSpanSource;
 
     int ip;
     try {
@@ -158,6 +167,16 @@ public class Tracer implements io.opentracing.Tracer {
     return extractor.extract(carrier);
   }
 
+  @Override
+  public ActiveSpan activeSpan() {
+    return activeSpanSource.activeSpan();
+  }
+
+  @Override
+  public ActiveSpan makeActive(io.opentracing.Span span) {
+    return activeSpanSource.makeActive(span);
+  }
+
   /**
    * Shuts down the {@link Reporter} and {@link Sampler}
    */
@@ -177,6 +196,7 @@ public class Tracer implements io.opentracing.Tracer {
      */
     private List<Reference> references = Collections.emptyList();
     private final Map<String, Object> tags = new HashMap<String, Object>();
+    private boolean ignoreActiveSpan = false;
 
     SpanBuilder(String operationName) {
       this.operationName = operationName;
@@ -188,7 +208,7 @@ public class Tracer implements io.opentracing.Tracer {
     }
 
     @Override
-    public io.opentracing.Tracer.SpanBuilder asChildOf(io.opentracing.Span parent) {
+    public io.opentracing.Tracer.SpanBuilder asChildOf(BaseSpan<?> parent) {
       return addReference(References.CHILD_OF, parent.context());
     }
 
@@ -349,12 +369,17 @@ public class Tracer implements io.opentracing.Tracer {
     }
 
     @Override
-    public io.opentracing.Span start() {
+    public io.opentracing.Span startManual() {
       SpanContext context;
 
       String debugId = debugId();
       if (references.isEmpty()) {
         context = createNewContext(null);
+
+        // Check if active span should be established as CHILD_OF relationship
+        if (!ignoreActiveSpan && null != activeSpanSource.activeSpan()) {
+          asChildOf(activeSpanSource.activeSpan());
+        }
       } else if (debugId != null) {
         context = createNewContext(debugId);
       } else {
@@ -395,6 +420,23 @@ public class Tracer implements io.opentracing.Tracer {
       metrics.spansStarted.inc(1);
       return span;
     }
+
+    @Override
+    public ActiveSpan startActive() {
+      return activeSpanSource.makeActive(startManual());
+    }
+
+    @Override
+    public io.opentracing.Tracer.SpanBuilder ignoreActiveSpan() {
+      ignoreActiveSpan = true;
+      return this;
+    }
+
+    @Override
+    @Deprecated
+    public io.opentracing.Span start() {
+      return startManual();
+    }
   }
 
   /**
@@ -409,6 +451,7 @@ public class Tracer implements io.opentracing.Tracer {
     private Clock clock = new SystemClock();
     private Map<String, Object> tags = new HashMap<String, Object>();
     private boolean zipkinSharedRpcSpan;
+    private ActiveSpanSource activeSpanSource = new ThreadLocalActiveSpanSource();
 
     public Builder(String serviceName, Reporter reporter, Sampler sampler) {
       if (serviceName == null || serviceName.trim().length() == 0) {
@@ -440,6 +483,11 @@ public class Tracer implements io.opentracing.Tracer {
 
     public Builder withStatsReporter(StatsReporter statsReporter) {
       this.metrics = new Metrics(new StatsFactoryImpl(statsReporter));
+      return this;
+    }
+
+    public Builder withActiveSpanSource(ActiveSpanSource activeSpanSource) {
+      this.activeSpanSource = activeSpanSource;
       return this;
     }
 
@@ -475,7 +523,7 @@ public class Tracer implements io.opentracing.Tracer {
 
     public Tracer build() {
       return new Tracer(this.serviceName, reporter, sampler, registry, clock, metrics, tags,
-          zipkinSharedRpcSpan);
+          zipkinSharedRpcSpan, activeSpanSource);
     }
   }
 
@@ -530,4 +578,5 @@ public class Tracer implements io.opentracing.Tracer {
       return null;
     }
   }
+
 }

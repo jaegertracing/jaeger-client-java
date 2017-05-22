@@ -58,7 +58,7 @@ public class ThriftSpanConverterTest {
 
   @Test
   public void testSpanKindServerCreatesAnnotations() {
-    Span span = (com.uber.jaeger.Span) tracer.buildSpan("operation-name").start();
+    Span span = (com.uber.jaeger.Span) tracer.buildSpan("operation-name").startManual();
     Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_SERVER);
 
     com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan(span);
@@ -82,7 +82,7 @@ public class ThriftSpanConverterTest {
 
   @Test
   public void testSpanKindClientCreatesAnnotations() {
-    Span span = (com.uber.jaeger.Span) tracer.buildSpan("operation-name").start();
+    Span span = (com.uber.jaeger.Span) tracer.buildSpan("operation-name").startManual();
     Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
 
     com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan(span);
@@ -107,7 +107,7 @@ public class ThriftSpanConverterTest {
   @Test
   public void testExpectdLocalComponentNameUsed() {
     String expectedCompnentName = "local-name";
-    Span span = (com.uber.jaeger.Span) tracer.buildSpan("operation-name").start();
+    Span span = (com.uber.jaeger.Span) tracer.buildSpan("operation-name").startManual();
     Tags.COMPONENT.set(span, expectedCompnentName);
 
     com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan(span);
@@ -121,7 +121,7 @@ public class ThriftSpanConverterTest {
     int expectedIp = (127 << 24) | 1;
     int expectedPort = 8080;
     String expectedServiceName = "some-peer-service";
-    Span span = (Span) tracer.buildSpan("test-service-operation").start();
+    Span span = (Span) tracer.buildSpan("test-service-operation").startManual();
     Tags.PEER_HOST_IPV4.set(span, expectedIp);
     Tags.PEER_PORT.set(span, expectedPort);
     Tags.PEER_SERVICE.set(span, expectedServiceName);
@@ -133,7 +133,7 @@ public class ThriftSpanConverterTest {
 
   @Test
   public void testSpanDetectsIsClient() {
-    Span span = (Span) tracer.buildSpan("test-service-operation").start();
+    Span span = (Span) tracer.buildSpan("test-service-operation").startManual();
     Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
 
     assertTrue(ThriftSpanConverter.isRpc(span));
@@ -142,7 +142,7 @@ public class ThriftSpanConverterTest {
 
   @Test
   public void testSpanDetectsIsServer() {
-    Span span = (Span) tracer.buildSpan("test-service-operation").start();
+    Span span = (Span) tracer.buildSpan("test-service-operation").startManual();
     Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_SERVER);
 
     assertTrue(ThriftSpanConverter.isRpc(span));
@@ -154,7 +154,7 @@ public class ThriftSpanConverterTest {
     String expectedOperation = "parent";
     Span client = (Span) tracer.buildSpan(expectedOperation)
         .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT)
-        .start();
+        .startManual();
 
     Map<String, String> map = new HashMap<>();
     TextMap carrier = new TextMapInjectAdapter(map);
@@ -167,7 +167,7 @@ public class ThriftSpanConverterTest {
     Span server = (Span)tracer.buildSpan("child")
         .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
         .asChildOf(ctx)
-        .start();
+        .startManual();
 
     assertEquals("client and server must have the same span ID",
         client.context().getSpanId(), server.context().getSpanId());

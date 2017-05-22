@@ -71,7 +71,7 @@ public class RemoteReporterTest {
 
   @Test
   public void testRemoteReporterReport() throws Exception {
-    Span span = (Span) tracer.buildSpan("raza").start();
+    Span span = (Span) tracer.buildSpan("raza").startManual();
     reporter.report(span);
     // do sleep until automatic flush happens on 'reporter'
     // added 20ms on top of 'flushInterval' to avoid corner cases
@@ -89,7 +89,7 @@ public class RemoteReporterTest {
   public void testRemoteReporterFlushesOnClose() throws Exception {
     int numberOfSpans = 100;
     for (int i = 0; i < numberOfSpans; i++) {
-      Span span = (Span) tracer.buildSpan("raza").start();
+      Span span = (Span) tracer.buildSpan("raza").startManual();
       reporter.report(span);
     }
     reporter.close();
@@ -239,6 +239,6 @@ public class RemoteReporterTest {
   }
 
   private Span newSpan() {
-    return (Span) tracer.buildSpan("x").start();
+    return (Span) tracer.buildSpan("x").startManual();
   }
 }

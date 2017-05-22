@@ -95,7 +95,7 @@ public class FilterIntegrationTest {
   public void testJerseyClientReceivesSpan() throws Exception {
     WebTarget target = client.target(server.BASE_URI).path("jersey").path("hop1");
 
-    Span span = (Span) tracer.buildSpan("root-span").start();
+    Span span = (Span) tracer.buildSpan("root-span").startManual();
     span.setBaggageItem(BAGGAGE_KEY, BAGGAGE_VALUE);
     traceContext.push(span);
 

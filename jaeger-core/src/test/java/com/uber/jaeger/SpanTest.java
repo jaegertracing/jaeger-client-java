@@ -58,7 +58,7 @@ public class SpanTest {
             .withStatsReporter(metricsReporter)
             .withClock(clock)
             .build();
-    span = (Span) tracer.buildSpan("some-operation").start();
+    span = (Span) tracer.buildSpan("some-operation").startManual();
   }
 
   @Test
@@ -132,7 +132,7 @@ public class SpanTest {
     when(clock.currentNanoTicks())
         .thenThrow(new IllegalStateException("currentNanoTicks() called"));
 
-    Span span = (Span) tracer.buildSpan("test-service-name").withStartTimestamp(567).start();
+    Span span = (Span) tracer.buildSpan("test-service-name").withStartTimestamp(567).startManual();
     span.finish(999);
 
     assertEquals(1, reporter.getSpans().size());
@@ -147,7 +147,7 @@ public class SpanTest {
     when(clock.currentNanoTicks())
         .thenThrow(new IllegalStateException("currentNanoTicks() called"));
 
-    Span span = (Span) tracer.buildSpan("test-service-name").start();
+    Span span = (Span) tracer.buildSpan("test-service-name").startManual();
     span.finish();
 
     assertEquals(1, reporter.getSpans().size());
@@ -163,7 +163,7 @@ public class SpanTest {
         .thenThrow(new IllegalStateException("currentTimeMicros() called 2nd time"));
     when(clock.currentNanoTicks()).thenReturn(20000L).thenReturn(30000L);
 
-    Span span = (Span) tracer.buildSpan("test-service-name").start();
+    Span span = (Span) tracer.buildSpan("test-service-name").startManual();
     span.finish();
 
     assertEquals(1, reporter.getSpans().size());
@@ -173,7 +173,7 @@ public class SpanTest {
 
   @Test
   public void testSpanToString() {
-    Span span = (Span) tracer.buildSpan("test-operation").start();
+    Span span = (Span) tracer.buildSpan("test-operation").startManual();
     SpanContext expectedContext = span.context();
     SpanContext actualContext = SpanContext.contextFromString(span.context().contextAsString());
 
@@ -186,7 +186,7 @@ public class SpanTest {
   @Test
   public void testOperationName() {
     String expectedOperation = "leela";
-    Span span = (Span) tracer.buildSpan(expectedOperation).start();
+    Span span = (Span) tracer.buildSpan(expectedOperation).startManual();
     assertEquals(expectedOperation, span.getOperationName());
   }
 
@@ -271,7 +271,7 @@ public class SpanTest {
 
   @Test
   public void testSpanDetectsSamplingPriorityGreaterThanZero() {
-    Span span = (Span) tracer.buildSpan("test-service-operation").start();
+    Span span = (Span) tracer.buildSpan("test-service-operation").startManual();
     Tags.SAMPLING_PRIORITY.set(span, 1);
 
     assertEquals(span.context().getFlags() & SpanContext.flagSampled, SpanContext.flagSampled);
@@ -280,7 +280,7 @@ public class SpanTest {
 
   @Test
   public void testSpanDetectsSamplingPriorityLessThanZero() {
-    Span span = (Span) tracer.buildSpan("test-service-operation").start();
+    Span span = (Span) tracer.buildSpan("test-service-operation").startManual();
 
     assertEquals(span.context().getFlags() & SpanContext.flagSampled, SpanContext.flagSampled);
     Tags.SAMPLING_PRIORITY.set(span, -1);
@@ -289,12 +289,12 @@ public class SpanTest {
 
   @Test
   public void testBaggageOneReference() {
-    io.opentracing.Span parent = tracer.buildSpan("foo").start();
+    io.opentracing.Span parent = tracer.buildSpan("foo").startManual();
     parent.setBaggageItem("foo", "bar");
 
     io.opentracing.Span child = tracer.buildSpan("foo")
         .asChildOf(parent)
-        .start();
+        .startManual();
 
     child.setBaggageItem("a", "a");
 
@@ -305,15 +305,15 @@ public class SpanTest {
 
   @Test
   public void testBaggageMultipleReferences() {
-    io.opentracing.Span parent1 = tracer.buildSpan("foo").start();
+    io.opentracing.Span parent1 = tracer.buildSpan("foo").startManual();
     parent1.setBaggageItem("foo", "bar");
-    io.opentracing.Span parent2 = tracer.buildSpan("foo").start();
+    io.opentracing.Span parent2 = tracer.buildSpan("foo").startManual();
     parent2.setBaggageItem("foo2", "bar");
 
     io.opentracing.Span child = tracer.buildSpan("foo")
         .asChildOf(parent1)
         .addReference(References.FOLLOWS_FROM, parent2.context())
-        .start();
+        .startManual();
 
     child.setBaggageItem("a", "a");
 
@@ -326,7 +326,7 @@ public class SpanTest {
 
   @Test
   public void testImmutableBaggage() {
-    io.opentracing.Span span = tracer.buildSpan("foo").start();
+    io.opentracing.Span span = tracer.buildSpan("foo").startManual();
     span.setBaggageItem("foo", "bar");
     {
       Iterator<Entry<String, String>> baggageIter = span.context().baggageItems().iterator();
