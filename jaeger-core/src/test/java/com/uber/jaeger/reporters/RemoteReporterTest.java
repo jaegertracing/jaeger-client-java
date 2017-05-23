@@ -27,6 +27,7 @@ import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
@@ -216,20 +217,25 @@ public class RemoteReporterTest {
 
   @Test
   public void testFlushUpdatesQueueLength() throws Exception {
+    int neverFlushInterval = Integer.MAX_VALUE;
+    reporter = new RemoteReporter(sender, neverFlushInterval, maxQueueSize, metrics);
+    tracer = new Tracer.Builder("test-remote-reporter", reporter, new ConstSampler(true))
+        .withStatsReporter(metricsReporter)
+        .build();
+
     // change sender to blocking mode
     sender.permitAppend(0);
-    RemoteReporter remoteReporter = (RemoteReporter) reporter;
-    remoteReporter.flush();
 
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 3; i++) {
       reporter.report(newSpan());
     }
 
-    assertEquals(0, metricsReporter.gauges.get("jaeger.reporter-queue").longValue());
+    assertNull(metricsReporter.gauges.get("jaeger.reporter-queue"));
 
+    RemoteReporter remoteReporter = (RemoteReporter) reporter;
     remoteReporter.flush();
 
-    assertTrue(metricsReporter.gauges.get("jaeger.reporter-queue") > 5);
+    assertTrue(metricsReporter.gauges.get("jaeger.reporter-queue") > 0);
   }
 
   private Span newSpan() {

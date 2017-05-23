@@ -80,7 +80,7 @@ public class RemoteReporter implements Reporter {
             flush();
           }
         },
-        0,
+        flushInterval,
         flushInterval);
   }
 
