@@ -118,6 +118,13 @@ public class Span implements io.opentracing.Span {
   public Span setBaggageItem(String key, String value) {
     synchronized (this) {
       this.context = this.context.withBaggageItem(key, value);
+      if (context.isSampled()) {
+        Map<String, String> fields = new HashMap<String, String>();
+        fields.put("event", "baggage");
+        fields.put("key", key);
+        fields.put("value", value);
+        return this.log(fields);
+      }
     }
     return this;
   }

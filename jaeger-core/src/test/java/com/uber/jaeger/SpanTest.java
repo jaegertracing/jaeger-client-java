@@ -36,6 +36,7 @@ import io.opentracing.References;
 import io.opentracing.tag.Tags;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import org.junit.Before;
@@ -77,6 +78,9 @@ public class SpanTest {
     String key = "some.BAGGAGE";
     span.setBaggageItem(key, expected);
     assertEquals(expected, span.getBaggageItem(key));
+
+    // Ensure the baggage was logged
+    this.assertBaggageLogs(span, key, expected);
   }
 
   @Test
@@ -291,12 +295,14 @@ public class SpanTest {
   public void testBaggageOneReference() {
     io.opentracing.Span parent = tracer.buildSpan("foo").startManual();
     parent.setBaggageItem("foo", "bar");
+    this.assertBaggageLogs(parent, "foo", "bar");
 
     io.opentracing.Span child = tracer.buildSpan("foo")
         .asChildOf(parent)
         .startManual();
 
     child.setBaggageItem("a", "a");
+    this.assertBaggageLogs(child, "a", "a");
 
     assertNull(parent.getBaggageItem("a"));
     assertEquals("a", child.getBaggageItem("a"));
@@ -307,8 +313,10 @@ public class SpanTest {
   public void testBaggageMultipleReferences() {
     io.opentracing.Span parent1 = tracer.buildSpan("foo").startManual();
     parent1.setBaggageItem("foo", "bar");
+    this.assertBaggageLogs(parent1, "foo", "bar");
     io.opentracing.Span parent2 = tracer.buildSpan("foo").startManual();
     parent2.setBaggageItem("foo2", "bar");
+    this.assertBaggageLogs(parent2, "foo2", "bar");
 
     io.opentracing.Span child = tracer.buildSpan("foo")
         .asChildOf(parent1)
@@ -316,6 +324,7 @@ public class SpanTest {
         .startManual();
 
     child.setBaggageItem("a", "a");
+    this.assertBaggageLogs(child, "a", "a");
 
     assertNull(parent1.getBaggageItem("a"));
     assertNull(parent2.getBaggageItem("a"));
@@ -337,5 +346,16 @@ public class SpanTest {
     Iterator<Entry<String, String>> baggageIter = span.context().baggageItems().iterator();
     baggageIter.next();
     assertFalse(baggageIter.hasNext());
+  }
+
+  private void assertBaggageLogs(io.opentracing.Span span, String key, String value) {
+    Span sp = (Span)span;
+    List<LogData> logs = sp.getLogs();
+    assertEquals(1, logs.size());
+    Map<String, ?> fields = logs.get(0).getFields();
+    assertEquals(3, fields.size());
+    assertEquals("baggage", fields.get("event"));
+    assertEquals(key, fields.get("key"));
+    assertEquals(value, fields.get("value"));
   }
 }
