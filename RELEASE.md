@@ -7,6 +7,7 @@ The release process consists of these steps:
  1. Add an entry to CHANGELOG.pm with description of changes in the new release
  1. Commit as "Preparing release"
  1. Run `make release`
+   * Make sure you have the right version 0.9.2 of Thrift installed: `thrift -version`
  1. Once the artifacts are uploaded to Sonatype staging, release them to Maven Central
    * https://oss.sonatype.org/, log in, go to Staging Repositories
    * In the top-right corner search box type `uber`, and find your uploaded repository
