@@ -1,6 +1,14 @@
 Changes by Version
 ==================
 
+0.19.0 (2017-05-29)
+-------------------
+- TraceResolver support (https://github.com/uber/jaeger-client-java/pull/175)
+- Do not truncate reported strings (https://github.com/uber/jaeger-client-java/pull/174)
+- Bump OpenTracing version to 0.22.0 (https://github.com/uber/jaeger-client-java/pull/164)
+- Use jaeger.thrift data model (https://github.com/uber/jaeger-client-java/pull/142)
+- Enable process level tags to be associated with the tracer (https://github.com/uber/jaeger-client-java/pull/143)
+
 0.18.0 (2017-04-13)
 -------------------
 
