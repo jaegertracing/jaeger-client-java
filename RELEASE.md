@@ -3,19 +3,19 @@
 TODO: the release process is too manual and needs to be automated
 
 The release process consists of these steps:
- 1. Edit build.gradle and remove the `-SNAPSHOT` suffix from the `version` parameter
- 1. Add an entry to CHANGELOG.pm with description of changes in the new release
- 1. Commit as "Preparing release"
- 1. Run `make release`
-   * Make sure you have the right version 0.9.2 of Thrift installed: `thrift -version`
- 1. Once the artifacts are uploaded to Sonatype staging, release them to Maven Central
-   * https://oss.sonatype.org/, log in, go to Staging Repositories
-   * In the top-right corner search box type `uber`, and find your uploaded repository
-   * Hit Close button. Monitor status on Activity tab at the bottom, hitting Refresh.
-   * Once Close is successful, the Release button will become available, so hit it
-   * Keep hitting Refresh while sync to Maven is in progress. Once it's complete, the repository will disappear.
- 1. Bump the version in `build.gradle` to the next release and add `-SNAPSHOT suffix
- 1. Commit as "Back to development"
+  1. Edit build.gradle and remove the `-SNAPSHOT` suffix from the `version` parameter
+  1. Add an entry to CHANGELOG.pm with description of changes in the new release
+  1. Commit as "Preparing release"
+  1. Run `make release`
+     * Make sure you have the right version 0.9.2 of Thrift installed: `thrift -version`
+  1. Once the artifacts are uploaded to Sonatype staging, release them to Maven Central
+     * https://oss.sonatype.org/, log in, go to Staging Repositories
+     * In the top-right corner search box type `uber`, and find your uploaded repository
+     * Hit Close button. Monitor status on Activity tab at the bottom, hitting Refresh.
+     * Once Close is successful, the Release button will become available, so hit it
+     * Keep hitting Refresh while sync to Maven is in progress. Once it's complete, the repository will disappear.
+  1. Bump the version in `build.gradle` to the next release and add `-SNAPSHOT suffix
+  1. Commit as "Back to development"
 
 The `uploadArchives` step performs signing of the artifacts. For that to work the script
 requires private/public keys.
