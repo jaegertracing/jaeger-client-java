@@ -88,7 +88,7 @@ subprojects {
         strictCheck true
         include "**/*.java"
         ext.year = Calendar.getInstance().get(Calendar.YEAR)
-        ext.name = 'Uber Technologies, Inc'
+        ext.name = 'The Jaeger Authors'
         ignoreFailures = false
         mapping {
             java = 'SLASHSTAR_STYLE'
