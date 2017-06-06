@@ -283,6 +283,11 @@ public class Tracer implements io.opentracing.Tracer {
         }
       }
 
+      // Check if active span should be established as CHILD_OF relationship
+      if (!ignoreActiveSpan && null != activeSpanSource.activeSpan()) {
+        asChildOf(activeSpanSource.activeSpan());
+      }
+
       return new SpanContext(id, id, 0, flags);
     }
 
@@ -375,11 +380,6 @@ public class Tracer implements io.opentracing.Tracer {
       String debugId = debugId();
       if (references.isEmpty()) {
         context = createNewContext(null);
-
-        // Check if active span should be established as CHILD_OF relationship
-        if (!ignoreActiveSpan && null != activeSpanSource.activeSpan()) {
-          asChildOf(activeSpanSource.activeSpan());
-        }
       } else if (debugId != null) {
         context = createNewContext(debugId);
       } else {
