@@ -111,6 +111,36 @@ public class PropagationTest {
   }
 
   @Test
+  public void testNoAutoRefWithExistingRefs() {
+    InMemoryReporter reporter = new InMemoryReporter();
+    Tracer tracer =
+        new Tracer.Builder("test", reporter, new ConstSampler(true)).build();
+
+    io.opentracing.Span initialSpan = tracer.buildSpan("initial").startManual();
+
+    try (ActiveSpan parent = tracer.buildSpan("parent").startActive()) {
+      tracer.buildSpan("child").asChildOf(initialSpan.context()).startActive().deactivate();
+    }
+
+    initialSpan.finish();
+
+    assertEquals(3, reporter.getSpans().size());
+
+    Span childSpan = reporter.getSpans().get(0);
+    Span parentSpan = reporter.getSpans().get(1);
+    Span initSpan = reporter.getSpans().get(2);
+
+    assertTrue(initSpan.getReferences().isEmpty());
+    assertTrue(parentSpan.getReferences().isEmpty());
+
+    assertEquals(initSpan.context().getTraceId(), childSpan.context().getTraceId());
+    assertEquals(initSpan.context().getSpanId(), childSpan.context().getParentId());
+
+    assertEquals(0, initSpan.context().getParentId());
+    assertEquals(0, parentSpan.context().getParentId());
+  }
+
+  @Test
   public void testCustomActiveSpanSource() {
     ActiveSpan activeSpan = mock(ActiveSpan.class);
     Tracer tracer =
