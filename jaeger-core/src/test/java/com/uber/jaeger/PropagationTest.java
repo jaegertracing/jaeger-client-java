@@ -23,6 +23,7 @@
 package com.uber.jaeger;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
@@ -75,13 +76,19 @@ public class PropagationTest {
       tracer.buildSpan("child").startActive().deactivate();
     }
     assertEquals(2, reporter.getSpans().size());
-    assertEquals("child", reporter.getSpans().get(0).getOperationName());
-    assertEquals(1, reporter.getSpans().get(0).getReferences().size());
-    assertEquals("parent", reporter.getSpans().get(1).getOperationName());
-    assertTrue(reporter.getSpans().get(1).getReferences().isEmpty());
-    assertEquals(References.CHILD_OF, reporter.getSpans().get(0).getReferences().get(0).getType());
-    assertEquals(reporter.getSpans().get(1).context(),
-        reporter.getSpans().get(0).getReferences().get(0).getSpanContext());
+
+    Span childSpan = reporter.getSpans().get(0);
+    Span parentSpan = reporter.getSpans().get(1);
+
+    assertEquals("child", childSpan.getOperationName());
+    assertEquals(1, childSpan.getReferences().size());
+    assertEquals("parent", parentSpan.getOperationName());
+    assertTrue(parentSpan.getReferences().isEmpty());
+    assertEquals(References.CHILD_OF, childSpan.getReferences().get(0).getType());
+    assertEquals(parentSpan.context(),
+        childSpan.getReferences().get(0).getSpanContext());
+    assertEquals(parentSpan.context().getTraceId(), childSpan.context().getTraceId());
+    assertEquals(parentSpan.context().getSpanId(), childSpan.context().getParentId());
   }
 
   @Test
@@ -93,8 +100,14 @@ public class PropagationTest {
       tracer.buildSpan("child").ignoreActiveSpan().startActive().deactivate();
     }
     assertEquals(2, reporter.getSpans().size());
+
+    Span childSpan = reporter.getSpans().get(0);
+    Span parentSpan = reporter.getSpans().get(1);
+
     assertTrue(reporter.getSpans().get(0).getReferences().isEmpty());
     assertTrue(reporter.getSpans().get(1).getReferences().isEmpty());
+    assertNotEquals(parentSpan.context().getTraceId(), childSpan.context().getTraceId());
+    assertEquals(0, childSpan.context().getParentId());
   }
 
   @Test

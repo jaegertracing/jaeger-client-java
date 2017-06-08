@@ -169,10 +169,6 @@ public class Span implements io.opentracing.Span {
     }
   }
 
-  public void close() {
-    finish();
-  }
-
   @Override
   public synchronized Span setTag(String key, String value) {
     return setTagAsObject(key, value);
