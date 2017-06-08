@@ -265,8 +265,6 @@ public class Tracer implements io.opentracing.Tracer {
 
     private SpanContext createNewContext(String debugId) {
       long id = Utils.uniqueId();
-      long traceId = id;
-      long parentId = 0;
 
       byte flags = 0;
       if (debugId != null) {
@@ -285,15 +283,7 @@ public class Tracer implements io.opentracing.Tracer {
         }
       }
 
-      // Check if active span should be established as CHILD_OF relationship
-      if (!ignoreActiveSpan && null != activeSpanSource.activeSpan()) {
-        SpanContext parentContext = (SpanContext) activeSpanSource.activeSpan().context();
-        asChildOf(parentContext);
-        traceId = parentContext.getTraceId();
-        parentId = parentContext.getSpanId();
-      }
-
-      return new SpanContext(traceId, id, parentId, flags);
+      return new SpanContext(id, id, 0, flags);
     }
 
     private Map<String, String> createChildBaggage() {
@@ -381,6 +371,11 @@ public class Tracer implements io.opentracing.Tracer {
     @Override
     public io.opentracing.Span startManual() {
       SpanContext context;
+
+      // Check if active span should be established as CHILD_OF relationship
+      if (!ignoreActiveSpan && null != activeSpanSource.activeSpan()) {
+        asChildOf(activeSpanSource.activeSpan());
+      }
 
       String debugId = debugId();
       if (references.isEmpty()) {
