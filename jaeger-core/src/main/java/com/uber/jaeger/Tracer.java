@@ -373,7 +373,7 @@ public class Tracer implements io.opentracing.Tracer {
       SpanContext context;
 
       // Check if active span should be established as CHILD_OF relationship
-      if (!ignoreActiveSpan && null != activeSpanSource.activeSpan()) {
+      if (references.isEmpty() && !ignoreActiveSpan && null != activeSpanSource.activeSpan()) {
         asChildOf(activeSpanSource.activeSpan());
       }
 
