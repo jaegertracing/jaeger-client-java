@@ -56,7 +56,7 @@ public class ClientFilter implements ClientRequestFilter, ClientResponseFilter {
       if (!traceContext.isEmpty()) {
         clientSpanBuilder.asChildOf(traceContext.getCurrentSpan());
       }
-      Span clientSpan = clientSpanBuilder.start();
+      Span clientSpan = clientSpanBuilder.startManual();
 
       Tags.SPAN_KIND.set(clientSpan, Tags.SPAN_KIND_CLIENT);
       Tags.HTTP_URL.set(clientSpan, clientRequestContext.getUri().toString());

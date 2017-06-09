@@ -121,7 +121,7 @@ public class JaegerThriftSpanConverterTest {
     Map<String, Object> fields = new HashMap<String, Object>();
     fields.put("k", "v");
 
-    Span span = tracer.buildSpan("operation-name").start();
+    Span span = tracer.buildSpan("operation-name").startManual();
     span = span.log(1, "key", "value");
     span = span.log(1, fields);
 
@@ -149,11 +149,11 @@ public class JaegerThriftSpanConverterTest {
 
   @Test
   public void testConvertSpanOneReferenceChildOf() {
-    Span parent = tracer.buildSpan("foo").start();
+    Span parent = tracer.buildSpan("foo").startManual();
 
     Span child = tracer.buildSpan("foo")
         .asChildOf(parent)
-        .start();
+        .startManual();
 
     com.uber.jaeger.thriftjava.Span span = JaegerThriftSpanConverter.convertSpan((com.uber.jaeger.Span) child);
 
@@ -163,13 +163,13 @@ public class JaegerThriftSpanConverterTest {
 
   @Test
   public void testConvertSpanTwoReferencesChildOf() {
-    Span parent = tracer.buildSpan("foo").start();
-    Span parent2 = tracer.buildSpan("foo").start();
+    Span parent = tracer.buildSpan("foo").startManual();
+    Span parent2 = tracer.buildSpan("foo").startManual();
 
     Span child = tracer.buildSpan("foo")
         .asChildOf(parent)
         .asChildOf(parent2)
-        .start();
+        .startManual();
 
     com.uber.jaeger.thriftjava.Span span = JaegerThriftSpanConverter.convertSpan((com.uber.jaeger.Span) child);
 
@@ -181,13 +181,13 @@ public class JaegerThriftSpanConverterTest {
 
   @Test
   public void testConvertSpanMixedReferences() {
-    Span parent = tracer.buildSpan("foo").start();
-    Span parent2 = tracer.buildSpan("foo").start();
+    Span parent = tracer.buildSpan("foo").startManual();
+    Span parent2 = tracer.buildSpan("foo").startManual();
 
     Span child = tracer.buildSpan("foo")
         .addReference(References.FOLLOWS_FROM, parent.context())
         .asChildOf(parent2)
-        .start();
+        .startManual();
 
     com.uber.jaeger.thriftjava.Span span = JaegerThriftSpanConverter.convertSpan((com.uber.jaeger.Span) child);
 

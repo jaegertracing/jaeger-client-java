@@ -110,9 +110,9 @@ public class TracerTagsTest {
             .withTag("tracer.tag.num", 1)
             .build();
 
-    Span span = (Span) tracer.buildSpan("root").start();
+    Span span = (Span) tracer.buildSpan("root").startManual();
     if (spanType == SpanType.CHILD) {
-      span = (Span) tracer.buildSpan("child").asChildOf(span).start();
+      span = (Span) tracer.buildSpan("child").asChildOf(span).startManual();
     }
     if (spanType == SpanType.RPC_SERVER) {
       span =
@@ -121,7 +121,7 @@ public class TracerTagsTest {
                   .buildSpan("rpc-server")
                   .asChildOf(span)
                   .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
-                  .start();
+                  .startManual();
     }
     Map<String, Object> tags = span.getTags();
     for (String key : expectedTags.keySet()) {

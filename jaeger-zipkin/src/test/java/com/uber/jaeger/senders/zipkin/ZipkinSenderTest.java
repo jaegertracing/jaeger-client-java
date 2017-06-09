@@ -73,7 +73,7 @@ public class ZipkinSenderTest {
 
   @Test
   public void testAppendSpanTooLarge() throws Exception {
-    Span jaegerSpan = (Span) tracer.buildSpan("raza").start();
+    Span jaegerSpan = (Span) tracer.buildSpan("raza").startManual();
     String msg = "";
     for (int i = 0; i < 1001; i++) {
       msg += ".";
@@ -92,7 +92,7 @@ public class ZipkinSenderTest {
     // find size of the initial span
     AutoExpandingBufferWriteTransport memoryTransport =
         new AutoExpandingBufferWriteTransport(messageMaxBytes, 2);
-    Span jaegerSpan = (Span) tracer.buildSpan("raza").start();
+    Span jaegerSpan = (Span) tracer.buildSpan("raza").startManual();
     com.twitter.zipkin.thriftjava.Span span = ThriftSpanConverter.convertSpan(jaegerSpan);
 
     int expectedNumSpans = 11;
@@ -119,7 +119,7 @@ public class ZipkinSenderTest {
 
   @Test
   public void testFlushSendsSpan() throws Exception {
-    Span expectedSpan = (Span) tracer.buildSpan("raza").start();
+    Span expectedSpan = (Span) tracer.buildSpan("raza").startManual();
 
     assertEquals(0, sender.append(expectedSpan));
     assertEquals(1, sender.flush());

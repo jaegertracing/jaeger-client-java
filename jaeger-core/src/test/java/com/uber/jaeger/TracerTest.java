@@ -59,7 +59,7 @@ public class TracerTest {
   @Test
   public void testBuildSpan() {
     String expectedOperation = "fry";
-    Span span = (Span) tracer.buildSpan(expectedOperation).start();
+    Span span = (Span) tracer.buildSpan(expectedOperation).startManual();
 
     assertEquals(expectedOperation, span.getOperationName());
   }
@@ -67,7 +67,7 @@ public class TracerTest {
   @Test
   public void testTracerMetrics() {
     String expectedOperation = "fry";
-    tracer.buildSpan(expectedOperation).start();
+    tracer.buildSpan(expectedOperation).startManual();
     assertEquals(
         1L, metricsReporter.counters.get("jaeger.spans.group=sampling.sampled=y").longValue());
     assertEquals(
@@ -86,7 +86,7 @@ public class TracerTest {
             .withStatsReporter(metricsReporter)
             .registerInjector(Format.Builtin.TEXT_MAP, injector)
             .build();
-    Span span = (Span) tracer.buildSpan("leela").start();
+    Span span = (Span) tracer.buildSpan("leela").startManual();
 
     TextMap carrier = mock(TextMap.class);
     tracer.inject(span.context(), Format.Builtin.TEXT_MAP, carrier);

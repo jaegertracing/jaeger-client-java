@@ -83,7 +83,7 @@ public class ServerFilter implements ContainerRequestFilter, ContainerResponseFi
       if (spanContext != null) {
         builder = builder.asChildOf(spanContext);
       }
-      Span serverSpan = builder.start();
+      Span serverSpan = builder.startManual();
 
       traceContext.push(serverSpan);
     } catch (Exception e) {
