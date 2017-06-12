@@ -36,11 +36,10 @@ import com.uber.jaeger.samplers.ProbabilisticSampler;
 import com.uber.jaeger.samplers.RateLimitingSampler;
 import com.uber.jaeger.samplers.RemoteControlledSampler;
 import com.uber.jaeger.samplers.Sampler;
+import com.uber.jaeger.senders.Sender;
 import com.uber.jaeger.senders.UdpSender;
-
 import java.text.NumberFormat;
 import java.text.ParseException;
-
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -124,8 +123,8 @@ public class Configuration {
       String serviceName,
       SamplerConfiguration samplerConfig,
       ReporterConfiguration reporterConfig) {
-    if (serviceName == null || serviceName.length() == 0) {
-      throw new RuntimeException("Must provide a service name for Jaeger Configuration");
+    if (serviceName == null || serviceName.isEmpty()) {
+      throw new IllegalArgumentException("Must provide a service name for Jaeger Configuration");
     }
 
     this.serviceName = serviceName;
@@ -273,24 +272,23 @@ public class Configuration {
   }
 
   public static class ReporterConfiguration {
+    private static final int DEFAULT_FLUSH_INTERVAL_MS = 1000;
+    private static final int DEFAULT_MAX_QUEUE_SIZE = 100;
 
-    private static final String defaultAgentHost = "localhost";
-    private static final int defaultAgentPort = 5775;
-    private static final int defaultFlushIntervalMs = 1000;
-    private static final int defaultMaxQueueSize = 100;
+    private Boolean logSpans;
+    private String agentHost;
+    private Integer agentPort;
+    private Integer flushIntervalMs;
+    private Integer maxQueueSize;
 
-    private final Boolean logSpans;
-
-    private final String agentHost;
-
-    private final Integer agentPort;
-
-    private final Integer flushIntervalMs;
-
-    private final Integer maxQueueSize;
+    private Sender sender;
 
     public ReporterConfiguration() {
       this(null, null, null, null, null);
+    }
+
+    public ReporterConfiguration(Sender sender) {
+      this.sender = sender;
     }
 
     public ReporterConfiguration(
@@ -315,18 +313,20 @@ public class Configuration {
           getPropertyAsInt(JAEGER_REPORTER_MAX_QUEUE_SIZE));
     }
 
-    private Reporter getReporter(Metrics metrics) {
-      UdpSender sender =
+    private Sender getSender() {
+      return this.sender != null ? this.sender :
           new UdpSender(
-              stringOrDefault(this.agentHost, defaultAgentHost),
-              numberOrDefault(this.agentPort, defaultAgentPort).intValue(),
+              stringOrDefault(this.agentHost, UdpSender.DEFAULT_AGENT_UDP_HOST),
+              numberOrDefault(this.agentPort, UdpSender.DEFAULT_AGENT_UDP_COMPACT_PORT).intValue(),
               0 /* max packet size */);
+    }
 
+    private Reporter getReporter(Metrics metrics) {
       Reporter reporter =
           new RemoteReporter(
-              sender,
-              numberOrDefault(this.flushIntervalMs, defaultFlushIntervalMs).intValue(),
-              numberOrDefault(this.maxQueueSize, defaultMaxQueueSize).intValue(),
+              getSender(),
+              numberOrDefault(this.flushIntervalMs, DEFAULT_FLUSH_INTERVAL_MS).intValue(),
+              numberOrDefault(this.maxQueueSize, DEFAULT_MAX_QUEUE_SIZE).intValue(),
               metrics);
 
       if (Boolean.TRUE.equals(this.logSpans)) {

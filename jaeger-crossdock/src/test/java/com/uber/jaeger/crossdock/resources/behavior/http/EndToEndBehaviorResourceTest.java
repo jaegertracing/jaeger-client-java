@@ -23,11 +23,11 @@
 package com.uber.jaeger.crossdock.resources.behavior.http;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import com.uber.jaeger.Span;
 import com.uber.jaeger.crossdock.api.CreateTracesRequest;
+import com.uber.jaeger.crossdock.resources.behavior.EndToEndBehavior;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
 import io.opentracing.Tracer;
@@ -47,15 +47,9 @@ public class EndToEndBehaviorResourceTest {
     Tracer tracer =
         new com.uber.jaeger.Tracer.Builder("crossdock-java", reporter, new ConstSampler(true))
             .build();
-    Map<String, Tracer> tracers = new HashMap<String, Tracer>();
+    Map<String, Tracer> tracers = new HashMap<>();
     tracers.put("const", tracer);
-    resource = new EndToEndBehaviorResource(tracers);
-  }
-
-  @Test
-  public void testConstructor() throws Exception {
-    EndToEndBehaviorResource testResource = new EndToEndBehaviorResource("localhost");
-    assertNotNull(testResource);
+    resource = new EndToEndBehaviorResource(new EndToEndBehavior(tracers));
   }
 
   @Test

@@ -26,6 +26,7 @@ import com.uber.jaeger.Configuration;
 import com.uber.jaeger.Configuration.ReporterConfiguration;
 import com.uber.jaeger.Configuration.SamplerConfiguration;
 import com.uber.jaeger.context.TraceContext;
+import com.uber.jaeger.crossdock.resources.behavior.EndToEndBehavior;
 import com.uber.jaeger.crossdock.resources.behavior.ExceptionMapper;
 import com.uber.jaeger.crossdock.resources.behavior.TraceBehavior;
 import com.uber.jaeger.crossdock.resources.behavior.http.EndToEndBehaviorResource;
@@ -34,9 +35,15 @@ import com.uber.jaeger.crossdock.resources.behavior.tchannel.TChannelServer;
 import com.uber.jaeger.crossdock.resources.health.HealthResource;
 import com.uber.jaeger.filters.jaxrs2.TracingUtils;
 import com.uber.jaeger.samplers.ConstSampler;
+import com.uber.jaeger.senders.HttpSender;
+import com.uber.jaeger.senders.Sender;
+import com.uber.jaeger.senders.UdpSender;
+import com.uber.tchannel.api.TChannel.Builder;
 import io.opentracing.Tracer;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import org.apache.log4j.BasicConfigurator;
@@ -49,8 +56,6 @@ import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 
 public class JerseyServer {
-  public static final String SERVICE_NAME = "java";
-
   // TODO should not be static
   public static Client client;
 
@@ -58,23 +63,21 @@ public class JerseyServer {
 
   private final Configuration config;
 
-  public JerseyServer(String hostPort, Class... resourceClasses) {
+  public JerseyServer(String hostPort, String serviceName, List<Object> resources) {
     final String samplingType = ConstSampler.TYPE;
     final Number samplingParam = 0;
     final boolean logging = true;
 
     config =
         new Configuration(
-            SERVICE_NAME,
+            serviceName,
             new SamplerConfiguration(samplingType, samplingParam),
             new ReporterConfiguration(logging, null, null, null, null));
 
     // create a resource config that scans for JAX-RS resources and providers
     final ResourceConfig rc = new ResourceConfig();
 
-    for (Class clz : resourceClasses) {
-      rc.packages(clz.getPackage().getName());
-    }
+    resources.forEach(rc::register);
 
     rc.register(TracingUtils.serverFilter(config.getTracer()))
         .register(LoggingFilter.class)
@@ -95,10 +98,14 @@ public class JerseyServer {
     client = initializeClient(config);
   }
 
-  public int getPort() {
-    ArrayList<NetworkListener> networkListeners = new ArrayList<>(server.getListeners());
-    return networkListeners.get(0).getPort();
+  public List<NetworkListener> getNetworkListeners() {
+    return new ArrayList<>(server.getListeners());
   }
+
+  public void addNetworkListener(NetworkListener networkListener) {
+    server.addListener(networkListener);
+  }
+
 
   private static TraceContext traceContext() {
     return com.uber.jaeger.context.TracingUtils.getTraceContext();
@@ -128,9 +135,33 @@ public class JerseyServer {
 
   public static void main(String[] args) throws Exception {
     BasicConfigurator.configure();
-    JerseyServer server = new JerseyServer("0.0.0.0:8081", TraceBehaviorResource.class, EndToEndBehaviorResource.class);
-    TraceBehavior behavior = new TraceBehavior();
-    new TChannelServer(8082, behavior, server.getTracer(), false).start();
-    new JerseyServer("0.0.0.0:8080", HealthResource.class);
+
+    String serviceName = serviceNameFromEnv();
+
+    JerseyServer server = new JerseyServer("0.0.0.0:8081", serviceName,
+        Arrays.asList(new TraceBehaviorResource(),
+            new EndToEndBehaviorResource(new EndToEndBehavior("test_driver",
+                "crossdock-" + serviceName, senderFromEnv("test_driver"))),
+            new HealthResource()));
+
+    server.addNetworkListener(new NetworkListener("health", "0.0.0.0", 8080));
+    Builder tchannelBuilder = new Builder(serviceName);
+    tchannelBuilder.setServerPort(8082);
+    new TChannelServer(tchannelBuilder, new TraceBehavior(), server.getTracer()).start();
+  }
+
+  private static Sender senderFromEnv(String jaegerHost) {
+    String senderEnvVar = System.getenv(Constants.ENV_PROP_SENDER_TYPE);
+    if ("udp".equalsIgnoreCase(senderEnvVar)) {
+      return new UdpSender(jaegerHost, 0, 0);
+    } else if ("http".equalsIgnoreCase(senderEnvVar)) {
+      return new HttpSender(String.format("http://%s:14268/api/traces", jaegerHost), 0);
+    }
+
+    throw new IllegalStateException("Env variable " + Constants.ENV_PROP_SENDER_TYPE + ", has not been specified!");
+  }
+
+  private static String serviceNameFromEnv() {
+    return "java-" + System.getenv(Constants.ENV_PROP_SENDER_TYPE);
   }
 }

@@ -34,51 +34,42 @@ import com.uber.jaeger.samplers.HttpSamplingManager;
 import com.uber.jaeger.samplers.ProbabilisticSampler;
 import com.uber.jaeger.samplers.RemoteControlledSampler;
 import com.uber.jaeger.samplers.Sampler;
-import com.uber.jaeger.senders.UdpSender;
+import com.uber.jaeger.senders.Sender;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
 import java.util.HashMap;
 import java.util.Map;
 
 public class EndToEndBehavior {
-  private static final String SERVICE_NAME = "crossdock-java";
 
-  private Map<String, Tracer> tracers;
-  private String host;
+  private final Map<String, Tracer> tracers;
 
-  public EndToEndBehavior(String host) {
-    this.host = host;
+  public EndToEndBehavior(Map<String, Tracer> tracers) {
+    this.tracers = new HashMap<>(tracers);
+  }
+
+  public EndToEndBehavior(String jaegerHost, String serviceName, Sender sender) {
     StatsFactory statsFactory = new StatsFactoryImpl(new NullStatsReporter());
     Metrics metrics = new Metrics(statsFactory);
-    Reporter reporter = getReporter(metrics);
+    Reporter reporter = new RemoteReporter(sender, 1000, 100, metrics);
 
     ConstSampler constSampler = new ConstSampler(true);
 
-    tracers = new HashMap<String, Tracer>();
-    tracers.put(RemoteControlledSampler.TYPE, getRemoteTracer(metrics, reporter));
-    tracers.put(ConstSampler.TYPE, new com.uber.jaeger.Tracer.Builder(SERVICE_NAME, reporter, constSampler).build());
+    tracers = new HashMap<>();
+    tracers.put(RemoteControlledSampler.TYPE, getRemoteTracer(metrics, reporter, serviceName, jaegerHost));
+    tracers.put(ConstSampler.TYPE, new com.uber.jaeger.Tracer.Builder(serviceName, reporter, constSampler).build());
   }
 
-  private Reporter getReporter(Metrics metrics) {
-    UdpSender sender = new UdpSender(host, 6831, 0);
-    return new RemoteReporter(sender, 1000, 100, metrics);
-  }
-
-  private Tracer getRemoteTracer(Metrics metrics, Reporter reporter) {
+  private Tracer getRemoteTracer(Metrics metrics, Reporter reporter, String serviceName, String jaegerHost) {
     Sampler initialSampler = new ProbabilisticSampler(1.0);
-    HttpSamplingManager manager = new HttpSamplingManager(host + ":5778");
+    HttpSamplingManager manager = new HttpSamplingManager(jaegerHost + ":5778");
 
-    RemoteControlledSampler remoteSampler = new RemoteControlledSampler(SERVICE_NAME, manager, initialSampler,
+    RemoteControlledSampler remoteSampler = new RemoteControlledSampler(serviceName, manager, initialSampler,
         metrics, 5000);
 
-    com.uber.jaeger.Tracer.Builder remoteTracerBuilder = new com.uber.jaeger.Tracer.Builder(SERVICE_NAME, reporter,
+    com.uber.jaeger.Tracer.Builder remoteTracerBuilder = new com.uber.jaeger.Tracer.Builder(serviceName, reporter,
         remoteSampler);
     return remoteTracerBuilder.build();
-  }
-
-  public EndToEndBehavior(String host, Map<String, Tracer> tracers) {
-    this.host = host;
-    this.tracers = tracers;
   }
 
   public void generateTraces(CreateTracesRequest request) {

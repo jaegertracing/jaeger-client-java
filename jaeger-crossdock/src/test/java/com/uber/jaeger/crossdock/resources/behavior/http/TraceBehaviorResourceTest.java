@@ -37,9 +37,12 @@ import com.uber.jaeger.crossdock.api.StartTraceRequest;
 import com.uber.jaeger.crossdock.api.TraceResponse;
 import com.uber.jaeger.crossdock.resources.behavior.TraceBehavior;
 import com.uber.jaeger.crossdock.resources.behavior.tchannel.TChannelServer;
+import com.uber.tchannel.api.TChannel.Builder;
 import io.opentracing.tag.Tags;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
@@ -54,6 +57,8 @@ import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
 public class TraceBehaviorResourceTest {
+  private static final String SERVICE_NAME = "foo";
+
   private JerseyServer server;
   private TraceBehavior behavior;
   private String port;
@@ -82,10 +87,9 @@ public class TraceBehaviorResourceTest {
 
   @Before
   public void setUp() throws Exception {
-    server = new JerseyServer("127.0.0.1:0", TraceBehaviorResource.class);
-    port = String.valueOf(server.getPort());
+    server = new JerseyServer("127.0.0.1:0", SERVICE_NAME, Collections.singletonList(new TraceBehaviorResource()));
+    port = String.valueOf(server.getNetworkListeners().get(0).getPort());
     hostPort = String.format("127.0.0.1:%s", port);
-
     behavior = new TraceBehavior();
   }
 
@@ -103,7 +107,7 @@ public class TraceBehaviorResourceTest {
     String expectedBaggage = "baggage-example";
 
     Downstream downstream =
-        new Downstream("java", "127.0.0.1", port, Constants.TRANSPORT_HTTP, "server", null);
+        new Downstream(SERVICE_NAME, "127.0.0.1", port, Constants.TRANSPORT_HTTP, "server", null);
     StartTraceRequest startTraceRequest =
         new StartTraceRequest("server-role", expectedSampled, expectedBaggage, downstream);
 
@@ -131,10 +135,10 @@ public class TraceBehaviorResourceTest {
     }
 
     Downstream bottomDownstream =
-        new Downstream("java", "127.0.0.1", port, Constants.TRANSPORT_HTTP, "server", null);
+        new Downstream(SERVICE_NAME, "127.0.0.1", port, Constants.TRANSPORT_HTTP, "server", null);
     Downstream topDownstream =
         new Downstream(
-            "java", "127.0.0.1", port, Constants.TRANSPORT_HTTP, "server", bottomDownstream);
+            SERVICE_NAME, "127.0.0.1", port, Constants.TRANSPORT_HTTP, "server", bottomDownstream);
 
     JoinTraceRequest joinTraceRequest = new JoinTraceRequest("server-role", topDownstream);
 
@@ -152,7 +156,10 @@ public class TraceBehaviorResourceTest {
 
   @Test
   public void testJoinTraceTChannel() throws Exception {
-    TChannelServer tchannel = new TChannelServer(0, behavior, server.getTracer(), true);
+    Builder tchannelBuilder = new Builder("foo");
+    tchannelBuilder.setServerPort(0);
+    tchannelBuilder.setServerHost(InetAddress.getLoopbackAddress());
+    TChannelServer tchannel = new TChannelServer(tchannelBuilder, behavior, server.getTracer());
     tchannel.start();
 
     Span span = (Span) server.getTracer().buildSpan("root").startManual();
@@ -166,14 +173,13 @@ public class TraceBehaviorResourceTest {
 
     TraceResponse response =
         behavior.callDownstreamTChannel(
-            new Downstream(
-                JerseyServer.SERVICE_NAME,
+            new Downstream(SERVICE_NAME,
                 tchannel.getChannel().getListeningHost(),
                 String.valueOf(tchannel.getChannel().getListeningPort()),
                 Constants.TRANSPORT_TCHANNEL,
                 "s2",
                 new Downstream(
-                    JerseyServer.SERVICE_NAME,
+                    SERVICE_NAME,
                     tchannel.getChannel().getListeningHost(),
                     String.valueOf(tchannel.getChannel().getListeningPort()),
                     Constants.TRANSPORT_TCHANNEL,
