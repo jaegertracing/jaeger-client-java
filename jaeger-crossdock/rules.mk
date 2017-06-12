@@ -23,3 +23,6 @@ gradle-compile:
 crossdock-logs:
 	docker-compose -f $(XDOCK_YAML) logs
 
+.PHONY: crossdock-clean
+crossdock-clean:
+	docker-compose -f $(XDOCK_YAML) down
