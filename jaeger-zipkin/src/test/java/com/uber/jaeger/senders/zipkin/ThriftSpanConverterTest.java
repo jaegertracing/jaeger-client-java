@@ -64,11 +64,11 @@ public class ThriftSpanConverterTest {
             .build();
   }
 
-  // sentinel value is used to mark tags that should *not* be present
-  private static final String SENTINEL = "sentinel";
+  // undef value is used to mark tags that should *not* be present
+  private static final String UNDEF = "undef";
 
-  // NA value is used to mark tags that should be present but we don't care what it's value is
-  private static final String NA = "na";
+  // ANY value is used to mark tags that should be present but we don't care what it's value is
+  private static final String ANY = "any";
 
   private enum SpanType {
     ROOT,
@@ -82,7 +82,7 @@ public class ThriftSpanConverterTest {
 
     Map<String, String> rootTags = new HashMap<>();
     rootTags.put("tracer.jaeger.version", tracer.getVersion());
-    rootTags.put("tracer.hostname", NA);
+    rootTags.put("tracer.hostname", ANY);
     rootTags.put("tracer.tag.str", "y");
     rootTags.put("tracer.tag.bool", "true");
     rootTags.put("tracer.tag.num", "1");
@@ -90,22 +90,22 @@ public class ThriftSpanConverterTest {
     rootTags.put("sampler.param", "true");
 
     Map<String, String> childTags = new HashMap<>();
-    childTags.put("tracer.jaeger.version", SENTINEL);
-    childTags.put("tracer.hostname", SENTINEL);
-    childTags.put("tracer.tag.str", SENTINEL);
-    childTags.put("tracer.tag.bool", SENTINEL);
-    childTags.put("tracer.tag.num", SENTINEL);
-    childTags.put("sampler.type", SENTINEL);
-    childTags.put("sampler.param", SENTINEL);
+    childTags.put("tracer.jaeger.version", UNDEF);
+    childTags.put("tracer.hostname", UNDEF);
+    childTags.put("tracer.tag.str", UNDEF);
+    childTags.put("tracer.tag.bool", UNDEF);
+    childTags.put("tracer.tag.num", UNDEF);
+    childTags.put("sampler.type", UNDEF);
+    childTags.put("sampler.param", UNDEF);
 
     Map<String, String> rpcTags = new HashMap<>();
     rpcTags.put("tracer.jaeger.version", tracer.getVersion());
-    rpcTags.put("tracer.hostname", NA);
+    rpcTags.put("tracer.hostname", ANY);
     rpcTags.put("tracer.tag.str", "y");
     rpcTags.put("tracer.tag.bool", "true");
     rpcTags.put("tracer.tag.num", "1");
-    rpcTags.put("sampler.type", SENTINEL);
-    rpcTags.put("sampler.param", SENTINEL);
+    rpcTags.put("sampler.type", UNDEF);
+    rpcTags.put("sampler.param", UNDEF);
 
     return new Object[][] {
         { SpanType.ROOT, rootTags },
@@ -143,9 +143,9 @@ public class ThriftSpanConverterTest {
     for (String key : expectedTags.keySet()) {
       Object expectedValue = expectedTags.get(key);
       BinaryAnnotation anno = findBinaryAnnotation(annotations, key);
-      if (expectedValue == SENTINEL) {
+      if (expectedValue.equals(UNDEF)) {
         assertNull("Not expecting " + key + " for " + spanType, anno);
-      } else if (expectedValue == NA) {
+      } else if (expectedValue.equals(ANY)) {
         assertEquals(key, anno.getKey());
       } else {
         String actualValue = new String(anno.getValue(), StandardCharsets.UTF_8);
@@ -187,8 +187,7 @@ public class ThriftSpanConverterTest {
 
   @Test
   public void testSpanKindClientCreatesAnnotations() {
-    Span parent = (com.uber.jaeger.Span) tracer.buildSpan("operation-name").startManual();
-    Span span = (com.uber.jaeger.Span) tracer.buildSpan("operation-name").asChildOf(parent).startManual();
+    Span span = (com.uber.jaeger.Span) tracer.buildSpan("operation-name").startManual();
     Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
 
     com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan(span);

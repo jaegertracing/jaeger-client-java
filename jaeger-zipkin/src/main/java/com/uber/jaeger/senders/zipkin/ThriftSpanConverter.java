@@ -93,7 +93,7 @@ public class ThriftSpanConverter {
     boolean firstSpanInProcess = span.getReferences().isEmpty() || isRpcServer(span);
 
     Map<String, ?> processTags = span.getTracer().tags();
-    if (firstSpanInProcess && processTags != null) {
+    if (firstSpanInProcess) {
       // add tracer tags to first zipkin span in a process but remove "ip" tag as it is
       // taken care of separately.
       for (String tagKey : processTags.keySet()) {
