@@ -50,7 +50,7 @@ public class Utils {
 
     int intIp = 0;
     for (byte octet : octets.getAddress()) {
-      intIp = (intIp << 8) | (octet);
+      intIp = (intIp << 8) | (octet & 0xFF);
     }
     return intIp;
   }

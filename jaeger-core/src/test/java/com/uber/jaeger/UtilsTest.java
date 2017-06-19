@@ -49,9 +49,30 @@ public class UtilsTest {
   }
 
   @Test
-  public void testIpToInt32() {
+  public void testIpToInt32_localhost() {
     int expectedIp = (127 << 24) | 1;
     int actualIp = Utils.ipToInt("127.0.0.1");
+    assertEquals(expectedIp, actualIp);
+  }
+
+  @Test
+  public void testIpToInt32_above127() {
+    int expectedIp = 176750850;
+    int actualIp = Utils.ipToInt("10.137.1.2");
+    assertEquals(expectedIp, actualIp);
+  }
+
+  @Test
+  public void testIpToInt32_zeros() {
+    int expectedIp = 0;
+    int actualIp = Utils.ipToInt("0.0.0.0");
+    assertEquals(expectedIp, actualIp);
+  }
+
+  @Test
+  public void testIpToInt32_broadcast() {
+    int expectedIp = -1;
+    int actualIp = Utils.ipToInt("255.255.255.255");
     assertEquals(expectedIp, actualIp);
   }
 }
