@@ -22,6 +22,7 @@
 
 package com.uber.jaeger;
 
+import com.uber.jaeger.Constants;
 import com.uber.jaeger.exceptions.UnsupportedFormatException;
 import com.uber.jaeger.metrics.Metrics;
 import com.uber.jaeger.metrics.NullStatsReporter;
@@ -69,7 +70,7 @@ public class Tracer implements io.opentracing.Tracer {
   private final PropagationRegistry registry;
   private final Clock clock;
   private final Metrics metrics;
-  private final int ip;
+  private final int ipv4;
   private final Map<String, ?> tags;
   private final boolean zipkinSharedRpcSpan;
   private final ActiveSpanSource activeSpanSource;
@@ -93,21 +94,21 @@ public class Tracer implements io.opentracing.Tracer {
     this.zipkinSharedRpcSpan = zipkinSharedRpcSpan;
     this.activeSpanSource = activeSpanSource;
 
-    int ip;
-    try {
-      ip = Utils.ipToInt(Inet4Address.getLocalHost().getHostAddress());
-    } catch (UnknownHostException e) {
-      ip = 0;
-    }
-    this.ip = ip;
-
     this.version = loadVersion();
 
-    tags.put("jaeger.version", this.version);
+    tags.put(Constants.JAEGER_CLIENT_VERSION_TAG_KEY, this.version);
     String hostname = getHostName();
     if (hostname != null) {
-      tags.put("jaeger.hostname", hostname);
+      tags.put(Constants.TRACER_HOSTNAME_TAG_KEY, hostname);
     }
+    int ipv4 ;
+    try {
+      tags.put(Constants.TRACER_IP_TAG_KEY, InetAddress.getLocalHost().getHostAddress());
+      ipv4 = Utils.ipToInt(Inet4Address.getLocalHost().getHostAddress());
+    } catch (UnknownHostException e) {
+      ipv4 = 0;
+    }
+    this.ipv4 = ipv4;
     this.tags = Collections.unmodifiableMap(tags);
   }
 
@@ -127,8 +128,8 @@ public class Tracer implements io.opentracing.Tracer {
     return tags;
   }
 
-  public int getIp() {
-    return ip;
+  public int getIpv4() {
+    return ipv4;
   }
 
   Clock clock() {
@@ -397,11 +398,6 @@ public class Tracer implements io.opentracing.Tracer {
         }
       }
 
-      // TODO move this to jaeger-zipkin, this adds tracer tags to zipkin first span in a process
-      if (zipkinSharedRpcSpan && (references.isEmpty() || isRpcServer())) {
-        tags.putAll(Tracer.this.tags);
-      }
-
       Span span =
           new Span(
               Tracer.this,
@@ -557,7 +553,7 @@ public class Tracer implements io.opentracing.Tracer {
       try {
         Properties prop = new Properties();
         prop.load(is);
-        version = prop.getProperty("jaeger.version");
+        version = prop.getProperty(Constants.JAEGER_CLIENT_VERSION_TAG_KEY);
       } finally {
         is.close();
       }
@@ -565,7 +561,7 @@ public class Tracer implements io.opentracing.Tracer {
       throw new RuntimeException("Cannot read jaeger.properties", e);
     }
     if (version == null) {
-      throw new RuntimeException("Cannot read jaeger.version from jaeger.properties");
+      throw new RuntimeException("Cannot read " + Constants.JAEGER_CLIENT_VERSION_TAG_KEY + " from jaeger.properties");
     }
     return "Java-" + version;
   }

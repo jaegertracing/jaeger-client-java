@@ -9,6 +9,7 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: junitVersion
     testCompile group: 'io.zipkin.java', name: 'zipkin-junit', version: '1.16.2'
     testCompile group: 'io.zipkin.brave', name: 'brave-http', version: '4.1.1'
+    testCompile group: 'com.tngtech.java', name: 'junit-dataprovider', version: junitDataProviderVersion
 
     signature 'org.codehaus.mojo.signature:java16:1.1@signature'
 }

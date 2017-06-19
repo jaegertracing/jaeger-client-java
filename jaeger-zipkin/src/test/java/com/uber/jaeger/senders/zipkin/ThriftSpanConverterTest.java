@@ -25,8 +25,13 @@ package com.uber.jaeger.senders.zipkin;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 
+import com.tngtech.java.junit.dataprovider.DataProvider;
+import com.tngtech.java.junit.dataprovider.DataProviderRunner;
+import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import com.twitter.zipkin.thriftjava.Annotation;
+import com.twitter.zipkin.thriftjava.BinaryAnnotation;
 import com.twitter.zipkin.thriftjava.zipkincoreConstants;
 import com.uber.jaeger.Span;
 import com.uber.jaeger.SpanContext;
@@ -42,9 +47,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@RunWith(DataProviderRunner.class)
 public class ThriftSpanConverterTest {
   Tracer tracer;
 
@@ -54,6 +62,105 @@ public class ThriftSpanConverterTest {
         new Tracer.Builder("test-service-name", new InMemoryReporter(), new ConstSampler(true))
                 .withZipkinSharedRpcSpan()
             .build();
+  }
+
+  // undef value is used to mark tags that should *not* be present
+  private static final String UNDEF = "undef";
+
+  // ANY value is used to mark tags that should be present but we don't care what it's value is
+  private static final String ANY = "any";
+
+  private enum SpanType {
+    ROOT,
+    CHILD,
+    RPC_SERVER
+  }
+
+  @DataProvider
+  public static Object[][] dataProviderTracerTags() {
+    Tracer tracer = new Tracer.Builder("x", null, null).build();
+
+    Map<String, String> rootTags = new HashMap<>();
+    rootTags.put("tracer.jaeger.version", tracer.getVersion());
+    rootTags.put("tracer.hostname", ANY);
+    rootTags.put("tracer.tag.str", "y");
+    rootTags.put("tracer.tag.bool", "true");
+    rootTags.put("tracer.tag.num", "1");
+    rootTags.put("sampler.type", "const");
+    rootTags.put("sampler.param", "true");
+
+    Map<String, String> childTags = new HashMap<>();
+    childTags.put("tracer.jaeger.version", UNDEF);
+    childTags.put("tracer.hostname", UNDEF);
+    childTags.put("tracer.tag.str", UNDEF);
+    childTags.put("tracer.tag.bool", UNDEF);
+    childTags.put("tracer.tag.num", UNDEF);
+    childTags.put("sampler.type", UNDEF);
+    childTags.put("sampler.param", UNDEF);
+
+    Map<String, String> rpcTags = new HashMap<>();
+    rpcTags.put("tracer.jaeger.version", tracer.getVersion());
+    rpcTags.put("tracer.hostname", ANY);
+    rpcTags.put("tracer.tag.str", "y");
+    rpcTags.put("tracer.tag.bool", "true");
+    rpcTags.put("tracer.tag.num", "1");
+    rpcTags.put("sampler.type", UNDEF);
+    rpcTags.put("sampler.param", UNDEF);
+
+    return new Object[][] {
+        { SpanType.ROOT, rootTags },
+        { SpanType.CHILD, childTags },
+        { SpanType.RPC_SERVER, rpcTags },
+    };
+  }
+
+  @Test
+  @UseDataProvider("dataProviderTracerTags")
+  public void testTracerTags(SpanType spanType, Map<String, String> expectedTags) throws Exception {
+    InMemoryReporter spanReporter = new InMemoryReporter();
+    Tracer tracer = new Tracer.Builder("x", spanReporter, new ConstSampler(true))
+        .withZipkinSharedRpcSpan()
+        .withTag("tag.str", "y")
+        .withTag("tag.bool", true)
+        .withTag("tag.num", 1)
+        .build();
+
+    Span span = (Span) tracer.buildSpan("root").startManual();
+    if (spanType == SpanType.CHILD) {
+      span = (Span) tracer.buildSpan("child").asChildOf(span).startManual();
+    } else if (spanType == SpanType.RPC_SERVER) {
+      span =
+          (Span)
+              tracer
+                  .buildSpan("rpc-server")
+                  .asChildOf(span)
+                  .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
+                  .startManual();
+    }
+    com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan(span);
+
+    List<BinaryAnnotation> annotations = zipkinSpan.getBinary_annotations();;
+    for (String key : expectedTags.keySet()) {
+      Object expectedValue = expectedTags.get(key);
+      BinaryAnnotation anno = findBinaryAnnotation(annotations, key);
+      if (expectedValue.equals(UNDEF)) {
+        assertNull("Not expecting " + key + " for " + spanType, anno);
+      } else if (expectedValue.equals(ANY)) {
+        assertEquals(key, anno.getKey());
+      } else {
+        String actualValue = new String(anno.getValue(), StandardCharsets.UTF_8);
+        assertEquals("Expecting " + key + " for " + spanType, expectedValue, actualValue);
+      }
+    }
+  }
+
+  private BinaryAnnotation findBinaryAnnotation(List<BinaryAnnotation> annotations, String key) {
+    for (BinaryAnnotation anno : annotations) {
+      if (anno.getKey().equals(key)) {
+        return anno;
+      }
+    }
+    return null;
   }
 
   @Test
@@ -70,12 +177,10 @@ public class ThriftSpanConverterTest {
       if (anno.getValue().equals(zipkincoreConstants.SERVER_RECV)) {
         serverReceiveFound = true;
       }
-
       if (anno.getValue().equals(zipkincoreConstants.SERVER_SEND)) {
         serverSendFound = true;
       }
     }
-
     assertTrue(serverReceiveFound);
     assertTrue(serverSendFound);
   }
@@ -105,15 +210,15 @@ public class ThriftSpanConverterTest {
   }
 
   @Test
-  public void testExpectdLocalComponentNameUsed() {
-    String expectedCompnentName = "local-name";
+  public void testExpectedLocalComponentNameUsed() {
+    String expectedComponentName = "local-name";
     Span span = (com.uber.jaeger.Span) tracer.buildSpan("operation-name").startManual();
-    Tags.COMPONENT.set(span, expectedCompnentName);
+    Tags.COMPONENT.set(span, expectedComponentName);
 
     com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan(span);
     String actualComponent =
-        new String(zipkinSpan.getBinary_annotations().get(0).getValue(), StandardCharsets.UTF_8);
-    assertEquals(expectedCompnentName, actualComponent);
+        new String(zipkinSpan.getBinary_annotations().get(3).getValue(), StandardCharsets.UTF_8);
+    assertEquals(expectedComponentName, actualComponent);
   }
 
   @Test
