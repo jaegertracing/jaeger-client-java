@@ -127,7 +127,7 @@ public class ThriftSpanConverterTest {
     assertEquals(processTagsExist, jaegerHostnameFound);
     assertFalse(ipFound); // the "ip" tag should be removed
   }
-  
+
   @Test
   public void testExpectedLocalComponentNameUsed() {
     String expectedComponentName = "local-name";
