@@ -97,7 +97,8 @@ public class ThriftSpanConverter {
       for (String tagKey : span.getTracer().tags().keySet()) {
         if (!tagKey.equals("ip")) {
           Object tagValue = tags.get(tagKey);
-          binaryAnnotations.add(buildBinaryAnnotation(tagKey, tagValue));
+          // add a tracer. prefix to process tags for zipkin
+          binaryAnnotations.add(buildBinaryAnnotation("tracer." + tagKey, tagValue));
         }
       }
     }

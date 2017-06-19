@@ -171,7 +171,7 @@ public class UdpSenderTest {
     assertTrue(actualSpan.references.isEmpty());
     assertEquals(expectedSpan.getOperationName(), actualSpan.getOperationName());
     assertEquals(4, batch.getProcess().getTags().size());
-    assertEquals("jaeger.hostname", batch.getProcess().getTags().get(0).getKey());
+    assertEquals("hostname", batch.getProcess().getTags().get(0).getKey());
     assertEquals("jaeger.version", batch.getProcess().getTags().get(1).getKey());
     assertEquals("bar", batch.getProcess().getTags().get(2).getVStr());
     assertEquals("ip", batch.getProcess().getTags().get(3).getKey());

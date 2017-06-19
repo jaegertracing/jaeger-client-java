@@ -22,6 +22,7 @@
 
 package com.uber.jaeger;
 
+import com.uber.jaeger.Constants;
 import com.uber.jaeger.exceptions.UnsupportedFormatException;
 import com.uber.jaeger.metrics.Metrics;
 import com.uber.jaeger.metrics.NullStatsReporter;
@@ -57,10 +58,6 @@ import java.util.Map;
 import java.util.Properties;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
-
-import static com.uber.jaeger.Constants.JAEGER_CLIENT_VERSION_TAG_KEY;
-import static com.uber.jaeger.Constants.TRACER_HOSTNAME_TAG_KEY;
-import static com.uber.jaeger.Constants.TRACER_IP_TAG_KEY;
 
 @ToString(exclude = {"registry", "clock", "metrics", "activeSpanSource"})
 @Slf4j
@@ -99,16 +96,18 @@ public class Tracer implements io.opentracing.Tracer {
 
     this.version = loadVersion();
 
-    tags.put(JAEGER_CLIENT_VERSION_TAG_KEY, this.version);
+    tags.put(Constants.JAEGER_CLIENT_VERSION_TAG_KEY, this.version);
     String hostname = getHostName();
     if (hostname != null) {
-      tags.put(TRACER_HOSTNAME_TAG_KEY, hostname);
+      tags.put(Constants.TRACER_HOSTNAME_TAG_KEY, hostname);
     }
     int ipv4 = 0;
     try {
-      tags.put(TRACER_IP_TAG_KEY, InetAddress.getLocalHost().getHostAddress());
+      tags.put(Constants.TRACER_IP_TAG_KEY, InetAddress.getLocalHost().getHostAddress());
       ipv4 = Utils.ipToInt(Inet4Address.getLocalHost().getHostAddress());
-    } catch (UnknownHostException e) { }
+    } catch (UnknownHostException e) {
+      ipv4 = 0;
+    }
     this.ipv4 = ipv4;
     this.tags = Collections.unmodifiableMap(tags);
   }
@@ -554,7 +553,7 @@ public class Tracer implements io.opentracing.Tracer {
       try {
         Properties prop = new Properties();
         prop.load(is);
-        version = prop.getProperty(JAEGER_CLIENT_VERSION_TAG_KEY);
+        version = prop.getProperty(Constants.JAEGER_CLIENT_VERSION_TAG_KEY);
       } finally {
         is.close();
       }
@@ -562,7 +561,7 @@ public class Tracer implements io.opentracing.Tracer {
       throw new RuntimeException("Cannot read jaeger.properties", e);
     }
     if (version == null) {
-      throw new RuntimeException("Cannot read " + JAEGER_CLIENT_VERSION_TAG_KEY + " from jaeger.properties");
+      throw new RuntimeException("Cannot read " + Constants.JAEGER_CLIENT_VERSION_TAG_KEY + " from jaeger.properties");
     }
     return "Java-" + version;
   }

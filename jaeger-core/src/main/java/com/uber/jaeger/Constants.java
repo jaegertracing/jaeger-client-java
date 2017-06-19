@@ -51,7 +51,7 @@ public class Constants {
   /**
    * The name used to report host name of the process.
    */
-  public static final String TRACER_HOSTNAME_TAG_KEY = "jaeger.hostname";
+  public static final String TRACER_HOSTNAME_TAG_KEY = "hostname";
 
   /**
    * The name used to report ip of the process.

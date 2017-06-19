@@ -107,15 +107,15 @@ public class ThriftSpanConverterTest {
   }
 
   public void findProcessTags(com.twitter.zipkin.thriftjava.Span zipkinSpan, boolean processTagsExist) {
-    List<BinaryAnnotation> bAnnotations = zipkinSpan.getBinary_annotations();
+    List<BinaryAnnotation> annotations = zipkinSpan.getBinary_annotations();
     boolean jaegerVersionFound = false;
     boolean jaegerHostnameFound = false;
     boolean ipFound = false;
-    for (BinaryAnnotation anno : bAnnotations) {
-      if (anno.getKey().equals("jaeger.version")) {
+    for (BinaryAnnotation anno : annotations) {
+      if (anno.getKey().equals("tracer.jaeger.version")) {
         jaegerVersionFound = true;
       }
-      if (anno.getKey().equals("jaeger.hostname")) {
+      if (anno.getKey().equals("tracer.hostname")) {
         jaegerHostnameFound = true;
       }
       if (anno.getKey().equals("ip")) {
