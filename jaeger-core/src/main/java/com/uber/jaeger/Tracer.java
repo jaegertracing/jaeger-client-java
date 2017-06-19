@@ -101,7 +101,7 @@ public class Tracer implements io.opentracing.Tracer {
     if (hostname != null) {
       tags.put(Constants.TRACER_HOSTNAME_TAG_KEY, hostname);
     }
-    int ipv4 = 0;
+    int ipv4 ;
     try {
       tags.put(Constants.TRACER_IP_TAG_KEY, InetAddress.getLocalHost().getHostAddress());
       ipv4 = Utils.ipToInt(Inet4Address.getLocalHost().getHostAddress());

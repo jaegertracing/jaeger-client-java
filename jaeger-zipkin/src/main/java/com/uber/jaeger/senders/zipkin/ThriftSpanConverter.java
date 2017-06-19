@@ -27,6 +27,7 @@ import com.twitter.zipkin.thriftjava.AnnotationType;
 import com.twitter.zipkin.thriftjava.BinaryAnnotation;
 import com.twitter.zipkin.thriftjava.Endpoint;
 import com.twitter.zipkin.thriftjava.zipkincoreConstants;
+import com.uber.jaeger.Constants;
 import com.uber.jaeger.LogData;
 import com.uber.jaeger.Span;
 import com.uber.jaeger.SpanContext;
@@ -91,12 +92,13 @@ public class ThriftSpanConverter {
     boolean isClient = isRpcClient(span);
     boolean firstSpanInProcess = span.getReferences().isEmpty() || isRpcServer(span);
 
-    if (firstSpanInProcess && span.getTracer().tags() != null) {
+    Map<String, ?> processTags = span.getTracer().tags();
+    if (firstSpanInProcess && processTags != null) {
       // add tracer tags to first zipkin span in a process but remove "ip" tag as it is
       // taken care of separately.
-      for (String tagKey : span.getTracer().tags().keySet()) {
-        if (!tagKey.equals("ip")) {
-          Object tagValue = tags.get(tagKey);
+      for (String tagKey : processTags.keySet()) {
+        if (!tagKey.equals(Constants.TRACER_IP_TAG_KEY)) {
+          Object tagValue = processTags.get(tagKey);
           // add a tracer. prefix to process tags for zipkin
           binaryAnnotations.add(buildBinaryAnnotation("tracer." + tagKey, tagValue));
         }

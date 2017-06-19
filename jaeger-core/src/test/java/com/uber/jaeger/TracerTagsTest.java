@@ -23,103 +23,27 @@
 package com.uber.jaeger;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
-import io.opentracing.tag.Tags;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
-@RunWith(Parameterized.class)
 public class TracerTagsTest {
 
-  private enum SpanType {
-    ROOT,
-    CHILD,
-    RPC_SERVER
-  }
-
-  // sentinel value is used to mark tags that should *not* be present
-  private static final Object SENTINEL = new Object();
-
-  private final SpanType spanType;
-  private final Map<String, Object> expectedTags;
-
-  public TracerTagsTest(SpanType spanType, Map<String, Object> expectedTags) {
-    this.spanType = spanType;
-    this.expectedTags = expectedTags;
-  }
-
-  @Parameterized.Parameters(name = "{index}: {0}")
-  public static Collection<Object[]> data() {
-    Tracer tracer = new Tracer.Builder("x", null, null).build();
-
-    Map<String, Object> rootTags = new HashMap<>();
-    rootTags.put("jaeger.version", SENTINEL);
-    rootTags.put("hostname", SENTINEL);
-    rootTags.put("tracer.tag.str", SENTINEL);
-    rootTags.put("sampler.type", "const");
-    rootTags.put("sampler.param", true);
-
-    Map<String, Object> sentinelTags = new HashMap<>();
-    sentinelTags.put("jaeger.version", SENTINEL);
-    sentinelTags.put("hostname", SENTINEL);
-    sentinelTags.put("tracer.tag.str", SENTINEL);
-    sentinelTags.put("sampler.type", SENTINEL);
-    sentinelTags.put("sampler.param", SENTINEL);
-
-    List<Object[]> data = new ArrayList<>();
-    data.add(new Object[] {SpanType.ROOT, rootTags});
-    data.add(new Object[] {SpanType.CHILD, sentinelTags});
-    data.add(new Object[] {SpanType.RPC_SERVER, sentinelTags});
-    return data;
-  }
-
-  @Before
-  public void setUp() throws Exception {}
-
   @Test
-  public void testTracerTagsZipkin() throws Exception {
+  public void testTracerTags() throws Exception {
     InMemoryReporter spanReporter = new InMemoryReporter();
     Tracer tracer = new Tracer.Builder("x", spanReporter, new ConstSampler(true))
-            .withZipkinSharedRpcSpan()
-            .withTag("tracer.tag.str", "y")
-            .build();
+        .withZipkinSharedRpcSpan()
+        .withTag("tracer.tag.str", "y")
+        .build();
 
     Span span = (Span) tracer.buildSpan("root").startManual();
-    if (spanType == SpanType.CHILD) {
-      span = (Span) tracer.buildSpan("child").asChildOf(span).startManual();
-    }
-    if (spanType == SpanType.RPC_SERVER) {
-      span =
-          (Span)
-              tracer
-                  .buildSpan("rpc-server")
-                  .asChildOf(span)
-                  .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
-                  .startManual();
-    }
-    Map<String, Object> tags = span.getTags();
-    for (String key : expectedTags.keySet()) {
-      Object expectedValue = expectedTags.get(key);
-      Object actualValue = tags.get(key);
-      if (expectedValue == SENTINEL) {
-        assertNull("Not expecting " + key + " for " + spanType, actualValue);
-      } else {
-        assertEquals("Expecting " + key + " for " + spanType, expectedValue, actualValue);
-      }
-    }
-    Map<String, ?> processTags = tracer.tags();
-    assertEquals(true, processTags.containsKey("jaeger.version"));
-    assertEquals(true, processTags.containsKey("hostname"));
-    assertEquals(true, processTags.containsKey("tracer.tag.str"));
+
+    // span should only contain sampler tags and no tracer tags
+    assertEquals(2, span.getTags().size());
+    assertEquals(true, span.getTags().containsKey("sampler.type"));
+    assertEquals(true, span.getTags().containsKey("sampler.param"));
+    assertEquals(false, span.getTags().containsKey("tracer.tag.str"));
   }
 }
