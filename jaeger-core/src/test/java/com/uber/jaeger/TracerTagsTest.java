@@ -64,14 +64,14 @@ public class TracerTagsTest {
 
     Map<String, Object> rootTags = new HashMap<>();
     rootTags.put("jaeger.version", SENTINEL);
-    rootTags.put("jaeger.hostname", SENTINEL);
+    rootTags.put("hostname", SENTINEL);
     rootTags.put("tracer.tag.str", SENTINEL);
     rootTags.put("sampler.type", "const");
     rootTags.put("sampler.param", true);
 
     Map<String, Object> sentinelTags = new HashMap<>();
     sentinelTags.put("jaeger.version", SENTINEL);
-    sentinelTags.put("jaeger.hostname", SENTINEL);
+    sentinelTags.put("hostname", SENTINEL);
     sentinelTags.put("tracer.tag.str", SENTINEL);
     sentinelTags.put("sampler.type", SENTINEL);
     sentinelTags.put("sampler.param", SENTINEL);
@@ -117,5 +117,9 @@ public class TracerTagsTest {
         assertEquals("Expecting " + key + " for " + spanType, expectedValue, actualValue);
       }
     }
+    Map<String, ?> processTags = tracer.tags();
+    assertEquals(true, processTags.containsKey("jaeger.version"));
+    assertEquals(true, processTags.containsKey("hostname"));
+    assertEquals(true, processTags.containsKey("tracer.tag.str"));
   }
 }
