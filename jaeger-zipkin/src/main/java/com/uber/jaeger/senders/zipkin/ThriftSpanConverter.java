@@ -34,6 +34,7 @@ import com.uber.jaeger.Tracer;
 import io.opentracing.tag.Tags;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -43,7 +44,7 @@ public class ThriftSpanConverter {
 
   public static com.twitter.zipkin.thriftjava.Span convertSpan(Span span) {
     Tracer tracer = span.getTracer();
-    Endpoint host = new Endpoint(tracer.getIp(), (short) 0, tracer.getServiceName());
+    Endpoint host = new Endpoint(tracer.getIpv4(), (short) 0, tracer.getServiceName());
 
     SpanContext context = span.context();
     return new com.twitter.zipkin.thriftjava.Span(
@@ -88,6 +89,18 @@ public class ThriftSpanConverter {
     Map<String, Object> tags = span.getTags();
     boolean isRpc = isRpc(span);
     boolean isClient = isRpcClient(span);
+    boolean firstSpanInProcess = span.getReferences().isEmpty() || isRpcServer(span);
+
+    if (firstSpanInProcess && span.getTracer().tags() != null) {
+      // add tracer tags to first zipkin span in a process but remove "ip" tag as it is
+      // taken care of separately.
+      for (String tagKey : span.getTracer().tags().keySet()) {
+        if (!tagKey.equals("ip")) {
+          Object tagValue = tags.get(tagKey);
+          binaryAnnotations.add(buildBinaryAnnotation(tagKey, tagValue));
+        }
+      }
+    }
 
     Endpoint peerEndpoint = extractPeerEndpoint(tags);
     if (peerEndpoint != null && isClient) {
@@ -137,13 +150,17 @@ public class ThriftSpanConverter {
     return banno;
   }
 
-  public static boolean isRpc(Span span) {
+  static boolean isRpcServer(Span span) {
+    return Tags.SPAN_KIND_SERVER.equals(span.getTags().get(Tags.SPAN_KIND.getKey()));
+  }
+
+  static boolean isRpc(Span span) {
     Object spanKindValue = span.getTags().get(Tags.SPAN_KIND.getKey());
     return Tags.SPAN_KIND_CLIENT.equals(spanKindValue) || Tags.SPAN_KIND_SERVER.equals(spanKindValue);
 
   }
 
-  public static boolean isRpcClient(Span span) {
+  static boolean isRpcClient(Span span) {
     return Tags.SPAN_KIND_CLIENT.equals(span.getTags().get(Tags.SPAN_KIND.getKey()));
   }
 

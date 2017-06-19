@@ -27,6 +27,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
 import com.twitter.zipkin.thriftjava.Annotation;
+import com.twitter.zipkin.thriftjava.BinaryAnnotation;
 import com.twitter.zipkin.thriftjava.zipkincoreConstants;
 import com.uber.jaeger.Span;
 import com.uber.jaeger.SpanContext;
@@ -70,19 +71,19 @@ public class ThriftSpanConverterTest {
       if (anno.getValue().equals(zipkincoreConstants.SERVER_RECV)) {
         serverReceiveFound = true;
       }
-
       if (anno.getValue().equals(zipkincoreConstants.SERVER_SEND)) {
         serverSendFound = true;
       }
     }
-
     assertTrue(serverReceiveFound);
     assertTrue(serverSendFound);
+    findProcessTags(zipkinSpan, true);
   }
 
   @Test
   public void testSpanKindClientCreatesAnnotations() {
-    Span span = (com.uber.jaeger.Span) tracer.buildSpan("operation-name").startManual();
+    Span parent = (com.uber.jaeger.Span) tracer.buildSpan("operation-name").startManual();
+    Span span = (com.uber.jaeger.Span) tracer.buildSpan("operation-name").asChildOf(parent).startManual();
     Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
 
     com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan(span);
@@ -102,18 +103,41 @@ public class ThriftSpanConverterTest {
 
     assertTrue(clientReceiveFound);
     assertTrue(clientSendFound);
+    findProcessTags(zipkinSpan, false);
   }
 
+  public void findProcessTags(com.twitter.zipkin.thriftjava.Span zipkinSpan, boolean processTagsExist) {
+    List<BinaryAnnotation> bAnnotations = zipkinSpan.getBinary_annotations();
+    boolean jaegerVersionFound = false;
+    boolean jaegerHostnameFound = false;
+    boolean ipFound = false;
+    for (BinaryAnnotation anno : bAnnotations) {
+      if (anno.getKey().equals("jaeger.version")) {
+        jaegerVersionFound = true;
+      }
+      if (anno.getKey().equals("jaeger.hostname")) {
+        jaegerHostnameFound = true;
+      }
+      if (anno.getKey().equals("ip")) {
+        ipFound = true;
+      }
+    }
+
+    assertEquals(processTagsExist, jaegerVersionFound);
+    assertEquals(processTagsExist, jaegerHostnameFound);
+    assertFalse(ipFound); // the "ip" tag should be removed
+  }
+  
   @Test
-  public void testExpectdLocalComponentNameUsed() {
-    String expectedCompnentName = "local-name";
+  public void testExpectedLocalComponentNameUsed() {
+    String expectedComponentName = "local-name";
     Span span = (com.uber.jaeger.Span) tracer.buildSpan("operation-name").startManual();
-    Tags.COMPONENT.set(span, expectedCompnentName);
+    Tags.COMPONENT.set(span, expectedComponentName);
 
     com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan(span);
     String actualComponent =
-        new String(zipkinSpan.getBinary_annotations().get(0).getValue(), StandardCharsets.UTF_8);
-    assertEquals(expectedCompnentName, actualComponent);
+        new String(zipkinSpan.getBinary_annotations().get(3).getValue(), StandardCharsets.UTF_8);
+    assertEquals(expectedComponentName, actualComponent);
   }
 
   @Test

@@ -61,39 +61,25 @@ public class TracerTagsTest {
   @Parameterized.Parameters(name = "{index}: {0}")
   public static Collection<Object[]> data() {
     Tracer tracer = new Tracer.Builder("x", null, null).build();
-    String hostname = tracer.getHostName();
 
     Map<String, Object> rootTags = new HashMap<>();
-    rootTags.put("jaeger.version", tracer.getVersion());
-    rootTags.put("jaeger.hostname", hostname);
-    rootTags.put("tracer.tag.str", "y");
-    rootTags.put("tracer.tag.bool", true);
-    rootTags.put("tracer.tag.num", 1);
+    rootTags.put("jaeger.version", SENTINEL);
+    rootTags.put("jaeger.hostname", SENTINEL);
+    rootTags.put("tracer.tag.str", SENTINEL);
     rootTags.put("sampler.type", "const");
     rootTags.put("sampler.param", true);
 
-    Map<String, Object> childTags = new HashMap<>();
-    childTags.put("jaeger.version", SENTINEL);
-    childTags.put("jaeger.hostname", SENTINEL);
-    childTags.put("tracer.tag.str", SENTINEL);
-    childTags.put("tracer.tag.bool", SENTINEL);
-    childTags.put("tracer.tag.num", SENTINEL);
-    childTags.put("sampler.type", SENTINEL);
-    childTags.put("sampler.param", SENTINEL);
-
-    Map<String, Object> rpcTags = new HashMap<>();
-    rpcTags.put("jaeger.version", tracer.getVersion());
-    rpcTags.put("jaeger.hostname", hostname);
-    rpcTags.put("tracer.tag.str", "y");
-    rpcTags.put("tracer.tag.bool", true);
-    rpcTags.put("tracer.tag.num", 1);
-    rpcTags.put("sampler.type", SENTINEL);
-    rpcTags.put("sampler.param", SENTINEL);
+    Map<String, Object> sentinelTags = new HashMap<>();
+    sentinelTags.put("jaeger.version", SENTINEL);
+    sentinelTags.put("jaeger.hostname", SENTINEL);
+    sentinelTags.put("tracer.tag.str", SENTINEL);
+    sentinelTags.put("sampler.type", SENTINEL);
+    sentinelTags.put("sampler.param", SENTINEL);
 
     List<Object[]> data = new ArrayList<>();
     data.add(new Object[] {SpanType.ROOT, rootTags});
-    data.add(new Object[] {SpanType.CHILD, childTags});
-    data.add(new Object[] {SpanType.RPC_SERVER, rpcTags});
+    data.add(new Object[] {SpanType.CHILD, sentinelTags});
+    data.add(new Object[] {SpanType.RPC_SERVER, sentinelTags});
     return data;
   }
 
@@ -106,8 +92,6 @@ public class TracerTagsTest {
     Tracer tracer = new Tracer.Builder("x", spanReporter, new ConstSampler(true))
             .withZipkinSharedRpcSpan()
             .withTag("tracer.tag.str", "y")
-            .withTag("tracer.tag.bool", true)
-            .withTag("tracer.tag.num", 1)
             .build();
 
     Span span = (Span) tracer.buildSpan("root").startManual();

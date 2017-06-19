@@ -69,7 +69,7 @@ public class Tracer implements io.opentracing.Tracer {
   private final PropagationRegistry registry;
   private final Clock clock;
   private final Metrics metrics;
-  private final int ip;
+  private final int ipv4;
   private final Map<String, ?> tags;
   private final boolean zipkinSharedRpcSpan;
   private final ActiveSpanSource activeSpanSource;
@@ -93,14 +93,6 @@ public class Tracer implements io.opentracing.Tracer {
     this.zipkinSharedRpcSpan = zipkinSharedRpcSpan;
     this.activeSpanSource = activeSpanSource;
 
-    int ip;
-    try {
-      ip = Utils.ipToInt(Inet4Address.getLocalHost().getHostAddress());
-    } catch (UnknownHostException e) {
-      ip = 0;
-    }
-    this.ip = ip;
-
     this.version = loadVersion();
 
     tags.put("jaeger.version", this.version);
@@ -108,6 +100,12 @@ public class Tracer implements io.opentracing.Tracer {
     if (hostname != null) {
       tags.put("jaeger.hostname", hostname);
     }
+    int ipv4 = 0;
+    try {
+      tags.put("ip", InetAddress.getLocalHost().getHostAddress());
+      ipv4 = Utils.ipToInt(Inet4Address.getLocalHost().getHostAddress());
+    } catch (UnknownHostException e) {}
+    this.ipv4 = ipv4;
     this.tags = Collections.unmodifiableMap(tags);
   }
 
@@ -127,8 +125,8 @@ public class Tracer implements io.opentracing.Tracer {
     return tags;
   }
 
-  public int getIp() {
-    return ip;
+  public int getIpv4() {
+    return ipv4;
   }
 
   Clock clock() {
@@ -395,11 +393,6 @@ public class Tracer implements io.opentracing.Tracer {
           startTimeNanoTicks = clock.currentNanoTicks();
           computeDurationViaNanoTicks = true;
         }
-      }
-
-      // TODO move this to jaeger-zipkin, this adds tracer tags to zipkin first span in a process
-      if (zipkinSharedRpcSpan && (references.isEmpty() || isRpcServer())) {
-        tags.putAll(Tracer.this.tags);
       }
 
       Span span =
