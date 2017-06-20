@@ -22,7 +22,9 @@
 
 package com.uber.jaeger;
 
+import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 
 import com.uber.jaeger.exceptions.EmptyIpException;
 import com.uber.jaeger.exceptions.NotFourOctetsException;
@@ -50,29 +52,21 @@ public class UtilsTest {
 
   @Test
   public void testIpToInt32_localhost() {
-    int expectedIp = (127 << 24) | 1;
-    int actualIp = Utils.ipToInt("127.0.0.1");
-    assertEquals(expectedIp, actualIp);
+    assertThat(Utils.ipToInt("127.0.0.1"), equalTo((127 << 24) | 1));
   }
 
   @Test
   public void testIpToInt32_above127() {
-    int expectedIp = 176750850;
-    int actualIp = Utils.ipToInt("10.137.1.2");
-    assertEquals(expectedIp, actualIp);
+    assertThat(Utils.ipToInt("10.137.1.2"), equalTo((10 << 24) | (137 << 16) | (1 << 8) | 2));
   }
 
   @Test
   public void testIpToInt32_zeros() {
-    int expectedIp = 0;
-    int actualIp = Utils.ipToInt("0.0.0.0");
-    assertEquals(expectedIp, actualIp);
+    assertThat(Utils.ipToInt("0.0.0.0"), equalTo(0));
   }
 
   @Test
   public void testIpToInt32_broadcast() {
-    int expectedIp = -1;
-    int actualIp = Utils.ipToInt("255.255.255.255");
-    assertEquals(expectedIp, actualIp);
+    assertThat(Utils.ipToInt("255.255.255.255"), equalTo(-1));
   }
 }
