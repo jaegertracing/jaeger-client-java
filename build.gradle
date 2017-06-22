@@ -23,7 +23,7 @@ ext.junitDataProviderVersion = '1.10.0'
 ext.awaitilityVersion = '3.0.0'
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '3.5'
+    gradleVersion = '4.0'
 }
 
 allprojects {
