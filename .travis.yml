@@ -1,9 +1,6 @@
 sudo: required
-
 language: java
-
 dist: trusty
-
 matrix:
   include:
   - env:
@@ -11,43 +8,40 @@ matrix:
     - COVERAGE=true
   - env:
     - CROSSDOCK=true
-
 services:
 - docker
-
 env:
   global:
   - DOCKER_VERSION=1.11.1-0~trusty
   - DOCKER_COMPOSE_VERSION=1.7.0
   - COMMIT=${TRAVIS_COMMIT::8}
   # SONATYPE_USERNAME=<sonatype username>
-  - secure: PRiEM4oGX4yjIzQlGMg+C28LdrkikUO8fsCXul0O+mJQ6Yua3b+G9HOC586UvyqAY4mFvSGP/EIefBuRLVQhFKvHpxHtfjpGg3w2Txq9KxiY5DjaYFuihKPz8Zs+PAZXd8rWqQvjZFkpHHmXdQG5I4MRSCb5Pkk/T3uwJqDCpcQeaBxWIglwVm4etM4pBxQT7BCVKvh4CJ6vNJuLPRRqn4CqgnZV9ytcrUoOF3binbdP2S2KImBqimAyLW3ThqTaJ2xkGWTKI7oc3k2NCejIFUPcf9dzzZ4aKKu9x9t94v7QSwLOE+9tQh5F0W3C89qcG9SmPVaTS7QwQhKwFP92BfMbobu056VSxSFielQ5DvPTaAiStGBzr/2Uhn+KITjSRNj6dX6tjaL9q/8TFE+g0QZIP00PhfzzNOde5Nlh8fUu3bo+4X6Y+WPXHEe8SfLdVYIb6+1zvxkNyWHQoeN+uDGIDSOgWYT74tz0HBcpt2WIrOPaSc6m6RaZKC8dOuWODY+HRZXetwvsYa/aw+Y/7aGJgh7oJqNM5/D2Cc9tp/Q81J5pGZZEjNF+lcjMX8A8COk4TKtd9SbL+a5BeNUOcu8wWJZ/5vEHi2MaghfCr0xVDqQVrKbHQS1UH/qnholpUOD35iP4wVl9r3ftee1yuH35ZNFUZIGlAmLhvZ5LQgY=
+  - secure: PhwgRqJUOAcGnZGp9r7Bti4KSsZHCrPvEXubIpkk0y2JGh4rHiRr0iZOgR4+teBh4c1bsOwbLNtSUjE8pKYi2+vBVxL2IsNSXU/UXOz7aTvNzOMGHUm4rmJKUY70f2Ur9yFkdMQr4x9j7kkMJYEPDTGushRPjE/1TJR7E1WJoZdLB7hzEQEzfxuOlsMhpDtJ8KAVEuFeyxrlJb5YMObwUbnZ+iu92xWzaT7uM4+dIK43t13f7+29U7YHTi2a2lPr4ik3yIzj0OApZlnSX1sDEW0cTzonJH0iWeMHBsiSiUYOWzkLfERq0ABhUuMzMK4JzPRso7sb/GjFnvoCzUCGyFmDjU20lgzTR5uB+98i1fktlb9uF2wY/2y6WqG13vC+jLd8I2k8lPGmhaG5re2YPnmo3n3nLlNkH157hPadgV/p6HuOj8+dx6EKUFP4KZztSuK0cj1cCLZD+6Sv02iUT34yGILYtIqTp7/AeCUqogUsgNnsyOwDow6Y0wppdZ+TfVRuYS9mg4gW8pNo9CfVfKRyhDtgWvF8hkNOTvEyRBy9PeQzDxWQRUmEl94ndOkQcrdAeB4htrYqT4/SF0IVn9MVycL3FJqq00bELW7127awgHClvFoCPIDCyO/J/Lu49OgJPZopNAV6vsb9OmmzyHDWr2mCZcVkcYVbHSCoDsA=
   # SONATYPE_PASSWORD=<sonatype password>
-  - secure: gqAqV1tCjiqAzbreGsgvlcXCg9M7MLyyc+9v7/booL+eNqjevQ25CEzLSBoQQnJAKNDixHloCwCxRIbCrc3HcAl/8V6NZ8JxzUPoxKzN3yr4SPyD+KcJSNDwPqCHScKnMbuBPGKPcZFng2XyIpKAAAzqmc+zMpKRBdos4l27l5b4NdPHJUPRgFpqyL2oZY5nzeqzB/akP1c0jOZOSbfl4JVdXflYAWiXtA3zesVCJcrsYrQQ/xpL4ziETqy9UFZnMcBH9KADx6gCyoZMsf9OfVCGl0YGBb1LECIUYi/74b8TPp18+oUNYnpZScsOHmUSdmFrkIb/y714OIYPDQPhpny/aPXkBHH2ze+7AQGHNPoNJJZsG/W7/pj4AH91HGLVBxGApuA95WNFoIglHWtII+uvraeiTWaeC6VYOrwDdLHy5Aijtr1lH+zqFOfzSWGyj6Blt8x3aKsZmnFA4b8h+l0y+VjEFqmZIf9yKLlShieyhCWdZtIEwmeB120zbFIJHRfHClOs7Zwel4uE2HCJVSqP24auhA5j7uHYPBBSD/+VZRoeDiDE0qjRO0ZeXAUP6EIrplZecDWZXYZhW6XOHWpHittbCAisz2m43DEXSunISrLS5ONkjeDUfn42q24c80/gwPlG+7zLynwrJ1sO7EHECPhoPmUpilaQ+j4kmt4=
+  - secure: Lbt9FQrHLa4k+ZJgnNleUrmFw59NNceTYjgX8pSpCkTQyldtfB386PxnFRAT12GCrPRO8u+7U/lFR9QjE2hJtB/y+3VfHldbwTY5nXhMRUac8FKsONkYryQa202oenVrKLg4JgdJdXkpDJEF9YcHLnc39w326/mPVeYWRgv3XZbOa7g3GJjI9BV6ozyN2oEFqtIP6OCx/1FJt+6aAHYOSfc83dWfHL7TW5xg8Dj3IGziItanXfEmM+LXiRPhjiB+JrUhfYD0SovbH3U7WiVTUyRsUTPg2sPSP7iptJ3Mv/y900rBaygdDM4H1QP5aBfB9ycOFiEcQWprvs/J7BDSLR3Nug6qXxdJIinrBXzV2qxxevZAZ9JiWP6oAcFKKsaycQZjdtmmLVWLqtKy0fCS+TvVHTEFMY2cxrATUGsCla4pb16ZXQ/bFcVhUp7uJ82rf5aP/niji4EuYCUOT1E1HUlDFvIEm0+KOornzOKPxUwRk/X5/xI1jfrNEtlRNFdS7mbbXhWIwtgCU8xyNOa7hGpunN9H4LpRtxowtmg3FbXQbH6RzCUfhrDlnYXA3n2frFbkxEjH+aDAhintau/ULyPW+Tyr8yF+0B3BIK3q7h0d9sX1/AnGAdPNYbVdWrdns4IP4w2NV4MtF2Hu6B7jj5lIby59dccyFCcfrn0N+ss=
   # DOCKER_USERNAME=<docker username>
   - secure: q19fJLh2aO583rOALLKor4FeQr5u3EWKtUNhOyrUR9k7FLVk/9cLIrLr77DWdYxn0DE123DeHHm+GB7vEL85DmhJXUy3Bqpkjqr/eOZwtzGuCeDY9q7pO3eJJ8V3Fhw0p9rvGq1yg/nEO6S9whE+IUFxUanSIsjltM93KEfeaOGEvi5vkfKoD1etgGh8tx3d69Q17SyfHl+xRMW4KOVe3vdjUUnFPINhqmjKaYRmbsZ3yx7cuX+i6qbpW3Biypy/zjeu/35CfjQIiB8rgo8G6qtbGj9gfMzt3xmDL2LEOJtIx4nDJ3wPMVsGUGbu8LhNzX71EddbnqdWwjLnyoYAEYynu13q8rHljA+NlT8mPBP4wX00TTtJoWmwCmMnWgRcFPMS50cVBDwLLANZcVPU6iNY/+0AE4ANlzWHDLD/0pTqvYB5Z2UIVbXPuvkys7xBL5pKFnqTXVlWQuTRkSO8PXnSo24QP04AcjlkHnqNPesjkztFh4DSOfyL/6BiLebKDo6C+KNcN6Ep9SYpVfkwYDLV2qtfbiLxu4wjAgQjxPk701VGMfywmMvHaqa7UQpXQfEvHM/kTYJGknqf80WvXo/ilnvb9esANEP6cJZ3Z9h7Sq9P/ytec5NqPRaKVaMmN5bJXNY30g7MLkyD1fAMKIkaUfFdKNFzZVAAmsC7fho=
   # DOCKER_PASSWORD=<docker password>
   - secure: aj5LcCTpFS+e/bgOkyteSj85SplvGAgeje+Rbo8C5jgxScnHutalAEECnlXJBvxdke8OE4s+J8dX4cKoHf0XXial8hwEwfm+r/wPeTpr06L0eleBGfGsiF0dsYApIs3EmIoA+4x3LGB0BTta/XOfNzj9TFkaf3NExn6GClXAzx51tyJm3C8Yt3OP756dga8opU8iIBvKIA7bgn2pOs7xBSd2Dx7J8jBsw3uBXKtpyVLj6n7fl0EaVEVpF9Od7ASeJ0+P9x2pEkiqZhuMHm4mj+BaUqIJABRZ93PqiEDxHG/pnoJiIbXVis3LFTxFKQVYLG53eoZuww1h09TW+m1oDe6cNpkt7TanaKZ8a5oT/sgHUZHzP5Tlvv8UiqcaTQDlxaszYgcOZkfRHctMNVc0Wyr0QEft77c0jsK8lCyudzMhXKxj+MFoYxkUx61vBWQvnToJdP1YHk0c7YWzPADEIwRG2v2rXZvx1CmWcMDtxtcU+gSrtcD/8GMFuKKHDV7EAvApKSLl5OoAioHPVZLNvZbrPFaVV6dpdrGB3kkWNf+WSu6F0IG/CCGStykJbNivyBYv87Ngs6iAVKYUW2uiuICd8Eb+Ak/J2T05t1kJaZRwfzXKVGAOHdn3lloah8bSGRPhbvT3PwkRXPwYRHL/jE5g/el0Bq1LI3tn/6VyDhM=
-
+  # SIGNING_KEY_ID
+  - secure: lVS7/tiVUjNAhjIS5kSx0vIGJP6JLi6PGHBgHyPvgj4/3SoxJeJ07HKyMmP6oLjvUzDOQZ7fn4VuEb3NOg4rJI5vbKSVw0w2qXTDaiJUSEtLRWgUV1II7hhPXf18ikXcgiCDWv8IMlEUq/7VLyiqyLfgxe457GfUBW+HFjg/BkCHzIveilxU9IAE2vGVB46g4tBl4wSXkY9mCpZVsQHcNdJ2UIzXizWMpMiC138MW+bm3jSug2OnWTL4Bm8alv1r3drRQiIyd3VbkUMKEFWV4NpMZvx8cI4Z54ePi9wmqGn67dcFjjfWroJ9NOK58SQcWMJc5NxI6Y4EdYU3DUZ/vfgSaDgFGbfL1+tIvgllqLuwfnTXM5wx1UDLHx9KbzveHG+JIvfLbIHsKIzAVHoyFo+ZQ3suEu3CL/75mjijnoHJ/sQhqeLeDIFwan+AdKlfofJ/Ztq7rqPysGu4SzYxs3m0pKEPuGnjXVDLAa4HUFz5inI+4Q34Mdr5Plm9E0Ka71PBMxsW92IbVTYCKASLvyGbHPpAFUSBeRtT/wYaKlOxvFJ7fARD//wRAlelD/41IzarwaXtbtVS8TvJ9vQWhbHDx/ssPTify+5zMzJ9QboiUjpcOlN1bhRJ1oi6OrgacH4do+yhWJyar2f+djomWDJ6uvsKqep3T+CjB945EFA=
+  # SIGNING_KEY_PASSPHRASE
+  - secure: T5pS+mGSBMntcRvwYU1YZoCiJbBgyPzl67UKa2ivyFeRxd7s+v4UZgdCKxCtvj6HlHjePf0gKBEPq/QrDMNwculzRQ2yuMxS6FVm/MUCcjt8sAnxMsPYLJpHNXTHwPSzHWEQ+iC8GeoZQ17C+SJtYj+wruXSlh/NeL9Ni5dzD3NcpA/WCi7kiWUWlIjKVkseZdHWOS+jBcvbLq9NxzLlES26KzPgB7Pk5PARAKjhbzEr5BDNgOk8K1sX1OskiFlFM5W9QX+cW2kfG9aMm5FfAfA1UjwEWhWYq2R7nTC/MuYhNLwgGV25h2rj6l52ys9B9VpdmXCawXRBmZrTYxHKAc30nNvEtr+4lh4b3ywIh6gm1D0Jvh+LLVeOKDaTPxN3SrmtUN/ORp+4oaF7/qzTqOXCpUO7zdNHl7PKAaCgOKwmedWFZyeDuOeEStGWp/2/RTjEdzozfdiMRrtI3q61uslYyNLMTdQ97cb7FtBlmsljkkgFWMZg2/k5VdWNuaTWGCrpo53IaAauRQBtVmM6KNgL3J97qkKUQr3gDW7ADd0Zy5cStPtybSuk50Rc6rb1cTA0BzkQPWAVGzy4mVeG00m6OuR2Gje0ceidydW0ELoV368e10RJPSlXyZ89aLNbGVk1l64c6/YR/D1dYK7bLc3I/j5e3pnWbkMKI5wsMxc=
 before_cache:
 - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
-
 cache:
   directories:
-  - $HOME/.gradle/caches/
-  - $HOME/.gradle/wrapper/
-
+  - "$HOME/.gradle/caches/"
+  - "$HOME/.gradle/wrapper/"
 before_install:
+- ./travis/prepare-signing.sh $encrypted_677f232983c0_key $encrypted_677f232983c0_iv
 - if [ "$CROSSDOCK" == true ]; then bash ./travis/install-crossdock-deps.sh ; fi
 - sudo rm -rf /usr/local/bin/thrift
 - sudo cp travis/docker-thrift/thrift /usr/local/bin/
-
-
 script:
 - if [ "$TESTS" == true ]; then make test ; else echo 'skipping tests'; fi
 - if [ "$COVERAGE" == true ]; then ./gradlew codeCoverageReport ; else echo 'skipping coverage'; fi
 - if [ "$CROSSDOCK" == true ]; then bash ./travis/build-crossdock.sh ; else echo 'skipping crossdock'; fi
-
 after_success:
 - if [ "$COVERAGE" == true ]; then bash <(curl -s https://codecov.io/bash) ; fi
-- if [ "$CROSSDOCK" == true ]; then ./gradlew uploadArchives -PossrhUsername="${SONATYPE_USERNAME}" -PossrhPassword="${SONATYPE_PASSWORD}" ; fi
+- if [ "$CROSSDOCK" == true -a "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_PULL_REQUEST" == false ]; then ./gradlew upload ; fi
