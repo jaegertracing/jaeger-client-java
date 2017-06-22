@@ -6,7 +6,7 @@ clean:
 
 .PHONY: test
 test:
-	./gradlew check --parallel
+	./gradlew check
 
 .PHONY: release
 release: clean
