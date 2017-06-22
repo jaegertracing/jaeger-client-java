@@ -38,14 +38,33 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.Properties;
 import javax.ws.rs.core.Application;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
+import org.glassfish.jersey.test.TestProperties;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class HttpSamplingManagerTest extends JerseyTest {
 
   HttpSamplingManager undertest = new HttpSamplingManager(null);
+
+  private static Properties originalProps;
+
+  @BeforeClass
+  public static void beforeClass() {
+    Properties originalProps = new Properties(System.getProperties());
+    if (System.getProperty(TestProperties.CONTAINER_PORT) == null) {
+      System.setProperty(TestProperties.CONTAINER_PORT, "0");
+    }
+  }
+
+  @AfterClass
+  public static void afterClass() {
+    System.setProperties(originalProps);
+  }
 
   @Override
   protected Application configure() {

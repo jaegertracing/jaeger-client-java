@@ -53,7 +53,6 @@ public class UdpSenderTest {
   static final String SERVICE_NAME = "test-sender";
   final String destHost = "localhost";
   int destPort;
-  int localPort = 0;
   final int maxPacketSize = 1000;
 
   Tracer tracer;
@@ -62,7 +61,7 @@ public class UdpSenderTest {
   TestTServer server;
 
   private TestTServer startServer() throws Exception {
-    TestTServer server = new TestTServer(localPort);
+    TestTServer server = new TestTServer(0);
     destPort = server.getPort();
 
     Thread t = new Thread(server);
@@ -161,7 +160,7 @@ public class UdpSenderTest {
     assertEquals(flushNum, 1);
 
     Batch batch = server.getBatch(expectedNumSpans, timeout);
-    assertEquals(batch.getSpans().size(), expectedNumSpans);
+    assertEquals(expectedNumSpans, batch.getSpans().size());
 
     com.uber.jaeger.thriftjava.Span actualSpan = batch.getSpans().get(0);
     assertEquals(expectedSpan.context().getTraceId(), actualSpan.getTraceIdLow());

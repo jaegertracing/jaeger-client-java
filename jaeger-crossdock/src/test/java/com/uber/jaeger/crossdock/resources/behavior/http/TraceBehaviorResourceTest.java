@@ -82,12 +82,10 @@ public class TraceBehaviorResourceTest {
 
   @Before
   public void setUp() throws Exception {
-    port = System.getenv("TRACE_TEST_BEHAVIOR_PORT");
-    if (port == null) {
-      port = "55555";
-    }
+    server = new JerseyServer("127.0.0.1:0", TraceBehaviorResource.class);
+    port = String.valueOf(server.getPort());
     hostPort = String.format("127.0.0.1:%s", port);
-    server = new JerseyServer(hostPort, TraceBehaviorResource.class);
+
     behavior = new TraceBehavior();
   }
 
@@ -154,7 +152,7 @@ public class TraceBehaviorResourceTest {
 
   @Test
   public void testJoinTraceTChannel() throws Exception {
-    TChannelServer tchannel = new TChannelServer(8081, behavior, server.getTracer(), true);
+    TChannelServer tchannel = new TChannelServer(0, behavior, server.getTracer(), true);
     tchannel.start();
 
     Span span = (Span) server.getTracer().buildSpan("root").startManual();

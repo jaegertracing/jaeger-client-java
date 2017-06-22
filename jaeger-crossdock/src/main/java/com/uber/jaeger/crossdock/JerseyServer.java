@@ -36,10 +36,12 @@ import com.uber.jaeger.filters.jaxrs2.TracingUtils;
 import com.uber.jaeger.samplers.ConstSampler;
 import io.opentracing.Tracer;
 import java.net.URI;
+import java.util.ArrayList;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import org.apache.log4j.BasicConfigurator;
 import org.glassfish.grizzly.http.server.HttpServer;
+import org.glassfish.grizzly.http.server.NetworkListener;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.filter.LoggingFilter;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
@@ -91,6 +93,11 @@ public class JerseyServer {
     String baseUri = String.format("http://%s/", hostPort);
     server = GrizzlyHttpServerFactory.createHttpServer(URI.create(baseUri), rc);
     client = initializeClient(config);
+  }
+
+  public int getPort() {
+    ArrayList<NetworkListener> networkListeners = new ArrayList<>(server.getListeners());
+    return networkListeners.get(0).getPort();
   }
 
   private static TraceContext traceContext() {
