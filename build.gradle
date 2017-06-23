@@ -31,7 +31,7 @@ allprojects {
     apply plugin: 'jacoco'
 
     group = 'com.uber.jaeger'
-    version = '0.20.0-SNAPSHOT'
+    version = '0.20.0'
 
     repositories {
         mavenCentral()

@@ -1,6 +1,13 @@
 Changes by Version
 ==================
 
+0.20.0 (2017-06-23)
+-------------------
+- Upgrade to OpenTracing Java 0.30.0 with in-process propagation support (https://github.com/uber/jaeger-client-java/pull/188)
+- Add Process IP to jaeger.thrift (https://github.com/uber/jaeger-client-java/pull/197)
+- Implement HTTP sender for jaeger.thrift (https://github.com/uber/jaeger-client-java/pull/194)
+
+
 0.19.0 (2017-05-29)
 -------------------
 - TraceResolver support (https://github.com/uber/jaeger-client-java/pull/175)
@@ -8,6 +15,7 @@ Changes by Version
 - Bump OpenTracing version to 0.22.0 (https://github.com/uber/jaeger-client-java/pull/164)
 - Use jaeger.thrift data model (https://github.com/uber/jaeger-client-java/pull/142)
 - Enable process level tags to be associated with the tracer (https://github.com/uber/jaeger-client-java/pull/143)
+
 
 0.18.0 (2017-04-13)
 -------------------
@@ -17,11 +25,13 @@ Changes by Version
 - Bump opentracingVersion to 0.21.0 (https://github.com/uber/jaeger-client-java/pull/137)
 - Add Java 6 compatibility (https://github.com/uber/jaeger-client-java/pull/132)
 
+
 0.17.0 (2016-12-02)
 -------------------
 
 - Fix bug where server spans were incorrectly marked as local components
 - Tighten checks for marking a span as a RPC
+
 
 0.16.0 (2016-11-28)
 -------------------
@@ -30,6 +40,7 @@ Changes by Version
 - Add Builder to TextMapCodec
 - Bump up zipkin to 1.16.2
 - Automatically add span names for jersey instrumentation
+
 
 0.15.0 (2016-10-26)
 -------------------
@@ -41,6 +52,7 @@ Changes by Version
 - Publish a shaded jar with libthrift 0.9.2 packaged
 - Bump up zipkin versions
 
+
 0.14.0 (2016-10-06)
 -------------------
 
@@ -48,15 +60,18 @@ Changes by Version
 - Add convenience setter for metrics
 - Expose interceptor callbacks and custom operation name for extension classes
 
+
 0.13.0 (2016-09-29)
 -------------------
 
 - Fix bug with dropwizard config parsing
 
+
 0.12.0 (2016-09-27)
 -------------------
 
 - Support Apache HttpClient
+
 
 0.11.0 (2016-09-22)
 -------------------
