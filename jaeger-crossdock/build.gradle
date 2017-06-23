@@ -18,7 +18,6 @@ dependencies {
     compile group: 'org.glassfish.jersey.containers', name: 'jersey-container-servlet', version: jerseyVersion
     compile group: 'org.glassfish.jersey.core', name: 'jersey-client', version: jerseyVersion
     compile group: 'org.glassfish.jersey.media', name: 'jersey-media-json-jackson', version: jerseyVersion
-    compile group: 'org.glassfish.jersey.media', name: 'jersey-media-moxy', version: '2.12'
     compile group: 'javax.servlet', name: 'servlet-api', version: '2.5'
     compile group: 'com.uber.tchannel', name: 'tchannel-core', version: '0.5.0'
     compile group: 'org.slf4j', name: 'slf4j-log4j12', version: slf4jVersion
@@ -33,4 +32,8 @@ jar {
     manifest {
         attributes 'Main-Class': 'com.uber.jaeger.crossdock.JerseyServer'
     }
+}
+
+animalsniffer {
+    sourceSets = []
 }

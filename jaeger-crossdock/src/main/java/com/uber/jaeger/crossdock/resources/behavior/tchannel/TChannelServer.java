@@ -23,33 +23,26 @@
 package com.uber.jaeger.crossdock.resources.behavior.tchannel;
 
 import com.uber.jaeger.context.TracingUtils;
-import com.uber.jaeger.crossdock.JerseyServer;
 import com.uber.jaeger.crossdock.resources.behavior.TraceBehavior;
 import com.uber.tchannel.api.TChannel;
 import com.uber.tchannel.tracing.TracingContext;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
-import java.net.InetAddress;
 import java.util.EmptyStackException;
 
 public class TChannelServer {
   // TODO should not be static
   public static TChannel server;
 
-  public TChannelServer(int port, TraceBehavior behavior, Tracer tracer, boolean useLoopback) {
-    TChannel.Builder builder = new TChannel.Builder(JerseyServer.SERVICE_NAME);
-    if (useLoopback) {
-      builder.setServerHost(InetAddress.getLoopbackAddress());
-    }
+  public TChannelServer(TChannel.Builder tchannelBuilder, TraceBehavior behavior, Tracer tracer) {
     server =
-        builder
-            .setServerPort(port)
+        tchannelBuilder
             .setTracer(tracer)
             .setTracingContext(new TracingContextAdapter())
             .build();
 
     server
-        .makeSubChannel(JerseyServer.SERVICE_NAME)
+        .makeSubChannel(server.getServiceName())
         .registerHealthHandler()
         .register("TracedService::joinTrace", new JoinTraceThriftHandler(behavior));
   }

@@ -6,26 +6,27 @@ services:
         links:
             - test_driver
             - go
-            - java
+            - java-udp
+            - java-http
             - python
         environment:
-            - WAIT_FOR=test_driver,go,java,python
+            - WAIT_FOR=test_driver,go,java-udp,java-http,python
             - WAIT_FOR_TIMEOUT=60s
 
             - CALL_TIMEOUT=60s
 
             - AXIS_CLIENT=go
-            - AXIS_S1NAME=go,java,python
+            - AXIS_S1NAME=go,java-udp,python
             - AXIS_SAMPLED=true,false
-            - AXIS_S2NAME=go,java,python
+            - AXIS_S2NAME=go,java-udp,python
             - AXIS_S2TRANSPORT=http,tchannel
-            - AXIS_S3NAME=go,java,python
+            - AXIS_S3NAME=go,java-udp,python
             - AXIS_S3TRANSPORT=http,tchannel
 
             - BEHAVIOR_TRACE=client,s1name,sampled,s2name,s2transport,s3name,s3transport
 
             - AXIS_TESTDRIVER=test_driver
-            - AXIS_SERVICES=java
+            - AXIS_SERVICES=java-udp,java-http
 
             - BEHAVIOR_ENDTOEND=testdriver,services
 
@@ -40,10 +41,21 @@ services:
         ports:
             - "8080-8082"
 
-    java:
+    java-udp:
+        depends_on:
+            - test_driver
         build: .
         ports:
             - "8080-8082"
+        environment:
+            - SENDER=udp
+
+    java-http:
+        build: .
+        ports:
+            - "8080-8082"
+        environment:
+            - SENDER=http
 
     cassandra:
         image: "cassandra:3.9"
