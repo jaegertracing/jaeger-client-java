@@ -158,8 +158,8 @@ public class JerseyServer {
       return new UdpSender(jaegerHost, 0, 0);
     }
 
-    throw new IllegalStateException("Env variable " + Constants.ENV_PROP_SENDER_TYPE +
-        ", is not valid, choose 'udp' or 'http'");
+    throw new IllegalStateException("Env variable " + Constants.ENV_PROP_SENDER_TYPE
+        + ", is not valid, choose 'udp' or 'http'");
   }
 
   private static String serviceNameFromEnv() {
