@@ -80,7 +80,7 @@ public class SpanTest {
     assertEquals(expected, span.getBaggageItem(key));
 
     // Ensure the baggage was logged
-    this.assertBaggageLogs(span, key, expected);
+    this.assertBaggageLogs(span, key, expected, false);
   }
 
   @Test
@@ -295,14 +295,14 @@ public class SpanTest {
   public void testBaggageOneReference() {
     io.opentracing.Span parent = tracer.buildSpan("foo").startManual();
     parent.setBaggageItem("foo", "bar");
-    this.assertBaggageLogs(parent, "foo", "bar");
+    this.assertBaggageLogs(parent, "foo", "bar", false);
 
     io.opentracing.Span child = tracer.buildSpan("foo")
         .asChildOf(parent)
         .startManual();
 
     child.setBaggageItem("a", "a");
-    this.assertBaggageLogs(child, "a", "a");
+    this.assertBaggageLogs(child, "a", "a", false);
 
     assertNull(parent.getBaggageItem("a"));
     assertEquals("a", child.getBaggageItem("a"));
@@ -313,10 +313,10 @@ public class SpanTest {
   public void testBaggageMultipleReferences() {
     io.opentracing.Span parent1 = tracer.buildSpan("foo").startManual();
     parent1.setBaggageItem("foo", "bar");
-    this.assertBaggageLogs(parent1, "foo", "bar");
+    this.assertBaggageLogs(parent1, "foo", "bar", false);
     io.opentracing.Span parent2 = tracer.buildSpan("foo").startManual();
     parent2.setBaggageItem("foo2", "bar");
-    this.assertBaggageLogs(parent2, "foo2", "bar");
+    this.assertBaggageLogs(parent2, "foo2", "bar", false);
 
     io.opentracing.Span child = tracer.buildSpan("foo")
         .asChildOf(parent1)
@@ -324,13 +324,15 @@ public class SpanTest {
         .startManual();
 
     child.setBaggageItem("a", "a");
-    this.assertBaggageLogs(child, "a", "a");
+    this.assertBaggageLogs(child, "a", "a", false);
+    child.setBaggageItem("foo2", "b");
+    this.assertBaggageLogs(child, "foo2", "b", true);
 
     assertNull(parent1.getBaggageItem("a"));
     assertNull(parent2.getBaggageItem("a"));
     assertEquals("a", child.getBaggageItem("a"));
     assertEquals("bar", child.getBaggageItem("foo"));
-    assertEquals("bar", child.getBaggageItem("foo2"));
+    assertEquals("b", child.getBaggageItem("foo2"));
   }
 
   @Test
@@ -348,14 +350,17 @@ public class SpanTest {
     assertFalse(baggageIter.hasNext());
   }
 
-  private void assertBaggageLogs(io.opentracing.Span span, String key, String value) {
+  private void assertBaggageLogs(io.opentracing.Span span, String key, String value, boolean override) {
     Span sp = (Span)span;
     List<LogData> logs = sp.getLogs();
-    assertEquals(1, logs.size());
-    Map<String, ?> fields = logs.get(0).getFields();
-    assertEquals(3, fields.size());
+    assertEquals(false, logs.isEmpty());
+    Map<String, ?> fields = logs.get(logs.size() - 1).getFields();
+    assertEquals(override ? 4 : 3, fields.size());
     assertEquals("baggage", fields.get("event"));
     assertEquals(key, fields.get("key"));
     assertEquals(value, fields.get("value"));
+    if (override) {
+      assertEquals("true", fields.get("override"));
+    }
   }
 }
