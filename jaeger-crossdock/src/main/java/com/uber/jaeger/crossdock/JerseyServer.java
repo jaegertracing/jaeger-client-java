@@ -152,16 +152,21 @@ public class JerseyServer {
 
   private static Sender senderFromEnv(String jaegerHost) {
     String senderEnvVar = System.getenv(Constants.ENV_PROP_SENDER_TYPE);
-    if ("udp".equalsIgnoreCase(senderEnvVar)) {
-      return new UdpSender(jaegerHost, 0, 0);
-    } else if ("http".equalsIgnoreCase(senderEnvVar)) {
+    if ("http".equalsIgnoreCase(senderEnvVar)) {
       return new HttpSender(String.format("http://%s:14268/api/traces", jaegerHost), 0);
+    } else if ("udp".equalsIgnoreCase(senderEnvVar) || senderEnvVar == null || senderEnvVar.isEmpty()) {
+      return new UdpSender(jaegerHost, 0, 0);
     }
 
-    throw new IllegalStateException("Env variable " + Constants.ENV_PROP_SENDER_TYPE + ", has not been specified!");
+    throw new IllegalStateException("Env variable " + Constants.ENV_PROP_SENDER_TYPE
+        + ", is not valid, choose 'udp' or 'http'");
   }
 
   private static String serviceNameFromEnv() {
-    return "java-" + System.getenv(Constants.ENV_PROP_SENDER_TYPE);
+    String senderEnvVar = System.getenv(Constants.ENV_PROP_SENDER_TYPE);
+    if (senderEnvVar == null || senderEnvVar.isEmpty()) {
+      return "java";
+    }
+    return "java-" + senderEnvVar;
   }
 }
