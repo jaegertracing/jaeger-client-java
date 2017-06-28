@@ -124,11 +124,12 @@ public class JaegerThriftSpanConverterTest {
     Span span = tracer.buildSpan("operation-name").startManual();
     span = span.log(1, "key", "value");
     span = span.log(1, fields);
+    span = span.setBaggageItem("foo", "bar");
 
     com.uber.jaeger.thriftjava.Span thriftSpan = JaegerThriftSpanConverter.convertSpan((com.uber.jaeger.Span) span);
 
     assertEquals("operation-name", thriftSpan.getOperationName());
-    assertEquals(2, thriftSpan.getLogs().size());
+    assertEquals(3, thriftSpan.getLogs().size());
     Log thriftLog = thriftSpan.getLogs().get(0);
     assertEquals(1, thriftLog.getTimestamp());
     assertEquals(2, thriftLog.getFields().size());
@@ -145,6 +146,18 @@ public class JaegerThriftSpanConverterTest {
     thriftTag = thriftLog.getFields().get(0);
     assertEquals("k", thriftTag.getKey());
     assertEquals("v", thriftTag.getVStr());
+
+    thriftLog = thriftSpan.getLogs().get(2);
+    assertEquals(3, thriftLog.getFields().size());
+    thriftTag = thriftLog.getFields().get(0);
+    assertEquals("event", thriftTag.getKey());
+    assertEquals("baggage", thriftTag.getVStr());
+    thriftTag = thriftLog.getFields().get(1);
+    assertEquals("value", thriftTag.getKey());
+    assertEquals("bar", thriftTag.getVStr());
+    thriftTag = thriftLog.getFields().get(2);
+    assertEquals("key", thriftTag.getKey());
+    assertEquals("foo", thriftTag.getVStr());
   }
 
   @Test

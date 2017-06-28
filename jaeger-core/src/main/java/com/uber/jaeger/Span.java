@@ -117,7 +117,19 @@ public class Span implements io.opentracing.Span {
   @Override
   public Span setBaggageItem(String key, String value) {
     synchronized (this) {
+      // TODO emit a metric whenever baggage is updated
+      String prevItem = this.getBaggageItem(key);
       this.context = this.context.withBaggageItem(key, value);
+      if (context.isSampled()) {
+        Map<String, String> fields = new HashMap<String, String>();
+        fields.put("event", "baggage");
+        fields.put("key", key);
+        fields.put("value", value);
+        if (prevItem != null) {
+          fields.put("override", "true");
+        }
+        return this.log(fields);
+      }
     }
     return this;
   }
