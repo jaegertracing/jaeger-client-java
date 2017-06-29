@@ -1,3 +1,5 @@
+import java.util.regex.Pattern
+
 plugins {
     id "org.jruyi.thrift" version "0.3.1"
     id "jacoco"
@@ -7,6 +9,9 @@ plugins {
     id "net.ltgt.errorprone" version "0.0.10"
     id 'ru.vyarus.animalsniffer' version '1.3.0'
 }
+
+ext.developmentVersion = '0.21.0-SNAPSHOT'
+
 
 ext.opentracingVersion = '0.30.0'
 ext.guavaVersion = '18.0'
@@ -31,7 +36,7 @@ allprojects {
     apply plugin: 'jacoco'
 
     group = 'com.uber.jaeger'
-    version = '0.21.0-SNAPSHOT'
+    version = getVersionForBuild()
 
     repositories {
         mavenCentral()
@@ -142,9 +147,27 @@ task codeCoverageReport(type: JacocoReport, group: 'Coverage reports') {
     }
 }
 
+task printVersion {
+    println getVersionForBuild()
+}
+
 configure(subprojects.findAll {it.name != 'jaeger-thrift'}) {
    apply plugin: 'net.ltgt.errorprone'
    dependencies {
      errorprone 'com.google.errorprone:error_prone_core:2.0.15'
    }
+}
+
+def getVersionForBuild() {
+    String candidateVersion = System.env.TRAVIS_TAG
+
+    if (null == candidateVersion || candidateVersion.isEmpty()) {
+        return ext.developmentVersion
+    }
+
+    if (Pattern.compile("[v]?((\\d+)\\.(\\d+)\\.(\\d+))").matcher(candidateVersion).matches()) {
+        return candidateVersion
+    }
+
+    return ext.developmentVersion
 }
