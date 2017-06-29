@@ -16,7 +16,7 @@ fi
 
 if [ "${TRAVIS_SECURE_ENV_VARS}" == true ]; then
     openssl aes-256-cbc -K "${ENCRYPTION_KEY}" -iv "${ENCRYPTION_IV}" -in travis/signing-key.asc.enc -out travis/signing-key.asc -d
-    if (( $? == 0 )); then
+    if (( $? != 0 )); then
         echo "Failed to decrypt the signing key. Skipping."
         exit 1
     fi
