@@ -69,7 +69,7 @@ public final class GuaranteedThroughputSampler implements Sampler {
       tags.put(Constants.SAMPLER_PARAM_TAG_KEY, samplingRate);
       isUpdated = true;
     }
-    if (lowerBound != lowerBoundSampler.getMaxTracesPerSecond()) {
+    if (Math.abs(lowerBound - lowerBoundSampler.getMaxTracesPerSecond()) > 0.000001) {
       lowerBoundSampler = new RateLimitingSampler(lowerBound);
       isUpdated = true;
     }
