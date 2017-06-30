@@ -166,7 +166,7 @@ def getVersionForBuild() {
     }
 
     if (Pattern.compile("[v]?((\\d+)\\.(\\d+)\\.(\\d+))").matcher(candidateVersion).matches()) {
-        return candidateVersion
+        return candidateVersion.drop(1)
     }
 
     return ext.developmentVersion
