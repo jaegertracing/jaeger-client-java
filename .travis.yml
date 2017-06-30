@@ -44,4 +44,4 @@ script:
 - if [ "$CROSSDOCK" == true ]; then bash ./travis/build-crossdock.sh ; else echo 'skipping crossdock'; fi
 after_success:
 - if [ "$COVERAGE" == true ]; then bash <(curl -s https://codecov.io/bash) ; fi
-- if [ "$CROSSDOCK" == true -a "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_PULL_REQUEST" == false ]; then ./gradlew upload ; fi
+- if [ "$CROSSDOCK" == true -a "$TRAVIS_PULL_REQUEST" == false ]; then ./gradlew upload ; fi
