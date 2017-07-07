@@ -22,6 +22,7 @@
 
 package com.uber.jaeger;
 
+import com.uber.jaeger.baggage.BaggageValidity;
 import io.opentracing.tag.Tags;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -117,8 +118,18 @@ public class Span implements io.opentracing.Span {
   @Override
   public Span setBaggageItem(String key, String value) {
     synchronized (this) {
-      // TODO emit a metric whenever baggage is updated
+      BaggageValidity validity = this.tracer.getBaggageRestrictionManager().isValidBaggageKey(key);
+      if (!validity.isValid()) {
+        this.tracer.getMetrics().baggageUpdateFailure.inc(1);
+        return this;
+      }
       String prevItem = this.getBaggageItem(key);
+      boolean truncated = false;
+      if (value.length() > validity.getMaxValueLength()) {
+        value = value.substring(0, validity.getMaxValueLength());
+        truncated = true;
+        this.tracer.getMetrics().baggageTruncate.inc(1);
+      }
       this.context = this.context.withBaggageItem(key, value);
       if (context.isSampled()) {
         Map<String, String> fields = new HashMap<String, String>();
@@ -128,9 +139,14 @@ public class Span implements io.opentracing.Span {
         if (prevItem != null) {
           fields.put("override", "true");
         }
+        if (truncated) {
+          fields.put("truncated", "true");
+        }
+        this.tracer.getMetrics().baggageUpdateSuccess.inc(1);
         return this.log(fields);
       }
     }
+    this.tracer.getMetrics().baggageUpdateSuccess.inc(1);
     return this;
   }
 

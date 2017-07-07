@@ -57,19 +57,6 @@ public class MetricsTest {
   }
 
   @Test
-  public void testCounterWithExplicitTags() throws Exception {
-    metrics.tracesJoinedSampled.inc(1);
-
-    Object[] metricNames = metricsReporter.counters.keySet().toArray();
-    String metricName = (String) metricNames[0];
-    long expectedAmount = metricsReporter.counters.get(metricName);
-
-    assertEquals(metricNames.length, 1);
-    assertEquals(expectedAmount, 1);
-    assertEquals("jaeger.traces.sampled=y.state=joined", metricName);
-  }
-
-  @Test
   public void testGaugeWithoutExplicitTags() {
     metrics.reporterQueueLength.update(1);
 

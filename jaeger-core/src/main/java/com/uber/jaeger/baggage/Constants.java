@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Uber Technologies, Inc
+ * Copyright (c) 2017, Uber Technologies, Inc
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,26 +20,8 @@
  * THE SOFTWARE.
  */
 
-package com.uber.jaeger.samplers;
+package com.uber.jaeger.baggage;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-
-@Path("")
-public class MockAgentResource {
-  @GET
-  @Path("")
-  @Produces(MediaType.APPLICATION_JSON)
-  public String getServiceSamplingStrategy(@QueryParam("service") String serviceName) {
-
-    if (serviceName.equals("clairvoyant")) {
-      return "{\"strategyType\":0,\"probabilisticSampling\":{\"samplingRate\":0.001},\"rateLimitingSampling\":null}";
-    }
-
-    throw new WebApplicationException();
-  }
+public class Constants {
+  public static final int DEFAULT_MAX_VALUE_LENGTH = 2048;
 }
