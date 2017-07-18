@@ -161,7 +161,7 @@ public class Configuration {
     Metrics metrics = new Metrics(statsFactory);
     Reporter reporter = reporterConfig.getReporter(metrics);
     Sampler sampler = samplerConfig.createSampler(serviceName, metrics);
-    return new Tracer.Builder(serviceName, reporter, sampler).withMetrics(metrics).withTags(getTracerTags());
+    return new Tracer.Builder(serviceName, reporter, sampler).withMetrics(metrics).withTags(tracerTagsFromEnv());
   }
 
   public synchronized io.opentracing.Tracer getTracer() {
@@ -409,7 +409,7 @@ public class Configuration {
     return null;
   }
 
-  private static Map<String, String> getTracerTags() {
+  private static Map<String, String> tracerTagsFromEnv() {
     Map<String, String> tracerTagMaps = null;
     String tracerTags = getProperty(JAEGER_TAGS);
     if (tracerTags != null) {
