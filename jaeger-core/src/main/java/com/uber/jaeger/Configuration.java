@@ -40,6 +40,9 @@ import com.uber.jaeger.senders.Sender;
 import com.uber.jaeger.senders.UdpSender;
 import java.text.NumberFormat;
 import java.text.ParseException;
+import java.util.HashMap;
+import java.util.Map;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -158,7 +161,7 @@ public class Configuration {
     Metrics metrics = new Metrics(statsFactory);
     Reporter reporter = reporterConfig.getReporter(metrics);
     Sampler sampler = samplerConfig.createSampler(serviceName, metrics);
-    return initTracerTags(new Tracer.Builder(serviceName, reporter, sampler).withMetrics(metrics));
+    return new Tracer.Builder(serviceName, reporter, sampler).withMetrics(metrics).withTags(getTracerTags());
   }
 
   public synchronized io.opentracing.Tracer getTracer() {
@@ -406,20 +409,24 @@ public class Configuration {
     return null;
   }
 
-  private static Tracer.Builder initTracerTags(Tracer.Builder builder) {
+  private static Map<String, String> getTracerTags() {
+    Map<String, String> tracerTagMaps = null;
     String tracerTags = getProperty(JAEGER_TAGS);
     if (tracerTags != null) {
       String[] tags = tracerTags.split("\\s*,\\s*");
       for (String tag : tags) {
         String[] tagValue = tag.split("\\s*=\\s*");
         if (tagValue.length == 2) {
-          builder.withTag(tagValue[0], resolveValue(tagValue[1]));
+          if (tracerTagMaps == null) {
+            tracerTagMaps = new HashMap<String, String>();
+          }
+          tracerTagMaps.put(tagValue[0], resolveValue(tagValue[1]));
         } else {
           log.error("Tracer tag incorrectly formatted: " + tag);
         }
       }
     }
-    return builder;
+    return tracerTagMaps;
   }
 
   private static String resolveValue(String value) {

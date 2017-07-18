@@ -517,6 +517,13 @@ public class Tracer implements io.opentracing.Tracer {
       return this;
     }
 
+    public Builder withTags(Map<String, String> tags) {
+      if (tags != null) {
+        this.tags.putAll(tags);
+      }
+      return this;
+    }
+
     public Tracer build() {
       return new Tracer(this.serviceName, reporter, sampler, registry, clock, metrics, tags,
           zipkinSharedRpcSpan, activeSpanSource);
