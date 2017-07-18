@@ -121,6 +121,14 @@ public class ConfigurationTest {
   }
 
   @Test
+  public void testTracerTagslistFormatError() {
+    System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
+    System.setProperty(Configuration.JAEGER_TAGS, "testTag1, testTag2 = testValue2");
+    com.uber.jaeger.Tracer tracer = (com.uber.jaeger.Tracer) Configuration.fromEnv().getTracer();
+    assertEquals("testValue2", tracer.tags().get("testTag2"));
+  }
+
+  @Test
   public void testTracerTagsSubstitutionDefault() {
     System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
     System.setProperty(Configuration.JAEGER_TAGS, "testTag1=${" + TEST_PROPERTY + ":hello}");
