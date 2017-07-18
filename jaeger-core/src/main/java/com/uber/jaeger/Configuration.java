@@ -97,6 +97,11 @@ public class Configuration {
   public static final String JAEGER_SERVICE_NAME = JAEGER_PREFIX + "SERVICE_NAME";
 
   /**
+   * The tracer level tags.
+   */
+  public static final String JAEGER_TAGS = JAEGER_PREFIX + "TAGS";
+
+  /**
    * The serviceName that the tracer will use
    */
   private final String serviceName;
@@ -153,7 +158,7 @@ public class Configuration {
     Metrics metrics = new Metrics(statsFactory);
     Reporter reporter = reporterConfig.getReporter(metrics);
     Sampler sampler = samplerConfig.createSampler(serviceName, metrics);
-    return new Tracer.Builder(serviceName, reporter, sampler).withMetrics(metrics);
+    return initTracerTags(new Tracer.Builder(serviceName, reporter, sampler).withMetrics(metrics));
   }
 
   public synchronized io.opentracing.Tracer getTracer() {
@@ -401,4 +406,33 @@ public class Configuration {
     return null;
   }
 
+  private static Tracer.Builder initTracerTags(Tracer.Builder builder) {
+    String tracerTags = getProperty(JAEGER_TAGS);
+    if (tracerTags != null) {
+      String[] tags = tracerTags.split("\\s*,\\s*");
+      for (String tag : tags) {
+        String[] tagValue = tag.split("\\s*=\\s*");
+        if (tagValue.length == 2) {
+          builder.withTag(tagValue[0], resolveValue(tagValue[1]));
+        } else {
+          log.error("Tracer tag incorrectly formatted: " + tag);
+        }
+      }
+    }
+    return builder;
+  }
+
+  private static String resolveValue(String value) {
+    if (value.startsWith("${") && value.endsWith("}")) {
+      String[] ref = value.substring(2, value.length() - 1).split("\\s*:\\s*");
+      if (ref.length > 0) {
+        String propertyValue = getProperty(ref[0]);
+        if (propertyValue == null && ref.length > 1) {
+          propertyValue = ref[1];
+        }
+        return propertyValue;
+      }
+    }
+    return value;
+  }
 }
