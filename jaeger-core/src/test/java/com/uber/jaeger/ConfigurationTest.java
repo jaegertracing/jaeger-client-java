@@ -38,6 +38,8 @@ import org.junit.Test;
 
 public class ConfigurationTest {
 
+  private static final String TEST_PROPERTY = "TestProperty";
+
   @Before
   @After
   public void clearProperties() {
@@ -51,6 +53,9 @@ public class ConfigurationTest {
     System.clearProperty(Configuration.JAEGER_SAMPLER_PARAM);
     System.clearProperty(Configuration.JAEGER_SAMPLER_MANAGER_HOST_PORT);
     System.clearProperty(Configuration.JAEGER_SERVICE_NAME);
+    System.clearProperty(Configuration.JAEGER_TAGS);
+
+    System.clearProperty(TEST_PROPERTY);
   }
 
   @Test
@@ -104,6 +109,40 @@ public class ConfigurationTest {
     System.setProperty(Configuration.JAEGER_REPORTER_LOG_SPANS, "X");
     ReporterConfiguration reporterConfig = ReporterConfiguration.fromEnv();
     assertFalse(reporterConfig.getLogSpans());
+  }
+
+  @Test
+  public void testTracerTagslist() {
+    System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
+    System.setProperty(Configuration.JAEGER_TAGS, "testTag1=testValue1, testTag2 = testValue2");
+    com.uber.jaeger.Tracer tracer = (com.uber.jaeger.Tracer) Configuration.fromEnv().getTracer();
+    assertEquals("testValue1", tracer.tags().get("testTag1"));
+    assertEquals("testValue2", tracer.tags().get("testTag2"));
+  }
+
+  @Test
+  public void testTracerTagslistFormatError() {
+    System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
+    System.setProperty(Configuration.JAEGER_TAGS, "testTag1, testTag2 = testValue2");
+    com.uber.jaeger.Tracer tracer = (com.uber.jaeger.Tracer) Configuration.fromEnv().getTracer();
+    assertEquals("testValue2", tracer.tags().get("testTag2"));
+  }
+
+  @Test
+  public void testTracerTagsSubstitutionDefault() {
+    System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
+    System.setProperty(Configuration.JAEGER_TAGS, "testTag1=${" + TEST_PROPERTY + ":hello}");
+    com.uber.jaeger.Tracer tracer = (com.uber.jaeger.Tracer) Configuration.fromEnv().getTracer();
+    assertEquals("hello", tracer.tags().get("testTag1"));
+  }
+
+  @Test
+  public void testTracerTagsSubstitutionSpecified() {
+    System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
+    System.setProperty(TEST_PROPERTY, "goodbye");
+    System.setProperty(Configuration.JAEGER_TAGS, "testTag1=${" + TEST_PROPERTY + ":hello}");
+    com.uber.jaeger.Tracer tracer = (com.uber.jaeger.Tracer) Configuration.fromEnv().getTracer();
+    assertEquals("goodbye", tracer.tags().get("testTag1"));
   }
 
 }

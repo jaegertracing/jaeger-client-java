@@ -40,6 +40,9 @@ import com.uber.jaeger.senders.Sender;
 import com.uber.jaeger.senders.UdpSender;
 import java.text.NumberFormat;
 import java.text.ParseException;
+import java.util.HashMap;
+import java.util.Map;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -95,6 +98,11 @@ public class Configuration {
    * The service name.
    */
   public static final String JAEGER_SERVICE_NAME = JAEGER_PREFIX + "SERVICE_NAME";
+
+  /**
+   * The tracer level tags.
+   */
+  public static final String JAEGER_TAGS = JAEGER_PREFIX + "TAGS";
 
   /**
    * The serviceName that the tracer will use
@@ -153,7 +161,7 @@ public class Configuration {
     Metrics metrics = new Metrics(statsFactory);
     Reporter reporter = reporterConfig.getReporter(metrics);
     Sampler sampler = samplerConfig.createSampler(serviceName, metrics);
-    return new Tracer.Builder(serviceName, reporter, sampler).withMetrics(metrics);
+    return new Tracer.Builder(serviceName, reporter, sampler).withMetrics(metrics).withTags(tracerTagsFromEnv());
   }
 
   public synchronized io.opentracing.Tracer getTracer() {
@@ -401,4 +409,37 @@ public class Configuration {
     return null;
   }
 
+  private static Map<String, String> tracerTagsFromEnv() {
+    Map<String, String> tracerTagMaps = null;
+    String tracerTags = getProperty(JAEGER_TAGS);
+    if (tracerTags != null) {
+      String[] tags = tracerTags.split("\\s*,\\s*");
+      for (String tag : tags) {
+        String[] tagValue = tag.split("\\s*=\\s*");
+        if (tagValue.length == 2) {
+          if (tracerTagMaps == null) {
+            tracerTagMaps = new HashMap<String, String>();
+          }
+          tracerTagMaps.put(tagValue[0], resolveValue(tagValue[1]));
+        } else {
+          log.error("Tracer tag incorrectly formatted: " + tag);
+        }
+      }
+    }
+    return tracerTagMaps;
+  }
+
+  private static String resolveValue(String value) {
+    if (value.startsWith("${") && value.endsWith("}")) {
+      String[] ref = value.substring(2, value.length() - 1).split("\\s*:\\s*");
+      if (ref.length > 0) {
+        String propertyValue = getProperty(ref[0]);
+        if (propertyValue == null && ref.length > 1) {
+          propertyValue = ref[1];
+        }
+        return propertyValue;
+      }
+    }
+    return value;
+  }
 }
