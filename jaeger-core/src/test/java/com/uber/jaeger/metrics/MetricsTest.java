@@ -45,6 +45,19 @@ public class MetricsTest {
 
   @Test
   public void testCounterWithoutExplicitTags() throws Exception {
+    metrics.baggageSanitize.inc(1);
+
+    Object[] metricNames = metricsReporter.counters.keySet().toArray();
+    String metricName = (String) metricNames[0];
+    long expectedAmount = metricsReporter.counters.get(metricName);
+
+    assertEquals(metricNames.length, 1);
+    assertEquals(expectedAmount, 1);
+    assertEquals("jaeger.baggage-sanitize", metricName);
+  }
+
+  @Test
+  public void testCounterWithExplicitTags() throws Exception {
     metrics.tracesJoinedSampled.inc(1);
 
     Object[] metricNames = metricsReporter.counters.keySet().toArray();
