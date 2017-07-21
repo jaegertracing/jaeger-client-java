@@ -26,10 +26,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import com.uber.jaeger.baggage.http.BaggageRestriction;
-import com.uber.jaeger.exceptions.BaggageRestrictionErrorException;
+import com.uber.jaeger.exceptions.BaggageRestrictionException;
 import com.uber.jaeger.mocks.MockAgentResource;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Properties;
 
@@ -39,13 +40,14 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.glassfish.jersey.test.TestProperties;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 
 public class HttpBaggageRestrictionProxyTest extends JerseyTest {
 
-  private HttpBaggageRestrictionProxy undertest = new HttpBaggageRestrictionProxy(null);
+  private HttpBaggageRestrictionProxy undertest;
   private BaggageRestriction expectedRestriction = new BaggageRestriction("key", 10);
 
   private static Properties originalProps;
@@ -64,6 +66,13 @@ public class HttpBaggageRestrictionProxyTest extends JerseyTest {
   }
 
   @Override
+  @Before
+  public void setUp() throws Exception {
+    super.setUp();
+    undertest = new HttpBaggageRestrictionProxy(null);
+  }
+
+  @Override
   protected Application configure() {
     return new ResourceConfig(MockAgentResource.class);
   }
@@ -78,14 +87,14 @@ public class HttpBaggageRestrictionProxyTest extends JerseyTest {
     assertEquals(expectedRestriction, response.get(0));
   }
 
-  @Test (expected = BaggageRestrictionErrorException.class)
+  @Test(expected = BaggageRestrictionException.class)
   public void testGetSamplingStrategyError() throws Exception {
     URI uri = target().getUri();
     undertest = new HttpBaggageRestrictionProxy(uri.getHost() + ":" + uri.getPort());
     undertest.getBaggageRestrictions("");
   }
 
-  @Test (expected = BaggageRestrictionErrorException.class)
+  @Test(expected = BaggageRestrictionException.class)
   public void testParseInvalidJson() throws Exception {
     undertest.parseJson("invalid json");
   }

@@ -28,44 +28,43 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.uber.jaeger.baggage.http.BaggageRestriction;
-import com.uber.jaeger.exceptions.BaggageRestrictionErrorException;
+import com.uber.jaeger.exceptions.BaggageRestrictionException;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
-import java.net.URLEncoder;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class HttpBaggageRestrictionProxy implements BaggageRestrictionProxy {
-  private static final String defaultBaggageRestrictionsServerHostPort = "localhost:5778";
-  private String hostPort = defaultBaggageRestrictionsServerHostPort;
-  private Gson gson = new Gson();
+import org.apache.http.client.utils.URIBuilder;
 
-  public HttpBaggageRestrictionProxy(String hostPort) {
-    if (hostPort != null) {
-      this.hostPort = hostPort;
-    }
+public class HttpBaggageRestrictionProxy implements BaggageRestrictionProxy {
+  private static final String DEFAULT_HOST_PORT = "localhost:5778";
+  private final URIBuilder builder;
+  private final Gson gson = new Gson();
+
+  public HttpBaggageRestrictionProxy(String hostPort) throws URISyntaxException {
+    hostPort = hostPort != null ? hostPort : DEFAULT_HOST_PORT;
+    this.builder = new URIBuilder("http://" + hostPort).setPath("/baggageRestrictions");
   }
 
-  List<com.uber.jaeger.baggage.http.BaggageRestriction> parseJson(String json) {
+  List<BaggageRestriction> parseJson(String json) throws BaggageRestrictionException {
     try {
       Type listType = new TypeToken<ArrayList<BaggageRestriction>>(){}.getType();
       return gson.fromJson(json, listType);
     } catch (JsonSyntaxException e) {
-      throw new BaggageRestrictionErrorException("Cannot deserialize json", e);
+      throw new BaggageRestrictionException("Cannot deserialize json", e);
     }
   }
 
   @Override
-  public List<com.uber.jaeger.baggage.http.BaggageRestriction> getBaggageRestrictions(String serviceName)
-      throws BaggageRestrictionErrorException {
+  public List<BaggageRestriction> getBaggageRestrictions(String serviceName)
+      throws BaggageRestrictionException {
     String jsonString;
     try {
       jsonString =
-          makeGetRequest(
-              "http://" + hostPort + "/baggageRestrictions?service=" + URLEncoder.encode(serviceName, "UTF-8"));
-    } catch (IOException e) {
-      throw new BaggageRestrictionErrorException(
+          makeGetRequest(builder.setParameter("service", serviceName).build());
+    } catch (Exception e) {
+      throw new BaggageRestrictionException(
           "http call to get baggage restriction from local agent failed.", e);
     }
     return parseJson(jsonString);

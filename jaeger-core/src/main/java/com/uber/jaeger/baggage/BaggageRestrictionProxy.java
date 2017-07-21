@@ -23,11 +23,11 @@
 package com.uber.jaeger.baggage;
 
 import com.uber.jaeger.baggage.http.BaggageRestriction;
-import com.uber.jaeger.exceptions.BaggageRestrictionErrorException;
+import com.uber.jaeger.exceptions.BaggageRestrictionException;
 
 import java.util.List;
 
 public interface BaggageRestrictionProxy {
   List<BaggageRestriction> getBaggageRestrictions(String serviceName)
-      throws BaggageRestrictionErrorException;
+      throws BaggageRestrictionException;
 }

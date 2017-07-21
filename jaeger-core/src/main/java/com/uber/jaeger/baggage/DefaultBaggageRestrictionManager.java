@@ -22,12 +22,10 @@
 
 package com.uber.jaeger.baggage;
 
-import static com.uber.jaeger.baggage.Constants.DEFAULT_MAX_VALUE_LENGTH;
-
-public class DefaultBaggageRestrictionManager implements BaggageRestrictionManager {
+public class DefaultBaggageRestrictionManager extends BaggageRestrictionManager {
 
   @Override
-  public BaggageValidity isValidBaggageKey(String key) {
-    return BaggageValidity.of(true, DEFAULT_MAX_VALUE_LENGTH);
+  public SanitizedBaggage sanitizeBaggage(String key, String value, String prevValue) {
+    return sanitizeBaggage(key, value, prevValue, DEFAULT_MAX_VALUE_LENGTH);
   }
 }

@@ -20,14 +20,16 @@
  * THE SOFTWARE.
  */
 
-package com.uber.jaeger.exceptions;
+package com.uber.jaeger.baggage;
 
-public class BaggageRestrictionErrorException extends RuntimeException {
-  public BaggageRestrictionErrorException(String msg) {
-    super(msg);
-  }
+import java.util.Map;
+import lombok.Value;
 
-  public BaggageRestrictionErrorException(String msg, Throwable cause) {
-    super(msg, cause);
-  }
+@Value(staticConstructor = "of")
+public class SanitizedBaggage {
+  final boolean valid;
+  final String sanitizedKey;
+  final String sanitizedValue;
+  final Map<String,String> fields;
+  final boolean sanitized;
 }

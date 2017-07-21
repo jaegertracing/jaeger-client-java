@@ -28,20 +28,19 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.uber.jaeger.exceptions.SamplingStrategyErrorException;
 import com.uber.jaeger.samplers.http.SamplingStrategyResponse;
-import java.io.IOException;
-import java.net.URLEncoder;
+import java.net.URISyntaxException;
 import lombok.ToString;
+import org.apache.http.client.utils.URIBuilder;
 
 @ToString
 public class HttpSamplingManager implements SamplingManager {
-  private static final String defaultSamplingServerHostPort = "localhost:5778";
-  private String hostPort = defaultSamplingServerHostPort;
-  private Gson gson = new Gson();
+  private static final String DEFAULT_HOST_PORT = "localhost:5778";
+  private final URIBuilder builder;
+  private final Gson gson = new Gson();
 
-  public HttpSamplingManager(String hostPort) {
-    if (hostPort != null) {
-      this.hostPort = hostPort;
-    }
+  public HttpSamplingManager(String hostPort) throws URISyntaxException {
+    hostPort = hostPort != null ? hostPort : DEFAULT_HOST_PORT;
+    this.builder = new URIBuilder("http://" + hostPort);
   }
 
   SamplingStrategyResponse parseJson(String json) {
@@ -58,9 +57,8 @@ public class HttpSamplingManager implements SamplingManager {
     String jsonString;
     try {
       jsonString =
-          makeGetRequest(
-              "http://" + hostPort + "/?service=" + URLEncoder.encode(serviceName, "UTF-8"));
-    } catch (IOException e) {
+          makeGetRequest(builder.setParameter("service", serviceName).build());
+    } catch (Exception e) {
       throw new SamplingStrategyErrorException(
           "http call to get sampling strategy from local agent failed.", e);
     }

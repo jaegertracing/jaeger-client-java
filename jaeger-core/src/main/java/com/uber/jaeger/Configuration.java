@@ -38,6 +38,8 @@ import com.uber.jaeger.samplers.RemoteControlledSampler;
 import com.uber.jaeger.samplers.Sampler;
 import com.uber.jaeger.senders.Sender;
 import com.uber.jaeger.senders.UdpSender;
+
+import java.net.URISyntaxException;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.HashMap;
@@ -258,7 +260,13 @@ public class Configuration {
       if (samplerType.equals(RemoteControlledSampler.TYPE)) {
         Sampler initialSampler = new ProbabilisticSampler(samplerParam.doubleValue());
 
-        HttpSamplingManager manager = new HttpSamplingManager(hostPort);
+        HttpSamplingManager manager = null;
+        try {
+          manager = new HttpSamplingManager(hostPort);
+        } catch (URISyntaxException e) {
+          log.error("JAEGER_SAMPLER_MANAGER_HOST_PORT '" + hostPort + "' is not a valid hostPort", e);
+          throw new IllegalArgumentException("JAEGER_SAMPLER_MANAGER_HOST_PORT must be valid");
+        }
 
         return new RemoteControlledSampler(serviceName, manager, initialSampler, metrics);
       }

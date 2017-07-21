@@ -226,9 +226,9 @@ public class Metrics {
   // Number of times baggage failed to write or update on spans
   public Counter baggageUpdateFailure;
 
-  @Metric(name = "baggage-truncate")
-  // Number of times baggage was truncated as per baggage restrictions
-  public Counter baggageTruncate;
+  @Metric(name = "baggage-sanitize")
+  // Number of times baggage was sanitized as per baggage restrictions
+  public Counter baggageSanitize;
 
   @Metric(
       name = "baggage-restrictions-update",

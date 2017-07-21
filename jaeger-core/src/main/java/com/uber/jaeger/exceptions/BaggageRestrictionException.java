@@ -20,8 +20,16 @@
  * THE SOFTWARE.
  */
 
-package com.uber.jaeger.baggage;
+package com.uber.jaeger.exceptions;
 
-public class Constants {
-  public static final int DEFAULT_MAX_VALUE_LENGTH = 2048;
+import java.io.IOException;
+
+public class BaggageRestrictionException extends IOException {
+  public BaggageRestrictionException(String msg) {
+    super(msg);
+  }
+
+  public BaggageRestrictionException(String msg, Throwable cause) {
+    super(msg, cause);
+  }
 }

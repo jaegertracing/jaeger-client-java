@@ -23,15 +23,18 @@
 package com.uber.jaeger.baggage;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 import com.uber.jaeger.baggage.http.BaggageRestriction;
-import com.uber.jaeger.exceptions.BaggageRestrictionErrorException;
+import com.uber.jaeger.exceptions.BaggageRestrictionException;
 import com.uber.jaeger.metrics.InMemoryStatsReporter;
 import com.uber.jaeger.metrics.Metrics;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.junit.After;
 import org.junit.Before;
@@ -47,6 +50,7 @@ public class RemoteBaggageRestrictionManagerTest {
   private InMemoryStatsReporter metricsReporter;
   private static final String SERVICE_NAME = "service";
   private static final String BAGGAGE_KEY = "key";
+  private static final String BAGGAGE_VALUE = "value";
   private static final int MAX_VALUE_LENGTH = 10;
   private static final BaggageRestriction RESTRICTION = new BaggageRestriction(BAGGAGE_KEY, MAX_VALUE_LENGTH);
 
@@ -57,7 +61,7 @@ public class RemoteBaggageRestrictionManagerTest {
     metricsReporter = new InMemoryStatsReporter();
     metrics = Metrics.fromStatsReporter(metricsReporter);
     undertest = new RemoteBaggageRestrictionManager(SERVICE_NAME, baggageRestrictionProxy, metrics,
-        false, 60000, 60000);
+        false);
   }
 
   @After
@@ -66,38 +70,57 @@ public class RemoteBaggageRestrictionManagerTest {
   }
 
   @Test
-  public void testIsValidBaggageKey() throws Exception {
+  public void testSanitizeBaggage() throws Exception {
     when(baggageRestrictionProxy.getBaggageRestrictions(SERVICE_NAME))
-        .thenReturn(new ArrayList<>(Arrays.asList(RESTRICTION)));
+        .thenReturn(new ArrayList<BaggageRestriction>(Arrays.asList(RESTRICTION)));
     undertest.updateBaggageRestrictions();
 
-    assertEquals(BaggageValidity.of(true, MAX_VALUE_LENGTH), undertest.isValidBaggageKey(BAGGAGE_KEY));
-    assertEquals(BaggageValidity.of(false, 0), undertest.isValidBaggageKey("llave"));
-    assertEquals(
-        1L, metricsReporter.counters.get("jaeger.baggage-restrictions-update.result=ok").longValue());
+    final String value = "01234567890123456789";
+    final String truncated = "0123456789";
+
+    Map<String, String> expectedFields = new HashMap<String, String>();
+    expectedFields.put("event", "baggage");
+    expectedFields.put("key", BAGGAGE_KEY);
+    expectedFields.put("value", truncated);
+    expectedFields.put("override", "true");
+    expectedFields.put("truncated", "true");
+
+    SanitizedBaggage expected = SanitizedBaggage.of(true, BAGGAGE_KEY, truncated, expectedFields, true);
+    assertEquals(expected, undertest.sanitizeBaggage(BAGGAGE_KEY, value, "prev"));
+
+    String invalidKey = "llave";
+    expected = SanitizedBaggage.of(false, null, null, null, false);
+    assertEquals(expected, undertest.sanitizeBaggage(invalidKey, BAGGAGE_VALUE, null));
+    assertTrue(
+        metricsReporter.counters.get("jaeger.baggage-restrictions-update.result=ok") > 0L);
   }
 
   @Test
   public void testAllowBaggageOnInitializationFailure() throws Exception {
     when(baggageRestrictionProxy.getBaggageRestrictions(SERVICE_NAME))
-        .thenThrow(new BaggageRestrictionErrorException("error"));
-    undertest.updateBaggageRestrictions();
+        .thenThrow(new BaggageRestrictionException("error"));
+    undertest = new RemoteBaggageRestrictionManager(SERVICE_NAME, baggageRestrictionProxy, metrics,false);
 
-    assertEquals(BaggageValidity.of(true, 2048), undertest.isValidBaggageKey(BAGGAGE_KEY));
-    assertEquals(
-        1L, metricsReporter.counters.get("jaeger.baggage-restrictions-update.result=err").longValue());
+    Map<String, String> expectedFields = new HashMap<String, String>();
+    expectedFields.put("event", "baggage");
+    expectedFields.put("key", BAGGAGE_KEY);
+    expectedFields.put("value", BAGGAGE_VALUE);
+
+    assertEquals(SanitizedBaggage.of(true, BAGGAGE_KEY, BAGGAGE_VALUE, expectedFields, false),
+        undertest.sanitizeBaggage(BAGGAGE_KEY, BAGGAGE_VALUE, null));
+    assertTrue(metricsReporter.counters.get("jaeger.baggage-restrictions-update.result=err") > 0L);
   }
 
   @Test
   public void testDenyBaggageOnInitializationFailure() throws Exception {
     when(baggageRestrictionProxy.getBaggageRestrictions(SERVICE_NAME))
-        .thenThrow(new BaggageRestrictionErrorException("error"));
+        .thenThrow(new BaggageRestrictionException("error"));
     undertest = new RemoteBaggageRestrictionManager(SERVICE_NAME, baggageRestrictionProxy, metrics,
-        true, 60000, 60000);
-    undertest.updateBaggageRestrictions();
+        true, 60000);
 
-    assertEquals(BaggageValidity.of(false, 0), undertest.isValidBaggageKey(BAGGAGE_KEY));
-    assertEquals(
-        1L, metricsReporter.counters.get("jaeger.baggage-restrictions-update.result=err").longValue());
+    assertEquals(SanitizedBaggage.of(false, null, null, null, false),
+        undertest.sanitizeBaggage(BAGGAGE_KEY, BAGGAGE_VALUE, null));
+    assertTrue(
+        metricsReporter.counters.get("jaeger.baggage-restrictions-update.result=err") > 0L);
   }
 }

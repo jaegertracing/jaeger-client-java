@@ -22,10 +22,8 @@
 
 package com.uber.jaeger.baggage;
 
-import static com.uber.jaeger.baggage.Constants.DEFAULT_MAX_VALUE_LENGTH;
-
 import com.uber.jaeger.baggage.http.BaggageRestriction;
-import com.uber.jaeger.exceptions.BaggageRestrictionErrorException;
+import com.uber.jaeger.exceptions.BaggageRestrictionException;
 import com.uber.jaeger.metrics.Metrics;
 
 import java.util.HashMap;
@@ -33,25 +31,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class RemoteBaggageRestrictionManager implements BaggageRestrictionManager {
+public class RemoteBaggageRestrictionManager extends BaggageRestrictionManager {
   private static final int DEFAULT_REFRESH_INTERVAL_MS = 60000;
-  private static final int DEFAULT_REFRESH_DELAY_MS = 0;
 
   private final String serviceName;
   private final BaggageRestrictionProxy proxy;
   private final Timer pollTimer;
-  private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
   private final Metrics metrics;
   private final boolean denyBaggageOnInitializationFailure;
-  private boolean initialized;
-  private Map<String, Integer> restrictions = new HashMap<String, Integer>();
+  private volatile boolean initialized;
+  private volatile Map<String, Integer> restrictions = new HashMap<String, Integer>();
 
   public RemoteBaggageRestrictionManager(
       String serviceName, BaggageRestrictionProxy proxy, Metrics metrics, boolean denyBaggageOnInitializationFailure) {
-    this(serviceName, proxy, metrics, denyBaggageOnInitializationFailure,
-        DEFAULT_REFRESH_INTERVAL_MS, DEFAULT_REFRESH_DELAY_MS);
+    this(serviceName, proxy, metrics, denyBaggageOnInitializationFailure, DEFAULT_REFRESH_INTERVAL_MS);
   }
 
   public RemoteBaggageRestrictionManager(
@@ -59,8 +53,7 @@ public class RemoteBaggageRestrictionManager implements BaggageRestrictionManage
       BaggageRestrictionProxy proxy,
       Metrics metrics,
       boolean denyBaggageOnInitializationFailure,
-      int refreshIntervalMs,
-      int refreshDelayMs
+      int refreshIntervalMs
   ) {
     this.serviceName = serviceName;
     this.proxy = proxy;
@@ -68,6 +61,10 @@ public class RemoteBaggageRestrictionManager implements BaggageRestrictionManage
     this.denyBaggageOnInitializationFailure = denyBaggageOnInitializationFailure;
     this.initialized = false;
 
+    // Initialize baggage restrictions
+    this.updateBaggageRestrictions();
+
+    int randomRefreshDelayMs = (int)(Math.random() * DEFAULT_REFRESH_INTERVAL_MS);
     pollTimer = new Timer(true); // true makes this a daemon thread
     pollTimer.schedule(
         new TimerTask() {
@@ -76,7 +73,7 @@ public class RemoteBaggageRestrictionManager implements BaggageRestrictionManage
             updateBaggageRestrictions();
           }
         },
-        refreshDelayMs,
+        randomRefreshDelayMs,
         refreshIntervalMs);
   }
 
@@ -84,7 +81,7 @@ public class RemoteBaggageRestrictionManager implements BaggageRestrictionManage
     List<BaggageRestriction> response;
     try {
       response = proxy.getBaggageRestrictions(serviceName);
-    } catch (BaggageRestrictionErrorException e) {
+    } catch (BaggageRestrictionException e) {
       metrics.baggageRestrictionsUpdateFailure.inc(1);
       return;
     }
@@ -98,39 +95,27 @@ public class RemoteBaggageRestrictionManager implements BaggageRestrictionManage
     for (com.uber.jaeger.baggage.http.BaggageRestriction restriction : restrictions) {
       baggageRestrictions.put(restriction.getBaggageKey(), restriction.getMaxValueLength());
     }
-    ReentrantReadWriteLock.WriteLock writeLock = this.lock.writeLock();
-    writeLock.lock();
     this.restrictions = baggageRestrictions;
     this.initialized = true;
-    writeLock.unlock();
   }
 
   public void close() {
-    synchronized (this) {
-      pollTimer.cancel();
-    }
+    pollTimer.cancel();
   }
 
   @Override
-  public BaggageValidity isValidBaggageKey(String key) {
-    BaggageValidity restriction;
-
+  public SanitizedBaggage sanitizeBaggage(String key, String value, String prevValue) {
     if (!this.initialized) {
       if (this.denyBaggageOnInitializationFailure) {
-        restriction = BaggageValidity.of(false, 0);
+        return INVALID_BAGGAGE;
       } else {
-        restriction = BaggageValidity.of(true, DEFAULT_MAX_VALUE_LENGTH);
+        return sanitizeBaggage(key, value, prevValue, DEFAULT_MAX_VALUE_LENGTH);
       }
-    } else {
-      ReentrantReadWriteLock.ReadLock readLock = this.lock.readLock();
-      readLock.lock();
-      if (this.restrictions.containsKey(key)) {
-        restriction = BaggageValidity.of(true, this.restrictions.get(key));
-      } else {
-        restriction = BaggageValidity.of(false, 0);
-      }
-      readLock.unlock();
     }
-    return restriction;
+    Integer maxValueLength = this.restrictions.get(key);
+    if (maxValueLength != null) {
+      return sanitizeBaggage(key, value, prevValue, maxValueLength);
+    }
+    return INVALID_BAGGAGE;
   }
 }

@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
+import java.net.URI;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
@@ -74,9 +75,12 @@ public class Utils {
     return (a == b) || (a != null && a.equals(b));
   }
 
-  public static String makeGetRequest(String urlToRead) throws IOException {
-    URL url = new URL(urlToRead);
+  private static final int TIMEOUT_MS = 5000;
+
+  public static String makeGetRequest(URI uri) throws IOException {
+    URL url = uri.toURL();
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+    conn.setConnectTimeout(TIMEOUT_MS);
     StringBuilder result = new StringBuilder();
     try {
       conn.setRequestMethod("GET");

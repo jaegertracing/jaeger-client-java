@@ -22,6 +22,49 @@
 
 package com.uber.jaeger.baggage;
 
-public interface BaggageRestrictionManager {
-  BaggageValidity isValidBaggageKey(String key);
+import java.util.HashMap;
+import java.util.Map;
+
+import lombok.AccessLevel;
+import lombok.Getter;
+
+public abstract class BaggageRestrictionManager {
+  static final int DEFAULT_MAX_VALUE_LENGTH = 2048;
+  static final SanitizedBaggage INVALID_BAGGAGE = SanitizedBaggage.of(false, null, null, null, false);
+
+  public abstract SanitizedBaggage sanitizeBaggage(String key, String value, String prevValue);
+
+  SanitizedBaggage sanitizeBaggage(String key, String value, String prevValue, int maxValueLength) {
+    TruncatedBaggage baggage = truncateBaggage(value, maxValueLength);
+    Map<String, String> fields = new HashMap<String, String>();
+    fields.put("event", "baggage");
+    fields.put("key", key);
+    fields.put("value", baggage.getTruncatedValue());
+    if (baggage.isTruncated()) {
+      fields.put("truncated", "true");
+    }
+    if (prevValue != null) {
+      fields.put("override", "true");
+    }
+    return SanitizedBaggage.of(true, key, baggage.getTruncatedValue(), fields,
+        baggage.isTruncated());
+  }
+
+  TruncatedBaggage truncateBaggage(String value, int maxValueLength) {
+    if (value.length() > maxValueLength) {
+      return new TruncatedBaggage(value.substring(0, maxValueLength), true);
+    }
+    return new TruncatedBaggage(value, false);
+  }
+
+  @Getter(AccessLevel.PACKAGE)
+  class TruncatedBaggage {
+    final String truncatedValue;
+    final boolean truncated;
+
+    TruncatedBaggage(String truncatedValue, boolean truncated) {
+      this.truncatedValue = truncatedValue;
+      this.truncated = truncated;
+    }
+  }
 }

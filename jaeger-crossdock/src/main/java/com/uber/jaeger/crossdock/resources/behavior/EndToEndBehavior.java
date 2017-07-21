@@ -37,6 +37,8 @@ import com.uber.jaeger.samplers.Sampler;
 import com.uber.jaeger.senders.Sender;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
+
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -48,7 +50,7 @@ public class EndToEndBehavior {
     this.tracers = new HashMap<>(tracers);
   }
 
-  public EndToEndBehavior(String jaegerHost, String serviceName, Sender sender) {
+  public EndToEndBehavior(String jaegerHost, String serviceName, Sender sender) throws URISyntaxException {
     StatsFactory statsFactory = new StatsFactoryImpl(new NullStatsReporter());
     Metrics metrics = new Metrics(statsFactory);
     Reporter reporter = new RemoteReporter(sender, 1000, 100, metrics);
@@ -60,7 +62,8 @@ public class EndToEndBehavior {
     tracers.put(ConstSampler.TYPE, new com.uber.jaeger.Tracer.Builder(serviceName, reporter, constSampler).build());
   }
 
-  private Tracer getRemoteTracer(Metrics metrics, Reporter reporter, String serviceName, String jaegerHost) {
+  private Tracer getRemoteTracer(Metrics metrics, Reporter reporter, String serviceName, String jaegerHost)
+      throws URISyntaxException {
     Sampler initialSampler = new ProbabilisticSampler(1.0);
     HttpSamplingManager manager = new HttpSamplingManager(jaegerHost + ":5778");
 

@@ -29,7 +29,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.uber.jaeger.baggage.BaggageRestrictionManager;
-import com.uber.jaeger.baggage.BaggageValidity;
+import com.uber.jaeger.baggage.DefaultBaggageRestrictionManager;
+import com.uber.jaeger.baggage.SanitizedBaggage;
 import com.uber.jaeger.metrics.InMemoryStatsReporter;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
@@ -43,7 +44,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 public class SpanTest {
   private Clock clock;
@@ -52,7 +52,6 @@ public class SpanTest {
   private Span span;
   private InMemoryStatsReporter metricsReporter;
   private BaggageRestrictionManager baggageRestrictionManager;
-  private BaggageValidity defaultBaggageValidity = BaggageValidity.of(true, 100);
 
   @Before
   public void setUp() throws Exception {
@@ -83,8 +82,10 @@ public class SpanTest {
   public void testSetAndGetBaggageItem() {
     String expected = "expected";
     String key = "some.BAGGAGE";
+    SanitizedBaggage sanitizedBaggage = SanitizedBaggage.of(true, key, expected,
+        generateBaggageFields(key, expected, false, false), false);
 
-    when(baggageRestrictionManager.isValidBaggageKey(key)).thenReturn(defaultBaggageValidity);
+    when(baggageRestrictionManager.sanitizeBaggage(key, expected, null)).thenReturn(sanitizedBaggage);
     span.setBaggageItem(key, expected);
     assertEquals(expected, span.getBaggageItem(key));
 
@@ -98,10 +99,13 @@ public class SpanTest {
   @Test
   public void testInvalidBaggageKey() {
     String key = "some.BAGGAGE";
+    String value = "value";
 
-    when(baggageRestrictionManager.isValidBaggageKey(key)).thenReturn(BaggageValidity.of(false, 0));
+    SanitizedBaggage sanitizedBaggage = SanitizedBaggage.of(false, null, null, null, false);
 
-    span.setBaggageItem(key, "rooz died for us");
+    when(baggageRestrictionManager.sanitizeBaggage(key, value, null)).thenReturn(sanitizedBaggage);
+
+    span.setBaggageItem(key, value);
     assertEquals(null, span.getBaggageItem(key));
 
     assertEquals(
@@ -114,7 +118,10 @@ public class SpanTest {
     String expected = "01234";
     String key = "some.BAGGAGE";
 
-    when(baggageRestrictionManager.isValidBaggageKey(key)).thenReturn(BaggageValidity.of(true, 5));
+    SanitizedBaggage sanitizedBaggage = SanitizedBaggage.of(true, key, expected,
+        generateBaggageFields(key, expected, false, true), true);
+
+    when(baggageRestrictionManager.sanitizeBaggage(key, value, null)).thenReturn(sanitizedBaggage);
 
     span.setBaggageItem(key, value);
     assertEquals(expected, span.getBaggageItem(key));
@@ -123,7 +130,15 @@ public class SpanTest {
     this.assertBaggageLogs(span, key, expected, false, true);
 
     assertEquals(
-        1L, metricsReporter.counters.get("jaeger.baggage-truncate").longValue());
+        1L, metricsReporter.counters.get("jaeger.baggage-sanitize").longValue());
+  }
+
+  @Test
+  public void testNullBaggage() {
+    String key = "some.BAGGAGE";
+
+    span.setBaggageItem(key, null);
+    assertNull(span.getBaggageItem(key));
   }
 
   @Test
@@ -336,7 +351,12 @@ public class SpanTest {
 
   @Test
   public void testBaggageOneReference() {
-    when(baggageRestrictionManager.isValidBaggageKey(Mockito.anyString())).thenReturn(defaultBaggageValidity);
+    baggageRestrictionManager = new DefaultBaggageRestrictionManager();
+    tracer = new Tracer.Builder("SamplerTest", reporter, new ConstSampler(true))
+            .withStatsReporter(metricsReporter)
+            .withClock(clock)
+            .withBaggageRestrictionManager(baggageRestrictionManager)
+            .build();
     io.opentracing.Span parent = tracer.buildSpan("foo").startManual();
     parent.setBaggageItem("foo", "bar");
     this.assertBaggageLogs(parent, "foo", "bar", false, false);
@@ -355,7 +375,13 @@ public class SpanTest {
 
   @Test
   public void testBaggageMultipleReferences() {
-    when(baggageRestrictionManager.isValidBaggageKey(Mockito.anyString())).thenReturn(defaultBaggageValidity);
+    baggageRestrictionManager = new DefaultBaggageRestrictionManager();
+    tracer = new Tracer.Builder("SamplerTest", reporter, new ConstSampler(true))
+        .withStatsReporter(metricsReporter)
+        .withClock(clock)
+        .withBaggageRestrictionManager(baggageRestrictionManager)
+        .build();
+
     io.opentracing.Span parent1 = tracer.buildSpan("foo").startManual();
     parent1.setBaggageItem("foo", "bar");
     this.assertBaggageLogs(parent1, "foo", "bar", false, false);
@@ -382,7 +408,13 @@ public class SpanTest {
 
   @Test
   public void testImmutableBaggage() {
-    when(baggageRestrictionManager.isValidBaggageKey(Mockito.anyString())).thenReturn(defaultBaggageValidity);
+    baggageRestrictionManager = new DefaultBaggageRestrictionManager();
+    tracer = new Tracer.Builder("SamplerTest", reporter, new ConstSampler(true))
+        .withStatsReporter(metricsReporter)
+        .withClock(clock)
+        .withBaggageRestrictionManager(baggageRestrictionManager)
+        .build();
+
     io.opentracing.Span span = tracer.buildSpan("foo").startManual();
     span.setBaggageItem("foo", "bar");
     {
@@ -416,5 +448,19 @@ public class SpanTest {
     if (truncate) {
       assertEquals("true", fields.get("truncated"));
     }
+  }
+
+  private Map<String, String> generateBaggageFields(String key, String value, Boolean override, Boolean truncated) {
+    Map<String, String> fields = new HashMap<String, String>();
+    fields.put("event", "baggage");
+    fields.put("key", key);
+    fields.put("value", value);
+    if (override) {
+      fields.put("override", "true");
+    }
+    if (truncated) {
+      fields.put("truncated", "true");
+    }
+    return fields;
   }
 }
