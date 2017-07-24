@@ -24,6 +24,7 @@ package com.uber.jaeger.senders;
 
 import com.uber.jaeger.thriftjava.Batch;
 import com.uber.jaeger.thriftjava.Process;
+import com.uber.jaeger.thriftjava.Span;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -34,6 +35,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.PoolingClientConnectionManager;
 import org.apache.thrift.TException;
 import org.apache.thrift.TSerializer;
 import org.apache.thrift.protocol.TBinaryProtocol.Factory;
@@ -44,7 +46,7 @@ public class HttpSender extends ThriftSender {
   private static final TProtocolFactory PROTOCOL_FACTORY = new Factory();
   private static final TSerializer SERIALIZER = new TSerializer(PROTOCOL_FACTORY);
 
-  private final HttpClient httpClient = new DefaultHttpClient();
+  private final HttpClient httpClient = new DefaultHttpClient(new PoolingClientConnectionManager());
   private final URI collectorUri;
 
   /**
@@ -57,7 +59,7 @@ public class HttpSender extends ThriftSender {
   }
 
   @Override
-  public void send(Process process, List<com.uber.jaeger.thriftjava.Span> spans) throws TException {
+  public void send(Process process, List<Span> spans) throws TException {
     Batch batch = new Batch(process, spans);
     byte[] bytes = SERIALIZER.serialize(batch);
 
