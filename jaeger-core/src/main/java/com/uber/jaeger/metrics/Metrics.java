@@ -211,4 +211,22 @@ public class Metrics {
   )
   // Number of times the Sampler failed to parse retrieved sampling strategy
   public Counter samplerParsingFailure;
+
+  @Metric(
+      name = "baggage-update",
+      tags = {@Tag(key = "result", value = "ok")}
+  )
+  // Number of times baggage was successfully written or updated on spans
+  public Counter baggageUpdateSuccess;
+
+  @Metric(
+      name = "baggage-update",
+      tags = {@Tag(key = "result", value = "err")}
+  )
+  // Number of times baggage failed to write or update on spans
+  public Counter baggageUpdateFailure;
+
+  @Metric(name = "baggage-truncate")
+  // Number of times baggage was truncated as per baggage restrictions
+  public Counter baggageTruncate;
 }
