@@ -25,12 +25,5 @@ package com.uber.jaeger.baggage;
 public abstract class BaggageRestrictionManager {
   static final int DEFAULT_MAX_VALUE_LENGTH = 2048;
 
-  public abstract SanitizedBaggage sanitizeBaggage(String key, String value);
-
-  SanitizedBaggage truncateBaggage(String value, int maxValueLength) {
-    if (value.length() > maxValueLength) {
-      return SanitizedBaggage.of(true, value.substring(0, maxValueLength), true);
-    }
-    return SanitizedBaggage.of(true, value, false);
-  }
+  public abstract BaggageValidity isBaggageValid(String key, String value);
 }

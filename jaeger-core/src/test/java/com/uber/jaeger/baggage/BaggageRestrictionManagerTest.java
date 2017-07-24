@@ -25,28 +25,17 @@ package com.uber.jaeger.baggage;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
 
-@RunWith(MockitoJUnitRunner.class)
 public class BaggageRestrictionManagerTest {
-  private static final String BAGGAGE_KEY = "key";
-  private static final String BAGGAGE_VALUE = "value";
-
-  private DefaultBaggageRestrictionManager undertest = new DefaultBaggageRestrictionManager();
 
   @Test
-  public void testSanitizeBaggage() {
-    SanitizedBaggage actual = undertest.sanitizeBaggage(BAGGAGE_KEY, BAGGAGE_VALUE);
-    SanitizedBaggage expected = SanitizedBaggage.of(true, BAGGAGE_VALUE, false);
-    assertEquals(expected, actual);
+  public void testIsBaggageValid() {
+    final String BAGGAGE_KEY = "key";
+    final String BAGGAGE_VALUE = "value";
+    final DefaultBaggageRestrictionManager undertest = new DefaultBaggageRestrictionManager();
 
-    final String value = "01234567890123456789";
-    final String truncated = "0123456789";
-    final int max_value_length = 10;
-
-    actual = undertest.truncateBaggage(value, max_value_length);
-    expected = SanitizedBaggage.of(true, truncated, true);
+    BaggageValidity actual = undertest.isBaggageValid(BAGGAGE_KEY, BAGGAGE_VALUE);
+    BaggageValidity expected = BaggageValidity.of(true, 2048);
     assertEquals(expected, actual);
   }
 }

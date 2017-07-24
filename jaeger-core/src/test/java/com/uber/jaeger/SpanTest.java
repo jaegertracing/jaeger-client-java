@@ -30,7 +30,7 @@ import static org.mockito.Mockito.when;
 
 import com.uber.jaeger.baggage.BaggageRestrictionManager;
 import com.uber.jaeger.baggage.DefaultBaggageRestrictionManager;
-import com.uber.jaeger.baggage.SanitizedBaggage;
+import com.uber.jaeger.baggage.BaggageValidity;
 import com.uber.jaeger.metrics.InMemoryStatsReporter;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
@@ -104,7 +104,7 @@ public class SpanTest {
             .build();
     span = (Span) tracer.buildSpan("some-operation").startManual();
 
-    when(mgr.sanitizeBaggage(key, value)).thenReturn(SanitizedBaggage.of(false, null, false));
+    when(mgr.isBaggageValid(key, value)).thenReturn(BaggageValidity.of(false, 0));
 
     span.setBaggageItem(key, value);
     assertNull(span.getBaggageItem(key));

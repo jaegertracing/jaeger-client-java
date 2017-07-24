@@ -22,7 +22,7 @@
 
 package com.uber.jaeger;
 
-import com.uber.jaeger.baggage.SanitizedBaggage;
+import com.uber.jaeger.baggage.BaggageValidity;
 import io.opentracing.tag.Tags;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -121,30 +121,8 @@ public class Span implements io.opentracing.Span {
       if (key == null || value == null) {
         return this;
       }
-      SanitizedBaggage baggage = this.tracer.getBaggageRestrictionManager().sanitizeBaggage(key, value);
-      if (!baggage.isValid()) {
-        this.tracer.getMetrics().baggageUpdateFailure.inc(1);
-        return this;
-      }
-      if (baggage.isTruncated()) {
-        this.tracer.getMetrics().baggageTruncate.inc(1);
-      }
-      String prevItem = this.getBaggageItem(key);
-      this.context = this.context.withBaggageItem(key, baggage.getSanitizedValue());
-      this.tracer.getMetrics().baggageUpdateSuccess.inc(1);
-      if (context.isSampled()) {
-        Map<String, String> fields = new HashMap<String, String>();
-        fields.put("event", "baggage");
-        fields.put("key", key);
-        fields.put("value", baggage.getSanitizedValue());
-        if (prevItem != null) {
-          fields.put("override", "true");
-        }
-        if (baggage.isTruncated()) {
-          fields.put("truncated", "true");
-        }
-        return this.log(fields);
-      }
+      BaggageValidity baggageValidity = this.getTracer().getBaggageRestrictionManager().isBaggageValid(key, value);
+      this.context = baggageValidity.sanitizeBaggage(this, key, value);
       return this;
     }
   }
