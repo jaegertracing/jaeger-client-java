@@ -456,8 +456,7 @@ public class Tracer implements io.opentracing.Tracer {
     private Map<String, Object> tags = new HashMap<String, Object>();
     private boolean zipkinSharedRpcSpan;
     private ActiveSpanSource activeSpanSource = new ThreadLocalActiveSpanSource();
-    private BaggageRestrictionManager baggageRestrictionManager =
-        new DefaultBaggageRestrictionManager(this.metrics);
+    private BaggageRestrictionManager baggageRestrictionManager;
 
     public Builder(String serviceName, Reporter reporter, Sampler sampler) {
       if (serviceName == null || serviceName.trim().length() == 0) {
@@ -508,9 +507,6 @@ public class Tracer implements io.opentracing.Tracer {
 
     public Builder withMetrics(Metrics metrics) {
       this.metrics = metrics;
-      if (this.baggageRestrictionManager instanceof DefaultBaggageRestrictionManager) {
-        this.baggageRestrictionManager = new DefaultBaggageRestrictionManager(this.metrics);
-      }
       return this;
     }
 
@@ -542,6 +538,9 @@ public class Tracer implements io.opentracing.Tracer {
     }
 
     public Tracer build() {
+      if (baggageRestrictionManager == null) {
+        baggageRestrictionManager = new DefaultBaggageRestrictionManager(this.metrics);
+      }
       return new Tracer(this.serviceName, reporter, sampler, registry, clock, metrics, tags,
           zipkinSharedRpcSpan, activeSpanSource, baggageRestrictionManager);
     }
