@@ -27,13 +27,7 @@ import java.util.EmptyStackException;
 import java.util.Stack;
 
 public class ThreadLocalTraceContext implements TraceContext {
-  private final ThreadLocal<Stack<Span>> threadLocal =
-      new ThreadLocal<Stack<Span>>() {
-        @Override
-        public Stack<Span> initialValue() {
-          return new Stack<Span>();
-        }
-      };
+  private final ThreadLocal<Stack<Span>> threadLocal = new StackSpan();
 
   @Override
   public void push(Span span) {
@@ -59,4 +53,12 @@ public class ThreadLocalTraceContext implements TraceContext {
   public Span getCurrentSpan() throws EmptyStackException {
     return threadLocal.get().peek();
   }
+}
+
+class StackSpan extends ThreadLocal<Stack<Span>> {
+
+    @Override
+    public Stack<Span> initialValue() {
+        return new Stack<>();
+    }
 }
