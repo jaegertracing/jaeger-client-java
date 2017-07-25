@@ -29,9 +29,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.uber.jaeger.baggage.BaggageRestrictionManager;
+import com.uber.jaeger.baggage.BaggageSetter;
 import com.uber.jaeger.baggage.DefaultBaggageRestrictionManager;
-import com.uber.jaeger.baggage.BaggageValidity;
 import com.uber.jaeger.metrics.InMemoryStatsReporter;
+import com.uber.jaeger.metrics.Metrics;
+import com.uber.jaeger.metrics.StatsFactoryImpl;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
 import com.uber.jaeger.utils.Clock;
@@ -51,17 +53,19 @@ public class SpanTest {
   private Tracer tracer;
   private Span span;
   private InMemoryStatsReporter metricsReporter;
+  private Metrics metrics;
 
   @Before
   public void setUp() throws Exception {
     metricsReporter = new InMemoryStatsReporter();
     reporter = new InMemoryReporter();
     clock = mock(Clock.class);
+    metrics = new Metrics(new StatsFactoryImpl(metricsReporter));
     tracer =
         new Tracer.Builder("SamplerTest", reporter, new ConstSampler(true))
             .withStatsReporter(metricsReporter)
             .withClock(clock)
-            .withBaggageRestrictionManager(new DefaultBaggageRestrictionManager(15))
+            .withBaggageRestrictionManager(new DefaultBaggageRestrictionManager(metrics, 15))
             .build();
     span = (Span) tracer.buildSpan("some-operation").startManual();
   }
@@ -78,43 +82,6 @@ public class SpanTest {
 
   @Test
   public void testSetAndGetBaggageItem() {
-    String expected = "expected";
-    String key = "some.BAGGAGE";
-    span.setBaggageItem(key, expected);
-    assertEquals(expected, span.getBaggageItem(key));
-
-    // Ensure the baggage was logged
-    this.assertBaggageLogs(span, key, expected, false, false);
-
-    assertEquals(
-        1L, metricsReporter.counters.get("jaeger.baggage-update.result=ok").longValue());
-  }
-
-  @Test
-  public void testInvalidBaggageKey() {
-    String key = "some.BAGGAGE";
-    String value = "luggage";
-    BaggageRestrictionManager mgr = mock(BaggageRestrictionManager.class);
-
-    tracer =
-        new Tracer.Builder("SamplerTest", reporter, new ConstSampler(true))
-            .withStatsReporter(metricsReporter)
-            .withClock(clock)
-            .withBaggageRestrictionManager(mgr)
-            .build();
-    span = (Span) tracer.buildSpan("some-operation").startManual();
-
-    when(mgr.isBaggageValid(key, value)).thenReturn(BaggageValidity.of(false, 0));
-
-    span.setBaggageItem(key, value);
-    assertNull(span.getBaggageItem(key));
-
-    assertEquals(
-        1L, metricsReporter.counters.get("jaeger.baggage-update.result=err").longValue());
-  }
-
-  @Test
-  public void testTruncateBaggage() {
     String value = "01234567890123456789";
     String expected = "012345678901234";
     String key = "some.BAGGAGE";
@@ -126,6 +93,30 @@ public class SpanTest {
 
     assertEquals(
         1L, metricsReporter.counters.get("jaeger.baggage-truncate").longValue());
+    assertEquals(
+        1L, metricsReporter.counters.get("jaeger.baggage-update.result=ok").longValue());
+  }
+
+  @Test
+  public void testInvalidBaggageKey() {
+    String key = "some.BAGGAGE";
+    BaggageRestrictionManager mgr = mock(BaggageRestrictionManager.class);
+
+    tracer =
+        new Tracer.Builder("SamplerTest", reporter, new ConstSampler(true))
+            .withStatsReporter(metricsReporter)
+            .withClock(clock)
+            .withBaggageRestrictionManager(mgr)
+            .build();
+    span = (Span) tracer.buildSpan("some-operation").startManual();
+
+    when(mgr.getBaggageSetter(key)).thenReturn(BaggageSetter.of(false, 0, metrics));
+
+    span.setBaggageItem(key, "luggage");
+    assertNull(span.getBaggageItem(key));
+
+    assertEquals(
+        1L, metricsReporter.counters.get("jaeger.baggage-update.result=err").longValue());
   }
 
   @Test

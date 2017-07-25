@@ -22,20 +22,21 @@
 
 package com.uber.jaeger.baggage;
 
+import com.uber.jaeger.metrics.Metrics;
+
 public class DefaultBaggageRestrictionManager extends BaggageRestrictionManager {
+  private final BaggageSetter baggageSetter;
 
-  private final BaggageValidity baggageValidity;
-
-  public DefaultBaggageRestrictionManager() {
-    this(DEFAULT_MAX_VALUE_LENGTH);
+  public DefaultBaggageRestrictionManager(Metrics metrics) {
+    this(metrics, DEFAULT_MAX_VALUE_LENGTH);
   }
 
-  public DefaultBaggageRestrictionManager(int maxValueLength) {
-    baggageValidity = BaggageValidity.of(true, maxValueLength);
+  public DefaultBaggageRestrictionManager(Metrics metrics, int maxValueLength) {
+    baggageSetter = BaggageSetter.of(true, maxValueLength, metrics);
   }
 
   @Override
-  public BaggageValidity isBaggageValid(String key, String value) {
-    return baggageValidity;
+  public BaggageSetter getBaggageSetter(String key) {
+    return baggageSetter;
   }
 }

@@ -25,18 +25,19 @@ package com.uber.jaeger.baggage;
 import com.uber.jaeger.Span;
 import com.uber.jaeger.SpanContext;
 import com.uber.jaeger.metrics.Metrics;
-import lombok.Value;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import lombok.Value;
+
 @Value(staticConstructor = "of")
-public class BaggageValidity {
+public class BaggageSetter {
   final boolean valid;
   final int maxValueLength;
+  final Metrics metrics;
 
-  public SpanContext sanitizeBaggage(Span span, String key, String value) {
-    Metrics metrics = span.getTracer().getMetrics();
+  public SpanContext setBaggage(Span span, String key, String value) {
     if (!this.isValid()) {
       metrics.baggageUpdateFailure.inc(1);
       this.logFields(span, key, value, null, false, true);

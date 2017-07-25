@@ -22,7 +22,7 @@
 
 package com.uber.jaeger;
 
-import com.uber.jaeger.baggage.BaggageValidity;
+import com.uber.jaeger.baggage.BaggageSetter;
 import io.opentracing.tag.Tags;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -117,12 +117,12 @@ public class Span implements io.opentracing.Span {
 
   @Override
   public Span setBaggageItem(String key, String value) {
+    if (key == null || value == null) {
+      return this;
+    }
+    BaggageSetter baggageValidity = this.getTracer().getBaggageRestrictionManager().getBaggageSetter(key);
     synchronized (this) {
-      if (key == null || value == null) {
-        return this;
-      }
-      BaggageValidity baggageValidity = this.getTracer().getBaggageRestrictionManager().isBaggageValid(key, value);
-      this.context = baggageValidity.sanitizeBaggage(this, key, value);
+      this.context = baggageValidity.setBaggage(this, key, value);
       return this;
     }
   }

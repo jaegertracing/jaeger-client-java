@@ -24,18 +24,21 @@ package com.uber.jaeger.baggage;
 
 import static org.junit.Assert.assertEquals;
 
+import com.uber.jaeger.metrics.Metrics;
+import com.uber.jaeger.metrics.NullStatsReporter;
+import com.uber.jaeger.metrics.StatsFactoryImpl;
 import org.junit.Test;
 
 public class BaggageRestrictionManagerTest {
 
+
   @Test
   public void testIsBaggageValid() {
-    final String BAGGAGE_KEY = "key";
-    final String BAGGAGE_VALUE = "value";
-    final DefaultBaggageRestrictionManager undertest = new DefaultBaggageRestrictionManager();
+    final Metrics nullMetrics = new Metrics(new StatsFactoryImpl(new NullStatsReporter()));
+    final DefaultBaggageRestrictionManager undertest = new DefaultBaggageRestrictionManager(nullMetrics);
 
-    BaggageValidity actual = undertest.isBaggageValid(BAGGAGE_KEY, BAGGAGE_VALUE);
-    BaggageValidity expected = BaggageValidity.of(true, 2048);
+    BaggageSetter actual = undertest.getBaggageSetter("key");
+    BaggageSetter expected = BaggageSetter.of(true, 2048, nullMetrics);
     assertEquals(expected, actual);
   }
 }

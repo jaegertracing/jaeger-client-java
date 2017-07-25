@@ -450,13 +450,14 @@ public class Tracer implements io.opentracing.Tracer {
     private final Sampler sampler;
     private final Reporter reporter;
     private final PropagationRegistry registry = new PropagationRegistry();
-    private Metrics metrics;
+    private Metrics metrics = new Metrics(new StatsFactoryImpl(new NullStatsReporter()));
     private String serviceName;
     private Clock clock = new SystemClock();
     private Map<String, Object> tags = new HashMap<String, Object>();
     private boolean zipkinSharedRpcSpan;
     private ActiveSpanSource activeSpanSource = new ThreadLocalActiveSpanSource();
-    private BaggageRestrictionManager baggageRestrictionManager = new DefaultBaggageRestrictionManager();
+    private BaggageRestrictionManager baggageRestrictionManager =
+        new DefaultBaggageRestrictionManager(this.metrics);
 
     public Builder(String serviceName, Reporter reporter, Sampler sampler) {
       if (serviceName == null || serviceName.trim().length() == 0) {
@@ -465,7 +466,6 @@ public class Tracer implements io.opentracing.Tracer {
       this.serviceName = serviceName;
       this.reporter = reporter;
       this.sampler = sampler;
-      this.metrics = new Metrics(new StatsFactoryImpl(new NullStatsReporter()));
 
       TextMapCodec textMapCodec = new TextMapCodec(false);
       this.registerInjector(Format.Builtin.TEXT_MAP, textMapCodec);
