@@ -136,7 +136,7 @@ This allows using Jaeger UI to find the trace by this tag.
 
 ## Developing
 
- 1. `git submodule init update`
+ 1. `./gradlew submodulesUpdate`
  2. `./gradlew clean check`
  
 ### Code Style

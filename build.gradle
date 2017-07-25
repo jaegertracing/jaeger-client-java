@@ -151,6 +151,12 @@ task printVersion {
     println getVersionForBuild()
 }
 
+task submodulesUpdate(type:Exec) {
+    description 'Updates (and inits) git submodules'
+    commandLine 'git', 'submodule', 'update', '--init', '--recursive'
+    group 'Build Setup'
+}
+
 configure(subprojects.findAll {it.name != 'jaeger-thrift'}) {
    apply plugin: 'net.ltgt.errorprone'
    dependencies {
