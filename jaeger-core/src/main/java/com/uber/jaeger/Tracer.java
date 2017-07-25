@@ -508,6 +508,9 @@ public class Tracer implements io.opentracing.Tracer {
 
     public Builder withMetrics(Metrics metrics) {
       this.metrics = metrics;
+      if (this.baggageRestrictionManager instanceof DefaultBaggageRestrictionManager) {
+        this.baggageRestrictionManager = new DefaultBaggageRestrictionManager(this.metrics);
+      }
       return this;
     }
 
