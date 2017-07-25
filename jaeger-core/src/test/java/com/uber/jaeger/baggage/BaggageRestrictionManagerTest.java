@@ -31,7 +31,6 @@ import org.junit.Test;
 
 public class BaggageRestrictionManagerTest {
 
-
   @Test
   public void testIsBaggageValid() {
     final Metrics nullMetrics = new Metrics(new StatsFactoryImpl(new NullStatsReporter()));
