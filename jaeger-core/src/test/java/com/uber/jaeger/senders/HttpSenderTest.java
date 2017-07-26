@@ -37,10 +37,9 @@ import org.glassfish.jersey.test.JerseyTest;
 import org.junit.Test;
 
 /**
- * This tests that HttpSender can be configured to make requests
+ * This class tests that HttpSender can be configured to make requests
  * and that exceptions are handled correctly.
- * It does not verify the contents of the requests as crossdock tests at
- * {@link com.uber.jaeger.crossdock.JerseyServer} in jaeger-crossdock verifies it.
+ * See  {@link com.uber.jaeger.crossdock.JerseyServer} for integration tests.
  */
 public class HttpSenderTest extends JerseyTest {
 

@@ -39,13 +39,13 @@ import org.apache.thrift.protocol.TBinaryProtocol.Factory;
 import org.apache.thrift.protocol.TProtocolFactory;
 
 public class HttpSender extends ThriftSender {
+
   private static final String HTTP_COLLECTOR_JAEGER_THRIFT_FORMAT_PARAM = "format=jaeger.thrift";
   private static final TProtocolFactory PROTOCOL_FACTORY = new Factory();
   private static final TSerializer SERIALIZER = new TSerializer(PROTOCOL_FACTORY);
-
+  private static final int ONE_MB_IN_BYTES = 1048576;
   private final OkHttpClient httpClient = new OkHttpClient();
   private final HttpUrl collectorUrl;
-  private static final int ONE_MB_IN_BYTES = 1048576;
 
   /**
    * @param endpoint Jaeger REST endpoint consuming jaeger.thrift, e.g
@@ -61,7 +61,8 @@ public class HttpSender extends ThriftSender {
    * @param maxPayloadBytes max bytes to serialize as payload
    */
   public HttpSender(String endpoint, int maxPayloadBytes) {
-    this(HttpUrl.parse(String.format("%s?%s", endpoint, HTTP_COLLECTOR_JAEGER_THRIFT_FORMAT_PARAM)), maxPayloadBytes);
+    this(HttpUrl.parse(String.format("%s?%s", endpoint, HTTP_COLLECTOR_JAEGER_THRIFT_FORMAT_PARAM)),
+        maxPayloadBytes);
   }
 
   /**
@@ -83,16 +84,24 @@ public class HttpSender extends ThriftSender {
 
     RequestBody body = RequestBody.create(MediaType.parse("application/x-thrift"), bytes);
     Request request = new Request.Builder().url(collectorUrl).post(body).build();
+    Response response;
     try {
-      Response response = httpClient.newCall(request).execute();
-      if (!response.isSuccessful()) {
-        String responseBody = response.body() != null ? response.body().string() : "null";
-        String exceptionMessage = String.format("Could not send %d spans, response %d: %s",
-                                                spans.size(), response.code(), responseBody);
-        throw new TException(exceptionMessage);
-      }
+      response = httpClient.newCall(request).execute();
     } catch (IOException e) {
-      throw new TException("Could not send " + spans.size() + ", spans", e);
+      throw new TException("Could not make request to send " + spans.size() + ", spans", e);
+    }
+
+    if (!response.isSuccessful()) {
+      String responseBody;
+      try {
+        responseBody = response.body() != null ? response.body().string() : "null";
+      } catch (IOException e) {
+        responseBody = "unable to read response";
+      }
+
+      String exceptionMessage = String.format("Could not send %d spans, response %d: %s",
+          spans.size(), response.code(), responseBody);
+      throw new TException(exceptionMessage);
     }
   }
 }
