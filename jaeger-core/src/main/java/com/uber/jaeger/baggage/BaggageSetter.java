@@ -57,7 +57,7 @@ public class BaggageSetter {
     return context;
   }
 
-  void logFields(Span span, String key, String value, String prevItem, boolean truncated, boolean invalid) {
+  private void logFields(Span span, String key, String value, String prevItem, boolean truncated, boolean invalid) {
     if (span.context().isSampled()) {
       Map<String, String> fields = new HashMap<String, String>();
       fields.put("event", "baggage");
