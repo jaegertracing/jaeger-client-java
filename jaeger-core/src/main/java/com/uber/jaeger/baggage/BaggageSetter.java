@@ -31,16 +31,34 @@ import java.util.Map;
 
 import lombok.Value;
 
+/**
+ * BaggageSetter is a class that sets baggage and the logs associated
+ * with the baggage on a given {@link Span}.
+ */
 @Value(staticConstructor = "of")
 public class BaggageSetter {
   final boolean valid;
   final int maxValueLength;
   final Metrics metrics;
 
+  /**
+   * Sets the baggage key:value on the {@link Span} and the corresponding
+   * logs. Whether the baggage is set on the span depends on if the key
+   * is valid.
+   * <p>
+   * A {@link SpanContext} is returned with the new baggage key:value set
+   * if key is valid, else returns the existing {@link SpanContext}
+   * on the {@link Span}.
+   *
+   * @param  span  the span to set the baggage on
+   * @param  key   the baggage key to set
+   * @param  value the baggage value to set
+   * @return       the SpanContext with the baggage set
+   */
   public SpanContext setBaggage(Span span, String key, String value) {
-    if (!this.isValid()) {
+    if (!valid) {
       metrics.baggageUpdateFailure.inc(1);
-      this.logFields(span, key, value, null, false, true);
+      logFields(span, key, value, null, false, true);
       return span.context();
     }
     boolean truncated = false;
@@ -51,7 +69,7 @@ public class BaggageSetter {
     }
 
     String prevItem = span.getBaggageItem(key);
-    this.logFields(span, key, value, prevItem, truncated, false);
+    logFields(span, key, value, prevItem, truncated, false);
     SpanContext context = span.context().withBaggageItem(key, value);
     metrics.baggageUpdateSuccess.inc(1);
     return context;

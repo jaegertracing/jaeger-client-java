@@ -70,7 +70,7 @@ public class BaggageSetterTest {
     final String value = "value";
     SpanContext ctx = setter.setBaggage(span, KEY, value);
 
-    assertBaggageLogs(span, KEY, value, false, true);
+    assertBaggageLogs(span, KEY, value, false, false, true);
     assertNull(ctx.getBaggageItem(KEY));
 
     assertEquals(
@@ -84,7 +84,7 @@ public class BaggageSetterTest {
     final String expected = "01234";
     SpanContext ctx = setter.setBaggage(span, KEY, value);
 
-    assertBaggageLogs(span, KEY, expected, true, false);
+    assertBaggageLogs(span, KEY, expected, true, false, false);
     assertEquals(expected, ctx.getBaggageItem(KEY));
 
     assertEquals(
@@ -93,11 +93,27 @@ public class BaggageSetterTest {
         1L, metricsReporter.counters.get("jaeger.baggage-update.result=ok").longValue());
   }
 
+  @Test
+  public void testOverrideBaggage() {
+    BaggageSetter setter = BaggageSetter.of(true, 5, metrics);
+    final String value = "value";
+    SpanContext ctx = setter.setBaggage(span, KEY, value);
+    Span child = (Span) tracer.buildSpan("some-operation").asChildOf(ctx).startManual();
+    ctx = setter.setBaggage(child, KEY, value);
+
+    assertBaggageLogs(child, KEY, value, false, true, false);
+    assertEquals(value, ctx.getBaggageItem(KEY));
+
+    assertEquals(
+        2L, metricsReporter.counters.get("jaeger.baggage-update.result=ok").longValue());
+  }
+
   private void assertBaggageLogs(
       Span span,
       String key,
       String value,
       boolean truncate,
+      boolean override,
       boolean invalid
   ) {
     List<LogData> logs = span.getLogs();
@@ -108,6 +124,9 @@ public class BaggageSetterTest {
     assertEquals(value, fields.get("value"));
     if (truncate) {
       assertEquals("true", fields.get("truncated"));
+    }
+    if (override) {
+      assertEquals("true", fields.get("override"));
     }
     if (invalid) {
       assertEquals("true", fields.get("invalid"));
