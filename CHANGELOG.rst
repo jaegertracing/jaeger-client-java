@@ -1,6 +1,10 @@
 Changes by Version
 ==================
 
+0.20.1
+------
+- Use okhttp for HTTP sender (https://github.com/uber/jaeger-client-java/pull/220)
+
 0.20.0 (2017-06-23)
 -------------------
 - Upgrade to OpenTracing Java 0.30.0 with in-process propagation support (https://github.com/uber/jaeger-client-java/pull/188)
