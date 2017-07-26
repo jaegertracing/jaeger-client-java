@@ -3,7 +3,7 @@ Changes by Version
 
 0.20.1
 ------
-- Use okhttp for HTTP sender (https://github.com/uber/jaeger-client-java/pull/220)
+- Use okhttp for HTTP sender (https://github.com/uber/jaeger-client-java/pull/224)
 
 0.20.0 (2017-06-23)
 -------------------
