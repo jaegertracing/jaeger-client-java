@@ -24,19 +24,31 @@ package com.uber.jaeger.baggage;
 
 import com.uber.jaeger.metrics.Metrics;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class DefaultBaggageRestrictionManager extends BaggageRestrictionManager {
-  private final BaggageSetter baggageSetter;
+  private Map<String, BaggageSetter> baggageSetters;
+  private final int maxValueLength;
+  private final Metrics metrics;
 
   public DefaultBaggageRestrictionManager(Metrics metrics) {
     this(metrics, DEFAULT_MAX_VALUE_LENGTH);
   }
 
   public DefaultBaggageRestrictionManager(Metrics metrics, int maxValueLength) {
-    baggageSetter = BaggageSetter.of(true, maxValueLength, metrics);
+    this.maxValueLength = maxValueLength;
+    this.metrics = metrics;
+    this.baggageSetters = new HashMap<String, BaggageSetter>();
   }
 
   @Override
   public BaggageSetter getBaggageSetter(String key) {
-    return baggageSetter;
+    BaggageSetter setter = baggageSetters.get(key);
+    if (setter == null) {
+      setter = BaggageSetter.of(key, true, maxValueLength, metrics);
+      baggageSetters.put(key, setter);
+    }
+    return setter;
   }
 }

@@ -95,7 +95,7 @@ public class SpanTest {
 
     final String key = "key";
     final String value = "value";
-    when(mgr.getBaggageSetter(key)).thenReturn(BaggageSetter.of(true, 10, metrics));
+    when(mgr.getBaggageSetter(key)).thenReturn(BaggageSetter.of(key, true, 10, metrics));
     span.setBaggageItem(key, "value");
     verify(mgr).getBaggageSetter(key);
     assertEquals(value, span.getBaggageItem(key));

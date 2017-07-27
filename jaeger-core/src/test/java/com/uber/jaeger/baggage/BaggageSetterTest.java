@@ -66,9 +66,9 @@ public class BaggageSetterTest {
 
   @Test
   public void testInvalidBaggage() {
-    BaggageSetter setter = BaggageSetter.of(false, 0, metrics);
+    BaggageSetter setter = BaggageSetter.of(KEY, false, 0, metrics);
     final String value = "value";
-    SpanContext ctx = setter.setBaggage(span, KEY, value);
+    SpanContext ctx = setter.setBaggage(span, value);
 
     assertBaggageLogs(span, KEY, value, false, false, true);
     assertNull(ctx.getBaggageItem(KEY));
@@ -79,10 +79,10 @@ public class BaggageSetterTest {
 
   @Test
   public void testTruncatedBaggage() {
-    BaggageSetter setter = BaggageSetter.of(true, 5, metrics);
+    BaggageSetter setter = BaggageSetter.of(KEY, true, 5, metrics);
     final String value = "0123456789";
     final String expected = "01234";
-    SpanContext ctx = setter.setBaggage(span, KEY, value);
+    SpanContext ctx = setter.setBaggage(span, value);
 
     assertBaggageLogs(span, KEY, expected, true, false, false);
     assertEquals(expected, ctx.getBaggageItem(KEY));
@@ -95,11 +95,11 @@ public class BaggageSetterTest {
 
   @Test
   public void testOverrideBaggage() {
-    BaggageSetter setter = BaggageSetter.of(true, 5, metrics);
+    BaggageSetter setter = BaggageSetter.of(KEY, true, 5, metrics);
     final String value = "value";
-    SpanContext ctx = setter.setBaggage(span, KEY, value);
+    SpanContext ctx = setter.setBaggage(span, value);
     Span child = (Span) tracer.buildSpan("some-operation").asChildOf(ctx).startManual();
-    ctx = setter.setBaggage(child, KEY, value);
+    ctx = setter.setBaggage(child, value);
 
     assertBaggageLogs(child, KEY, value, false, true, false);
     assertEquals(value, ctx.getBaggageItem(KEY));

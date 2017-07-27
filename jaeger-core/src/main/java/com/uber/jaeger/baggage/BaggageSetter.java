@@ -37,9 +37,15 @@ import lombok.Value;
  */
 @Value(staticConstructor = "of")
 public class BaggageSetter {
-  final boolean valid;
-  final int maxValueLength;
-  final Metrics metrics;
+
+  private final String key;
+  /**
+   * This flag represents whether the key is a valid baggage key. If valid
+   * the baggage key:value will be written to the span.
+   */
+  private final boolean valid;
+  private final int maxValueLength;
+  private final Metrics metrics;
 
   /**
    * Sets the baggage key:value on the {@link Span} and the corresponding
@@ -51,31 +57,30 @@ public class BaggageSetter {
    * on the {@link Span}.
    *
    * @param  span  the span to set the baggage on
-   * @param  key   the baggage key to set
    * @param  value the baggage value to set
    * @return       the SpanContext with the baggage set
    */
-  public SpanContext setBaggage(Span span, String key, String value) {
+  public SpanContext setBaggage(Span span, String value) {
+    boolean truncated = false;
+    String prevItem = span.getBaggageItem(key);
     if (!valid) {
       metrics.baggageUpdateFailure.inc(1);
-      logFields(span, key, value, null, false, true);
+      logFields(span, value, prevItem, truncated);
       return span.context();
     }
-    boolean truncated = false;
     if (value.length() > maxValueLength) {
       truncated = true;
       value = value.substring(0, maxValueLength);
       metrics.baggageTruncate.inc(1);
     }
 
-    String prevItem = span.getBaggageItem(key);
-    logFields(span, key, value, prevItem, truncated, false);
+    logFields(span, value, prevItem, truncated);
     SpanContext context = span.context().withBaggageItem(key, value);
     metrics.baggageUpdateSuccess.inc(1);
     return context;
   }
 
-  private void logFields(Span span, String key, String value, String prevItem, boolean truncated, boolean invalid) {
+  private void logFields(Span span, String value, String prevItem, boolean truncated) {
     if (span.context().isSampled()) {
       Map<String, String> fields = new HashMap<String, String>();
       fields.put("event", "baggage");
@@ -87,7 +92,7 @@ public class BaggageSetter {
       if (truncated) {
         fields.put("truncated", "true");
       }
-      if (invalid) {
+      if (!valid) {
         fields.put("invalid", "true");
       }
       span.log(fields);

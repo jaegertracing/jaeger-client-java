@@ -23,6 +23,7 @@
 package com.uber.jaeger.baggage;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 
 import com.uber.jaeger.metrics.Metrics;
 import com.uber.jaeger.metrics.NullStatsReporter;
@@ -32,12 +33,17 @@ import org.junit.Test;
 public class BaggageRestrictionManagerTest {
 
   @Test
-  public void testIsBaggageValid() {
+  public void testGetBaggageSetter() {
     final Metrics nullMetrics = new Metrics(new StatsFactoryImpl(new NullStatsReporter()));
     final DefaultBaggageRestrictionManager undertest = new DefaultBaggageRestrictionManager(nullMetrics);
 
-    BaggageSetter actual = undertest.getBaggageSetter("key");
-    BaggageSetter expected = BaggageSetter.of(true, 2048, nullMetrics);
+    final String key = "key";
+    BaggageSetter actual = undertest.getBaggageSetter(key);
+    BaggageSetter expected = BaggageSetter.of(key, true, 2048, nullMetrics);
     assertEquals(expected, actual);
+
+    expected = actual;
+    actual = undertest.getBaggageSetter(key);
+    assertSame(actual, expected);
   }
 }
