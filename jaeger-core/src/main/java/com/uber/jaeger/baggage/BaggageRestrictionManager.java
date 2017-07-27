@@ -23,12 +23,12 @@
 package com.uber.jaeger.baggage;
 
 /**
- * BaggageRestrictionManager is an abstract class that manages baggage
+ * BaggageRestrictionManager is an interface for a class that manages baggage
  * restrictions for baggage keys. The manager will return a {@link BaggageSetter}
  * for a specific baggage key which will set the baggage on the {@link com.uber.jaeger.Span}
  * given the baggage restrictions for that key.
  */
-public abstract class BaggageRestrictionManager {
+public interface BaggageRestrictionManager {
   static final int DEFAULT_MAX_VALUE_LENGTH = 2048;
 
   public abstract BaggageSetter getBaggageSetter(String key);

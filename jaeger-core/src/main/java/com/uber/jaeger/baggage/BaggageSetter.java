@@ -75,27 +75,27 @@ public class BaggageSetter {
     }
 
     logFields(span, value, prevItem, truncated);
-    SpanContext context = span.context().withBaggageItem(key, value);
     metrics.baggageUpdateSuccess.inc(1);
-    return context;
+    return span.context().withBaggageItem(key, value);
   }
 
   private void logFields(Span span, String value, String prevItem, boolean truncated) {
-    if (span.context().isSampled()) {
-      Map<String, String> fields = new HashMap<String, String>();
-      fields.put("event", "baggage");
-      fields.put("key", key);
-      fields.put("value", value);
-      if (prevItem != null) {
-        fields.put("override", "true");
-      }
-      if (truncated) {
-        fields.put("truncated", "true");
-      }
-      if (!valid) {
-        fields.put("invalid", "true");
-      }
-      span.log(fields);
+    if (!span.context().isSampled()) {
+      return;
     }
+    Map<String, String> fields = new HashMap<String, String>();
+    fields.put("event", "baggage");
+    fields.put("key", key);
+    fields.put("value", value);
+    if (prevItem != null) {
+      fields.put("override", "true");
+    }
+    if (truncated) {
+      fields.put("truncated", "true");
+    }
+    if (!valid) {
+      fields.put("invalid", "true");
+    }
+    span.log(fields);
   }
 }

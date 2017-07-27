@@ -27,7 +27,7 @@ import com.uber.jaeger.metrics.Metrics;
 import java.util.HashMap;
 import java.util.Map;
 
-public class DefaultBaggageRestrictionManager extends BaggageRestrictionManager {
+public class DefaultBaggageRestrictionManager implements BaggageRestrictionManager {
   private Map<String, BaggageSetter> baggageSetters;
   private final int maxValueLength;
   private final Metrics metrics;
