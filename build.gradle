@@ -133,7 +133,7 @@ task codeCoverageReport(type: JacocoReport, group: 'Coverage reports') {
     reports {
         html.enabled = true
         xml.enabled = true
-        xml.destination = "${buildDir}/reports/jacoco/report.xml"
+        xml.destination = file("${buildDir}/reports/jacoco/report.xml")
     }
 
     afterEvaluate {
