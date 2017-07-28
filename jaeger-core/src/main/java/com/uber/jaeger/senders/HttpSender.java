@@ -64,7 +64,7 @@ public class HttpSender extends ThriftSender {
    * http://localhost:14268/api/traces
    * @param maxPayloadBytes max bytes to serialize as payload
    */
-  public HttpSender(String endpoint, int maxPayloadBytes){
+  public HttpSender(String endpoint, int maxPayloadBytes) {
     this(endpoint, maxPayloadBytes, new OkHttpClient());
   }
 
