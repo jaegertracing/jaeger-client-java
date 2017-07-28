@@ -46,7 +46,7 @@ public class HttpSender extends ThriftSender {
   private static final int ONE_MB_IN_BYTES = 1048576;
   private static final MediaType MEDIA_TYPE_THRIFT = MediaType.parse("application/x-thrift");
   private final OkHttpClient httpClient;
-  private final HttpUrl collectorUrl;
+  private final Request.Builder requestBuilder;
 
   /**
    * @param endpoint Jaeger REST endpoint consuming jaeger.thrift, e.g
@@ -56,7 +56,16 @@ public class HttpSender extends ThriftSender {
    * Use {@link HttpSender#HttpSender(java.lang.String, int, okhttp3.OkHttpClient)} to adjust parameters.
    */
   public HttpSender(String endpoint) {
-    this(endpoint, ONE_MB_IN_BYTES, new OkHttpClient());
+    this(endpoint, ONE_MB_IN_BYTES);
+  }
+
+  /**
+   * @param endpoint Jaeger REST endpoint consuming jaeger.thrift, e.g
+   * http://localhost:14268/api/traces
+   * @param maxPayloadBytes max bytes to serialize as payload
+   */
+  public HttpSender(String endpoint, int maxPayloadBytes){
+    this(endpoint, maxPayloadBytes, new OkHttpClient());
   }
 
   /**
@@ -65,13 +74,15 @@ public class HttpSender extends ThriftSender {
    * @param maxPayloadBytes max bytes to serialize as payload
    * @param client a client used to make http requests
    */
-  public HttpSender(String endpoint, int maxPayloadBytes, OkHttpClient client) {
+  private HttpSender(String endpoint, int maxPayloadBytes, OkHttpClient client) {
     super(PROTOCOL_FACTORY, maxPayloadBytes);
-    this.collectorUrl = HttpUrl.parse(String.format("%s?%s", endpoint, HTTP_COLLECTOR_JAEGER_THRIFT_FORMAT_PARAM));
-    if (this.collectorUrl == null) {
+    HttpUrl collectorUrl = HttpUrl
+        .parse(String.format("%s?%s", endpoint, HTTP_COLLECTOR_JAEGER_THRIFT_FORMAT_PARAM));
+    if (collectorUrl == null) {
       throw new IllegalArgumentException("Could not parse url.");
     }
     this.httpClient = client;
+    this.requestBuilder = new Request.Builder().url(collectorUrl);
   }
 
   @Override
@@ -80,7 +91,7 @@ public class HttpSender extends ThriftSender {
     byte[] bytes = SERIALIZER.serialize(batch);
 
     RequestBody body = RequestBody.create(MEDIA_TYPE_THRIFT, bytes);
-    Request request = new Request.Builder().url(collectorUrl).post(body).build();
+    Request request = requestBuilder.post(body).build();
     Response response;
     try {
       response = httpClient.newCall(request).execute();
