@@ -39,7 +39,7 @@ public class BaggageRestrictionManagerTest {
 
     final String key = "key";
     BaggageSetter actual = undertest.getBaggageSetter(key);
-    BaggageSetter expected = BaggageSetter.of(key, true, 2048, nullMetrics);
+    BaggageSetter expected = BaggageSetter.of(true, 2048, nullMetrics);
     assertEquals(expected, actual);
 
     expected = actual;

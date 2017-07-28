@@ -130,7 +130,8 @@ public class TracerTest {
             .withMetrics(metrics)
             .build();
     Span span = (Span) tracer.buildSpan("some-operation").startManual();
-    tracer.getBaggageRestrictionManager().getBaggageSetter("key").setBaggage(span, "value");
+    final String key = "key";
+    tracer.getBaggageRestrictionManager().getBaggageSetter(key).setBaggage(span, key, "value");
 
     assertEquals(
         1L, metricsReporter.counters.get("jaeger.baggage-update.result=ok").longValue());

@@ -38,7 +38,6 @@ import lombok.Value;
 @Value(staticConstructor = "of")
 public class BaggageSetter {
 
-  private final String key;
   /**
    * This flag represents whether the key is a valid baggage key. If valid
    * the baggage key:value will be written to the span.
@@ -60,12 +59,12 @@ public class BaggageSetter {
    * @param  value the baggage value to set
    * @return       the SpanContext with the baggage set
    */
-  public SpanContext setBaggage(Span span, String value) {
+  public SpanContext setBaggage(Span span, String key, String value) {
     boolean truncated = false;
     String prevItem = span.getBaggageItem(key);
     if (!valid) {
       metrics.baggageUpdateFailure.inc(1);
-      logFields(span, value, prevItem, truncated);
+      logFields(span, key, value, prevItem, truncated);
       return span.context();
     }
     if (value.length() > maxValueLength) {
@@ -74,12 +73,12 @@ public class BaggageSetter {
       metrics.baggageTruncate.inc(1);
     }
 
-    logFields(span, value, prevItem, truncated);
+    logFields(span, key, value, prevItem, truncated);
     metrics.baggageUpdateSuccess.inc(1);
     return span.context().withBaggageItem(key, value);
   }
 
-  private void logFields(Span span, String value, String prevItem, boolean truncated) {
+  private void logFields(Span span, String key, String value, String prevItem, boolean truncated) {
     if (!span.context().isSampled()) {
       return;
     }

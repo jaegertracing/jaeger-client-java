@@ -29,7 +29,7 @@ package com.uber.jaeger.baggage;
  * given the baggage restrictions for that key.
  */
 public interface BaggageRestrictionManager {
-  static final int DEFAULT_MAX_VALUE_LENGTH = 2048;
+  int DEFAULT_MAX_VALUE_LENGTH = 2048;
 
-  public abstract BaggageSetter getBaggageSetter(String key);
+  BaggageSetter getBaggageSetter(String key);
 }
