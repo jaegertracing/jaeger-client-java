@@ -44,9 +44,11 @@ import io.opentracing.propagation.TextMapExtractAdapter;
 import io.opentracing.propagation.TextMapInjectAdapter;
 import io.opentracing.tag.Tags;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -276,5 +278,33 @@ public class ThriftSpanConverterTest {
 
     assertEquals("client and server must have the same span ID",
         client.context().getSpanId(), server.context().getSpanId());
+  }
+
+  @Test
+  public void testSpanLogsCreateAnnotations() {
+    Span span = (com.uber.jaeger.Span) tracer.buildSpan("span-with-logs").startManual();
+
+    span.log("event");
+
+    // use sorted map for consistent ordering in test
+    Map<String, Object> fields = new TreeMap<String, Object>();
+    fields.put("event", "structured data");
+    fields.put("string", "something");
+    fields.put("number", 42);
+    fields.put("boolean", true);
+    span.log(fields);
+
+    com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan(span);
+
+    List<String> annotationValues = new ArrayList<String>();
+    for (Annotation annotation : zipkinSpan.getAnnotations()) {
+      annotationValues.add(annotation.getValue());
+    }
+
+    List<String> expectedValues = new ArrayList<String>();
+    expectedValues.add("event");
+    expectedValues.add("boolean=true event=\"structured data\" number=42 string=\"something\"");
+
+    assertEquals("zipkin span should contain matching annotations for span logs", expectedValues, annotationValues);
   }
 }

@@ -78,11 +78,37 @@ public class ThriftSpanConverter {
     List<LogData> logs = span.getLogs();
     if (logs != null) {
       for (LogData logData : logs) {
-        annotations.add(new Annotation(logData.getTime(), logData.getMessage()));
+        String logMessage = logData.getMessage();
+        Map<String, ?> logFields = logData.getFields();
+        if (logMessage != null) {
+          annotations.add(new Annotation(logData.getTime(), logMessage));
+        } else if (logFields != null) {
+          annotations.add(new Annotation(logData.getTime(), logFieldsAsMessage(logFields)));
+        }
       }
     }
 
     return annotations;
+  }
+
+  private static String logFieldsAsMessage(Map<String, ?> logFields) {
+    StringBuilder message = new StringBuilder();
+    String delimiter = "";
+    for (Map.Entry<String, ?> field : logFields.entrySet()) {
+      message.append(delimiter);
+      message.append(field.getKey());
+      message.append("=");
+      Object fieldValue = field.getValue();
+      if (fieldValue instanceof String) {
+        message.append("\"");
+        message.append((String) fieldValue);
+        message.append("\"");
+      } else {
+        message.append(String.valueOf(fieldValue));
+      }
+      delimiter = " ";
+    }
+    return message.toString();
   }
 
   private static List<BinaryAnnotation> buildBinaryAnnotations(Span span, Endpoint host) {
