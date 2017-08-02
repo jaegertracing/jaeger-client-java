@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Uber Technologies, Inc
+ * Copyright (c) 2017, Uber Technologies, Inc
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,49 +20,53 @@
  * THE SOFTWARE.
  */
 
-package com.uber.jaeger.samplers;
+package com.uber.jaeger.baggage;
 
 import static com.uber.jaeger.utils.Utils.makeGetRequest;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
-import com.uber.jaeger.exceptions.SamplingStrategyErrorException;
-import com.uber.jaeger.samplers.http.SamplingStrategyResponse;
+import com.google.gson.reflect.TypeToken;
+import com.uber.jaeger.baggage.http.BaggageRestriction;
+import com.uber.jaeger.exceptions.BaggageRestrictionException;
+
+import java.lang.reflect.Type;
 import java.net.URISyntaxException;
-import lombok.ToString;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.http.client.utils.URIBuilder;
 
-@ToString
-public class HttpSamplingManager implements SamplingManager {
+public class HttpBaggageRestrictionProxy implements BaggageRestrictionProxy {
   private static final String DEFAULT_HOST_PORT = "localhost:5778";
   private final URIBuilder builder;
   private final Gson gson = new Gson();
 
-  public HttpSamplingManager(String hostPort) throws URISyntaxException {
+  public HttpBaggageRestrictionProxy(String hostPort) throws URISyntaxException {
     hostPort = hostPort != null ? hostPort : DEFAULT_HOST_PORT;
-    this.builder = new URIBuilder("http://" + hostPort);
+    this.builder = new URIBuilder("http://" + hostPort).setPath("/baggageRestrictions");
   }
 
-  SamplingStrategyResponse parseJson(String json) {
+  List<BaggageRestriction> parseJson(String json) throws BaggageRestrictionException {
     try {
-      return gson.fromJson(json, SamplingStrategyResponse.class);
+      Type listType = new TypeToken<ArrayList<BaggageRestriction>>(){}.getType();
+      return gson.fromJson(json, listType);
     } catch (JsonSyntaxException e) {
-      throw new SamplingStrategyErrorException("Cannot deserialize json", e);
+      throw new BaggageRestrictionException("Cannot deserialize json", e);
     }
   }
 
   @Override
-  public SamplingStrategyResponse getSamplingStrategy(String serviceName)
-      throws SamplingStrategyErrorException {
+  public List<BaggageRestriction> getBaggageRestrictions(String serviceName)
+      throws BaggageRestrictionException {
     String jsonString;
     try {
       jsonString =
           makeGetRequest(builder.setParameter("service", serviceName).build());
     } catch (Exception e) {
-      throw new SamplingStrategyErrorException(
-          "http call to get sampling strategy from local agent failed.", e);
+      throw new BaggageRestrictionException(
+          "http call to get baggage restriction from local agent failed.", e);
     }
-
     return parseJson(jsonString);
   }
 }

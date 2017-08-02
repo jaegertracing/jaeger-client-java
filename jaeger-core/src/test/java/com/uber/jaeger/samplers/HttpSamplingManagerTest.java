@@ -27,6 +27,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 import com.uber.jaeger.exceptions.SamplingStrategyErrorException;
+import com.uber.jaeger.mocks.MockAgentResource;
 import com.uber.jaeger.samplers.http.OperationSamplingParameters;
 import com.uber.jaeger.samplers.http.PerOperationSamplingParameters;
 import com.uber.jaeger.samplers.http.ProbabilisticSamplingStrategy;
@@ -44,12 +45,13 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.glassfish.jersey.test.TestProperties;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class HttpSamplingManagerTest extends JerseyTest {
 
-  HttpSamplingManager undertest = new HttpSamplingManager(null);
+  HttpSamplingManager undertest;
 
   private static Properties originalProps;
 
@@ -64,6 +66,13 @@ public class HttpSamplingManagerTest extends JerseyTest {
   @AfterClass
   public static void afterClass() {
     System.setProperties(originalProps);
+  }
+
+  @Override
+  @Before
+  public void setUp() throws Exception {
+    super.setUp();
+    undertest = new HttpSamplingManager(null);
   }
 
   @Override

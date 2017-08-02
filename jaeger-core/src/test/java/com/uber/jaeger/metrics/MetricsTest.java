@@ -45,7 +45,7 @@ public class MetricsTest {
 
   @Test
   public void testCounterWithoutExplicitTags() throws Exception {
-    metrics.tracesJoinedSampled.inc(1);
+    metrics.baggageSanitize.inc(1);
 
     Object[] metricNames = metricsReporter.counters.keySet().toArray();
     String metricName = (String) metricNames[0];
@@ -53,7 +53,7 @@ public class MetricsTest {
 
     assertEquals(metricNames.length, 1);
     assertEquals(expectedAmount, 1);
-    assertEquals("jaeger.traces.sampled=y.state=joined", metricName);
+    assertEquals("jaeger.baggage-sanitize", metricName);
   }
 
   @Test

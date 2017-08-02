@@ -28,6 +28,9 @@ import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.uber.jaeger.baggage.BaggageRestrictionManager;
+import com.uber.jaeger.baggage.DefaultBaggageRestrictionManager;
+import com.uber.jaeger.baggage.SanitizedBaggage;
 import com.uber.jaeger.metrics.InMemoryStatsReporter;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
@@ -48,16 +51,19 @@ public class SpanTest {
   private Tracer tracer;
   private Span span;
   private InMemoryStatsReporter metricsReporter;
+  private BaggageRestrictionManager baggageRestrictionManager;
 
   @Before
   public void setUp() throws Exception {
     metricsReporter = new InMemoryStatsReporter();
     reporter = new InMemoryReporter();
     clock = mock(Clock.class);
+    baggageRestrictionManager = mock(BaggageRestrictionManager.class);
     tracer =
         new Tracer.Builder("SamplerTest", reporter, new ConstSampler(true))
             .withStatsReporter(metricsReporter)
             .withClock(clock)
+            .withBaggageRestrictionManager(baggageRestrictionManager)
             .build();
     span = (Span) tracer.buildSpan("some-operation").startManual();
   }
@@ -76,11 +82,63 @@ public class SpanTest {
   public void testSetAndGetBaggageItem() {
     String expected = "expected";
     String key = "some.BAGGAGE";
+    SanitizedBaggage sanitizedBaggage = SanitizedBaggage.of(true, key, expected,
+        generateBaggageFields(key, expected, false, false), false);
+
+    when(baggageRestrictionManager.sanitizeBaggage(key, expected, null)).thenReturn(sanitizedBaggage);
     span.setBaggageItem(key, expected);
     assertEquals(expected, span.getBaggageItem(key));
 
     // Ensure the baggage was logged
-    this.assertBaggageLogs(span, key, expected, false);
+    this.assertBaggageLogs(span, key, expected, false, false);
+
+    assertEquals(
+        1L, metricsReporter.counters.get("jaeger.baggage-update.result=ok").longValue());
+  }
+
+  @Test
+  public void testInvalidBaggageKey() {
+    String key = "some.BAGGAGE";
+    String value = "value";
+
+    SanitizedBaggage sanitizedBaggage = SanitizedBaggage.of(false, null, null, null, false);
+
+    when(baggageRestrictionManager.sanitizeBaggage(key, value, null)).thenReturn(sanitizedBaggage);
+
+    span.setBaggageItem(key, value);
+    assertEquals(null, span.getBaggageItem(key));
+
+    assertEquals(
+        1L, metricsReporter.counters.get("jaeger.baggage-update.result=err").longValue());
+  }
+
+  @Test
+  public void testTruncateBaggage() {
+    String value = "01234567890123456789";
+    String expected = "01234";
+    String key = "some.BAGGAGE";
+
+    SanitizedBaggage sanitizedBaggage = SanitizedBaggage.of(true, key, expected,
+        generateBaggageFields(key, expected, false, true), true);
+
+    when(baggageRestrictionManager.sanitizeBaggage(key, value, null)).thenReturn(sanitizedBaggage);
+
+    span.setBaggageItem(key, value);
+    assertEquals(expected, span.getBaggageItem(key));
+
+    // Ensure the baggage was logged
+    this.assertBaggageLogs(span, key, expected, false, true);
+
+    assertEquals(
+        1L, metricsReporter.counters.get("jaeger.baggage-sanitize").longValue());
+  }
+
+  @Test
+  public void testNullBaggage() {
+    String key = "some.BAGGAGE";
+
+    span.setBaggageItem(key, null);
+    assertNull(span.getBaggageItem(key));
   }
 
   @Test
@@ -293,16 +351,22 @@ public class SpanTest {
 
   @Test
   public void testBaggageOneReference() {
+    baggageRestrictionManager = new DefaultBaggageRestrictionManager();
+    tracer = new Tracer.Builder("SamplerTest", reporter, new ConstSampler(true))
+            .withStatsReporter(metricsReporter)
+            .withClock(clock)
+            .withBaggageRestrictionManager(baggageRestrictionManager)
+            .build();
     io.opentracing.Span parent = tracer.buildSpan("foo").startManual();
     parent.setBaggageItem("foo", "bar");
-    this.assertBaggageLogs(parent, "foo", "bar", false);
+    this.assertBaggageLogs(parent, "foo", "bar", false, false);
 
     io.opentracing.Span child = tracer.buildSpan("foo")
         .asChildOf(parent)
         .startManual();
 
     child.setBaggageItem("a", "a");
-    this.assertBaggageLogs(child, "a", "a", false);
+    this.assertBaggageLogs(child, "a", "a", false, false);
 
     assertNull(parent.getBaggageItem("a"));
     assertEquals("a", child.getBaggageItem("a"));
@@ -311,12 +375,19 @@ public class SpanTest {
 
   @Test
   public void testBaggageMultipleReferences() {
+    baggageRestrictionManager = new DefaultBaggageRestrictionManager();
+    tracer = new Tracer.Builder("SamplerTest", reporter, new ConstSampler(true))
+        .withStatsReporter(metricsReporter)
+        .withClock(clock)
+        .withBaggageRestrictionManager(baggageRestrictionManager)
+        .build();
+
     io.opentracing.Span parent1 = tracer.buildSpan("foo").startManual();
     parent1.setBaggageItem("foo", "bar");
-    this.assertBaggageLogs(parent1, "foo", "bar", false);
+    this.assertBaggageLogs(parent1, "foo", "bar", false, false);
     io.opentracing.Span parent2 = tracer.buildSpan("foo").startManual();
     parent2.setBaggageItem("foo2", "bar");
-    this.assertBaggageLogs(parent2, "foo2", "bar", false);
+    this.assertBaggageLogs(parent2, "foo2", "bar", false, false);
 
     io.opentracing.Span child = tracer.buildSpan("foo")
         .asChildOf(parent1)
@@ -324,9 +395,9 @@ public class SpanTest {
         .startManual();
 
     child.setBaggageItem("a", "a");
-    this.assertBaggageLogs(child, "a", "a", false);
+    this.assertBaggageLogs(child, "a", "a", false, false);
     child.setBaggageItem("foo2", "b");
-    this.assertBaggageLogs(child, "foo2", "b", true);
+    this.assertBaggageLogs(child, "foo2", "b", true, false);
 
     assertNull(parent1.getBaggageItem("a"));
     assertNull(parent2.getBaggageItem("a"));
@@ -337,6 +408,13 @@ public class SpanTest {
 
   @Test
   public void testImmutableBaggage() {
+    baggageRestrictionManager = new DefaultBaggageRestrictionManager();
+    tracer = new Tracer.Builder("SamplerTest", reporter, new ConstSampler(true))
+        .withStatsReporter(metricsReporter)
+        .withClock(clock)
+        .withBaggageRestrictionManager(baggageRestrictionManager)
+        .build();
+
     io.opentracing.Span span = tracer.buildSpan("foo").startManual();
     span.setBaggageItem("foo", "bar");
     {
@@ -350,17 +428,39 @@ public class SpanTest {
     assertFalse(baggageIter.hasNext());
   }
 
-  private void assertBaggageLogs(io.opentracing.Span span, String key, String value, boolean override) {
+  private void assertBaggageLogs(
+      io.opentracing.Span span,
+      String key,
+      String value,
+      boolean override,
+      boolean truncate
+  ) {
     Span sp = (Span)span;
     List<LogData> logs = sp.getLogs();
     assertEquals(false, logs.isEmpty());
     Map<String, ?> fields = logs.get(logs.size() - 1).getFields();
-    assertEquals(override ? 4 : 3, fields.size());
     assertEquals("baggage", fields.get("event"));
     assertEquals(key, fields.get("key"));
     assertEquals(value, fields.get("value"));
     if (override) {
       assertEquals("true", fields.get("override"));
     }
+    if (truncate) {
+      assertEquals("true", fields.get("truncated"));
+    }
+  }
+
+  private Map<String, String> generateBaggageFields(String key, String value, Boolean override, Boolean truncated) {
+    Map<String, String> fields = new HashMap<String, String>();
+    fields.put("event", "baggage");
+    fields.put("key", key);
+    fields.put("value", value);
+    if (override) {
+      fields.put("override", "true");
+    }
+    if (truncated) {
+      fields.put("truncated", "true");
+    }
+    return fields;
   }
 }
