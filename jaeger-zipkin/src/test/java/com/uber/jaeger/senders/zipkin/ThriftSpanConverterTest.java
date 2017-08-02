@@ -303,7 +303,7 @@ public class ThriftSpanConverterTest {
 
     List<String> expectedValues = new ArrayList<String>();
     expectedValues.add("event");
-    expectedValues.add("boolean=true event=\"structured data\" number=42 string=\"something\"");
+    expectedValues.add("{\"boolean\":true,\"event\":\"structured data\",\"number\":42,\"string\":\"something\"}");
 
     assertEquals("zipkin span should contain matching annotations for span logs", expectedValues, annotationValues);
   }

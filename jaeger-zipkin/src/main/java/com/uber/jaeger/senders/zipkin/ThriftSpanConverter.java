@@ -22,6 +22,7 @@
 
 package com.uber.jaeger.senders.zipkin;
 
+import com.google.gson.Gson;
 import com.twitter.zipkin.thriftjava.Annotation;
 import com.twitter.zipkin.thriftjava.AnnotationType;
 import com.twitter.zipkin.thriftjava.BinaryAnnotation;
@@ -42,6 +43,7 @@ import java.util.Map;
 public class ThriftSpanConverter {
 
   private static final Charset UTF_8 = Charset.forName("UTF-8");
+  private static final Gson gson = new Gson();
 
   public static com.twitter.zipkin.thriftjava.Span convertSpan(Span span) {
     Tracer tracer = span.getTracer();
@@ -83,32 +85,12 @@ public class ThriftSpanConverter {
         if (logMessage != null) {
           annotations.add(new Annotation(logData.getTime(), logMessage));
         } else if (logFields != null) {
-          annotations.add(new Annotation(logData.getTime(), logFieldsAsMessage(logFields)));
+          annotations.add(new Annotation(logData.getTime(), gson.toJson(logFields)));
         }
       }
     }
 
     return annotations;
-  }
-
-  private static String logFieldsAsMessage(Map<String, ?> logFields) {
-    StringBuilder message = new StringBuilder();
-    String delimiter = "";
-    for (Map.Entry<String, ?> field : logFields.entrySet()) {
-      message.append(delimiter);
-      message.append(field.getKey());
-      message.append("=");
-      Object fieldValue = field.getValue();
-      if (fieldValue instanceof String) {
-        message.append("\"");
-        message.append((String) fieldValue);
-        message.append("\"");
-      } else {
-        message.append(String.valueOf(fieldValue));
-      }
-      delimiter = " ";
-    }
-    return message.toString();
   }
 
   private static List<BinaryAnnotation> buildBinaryAnnotations(Span span, Endpoint host) {
