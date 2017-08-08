@@ -22,23 +22,27 @@
 
 package com.uber.jaeger.baggage;
 
-/**
- * DefaultBaggageRestrictionManager is a manager that returns a {@link Restriction}
- * that allows all baggage.
- */
-public class DefaultBaggageRestrictionManager implements BaggageRestrictionManager {
-  private final Restriction restriction;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 
-  public DefaultBaggageRestrictionManager() {
-    this(DEFAULT_MAX_VALUE_LENGTH);
-  }
+import com.uber.jaeger.metrics.Metrics;
+import com.uber.jaeger.metrics.NullStatsReporter;
+import com.uber.jaeger.metrics.StatsFactoryImpl;
+import org.junit.Test;
 
-  DefaultBaggageRestrictionManager(int maxValueLength) {
-    this.restriction = Restriction.of(true, maxValueLength);
-  }
+public class DefaultBaggageRestrictionManagerTest {
 
-  @Override
-  public Restriction getRestriction(String key) {
-    return restriction;
+  @Test
+  public void testGetRestriction() {
+    final DefaultBaggageRestrictionManager undertest = new DefaultBaggageRestrictionManager();
+
+    final String key = "key";
+    Restriction actual = undertest.getRestriction(key);
+    Restriction expected = Restriction.of(true, 2048);
+    assertEquals(expected, actual);
+
+    expected = actual;
+    actual = undertest.getRestriction(key);
+    assertSame(actual, expected);
   }
 }

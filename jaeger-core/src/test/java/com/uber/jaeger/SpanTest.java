@@ -32,6 +32,7 @@ import static org.mockito.Mockito.when;
 import com.uber.jaeger.baggage.BaggageRestrictionManager;
 import com.uber.jaeger.baggage.BaggageSetter;
 import com.uber.jaeger.baggage.DefaultBaggageRestrictionManager;
+import com.uber.jaeger.baggage.Restriction;
 import com.uber.jaeger.metrics.InMemoryStatsReporter;
 import com.uber.jaeger.metrics.Metrics;
 import com.uber.jaeger.metrics.StatsFactoryImpl;
@@ -68,7 +69,7 @@ public class SpanTest {
         new Tracer.Builder("SamplerTest", reporter, new ConstSampler(true))
             .withStatsReporter(metricsReporter)
             .withClock(clock)
-            .withBaggageRestrictionManager(new DefaultBaggageRestrictionManager(metrics))
+            .withBaggageRestrictionManager(new DefaultBaggageRestrictionManager())
             .build();
     span = (Span) tracer.buildSpan("some-operation").startManual();
   }
@@ -95,9 +96,9 @@ public class SpanTest {
 
     final String key = "key";
     final String value = "value";
-    when(mgr.getBaggageSetter(key)).thenReturn(BaggageSetter.of(true, 10, metrics));
+    when(mgr.getRestriction(key)).thenReturn(Restriction.of(true, 10));
     span.setBaggageItem(key, "value");
-    verify(mgr).getBaggageSetter(key);
+    verify(mgr).getRestriction(key);
     assertEquals(value, span.getBaggageItem(key));
   }
 

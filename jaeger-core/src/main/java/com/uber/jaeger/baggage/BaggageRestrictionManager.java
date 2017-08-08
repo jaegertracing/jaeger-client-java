@@ -24,12 +24,12 @@ package com.uber.jaeger.baggage;
 
 /**
  * BaggageRestrictionManager is an interface for a class that manages baggage
- * restrictions for baggage keys. The manager will return a {@link BaggageSetter}
- * for a specific baggage key which will set the baggage on the {@link com.uber.jaeger.Span}
- * given the baggage restrictions for that key.
+ * restrictions for baggage keys. The manager will return a {@link Restriction}
+ * for a specific baggage key which will determine whether the baggage key is
+ * allowed and any other applicable restrictions on the baggage value.
  */
 public interface BaggageRestrictionManager {
   int DEFAULT_MAX_VALUE_LENGTH = 2048;
 
-  BaggageSetter getBaggageSetter(String key);
+  Restriction getRestriction(String key);
 }

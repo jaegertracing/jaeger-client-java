@@ -24,27 +24,25 @@ package com.uber.jaeger.baggage;
 
 import com.uber.jaeger.Span;
 import com.uber.jaeger.SpanContext;
+import com.uber.jaeger.metrics.Metric;
 import com.uber.jaeger.metrics.Metrics;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import lombok.Value;
-
 /**
  * BaggageSetter is a class that sets baggage and the logs associated
  * with the baggage on a given {@link Span}.
  */
-@Value(staticConstructor = "of")
 public class BaggageSetter {
 
-  /**
-   * This flag represents whether the key is a valid baggage key. If valid
-   * the baggage key:value will be written to the span.
-   */
-  private final boolean valid;
-  private final int maxValueLength;
+  private final BaggageRestrictionManager restrictionManager;
   private final Metrics metrics;
+
+  public BaggageSetter(BaggageRestrictionManager restrictionManager, Metrics metrics) {
+    this.restrictionManager = restrictionManager;
+    this.metrics = metrics;
+  }
 
   /**
    * Sets the baggage key:value on the {@link Span} and the corresponding
@@ -60,25 +58,26 @@ public class BaggageSetter {
    * @return       the SpanContext with the baggage set
    */
   public SpanContext setBaggage(Span span, String key, String value) {
+    Restriction restriction = restrictionManager.getRestriction(key);
     boolean truncated = false;
-    String prevItem = span.getBaggageItem(key);
-    if (!valid) {
+    String prevItem = null;
+    if (!restriction.isKeyAllowed()) {
       metrics.baggageUpdateFailure.inc(1);
-      logFields(span, key, value, prevItem, truncated);
+      logFields(span, key, value, prevItem, truncated, restriction.isKeyAllowed());
       return span.context();
     }
-    if (value.length() > maxValueLength) {
+    if (value.length() > restriction.getMaxValueLength()) {
       truncated = true;
-      value = value.substring(0, maxValueLength);
+      value = value.substring(0, restriction.getMaxValueLength());
       metrics.baggageTruncate.inc(1);
     }
-
-    logFields(span, key, value, prevItem, truncated);
+    prevItem = span.getBaggageItem(key);
+    logFields(span, key, value, prevItem, truncated, restriction.isKeyAllowed());
     metrics.baggageUpdateSuccess.inc(1);
     return span.context().withBaggageItem(key, value);
   }
 
-  private void logFields(Span span, String key, String value, String prevItem, boolean truncated) {
+  private void logFields(Span span, String key, String value, String prevItem, boolean truncated, boolean valid) {
     if (!span.context().isSampled()) {
       return;
     }

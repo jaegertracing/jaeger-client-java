@@ -22,28 +22,14 @@
 
 package com.uber.jaeger.baggage;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
+import lombok.Value;
 
-import com.uber.jaeger.metrics.Metrics;
-import com.uber.jaeger.metrics.NullStatsReporter;
-import com.uber.jaeger.metrics.StatsFactoryImpl;
-import org.junit.Test;
-
-public class BaggageRestrictionManagerTest {
-
-  @Test
-  public void testGetBaggageSetter() {
-    final Metrics nullMetrics = new Metrics(new StatsFactoryImpl(new NullStatsReporter()));
-    final DefaultBaggageRestrictionManager undertest = new DefaultBaggageRestrictionManager(nullMetrics);
-
-    final String key = "key";
-    BaggageSetter actual = undertest.getBaggageSetter(key);
-    BaggageSetter expected = BaggageSetter.of(true, 2048, nullMetrics);
-    assertEquals(expected, actual);
-
-    expected = actual;
-    actual = undertest.getBaggageSetter(key);
-    assertSame(actual, expected);
-  }
+/**
+ * Restriction determines whether a baggage key is allowed and contains any
+ * restrictions on the baggage value.
+ */
+@Value(staticConstructor = "of")
+public class Restriction {
+  boolean keyAllowed;
+  int maxValueLength;
 }

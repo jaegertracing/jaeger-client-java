@@ -24,6 +24,8 @@ package com.uber.jaeger.baggage;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.uber.jaeger.LogData;
 import com.uber.jaeger.Span;
@@ -48,6 +50,8 @@ public class BaggageSetterTest {
   private Span span;
   private InMemoryStatsReporter metricsReporter;
   private Metrics metrics;
+  private BaggageRestrictionManager mgr;
+  private BaggageSetter setter;
 
   private static final String KEY = "key";
 
@@ -56,17 +60,19 @@ public class BaggageSetterTest {
     metricsReporter = new InMemoryStatsReporter();
     reporter = new InMemoryReporter();
     metrics = new Metrics(new StatsFactoryImpl(metricsReporter));
+    mgr = mock(DefaultBaggageRestrictionManager.class);
+    setter = new BaggageSetter(mgr, metrics);
     tracer =
         new Tracer.Builder("SamplerTest", reporter, new ConstSampler(true))
             .withStatsReporter(metricsReporter)
-            .withBaggageRestrictionManager(new DefaultBaggageRestrictionManager(metrics, 15))
             .build();
     span = (Span) tracer.buildSpan("some-operation").startManual();
   }
 
   @Test
   public void testInvalidBaggage() {
-    BaggageSetter setter = BaggageSetter.of(false, 0, metrics);
+    when(mgr.getRestriction(KEY)).thenReturn(Restriction.of(false, 0));
+
     final String value = "value";
     SpanContext ctx = setter.setBaggage(span, KEY, value);
 
@@ -79,7 +85,7 @@ public class BaggageSetterTest {
 
   @Test
   public void testTruncatedBaggage() {
-    BaggageSetter setter = BaggageSetter.of(true, 5, metrics);
+    when(mgr.getRestriction(KEY)).thenReturn(Restriction.of(true, 5));
     final String value = "0123456789";
     final String expected = "01234";
     SpanContext ctx = setter.setBaggage(span, KEY, value);
@@ -95,7 +101,7 @@ public class BaggageSetterTest {
 
   @Test
   public void testOverrideBaggage() {
-    BaggageSetter setter = BaggageSetter.of(true, 5, metrics);
+    when(mgr.getRestriction(KEY)).thenReturn(Restriction.of(true, 5));
     final String value = "value";
     SpanContext ctx = setter.setBaggage(span, KEY, value);
     Span child = (Span) tracer.buildSpan("some-operation").asChildOf(ctx).startManual();
@@ -106,6 +112,23 @@ public class BaggageSetterTest {
 
     assertEquals(
         2L, metricsReporter.counters.get("jaeger.baggage-update.result=ok").longValue());
+  }
+
+  @Test
+  public void testUnsampledSpan() {
+    tracer =
+        new Tracer.Builder("SamplerTest", reporter, new ConstSampler(false))
+            .withStatsReporter(metricsReporter)
+            .build();
+    span = (Span) tracer.buildSpan("some-operation").startManual();
+
+    when(mgr.getRestriction(KEY)).thenReturn(Restriction.of(true, 5));
+    final String value = "value";
+    SpanContext ctx = setter.setBaggage(span, KEY, value);
+
+    assertEquals(value, ctx.getBaggageItem(KEY));
+    // No logs should be written if the span is not sampled
+    assertNull(span.getLogs());
   }
 
   private void assertBaggageLogs(

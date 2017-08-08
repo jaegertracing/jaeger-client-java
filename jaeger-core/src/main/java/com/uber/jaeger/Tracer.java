@@ -23,6 +23,7 @@
 package com.uber.jaeger;
 
 import com.uber.jaeger.baggage.BaggageRestrictionManager;
+import com.uber.jaeger.baggage.BaggageSetter;
 import com.uber.jaeger.baggage.DefaultBaggageRestrictionManager;
 import com.uber.jaeger.exceptions.UnsupportedFormatException;
 import com.uber.jaeger.metrics.Metrics;
@@ -75,7 +76,7 @@ public class Tracer implements io.opentracing.Tracer {
   private final Map<String, ?> tags;
   private final boolean zipkinSharedRpcSpan;
   private final ActiveSpanSource activeSpanSource;
-  private final BaggageRestrictionManager baggageRestrictionManager;
+  private final BaggageSetter baggageSetter;
 
   private Tracer(
       String serviceName,
@@ -96,7 +97,7 @@ public class Tracer implements io.opentracing.Tracer {
     this.metrics = metrics;
     this.zipkinSharedRpcSpan = zipkinSharedRpcSpan;
     this.activeSpanSource = activeSpanSource;
-    this.baggageRestrictionManager = baggageRestrictionManager;
+    this.baggageSetter = new BaggageSetter(baggageRestrictionManager, metrics);
 
     this.version = loadVersion();
 
@@ -142,10 +143,6 @@ public class Tracer implements io.opentracing.Tracer {
 
   Reporter getReporter() {
     return reporter;
-  }
-
-  BaggageRestrictionManager getBaggageRestrictionManager() {
-    return baggageRestrictionManager;
   }
 
   void reportSpan(Span span) {
@@ -456,7 +453,7 @@ public class Tracer implements io.opentracing.Tracer {
     private Map<String, Object> tags = new HashMap<String, Object>();
     private boolean zipkinSharedRpcSpan;
     private ActiveSpanSource activeSpanSource = new ThreadLocalActiveSpanSource();
-    private BaggageRestrictionManager baggageRestrictionManager;
+    private BaggageRestrictionManager baggageRestrictionManager = new DefaultBaggageRestrictionManager();
 
     public Builder(String serviceName, Reporter reporter, Sampler sampler) {
       if (serviceName == null || serviceName.trim().length() == 0) {
@@ -538,9 +535,6 @@ public class Tracer implements io.opentracing.Tracer {
     }
 
     public Tracer build() {
-      if (baggageRestrictionManager == null) {
-        baggageRestrictionManager = new DefaultBaggageRestrictionManager(this.metrics);
-      }
       return new Tracer(this.serviceName, reporter, sampler, registry, clock, metrics, tags,
           zipkinSharedRpcSpan, activeSpanSource, baggageRestrictionManager);
     }
@@ -598,4 +592,7 @@ public class Tracer implements io.opentracing.Tracer {
     }
   }
 
+  SpanContext setBaggage(Span span, String key, String value) {
+    return baggageSetter.setBaggage(span, key, value);
+  }
 }
