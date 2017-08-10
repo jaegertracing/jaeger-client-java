@@ -33,7 +33,11 @@ import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.reporters.Reporter;
 import com.uber.jaeger.samplers.ConstSampler;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import org.apache.thrift.transport.AutoExpandingBufferWriteTransport;
 import org.junit.After;
 import org.junit.Before;
@@ -141,6 +145,43 @@ public class ZipkinSenderTest {
     for (Annotation annotation : actualSpan.annotations) {
       assertEquals(tracer.getServiceName(), annotation.endpoint.serviceName);
     }
+  }
+
+  @Test
+  public void testAppendSpanWithLogs() throws Exception {
+    Span span = (Span) tracer.buildSpan("span-with-logs").startManual();
+
+    span.log("event");
+
+    // use sorted map for consistent ordering in test
+    Map<String, Object> fields = new TreeMap<String, Object>();
+    fields.put("event", "structured data");
+    fields.put("string", "something");
+    fields.put("number", 42);
+    fields.put("boolean", true);
+    span.log(fields);
+
+    sender.append(span);
+    sender.flush();
+
+    List<List<zipkin.Span>> traces = zipkinRule.getTraces();
+    assertEquals(1, traces.size());
+    assertEquals(1, traces.get(0).size());
+
+    zipkin.Span zipkinSpan = traces.get(0).get(0);
+    assertEquals(2, zipkinSpan.annotations.size());
+
+    // ignore order by using set
+    Set<String> annotationValues = new HashSet<String>();
+    for (Annotation annotation : zipkinSpan.annotations) {
+      annotationValues.add(annotation.value);
+    }
+
+    Set<String> expectedValues = new HashSet<String>();
+    expectedValues.add("event");
+    expectedValues.add("{\"boolean\":true,\"event\":\"structured data\",\"number\":42,\"string\":\"something\"}");
+
+    assertEquals("zipkin span should contain matching annotations for span logs", expectedValues, annotationValues);
   }
 
   private ZipkinSender newSender(int messageMaxBytes) {

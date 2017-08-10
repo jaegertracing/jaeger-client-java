@@ -22,6 +22,7 @@
 
 package com.uber.jaeger.senders.zipkin;
 
+import com.google.gson.Gson;
 import com.twitter.zipkin.thriftjava.Annotation;
 import com.twitter.zipkin.thriftjava.AnnotationType;
 import com.twitter.zipkin.thriftjava.BinaryAnnotation;
@@ -42,6 +43,7 @@ import java.util.Map;
 public class ThriftSpanConverter {
 
   private static final Charset UTF_8 = Charset.forName("UTF-8");
+  private static final Gson gson = new Gson();
 
   public static com.twitter.zipkin.thriftjava.Span convertSpan(Span span) {
     Tracer tracer = span.getTracer();
@@ -78,7 +80,13 @@ public class ThriftSpanConverter {
     List<LogData> logs = span.getLogs();
     if (logs != null) {
       for (LogData logData : logs) {
-        annotations.add(new Annotation(logData.getTime(), logData.getMessage()));
+        String logMessage = logData.getMessage();
+        Map<String, ?> logFields = logData.getFields();
+        if (logMessage != null) {
+          annotations.add(new Annotation(logData.getTime(), logMessage));
+        } else if (logFields != null) {
+          annotations.add(new Annotation(logData.getTime(), gson.toJson(logFields)));
+        }
       }
     }
 
