@@ -30,6 +30,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import com.uber.jaeger.metrics.InMemoryStatsReporter;
+import com.uber.jaeger.metrics.Metrics;
+import com.uber.jaeger.metrics.StatsFactoryImpl;
 import com.uber.jaeger.propagation.Injector;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.reporters.Reporter;
@@ -40,7 +42,6 @@ import io.opentracing.propagation.TextMap;
 import io.opentracing.tag.Tags;
 import org.junit.Before;
 import org.junit.Test;
-
 
 public class TracerTest {
 
@@ -118,6 +119,22 @@ public class TracerTest {
     spanBuilder.withTag(Tags.SPAN_KIND.getKey(), "peachy");
 
     assertFalse(spanBuilder.isRpcServer());
+  }
+
+  @Test
+  public void testWithBaggageRestrictionManager() {
+    metricsReporter = new InMemoryStatsReporter();
+    Metrics metrics = new Metrics(new StatsFactoryImpl(metricsReporter));
+    tracer =
+        new Tracer.Builder("TracerTestService", new InMemoryReporter(), new ConstSampler(true))
+            .withMetrics(metrics)
+            .build();
+    Span span = (Span) tracer.buildSpan("some-operation").startManual();
+    final String key = "key";
+    tracer.setBaggage(span, key, "value");
+
+    assertEquals(
+        1L, metricsReporter.counters.get("jaeger.baggage-update.result=ok").longValue());
   }
 
   @Test
