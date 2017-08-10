@@ -29,5 +29,6 @@ import lombok.Value;
 public class OperationSamplingParameters {
   double defaultSamplingProbability;
   double defaultLowerBoundTracesPerSecond;
+  double defaultUpperBoundTracesPerSecond;
   List<PerOperationSamplingParameters> perOperationStrategies;
 }

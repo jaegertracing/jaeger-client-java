@@ -22,7 +22,12 @@
 
 package com.uber.jaeger.utils;
 
+import lombok.Getter;
+
+@SuppressWarnings("EqualsHashCode")
 public class RateLimiter {
+  @Getter
+  private final double creditsPerSecond;
   private final double creditsPerNanosecond;
   private final Clock clock;
   private double balance;
@@ -34,6 +39,7 @@ public class RateLimiter {
   }
 
   public RateLimiter(double creditsPerSecond, double maxBalance, Clock clock) {
+    this.creditsPerSecond = creditsPerSecond;
     this.clock = clock;
     this.balance = maxBalance;
     this.maxBalance = maxBalance;
@@ -53,5 +59,14 @@ public class RateLimiter {
       return true;
     }
     return false;
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (this == other) {
+      return true;
+    }
+    return other instanceof RateLimiter && this.creditsPerSecond == ((RateLimiter) other).creditsPerSecond
+        && this.maxBalance == ((RateLimiter) other).maxBalance;
   }
 }

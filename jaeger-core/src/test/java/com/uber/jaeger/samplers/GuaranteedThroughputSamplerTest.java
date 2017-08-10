@@ -44,7 +44,7 @@ public class GuaranteedThroughputSamplerTest {
 
   @Test
   public void testRateLimitingLowerBound() throws Exception {
-    undertest = new GuaranteedThroughputSampler(0.0001, 1.0);
+    undertest = new GuaranteedThroughputSampler(0.0001, 1.0, 2.0);
 
     SamplingStatus samplingStatus = undertest.sample("test", Long.MAX_VALUE);
     Assert.assertTrue(samplingStatus.isSampled());
@@ -56,7 +56,7 @@ public class GuaranteedThroughputSamplerTest {
 
   @Test
   public void testProbabilityTagsOverrideRateLimitingTags() throws Exception {
-    undertest = new GuaranteedThroughputSampler(0.999, 1.0);
+    undertest = new GuaranteedThroughputSampler(0.999, 1.0, 2.0);
 
     SamplingStatus samplingStatus = undertest.sample("test", 0L);
     Assert.assertTrue(samplingStatus.isSampled());
@@ -67,11 +67,34 @@ public class GuaranteedThroughputSamplerTest {
   }
 
   @Test
-  public void testUpdate_probabilisticSampler() {
-    undertest = new GuaranteedThroughputSampler(0.001, 1);
+  public void testUpperBoundRateLimiter() {
+    undertest = new GuaranteedThroughputSampler(0.001, 0, 1);
 
-    assertFalse(undertest.update(0.001, 1));
-    assertTrue(undertest.update(0.002, 1));
+    SamplingStatus samplingStatus = undertest.sample("test", 0L);
+    Assert.assertTrue(samplingStatus.isSampled());
+    Map<String, Object> tags = samplingStatus.getTags();
+    assertEquals(tags.get(Constants.SAMPLER_PARAM_TAG_KEY), 0.001);
+
+    // maxSamplesPerSecond is 1, the second sample call should kick the upperBoundRateLimiter
+    // into action
+    samplingStatus = undertest.sample("test", 0L);
+    Assert.assertTrue(samplingStatus.isSampled());
+    tags = samplingStatus.getTags();
+    assertEquals(tags.get(Constants.SAMPLER_PARAM_TAG_KEY), 0.001);
+
+    // The samplingRate should be halved
+    samplingStatus = undertest.sample("test", 0L);
+    Assert.assertTrue(samplingStatus.isSampled());
+    tags = samplingStatus.getTags();
+    assertEquals(tags.get(Constants.SAMPLER_PARAM_TAG_KEY), 0.0005);
+  }
+
+  @Test
+  public void testUpdate_probabilisticSampler() {
+    undertest = new GuaranteedThroughputSampler(0.001, 1, 2.0);
+
+    assertFalse(undertest.update(0.001, 1, 2.0));
+    assertTrue(undertest.update(0.002, 1, 2.0));
 
     SamplingStatus samplingStatus = undertest.sample("test", Long.MAX_VALUE);
     Assert.assertTrue(samplingStatus.isSampled());
@@ -83,10 +106,10 @@ public class GuaranteedThroughputSamplerTest {
 
   @Test
   public void testUpdate_rateLimitingSampler() {
-    undertest = new GuaranteedThroughputSampler(0.001, 1);
+    undertest = new GuaranteedThroughputSampler(0.001, 1, 2);
 
-    assertFalse(undertest.update(0.001, 1));
-    assertTrue(undertest.update(0.001, 0));
+    assertFalse(undertest.update(0.001, 1, 2));
+    assertTrue(undertest.update(0.001, 0, 3));
 
     SamplingStatus samplingStatus = undertest.sample("test", 0L);
     Assert.assertTrue(samplingStatus.isSampled());

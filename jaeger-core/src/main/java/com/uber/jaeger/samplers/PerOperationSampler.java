@@ -42,16 +42,20 @@ import lombok.extern.slf4j.Slf4j;
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
 @Getter(AccessLevel.PACKAGE) //Visible for testing
 public class PerOperationSampler implements Sampler {
+  private static final double DEFAULT_MAX_SAMPLES_PER_SECOND = 2.0;
+
   private final int maxOperations;
   private final HashMap<String, GuaranteedThroughputSampler> operationNameToSampler;
   private ProbabilisticSampler defaultSampler;
-  private double lowerBound;
+  private double minSamplesPerSecond;
+  private double maxSamplesPerSecond;
 
   public PerOperationSampler(int maxOperations, OperationSamplingParameters strategies) {
     this(maxOperations,
          new HashMap<String, GuaranteedThroughputSampler>(),
          new ProbabilisticSampler(strategies.getDefaultSamplingProbability()),
-         strategies.getDefaultLowerBoundTracesPerSecond());
+         strategies.getDefaultLowerBoundTracesPerSecond(),
+         strategies.getDefaultUpperBoundTracesPerSecond());
     update(strategies);
   }
 
@@ -63,7 +67,9 @@ public class PerOperationSampler implements Sampler {
   public synchronized boolean update(OperationSamplingParameters strategies) {
     boolean isUpdated = false;
 
-    lowerBound = strategies.getDefaultLowerBoundTracesPerSecond();
+    minSamplesPerSecond = strategies.getDefaultLowerBoundTracesPerSecond();
+    maxSamplesPerSecond = strategies.getDefaultUpperBoundTracesPerSecond() == 0
+        ? DEFAULT_MAX_SAMPLES_PER_SECOND : strategies.getDefaultUpperBoundTracesPerSecond();
     ProbabilisticSampler defaultSampler = new ProbabilisticSampler(strategies.getDefaultSamplingProbability());
 
     if (!defaultSampler.equals(this.defaultSampler)) {
@@ -76,10 +82,10 @@ public class PerOperationSampler implements Sampler {
       double samplingRate = strategy.getProbabilisticSampling().getSamplingRate();
       GuaranteedThroughputSampler sampler = operationNameToSampler.get(operation);
       if (sampler != null) {
-        isUpdated = sampler.update(samplingRate, lowerBound) || isUpdated;
+        isUpdated = sampler.update(samplingRate, minSamplesPerSecond, maxSamplesPerSecond) || isUpdated;
       } else {
         if (operationNameToSampler.size() < maxOperations) {
-          sampler = new GuaranteedThroughputSampler(samplingRate, lowerBound);
+          sampler = new GuaranteedThroughputSampler(samplingRate, minSamplesPerSecond, maxSamplesPerSecond);
           operationNameToSampler.put(operation, sampler);
           isUpdated = true;
         } else {
@@ -99,7 +105,8 @@ public class PerOperationSampler implements Sampler {
     }
 
     if (operationNameToSampler.size() < maxOperations) {
-      sampler = new GuaranteedThroughputSampler(defaultSampler.getSamplingRate(), lowerBound);
+      sampler = new GuaranteedThroughputSampler(
+          defaultSampler.getSamplingRate(), minSamplesPerSecond, maxSamplesPerSecond);
       operationNameToSampler.put(operation, sampler);
       return sampler.sample(operation, id);
     }
