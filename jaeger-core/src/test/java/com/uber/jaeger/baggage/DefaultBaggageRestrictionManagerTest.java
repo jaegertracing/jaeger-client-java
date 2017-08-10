@@ -37,12 +37,12 @@ public class DefaultBaggageRestrictionManagerTest {
     final DefaultBaggageRestrictionManager undertest = new DefaultBaggageRestrictionManager();
 
     final String key = "key";
-    Restriction actual = undertest.getRestriction(key);
+    Restriction actual = undertest.getRestriction("", key);
     Restriction expected = Restriction.of(true, 2048);
     assertEquals(expected, actual);
 
     expected = actual;
-    actual = undertest.getRestriction(key);
+    actual = undertest.getRestriction("", key);
     assertSame(actual, expected);
   }
 }

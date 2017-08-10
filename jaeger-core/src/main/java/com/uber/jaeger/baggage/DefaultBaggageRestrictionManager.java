@@ -38,7 +38,7 @@ public class DefaultBaggageRestrictionManager implements BaggageRestrictionManag
   }
 
   @Override
-  public Restriction getRestriction(String key) {
+  public Restriction getRestriction(String service, String key) {
     return restriction;
   }
 }

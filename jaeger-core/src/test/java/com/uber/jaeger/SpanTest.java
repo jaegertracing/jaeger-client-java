@@ -86,9 +86,10 @@ public class SpanTest {
 
   @Test
   public void testSetAndGetBaggageItem() {
+    final String service = "SamplerTest";
     final BaggageRestrictionManager mgr = Mockito.mock(DefaultBaggageRestrictionManager.class);
     tracer =
-        new Tracer.Builder("SamplerTest", reporter, new ConstSampler(true))
+        new Tracer.Builder(service, reporter, new ConstSampler(true))
             .withClock(clock)
             .withBaggageRestrictionManager(mgr)
             .build();
@@ -96,9 +97,9 @@ public class SpanTest {
 
     final String key = "key";
     final String value = "value";
-    when(mgr.getRestriction(key)).thenReturn(Restriction.of(true, 10));
+    when(mgr.getRestriction(service, key)).thenReturn(Restriction.of(true, 10));
     span.setBaggageItem(key, "value");
-    verify(mgr).getRestriction(key);
+    verify(mgr).getRestriction(service, key);
     assertEquals(value, span.getBaggageItem(key));
   }
 

@@ -54,6 +54,7 @@ public class BaggageSetterTest {
   private BaggageSetter setter;
 
   private static final String KEY = "key";
+  private static final String SERVICE = "SamplerTest";
 
   @Before
   public void setUp() throws Exception {
@@ -63,7 +64,7 @@ public class BaggageSetterTest {
     mgr = mock(DefaultBaggageRestrictionManager.class);
     setter = new BaggageSetter(mgr, metrics);
     tracer =
-        new Tracer.Builder("SamplerTest", reporter, new ConstSampler(true))
+        new Tracer.Builder(SERVICE, reporter, new ConstSampler(true))
             .withStatsReporter(metricsReporter)
             .build();
     span = (Span) tracer.buildSpan("some-operation").startManual();
@@ -71,7 +72,7 @@ public class BaggageSetterTest {
 
   @Test
   public void testInvalidBaggage() {
-    when(mgr.getRestriction(KEY)).thenReturn(Restriction.of(false, 0));
+    when(mgr.getRestriction(SERVICE, KEY)).thenReturn(Restriction.of(false, 0));
 
     final String value = "value";
     SpanContext ctx = setter.setBaggage(span, KEY, value);
@@ -85,7 +86,7 @@ public class BaggageSetterTest {
 
   @Test
   public void testTruncatedBaggage() {
-    when(mgr.getRestriction(KEY)).thenReturn(Restriction.of(true, 5));
+    when(mgr.getRestriction(SERVICE, KEY)).thenReturn(Restriction.of(true, 5));
     final String value = "0123456789";
     final String expected = "01234";
     SpanContext ctx = setter.setBaggage(span, KEY, value);
@@ -101,7 +102,7 @@ public class BaggageSetterTest {
 
   @Test
   public void testOverrideBaggage() {
-    when(mgr.getRestriction(KEY)).thenReturn(Restriction.of(true, 5));
+    when(mgr.getRestriction(SERVICE, KEY)).thenReturn(Restriction.of(true, 5));
     final String value = "value";
     SpanContext ctx = setter.setBaggage(span, KEY, value);
     Span child = (Span) tracer.buildSpan("some-operation").asChildOf(ctx).startManual();
@@ -122,7 +123,7 @@ public class BaggageSetterTest {
             .build();
     span = (Span) tracer.buildSpan("some-operation").startManual();
 
-    when(mgr.getRestriction(KEY)).thenReturn(Restriction.of(true, 5));
+    when(mgr.getRestriction(SERVICE, KEY)).thenReturn(Restriction.of(true, 5));
     final String value = "value";
     SpanContext ctx = setter.setBaggage(span, KEY, value);
 

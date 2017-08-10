@@ -47,7 +47,7 @@ public class BaggageSetter {
   /**
    * Sets the baggage key:value on the {@link Span} and the corresponding
    * logs. Whether the baggage is set on the span depends on if the key
-   * is valid.
+   * is allowed to be set by this service.
    * <p>
    * A {@link SpanContext} is returned with the new baggage key:value set
    * if key is valid, else returns the existing {@link SpanContext}
@@ -58,7 +58,7 @@ public class BaggageSetter {
    * @return       the SpanContext with the baggage set
    */
   public SpanContext setBaggage(Span span, String key, String value) {
-    Restriction restriction = restrictionManager.getRestriction(key);
+    Restriction restriction = restrictionManager.getRestriction(span.getTracer().getServiceName(), key);
     boolean truncated = false;
     String prevItem = null;
     if (!restriction.isKeyAllowed()) {

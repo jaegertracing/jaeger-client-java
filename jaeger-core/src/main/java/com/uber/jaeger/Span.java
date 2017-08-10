@@ -121,7 +121,7 @@ public class Span implements io.opentracing.Span {
       return this;
     }
     synchronized (this) {
-      this.context = getTracer().setBaggage(this, key, value);
+      context = tracer.setBaggage(this, key, value);
       return this;
     }
   }
