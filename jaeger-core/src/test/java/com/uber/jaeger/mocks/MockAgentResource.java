@@ -20,7 +20,7 @@
  * THE SOFTWARE.
  */
 
-package com.uber.jaeger.samplers;
+package com.uber.jaeger.mocks;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -40,6 +40,16 @@ public class MockAgentResource {
       return "{\"strategyType\":0,\"probabilisticSampling\":{\"samplingRate\":0.001},\"rateLimitingSampling\":null}";
     }
 
+    throw new WebApplicationException();
+  }
+
+  @GET
+  @Path("baggageRestrictions")
+  @Produces(MediaType.APPLICATION_JSON)
+  public String getBaggageRestrictions(@QueryParam("service") String serviceName) {
+    if (serviceName.equals("clairvoyant")) {
+      return "[{\"baggageKey\":\"key\",\"maxValueLength\":\"10\"}]";
+    }
     throw new WebApplicationException();
   }
 }

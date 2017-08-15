@@ -27,6 +27,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 import com.uber.jaeger.exceptions.SamplingStrategyErrorException;
+import com.uber.jaeger.mocks.MockAgentResource;
 import com.uber.jaeger.samplers.http.OperationSamplingParameters;
 import com.uber.jaeger.samplers.http.PerOperationSamplingParameters;
 import com.uber.jaeger.samplers.http.ProbabilisticSamplingStrategy;
