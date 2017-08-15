@@ -51,7 +51,11 @@ public class RemoteBaggageRestrictionManager implements BaggageRestrictionManage
   private final Restriction validRestriction;
 
   public RemoteBaggageRestrictionManager(
-      String serviceName, BaggageRestrictionManagerProxy proxy, Metrics metrics, boolean denyBaggageOnInitializationFailure) {
+      String serviceName,
+      BaggageRestrictionManagerProxy proxy,
+      Metrics metrics,
+      boolean denyBaggageOnInitializationFailure
+  ) {
     this(serviceName, proxy, metrics, denyBaggageOnInitializationFailure, DEFAULT_REFRESH_INTERVAL_MS);
   }
 

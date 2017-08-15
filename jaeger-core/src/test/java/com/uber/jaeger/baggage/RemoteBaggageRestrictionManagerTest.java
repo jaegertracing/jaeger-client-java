@@ -50,7 +50,8 @@ public class RemoteBaggageRestrictionManagerTest {
   private static final String SERVICE_NAME = "service";
   private static final String BAGGAGE_KEY = "key";
   private static final int MAX_VALUE_LENGTH = 10;
-  private static final BaggageRestrictionResponse RESTRICTION = new BaggageRestrictionResponse(BAGGAGE_KEY, MAX_VALUE_LENGTH);
+  private static final BaggageRestrictionResponse RESTRICTION =
+      new BaggageRestrictionResponse(BAGGAGE_KEY, MAX_VALUE_LENGTH);
 
   private RemoteBaggageRestrictionManager undertest;
 

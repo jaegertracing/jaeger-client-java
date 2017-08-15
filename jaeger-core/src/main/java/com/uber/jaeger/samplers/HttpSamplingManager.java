@@ -22,6 +22,8 @@
 
 package com.uber.jaeger.samplers;
 
+import static com.uber.jaeger.utils.Utils.makeGetRequest;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.uber.jaeger.exceptions.SamplingStrategyErrorException;
@@ -32,7 +34,6 @@ import java.net.URLEncoder;
 
 import lombok.ToString;
 
-import static com.uber.jaeger.utils.Utils.makeGetRequest;
 
 @ToString
 public class HttpSamplingManager implements SamplingManager {
