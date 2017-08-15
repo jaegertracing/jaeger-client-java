@@ -30,6 +30,7 @@ import com.google.gson.reflect.TypeToken;
 import com.uber.jaeger.baggage.http.BaggageRestrictionResponse;
 import com.uber.jaeger.exceptions.BaggageRestrictionManagerException;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -59,8 +60,9 @@ public class HttpBaggageRestrictionManagerProxy implements BaggageRestrictionMan
     String jsonString;
     try {
       jsonString =
-          makeGetRequest("http://" + hostPort + "/baggageRestrictions?service=" + URLEncoder.encode(serviceName, "UTF-8"));
-    } catch (Exception e) {
+          makeGetRequest(
+              "http://" + hostPort + "/baggageRestrictions?service=" + URLEncoder.encode(serviceName, "UTF-8"));
+    } catch (IOException e) {
       throw new BaggageRestrictionManagerException(
           "http call to get baggage restriction from local agent failed.", e);
     }

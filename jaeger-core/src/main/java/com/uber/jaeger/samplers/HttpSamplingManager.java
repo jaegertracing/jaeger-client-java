@@ -26,7 +26,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.uber.jaeger.exceptions.SamplingStrategyErrorException;
 import com.uber.jaeger.samplers.http.SamplingStrategyResponse;
-import java.net.URISyntaxException;
+
+import java.io.IOException;
 import java.net.URLEncoder;
 
 import lombok.ToString;
@@ -56,10 +57,10 @@ public class HttpSamplingManager implements SamplingManager {
       throws SamplingStrategyErrorException {
     String jsonString;
     try {
-      // NB. URIBuilder is not thread safe however given the frequency of use
       jsonString =
-          makeGetRequest("http://" + hostPort + "/?service=" + URLEncoder.encode(serviceName, "UTF-8"));
-    } catch (Exception e) {
+          makeGetRequest(
+              "http://" + hostPort + "/?service=" + URLEncoder.encode(serviceName, "UTF-8"));
+    } catch (IOException e) {
       throw new SamplingStrategyErrorException(
           "http call to get sampling strategy from local agent failed.", e);
     }
