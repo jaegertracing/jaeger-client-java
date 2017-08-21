@@ -22,7 +22,7 @@
 
 package com.uber.jaeger.baggage;
 
-import static com.uber.jaeger.utils.Utils.makeGetRequest;
+import static com.uber.jaeger.utils.Http.makeGetRequest;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;

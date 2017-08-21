@@ -69,6 +69,28 @@ public class RemoteBaggageRestrictionManager implements BaggageRestrictionManage
     this(serviceName, proxy, metrics, denyBaggageOnInitializationFailure, refreshIntervalMs, DEFAULT_INITIAL_DELAY_MS);
   }
 
+  /**
+   * Creates a RemoteBaggageRestrictionManager that fetches {@link BaggageRestrictionResponse} from a remote
+   * agent and keeps track of {@link Restriction} for a service.
+   *
+   * {@param initialDelayMs} is only exposed for testing purposes so users can determine when the first call to
+   * remote agent is made. Under normal operations, this RemoteBaggageRestrictionManager will start up and
+   * asynchronously fetch restrictions. If the user wants to know if restrictions are ready, they can check via
+   * isReady().
+   *
+   * @param serviceName restrictions for this service are kept track of.
+   * @param proxy proxy to remote agent.
+   * @param metrics metrics for metrics emission.
+   * @param denyBaggageOnInitializationFailure determines the startup failure mode of RemoteBaggageRestrictionManager.
+   *                                           If DenyBaggageOnInitializationFailure is true,
+   *                                           RemoteBaggageRestrictionManager will not allow any baggage to be written
+   *                                           until baggage restrictions have been retrieved from agent. If
+   *                                           DenyBaggageOnInitializationFailure is false,
+   *                                           RemoteBaggageRestrictionManager will allow any baggage to be written
+   *                                           until baggage restrictions have been retrieved from agent.
+   * @param refreshIntervalMs how often restriction are fetched from remote agent.
+   * @param initialDelayMs delay before first fetch of restrictions.
+   */
   RemoteBaggageRestrictionManager(
       String serviceName,
       BaggageRestrictionManagerProxy proxy,
