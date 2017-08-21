@@ -229,4 +229,18 @@ public class Metrics {
   @Metric(name = "baggage-truncate")
   // Number of times baggage was truncated as per baggage restrictions
   public Counter baggageTruncate;
+
+  @Metric(
+      name = "baggage-restrictions-update",
+      tags = {@Tag(key = "result", value = "ok")}
+  )
+  // Number of times baggage restrictions were successfully updated
+  public Counter baggageRestrictionsUpdateSuccess;
+
+  @Metric(
+      name = "baggage-restrictions-update",
+      tags = {@Tag(key = "result", value = "err")}
+  )
+  // Number of times baggage restrictions failed to update
+  public Counter baggageRestrictionsUpdateFailure;
 }

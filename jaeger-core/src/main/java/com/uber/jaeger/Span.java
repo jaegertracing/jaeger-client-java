@@ -22,7 +22,6 @@
 
 package com.uber.jaeger;
 
-import com.uber.jaeger.baggage.BaggageSetter;
 import io.opentracing.tag.Tags;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -103,6 +102,12 @@ public class Span implements io.opentracing.Span {
   public String getOperationName() {
     synchronized (this) {
       return operationName;
+    }
+  }
+
+  public String getServiceName() {
+    synchronized (this) {
+      return this.getTracer().getServiceName();
     }
   }
 

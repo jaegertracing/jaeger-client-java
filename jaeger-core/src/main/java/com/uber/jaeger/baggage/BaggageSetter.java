@@ -58,7 +58,7 @@ public class BaggageSetter {
    * @return       the SpanContext with the baggage set
    */
   public SpanContext setBaggage(Span span, String key, String value) {
-    Restriction restriction = restrictionManager.getRestriction(span.getTracer().getServiceName(), key);
+    Restriction restriction = restrictionManager.getRestriction(span.getServiceName(), key);
     boolean truncated = false;
     String prevItem = null;
     if (!restriction.isKeyAllowed()) {
