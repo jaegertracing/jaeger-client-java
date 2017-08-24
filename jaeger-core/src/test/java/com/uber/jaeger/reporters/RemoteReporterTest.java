@@ -176,7 +176,7 @@ public class RemoteReporterTest {
     reporter.report(newSpan());
 
     // Then: one or both spans should be dropped
-    Long droppedCount = metricsReporter.counters.get("jaeger.spans.state=dropped");
+    Long droppedCount = metricsReporter.counters.get("jaeger.reporter-spans.state=dropped");
     assertThat(droppedCount, anyOf(equalTo(1L), equalTo(2L)));
   }
 
