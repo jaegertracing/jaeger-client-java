@@ -1,8 +1,14 @@
 Changes by Version
 ==================
 
-0.21.0
-------
+0.21.0 (2017-09-15)
+-------------------
+- Support baggage restrictions (https://github.com/uber/jaeger-client-java/pull/217, https://github.com/uber/jaeger-client-java/pull/229)
+- Fix concurrency bug when using multiple senders (https://github.com/uber/jaeger-client-java/pull/233)
+- Support span log fields in zipkin sender (https://github.com/uber/jaeger-client-java/pull/226)
+
+0.20.6 (2017-08-01)
+-------------------
 - Use okhttp for HTTP sender (https://github.com/uber/jaeger-client-java/pull/224)
 
 
