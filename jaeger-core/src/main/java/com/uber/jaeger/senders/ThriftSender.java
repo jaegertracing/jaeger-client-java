@@ -45,7 +45,7 @@ public abstract class ThriftSender implements Sender {
   private int byteBufferSize;
   private AutoExpandingBufferWriteTransport memoryTransport;
 
-  private final TProtocolFactory protocolFactory;
+  protected final TProtocolFactory protocolFactory;
   private final int maxSpanBytes;
 
   public ThriftSender(TProtocolFactory protocolFactory, int maxPacketSize) {

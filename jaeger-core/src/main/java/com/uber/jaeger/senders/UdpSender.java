@@ -31,11 +31,9 @@ import java.util.List;
 import lombok.ToString;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TCompactProtocol;
-import org.apache.thrift.protocol.TProtocolFactory;
 
 @ToString(exclude = {"agentClient"})
 public class UdpSender extends ThriftSender {
-  private static final TProtocolFactory PROTOCOL_FACTORY = new TCompactProtocol.Factory();
   public static final String DEFAULT_AGENT_UDP_HOST = "localhost";
   public static final int DEFAULT_AGENT_UDP_COMPACT_PORT = 6831;
 
@@ -43,7 +41,7 @@ public class UdpSender extends ThriftSender {
   private ThriftUdpTransport udpTransport;
 
   public UdpSender(String host, int port, int maxPacketSize) {
-    super(PROTOCOL_FACTORY, maxPacketSize);
+    super(new TCompactProtocol.Factory(), maxPacketSize);
 
     if (host == null || host.length() == 0) {
       host = DEFAULT_AGENT_UDP_HOST;
@@ -54,7 +52,7 @@ public class UdpSender extends ThriftSender {
     }
 
     udpTransport = ThriftUdpTransport.newThriftUdpClient(host, port);
-    agentClient = new Agent.Client(PROTOCOL_FACTORY.getProtocol(udpTransport));
+    agentClient = new Agent.Client(protocolFactory.getProtocol(udpTransport));
   }
 
   @Override

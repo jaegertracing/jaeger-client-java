@@ -36,15 +36,13 @@ import okhttp3.Response;
 import org.apache.thrift.TException;
 import org.apache.thrift.TSerializer;
 import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.TProtocolFactory;
 
 public class HttpSender extends ThriftSender {
 
   private static final String HTTP_COLLECTOR_JAEGER_THRIFT_FORMAT_PARAM = "format=jaeger.thrift";
-  private static final TProtocolFactory PROTOCOL_FACTORY = new TBinaryProtocol.Factory();
-  private static final TSerializer SERIALIZER = new TSerializer(PROTOCOL_FACTORY);
   private static final int ONE_MB_IN_BYTES = 1048576;
   private static final MediaType MEDIA_TYPE_THRIFT = MediaType.parse("application/x-thrift");
+  private final TSerializer serializer;
   private final OkHttpClient httpClient;
   private final Request.Builder requestBuilder;
 
@@ -75,7 +73,7 @@ public class HttpSender extends ThriftSender {
    * @param client a client used to make http requests
    */
   private HttpSender(String endpoint, int maxPayloadBytes, OkHttpClient client) {
-    super(PROTOCOL_FACTORY, maxPayloadBytes);
+    super(new TBinaryProtocol.Factory(), maxPayloadBytes);
     HttpUrl collectorUrl = HttpUrl
         .parse(String.format("%s?%s", endpoint, HTTP_COLLECTOR_JAEGER_THRIFT_FORMAT_PARAM));
     if (collectorUrl == null) {
@@ -83,12 +81,13 @@ public class HttpSender extends ThriftSender {
     }
     this.httpClient = client;
     this.requestBuilder = new Request.Builder().url(collectorUrl);
+    this.serializer = new TSerializer(protocolFactory);
   }
 
   @Override
   public void send(Process process, List<Span> spans) throws TException {
     Batch batch = new Batch(process, spans);
-    byte[] bytes = SERIALIZER.serialize(batch);
+    byte[] bytes = serializer.serialize(batch);
 
     RequestBody body = RequestBody.create(MEDIA_TYPE_THRIFT, bytes);
     Request request = requestBuilder.post(body).build();
