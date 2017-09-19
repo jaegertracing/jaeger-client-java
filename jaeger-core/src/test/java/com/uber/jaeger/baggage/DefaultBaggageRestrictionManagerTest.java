@@ -25,9 +25,6 @@ package com.uber.jaeger.baggage;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 
-import com.uber.jaeger.metrics.Metrics;
-import com.uber.jaeger.metrics.NullStatsReporter;
-import com.uber.jaeger.metrics.StatsFactoryImpl;
 import org.junit.Test;
 
 public class DefaultBaggageRestrictionManagerTest {
