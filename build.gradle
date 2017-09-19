@@ -23,8 +23,8 @@ ext.gsonVersion = '2.8.0'
 ext.tracerResolverVersion = '0.1.0'
 
 ext.junitVersion = '4.12'
-ext.mockitoVersion = '2.2.28'
-ext.junitDataProviderVersion = '1.10.0'
+ext.mockitoVersion = '2.11.0'
+ext.junitDataProviderVersion = '1.13.1'
 ext.awaitilityVersion = '3.0.0'
 ext.logbackVersion = '1.2.3'
 
@@ -127,7 +127,7 @@ subprojects {
 
     dependencies {
         compileOnly 'org.projectlombok:lombok:1.16.18'
-        compileOnly 'org.codehaus.mojo:animal-sniffer-annotations:1.15'
+        compileOnly 'org.codehaus.mojo:animal-sniffer-annotations:1.16'
     }
 
 }
