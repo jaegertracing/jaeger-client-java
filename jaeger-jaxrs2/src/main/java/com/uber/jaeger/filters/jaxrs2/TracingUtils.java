@@ -44,4 +44,6 @@ public class TracingUtils {
   public static ServerFilter serverFilter(Tracer tracer) {
     return new ServerFilter(tracer, getTraceContext());
   }
+
+  private TracingUtils() {}
 }

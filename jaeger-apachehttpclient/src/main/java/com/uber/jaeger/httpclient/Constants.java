@@ -24,4 +24,6 @@ package com.uber.jaeger.httpclient;
 
 public class Constants {
   static final String CURRENT_SPAN_CONTEXT_KEY = "io.opentracing.Span";
+
+  private Constants() {}
 }
