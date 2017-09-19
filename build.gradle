@@ -4,10 +4,10 @@ plugins {
     id "org.jruyi.thrift" version "0.4.0"
     id "jacoco"
     id "com.github.hierynomus.license" version "0.14.0"
-    id 'com.github.sherter.google-java-format' version '0.3.2'
+    id 'com.github.sherter.google-java-format' version '0.6'
     id "com.github.johnrengelman.shadow" version "2.0.1"
     id "net.ltgt.errorprone" version "0.0.12"
-    id 'ru.vyarus.animalsniffer' version '1.3.0'
+    id 'ru.vyarus.animalsniffer' version '1.4.2'
     id 'io.codearte.nexus-staging' version '0.11.0'
     id 'com.github.ben-manes.versions' version '0.17.0'
 }
