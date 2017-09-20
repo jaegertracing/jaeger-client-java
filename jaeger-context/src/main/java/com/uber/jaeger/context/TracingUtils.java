@@ -34,4 +34,6 @@ public class TracingUtils {
   public static ExecutorService tracedExecutor(ExecutorService wrappedExecutorService) {
     return new TracedExecutorService(wrappedExecutorService, traceContext);
   }
+
+  private TracingUtils(){}
 }

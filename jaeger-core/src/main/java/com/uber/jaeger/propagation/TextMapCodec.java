@@ -29,6 +29,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
@@ -75,7 +76,7 @@ public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
     String debugId = null;
     for (Map.Entry<String, String> entry : carrier) {
       // TODO there should be no lower-case here
-      String key = entry.getKey().toLowerCase();
+      String key = entry.getKey().toLowerCase(Locale.ROOT);
       if (key.equals(contextKey)) {
         context = SpanContext.contextFromString(decodedValue(entry.getValue()));
       } else if (key.equals(Constants.DEBUG_ID_HEADER_KEY)) {

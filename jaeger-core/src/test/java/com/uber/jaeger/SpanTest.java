@@ -30,7 +30,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.uber.jaeger.baggage.BaggageRestrictionManager;
-import com.uber.jaeger.baggage.BaggageSetter;
 import com.uber.jaeger.baggage.DefaultBaggageRestrictionManager;
 import com.uber.jaeger.baggage.Restriction;
 import com.uber.jaeger.metrics.InMemoryStatsReporter;
@@ -43,12 +42,10 @@ import io.opentracing.References;
 import io.opentracing.tag.Tags;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 
 public class SpanTest {

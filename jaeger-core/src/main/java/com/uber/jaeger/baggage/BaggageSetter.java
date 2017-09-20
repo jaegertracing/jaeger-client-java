@@ -24,7 +24,6 @@ package com.uber.jaeger.baggage;
 
 import com.uber.jaeger.Span;
 import com.uber.jaeger.SpanContext;
-import com.uber.jaeger.metrics.Metric;
 import com.uber.jaeger.metrics.Metrics;
 
 import java.util.HashMap;

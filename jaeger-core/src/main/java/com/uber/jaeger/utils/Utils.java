@@ -27,10 +27,11 @@ import com.uber.jaeger.exceptions.NotFourOctetsException;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Locale;
 
 public class Utils {
   public static String normalizeBaggageKey(String key) {
-    return key.replaceAll("_", "-").toLowerCase();
+    return key.replaceAll("_", "-").toLowerCase(Locale.ROOT);
   }
 
   public static int ipToInt(String ip) throws EmptyIpException, NotFourOctetsException {
@@ -67,4 +68,6 @@ public class Utils {
   public static boolean equals(Object a, Object b) {
     return (a == b) || (a != null && a.equals(b));
   }
+
+  private Utils() {}
 }
