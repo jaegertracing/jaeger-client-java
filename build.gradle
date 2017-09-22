@@ -8,10 +8,10 @@ plugins {
     id "com.github.johnrengelman.shadow" version "2.0.1"
     id "net.ltgt.errorprone" version "0.0.10"
     id 'ru.vyarus.animalsniffer' version '1.3.0'
+    id 'io.codearte.nexus-staging' version '0.11.0'
 }
 
 ext.developmentVersion = '0.21.0-SNAPSHOT'
-
 
 ext.opentracingVersion = '0.30.0'
 ext.guavaVersion = '18.0'
@@ -67,6 +67,16 @@ subprojects {
         manifest {
             attributes('Implementation-Title': project.name, 'Implementation-Version': project.version)
         }
+    }
+
+    if (!version.endsWith("SNAPSHOT")) {
+        nexusStaging {
+            packageGroup = "com.uber"
+            username = ossrhUsername
+            password = ossrhPassword
+        }
+
+        uploadArchives.finalizedBy closeAndReleaseRepository
     }
 
     animalsniffer {
