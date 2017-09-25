@@ -37,6 +37,7 @@ import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.reporters.Reporter;
 import com.uber.jaeger.samplers.ConstSampler;
 import com.uber.jaeger.samplers.Sampler;
+import io.opentracing.BaseSpan;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
 import io.opentracing.tag.Tags;
@@ -145,5 +146,18 @@ public class TracerTest {
     tracer.close();
     verify(reporter).close();
     verify(sampler).close();
+  }
+
+  @Test
+  public void testAsChildOfAcceptNull() {
+    tracer = new Tracer.Builder("foo", new InMemoryReporter(), new ConstSampler(true)).build();
+
+    Span span = (Span)tracer.buildSpan("foo").asChildOf((BaseSpan<?>) null).start();
+    span.finish();
+    assertTrue(span.getReferences().isEmpty());
+
+    span = (Span)tracer.buildSpan("foo").asChildOf((io.opentracing.SpanContext) null).start();
+    span.finish();
+    assertTrue(span.getReferences().isEmpty());
   }
 }
