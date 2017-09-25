@@ -48,6 +48,7 @@ import io.opentracing.propagation.Format;
 import io.opentracing.tag.Tags;
 import io.opentracing.util.ThreadLocalActiveSpanSource;
 
+import java.io.Closeable;
 import java.io.InputStream;
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -63,7 +64,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @ToString(exclude = {"registry", "clock", "metrics", "activeSpanSource"})
 @Slf4j
-public class Tracer implements io.opentracing.Tracer {
+public class Tracer implements io.opentracing.Tracer, Closeable {
 
   private final String version;
   private final String serviceName;
@@ -186,6 +187,7 @@ public class Tracer implements io.opentracing.Tracer {
   /**
    * Shuts down the {@link Reporter} and {@link Sampler}
    */
+  @Override
   public void close() {
     reporter.close();
     sampler.close();
