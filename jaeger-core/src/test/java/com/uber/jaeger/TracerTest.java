@@ -40,6 +40,7 @@ import com.uber.jaeger.samplers.Sampler;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
 import io.opentracing.tag.Tags;
+import java.io.Closeable;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -135,6 +136,11 @@ public class TracerTest {
 
     assertEquals(
         1L, metricsReporter.counters.get("jaeger.baggage-update.result=ok").longValue());
+  }
+
+  @Test
+  public void testTracerImplementsCloseable() {
+    assertTrue(Closeable.class.isAssignableFrom(Tracer.class));
   }
 
   @Test
