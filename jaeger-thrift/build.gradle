@@ -24,12 +24,8 @@ compileThrift {
     createGenFolder false
 }
 
-javadoc {
-    exclude '**/gen-java/**'
-    exclude '**/com/twitter/zipkin/thriftjava/**'
-    exclude '**/com/uber/jaeger/agent/thrift/**'
-    exclude '**/com/uber/jaeger/thrift/sampling_manager/**'
-    exclude '**/com/uber/jaeger/crossdock/thrift/**'
+tasks.withType(Javadoc) {
+   enabled = false
 }
 
 sourceSets {
