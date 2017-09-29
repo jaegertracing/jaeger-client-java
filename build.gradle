@@ -11,7 +11,7 @@ plugins {
     id 'io.codearte.nexus-staging' version '0.11.0'
 }
 
-ext.developmentVersion = '0.30.0-RC1-SNAPSHOT'
+ext.developmentVersion = '0.22.0-RC1-SNAPSHOT'
 
 ext.opentracingVersion = '0.31.0-RC1'
 ext.guavaVersion = '18.0'
