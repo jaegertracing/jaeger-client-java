@@ -236,30 +236,21 @@ public class Span implements io.opentracing.Span {
 
   @Override
   public Span log(String event) {
-    return log(tracer.clock().currentTimeMicros(), event, null);
+    return log(tracer.clock().currentTimeMicros(), event);
   }
 
   @Override
   public Span log(long timestampMicroseconds, String event) {
-    return log(timestampMicroseconds, event, null);
-  }
-
-  @Deprecated
-  public Span log(String message, /* @Nullable */ Object payload) {
-    return log(tracer.clock().currentTimeMicros(), message, payload);
-  }
-
-  @Deprecated
-  public Span log(long timestampMicroseconds, String message, /* @Nullable */ Object payload) {
     synchronized (this) {
-      if (message == null && payload == null) {
+      if (event == null) {
         return this;
       }
       if (context.isSampled()) {
         if (logs == null) {
           this.logs = new ArrayList<LogData>();
         }
-        logs.add(new LogData(timestampMicroseconds, message, payload));
+        // TODO: Consider removing payload from LogData
+        logs.add(new LogData(timestampMicroseconds, event, null));
       }
       return this;
     }
