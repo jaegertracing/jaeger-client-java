@@ -217,7 +217,7 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
 
     @Override
     public io.opentracing.Tracer.SpanBuilder asChildOf(BaseSpan<?> parent) {
-      return addReference(References.CHILD_OF, parent.context());
+      return addReference(References.CHILD_OF, parent != null ? parent.context() : null);
     }
 
     @Override
