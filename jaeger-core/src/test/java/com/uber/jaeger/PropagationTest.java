@@ -96,8 +96,7 @@ public class PropagationTest {
     InMemoryReporter reporter = new InMemoryReporter();
     Tracer tracer =
         new Tracer.Builder("test", reporter, new ConstSampler(true)).build();
-    try (Scope parent = tracer.buildSpan("parent").startActive()) {
-    }
+    tracer.buildSpan("parent").startActive().close();
     assertEquals(1, reporter.getSpans().size());
   }
 
@@ -106,8 +105,7 @@ public class PropagationTest {
     InMemoryReporter reporter = new InMemoryReporter();
     Tracer tracer =
         new Tracer.Builder("test", reporter, new ConstSampler(true)).build();
-    try (Scope parent = tracer.buildSpan("parent").startActive(false)) {
-    }
+    tracer.buildSpan("parent").startActive(false).close();
     assertTrue(reporter.getSpans().isEmpty());
   }
 
