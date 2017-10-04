@@ -175,7 +175,7 @@ def getVersionForBuild() {
         return ext.developmentVersion
     }
 
-    if (Pattern.compile("[v]?((\\d+)\\.(\\d+)\\.(\\d+))").matcher(candidateVersion).matches()) {
+    if (Pattern.compile("[v]?((\\d+)\\.(\\d+)\\.(\\d+))(\\-RC\\d+)?").matcher(candidateVersion).matches()) {
         return candidateVersion.drop(1)
     }
 
