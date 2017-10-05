@@ -3,7 +3,7 @@ Changes by Version
 
 0.22.0-RC1 (2017-10-05)
 -------------------
-- Bump OpenTracing version to 0.31.0-RC1 (https://github.com/jaegertracing/jaeger-client-java/pull/246)
+- Bump OpenTracing version to 0.31.0-RC1 (https://github.com/jaegertracing/jaeger-client-java/pull/246), done on branch `v0.22.0`
 - Tracer implements Closeable (https://github.com/jaegertracing/jaeger-client-java/pull/242)
 - Fix span builder should accept null in asChildOf (https://github.com/jaegertracing/jaeger-client-java/pull/243)
 
