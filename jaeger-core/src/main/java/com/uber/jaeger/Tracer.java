@@ -32,13 +32,12 @@ import com.uber.jaeger.utils.Clock;
 import com.uber.jaeger.utils.SystemClock;
 import com.uber.jaeger.utils.Utils;
 
-import io.opentracing.ActiveSpan;
-import io.opentracing.ActiveSpanSource;
-import io.opentracing.BaseSpan;
 import io.opentracing.References;
+import io.opentracing.Scope;
+import io.opentracing.ScopeManager;
 import io.opentracing.propagation.Format;
 import io.opentracing.tag.Tags;
-import io.opentracing.util.ThreadLocalActiveSpanSource;
+import io.opentracing.util.ThreadLocalScopeManager;
 
 import java.io.Closeable;
 import java.io.InputStream;
@@ -54,7 +53,7 @@ import java.util.Properties;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
-@ToString(exclude = {"registry", "clock", "metrics", "activeSpanSource"})
+@ToString(exclude = {"registry", "clock", "metrics", "scopeManager"})
 @Slf4j
 public class Tracer implements io.opentracing.Tracer, Closeable {
 
@@ -68,7 +67,7 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
   private final int ipv4;
   private final Map<String, ?> tags;
   private final boolean zipkinSharedRpcSpan;
-  private final ActiveSpanSource activeSpanSource;
+  private final ScopeManager scopeManager;
   private final BaggageSetter baggageSetter;
 
   private Tracer(
@@ -80,7 +79,7 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
       Metrics metrics,
       Map<String, Object> tags,
       boolean zipkinSharedRpcSpan,
-      ActiveSpanSource activeSpanSource,
+      ScopeManager scopeManager,
       BaggageRestrictionManager baggageRestrictionManager) {
     this.serviceName = serviceName;
     this.reporter = reporter;
@@ -89,7 +88,7 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
     this.clock = clock;
     this.metrics = metrics;
     this.zipkinSharedRpcSpan = zipkinSharedRpcSpan;
-    this.activeSpanSource = activeSpanSource;
+    this.scopeManager = scopeManager;
     this.baggageSetter = new BaggageSetter(baggageRestrictionManager, metrics);
 
     this.version = loadVersion();
@@ -144,6 +143,11 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
   }
 
   @Override
+  public ScopeManager scopeManager() {
+    return scopeManager;
+  }
+
+  @Override
   public io.opentracing.Tracer.SpanBuilder buildSpan(String operationName) {
     return new SpanBuilder(operationName);
   }
@@ -164,16 +168,6 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
       throw new UnsupportedFormatException(format);
     }
     return extractor.extract(carrier);
-  }
-
-  @Override
-  public ActiveSpan activeSpan() {
-    return activeSpanSource.activeSpan();
-  }
-
-  @Override
-  public ActiveSpan makeActive(io.opentracing.Span span) {
-    return activeSpanSource.makeActive(span);
   }
 
   /**
@@ -208,7 +202,7 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
     }
 
     @Override
-    public io.opentracing.Tracer.SpanBuilder asChildOf(BaseSpan<?> parent) {
+    public io.opentracing.Tracer.SpanBuilder asChildOf(io.opentracing.Span parent) {
       return addReference(References.CHILD_OF, parent != null ? parent.context() : null);
     }
 
@@ -373,8 +367,8 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
       SpanContext context;
 
       // Check if active span should be established as CHILD_OF relationship
-      if (references.isEmpty() && !ignoreActiveSpan && null != activeSpanSource.activeSpan()) {
-        asChildOf(activeSpanSource.activeSpan());
+      if (references.isEmpty() && !ignoreActiveSpan && null != scopeManager.active()) {
+        asChildOf(scopeManager.active().span());
       }
 
       String debugId = debugId();
@@ -417,8 +411,13 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
     }
 
     @Override
-    public ActiveSpan startActive() {
-      return activeSpanSource.makeActive(startManual());
+    public Scope startActive() {
+      return startActive(true);
+    }
+
+    @Override
+    public Scope startActive(boolean finishSpanOnClose) {
+      return scopeManager.activate(startManual(), finishSpanOnClose);
     }
 
     @Override
@@ -446,7 +445,7 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
     private Clock clock = new SystemClock();
     private Map<String, Object> tags = new HashMap<String, Object>();
     private boolean zipkinSharedRpcSpan;
-    private ActiveSpanSource activeSpanSource = new ThreadLocalActiveSpanSource();
+    private ScopeManager scopeManager = new ThreadLocalScopeManager();
     private BaggageRestrictionManager baggageRestrictionManager = new DefaultBaggageRestrictionManager();
 
     public Builder(String serviceName, Reporter reporter, Sampler sampler) {
@@ -481,8 +480,8 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
       return this;
     }
 
-    public Builder withActiveSpanSource(ActiveSpanSource activeSpanSource) {
-      this.activeSpanSource = activeSpanSource;
+    public Builder withScopeManager(ScopeManager scopeManager) {
+      this.scopeManager = scopeManager;
       return this;
     }
 
@@ -530,7 +529,7 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
 
     public Tracer build() {
       return new Tracer(this.serviceName, reporter, sampler, registry, clock, metrics, tags,
-          zipkinSharedRpcSpan, activeSpanSource, baggageRestrictionManager);
+          zipkinSharedRpcSpan, scopeManager, baggageRestrictionManager);
     }
   }
 

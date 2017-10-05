@@ -224,14 +224,12 @@ public class SpanTest {
     long expectedTimestamp = 2222;
     final String expectedLog = "some-log";
     final String expectedEvent = "event";
-    Object expectedPayload = new Object();
     Map<String, String> expectedFields = new HashMap<String, String>() {
       {
         put(expectedEvent, expectedLog);
       }
     };
 
-    span.log(expectedTimestamp, expectedLog, expectedPayload);
     span.log(expectedTimestamp, expectedEvent);
     span.log(expectedTimestamp, expectedFields);
     span.log(expectedTimestamp, (String) null);
@@ -240,16 +238,10 @@ public class SpanTest {
     LogData actualLogData = span.getLogs().get(0);
 
     assertEquals(expectedTimestamp, actualLogData.getTime());
-    assertEquals(expectedLog, actualLogData.getMessage());
-    assertEquals(expectedPayload, actualLogData.getPayload());
-
-    actualLogData = span.getLogs().get(1);
-
-    assertEquals(expectedTimestamp, actualLogData.getTime());
     assertEquals(expectedEvent, actualLogData.getMessage());
     assertNull(actualLogData.getPayload());
 
-    actualLogData = span.getLogs().get(2);
+    actualLogData = span.getLogs().get(1);
 
     assertEquals(expectedTimestamp, actualLogData.getTime());
     assertNull(actualLogData.getMessage());
@@ -262,11 +254,9 @@ public class SpanTest {
     final long expectedTimestamp = 2222;
     final String expectedLog = "some-log";
     final String expectedEvent = "expectedEvent";
-    final Object expectedPayload = new Object();
 
     when(clock.currentTimeMicros()).thenReturn(expectedTimestamp);
 
-    span.log(expectedLog, expectedPayload);
     span.log(expectedEvent);
 
     Map<String, String> expectedFields = new HashMap<String, String>() {
@@ -281,16 +271,10 @@ public class SpanTest {
     LogData actualLogData = span.getLogs().get(0);
 
     assertEquals(expectedTimestamp, actualLogData.getTime());
-    assertEquals(expectedLog, actualLogData.getMessage());
-    assertEquals(expectedPayload, actualLogData.getPayload());
-
-    actualLogData = span.getLogs().get(1);
-
-    assertEquals(expectedTimestamp, actualLogData.getTime());
     assertEquals(expectedEvent, actualLogData.getMessage());
     assertNull(actualLogData.getPayload());
 
-    actualLogData = span.getLogs().get(2);
+    actualLogData = span.getLogs().get(1);
 
     assertEquals(expectedTimestamp, actualLogData.getTime());
     assertNull(actualLogData.getMessage());

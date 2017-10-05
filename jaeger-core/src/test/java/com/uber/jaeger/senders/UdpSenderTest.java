@@ -93,7 +93,7 @@ public class UdpSenderTest {
     String msg = "";
     for (int i = 0; i < 10001; i++) {
       msg += ".";
-      jaegerSpan.log(msg, new Object());
+      jaegerSpan.log(msg);
     }
 
     try {

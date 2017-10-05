@@ -12,9 +12,9 @@ plugins {
     id 'com.github.ben-manes.versions' version '0.17.0'
 }
 
-ext.developmentVersion = '0.22.0-SNAPSHOT'
+ext.developmentVersion = '0.22.0-RC3-SNAPSHOT'
 
-ext.opentracingVersion = '0.30.0'
+ext.opentracingVersion = '0.31.0-RC1'
 ext.guavaVersion = '18.0'
 ext.apacheThriftVersion = '0.9.2'
 ext.jerseyVersion = '2.22.2'
@@ -184,7 +184,7 @@ def getVersionForBuild() {
         return ext.developmentVersion
     }
 
-    if (Pattern.compile("[v]?((\\d+)\\.(\\d+)\\.(\\d+))").matcher(candidateVersion).matches()) {
+    if (Pattern.compile("[v]?((\\d+)\\.(\\d+)\\.(\\d+))(\\-RC\\d+)?").matcher(candidateVersion).matches()) {
         return candidateVersion.drop(1)
     }
 
