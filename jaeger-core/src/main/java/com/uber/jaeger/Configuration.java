@@ -38,6 +38,7 @@ import com.uber.jaeger.samplers.RemoteControlledSampler;
 import com.uber.jaeger.samplers.Sampler;
 import com.uber.jaeger.senders.Sender;
 import com.uber.jaeger.senders.UdpSender;
+import io.opentracing.util.GlobalTracer;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.HashMap;
@@ -105,6 +106,11 @@ public class Configuration {
   public static final String JAEGER_TAGS = JAEGER_PREFIX + "TAGS";
 
   /**
+   * Disables registration with {@link GlobalTracer}.
+   */
+  public static final String JAEGER_DISABLE_GLOBAL_TRACER = JAEGER_PREFIX + "DISABLE_GLOBAL_TRACER";
+
+  /**
    * The serviceName that the tracer will use
    */
   private final String serviceName;
@@ -119,7 +125,13 @@ public class Configuration {
   private StatsFactory statsFactory;
 
   /**
-   * lazy singleton Tracer initialized in getTracer() method
+   * Use {@link GlobalTracer} to store the tracer instead of
+   * storing an instance of the tracer in {@link #tracer}.
+   */
+  private final boolean disableGlobalTracer;
+
+  /**
+   * lazy singleton Tracer initialized in getTracer() method.
    */
   private Tracer tracer;
 
@@ -131,6 +143,14 @@ public class Configuration {
       String serviceName,
       SamplerConfiguration samplerConfig,
       ReporterConfiguration reporterConfig) {
+    this(serviceName, samplerConfig, reporterConfig, true);
+  }
+
+  public Configuration(
+      String serviceName,
+      SamplerConfiguration samplerConfig,
+      ReporterConfiguration reporterConfig,
+      boolean disableGlobalTracer) {
     if (serviceName == null || serviceName.isEmpty()) {
       throw new IllegalArgumentException("Must provide a service name for Jaeger Configuration");
     }
@@ -148,13 +168,16 @@ public class Configuration {
     this.reporterConfig = reporterConfig;
 
     statsFactory = new StatsFactoryImpl(new NullStatsReporter());
+
+    this.disableGlobalTracer = disableGlobalTracer;
   }
 
   public static Configuration fromEnv() {
     return new Configuration(
         getProperty(JAEGER_SERVICE_NAME),
         SamplerConfiguration.fromEnv(),
-        ReporterConfiguration.fromEnv());
+        ReporterConfiguration.fromEnv(),
+        Boolean.valueOf(getProperty(JAEGER_DISABLE_GLOBAL_TRACER)));
   }
 
   public Tracer.Builder getTracerBuilder() {
@@ -165,6 +188,26 @@ public class Configuration {
   }
 
   public synchronized io.opentracing.Tracer getTracer() {
+    if (disableGlobalTracer) {
+      return getLocalTracer();
+    }
+
+    return getGlobalTracer();
+  }
+
+  private io.opentracing.Tracer getGlobalTracer() {
+    if (GlobalTracer.isRegistered()) {
+      return GlobalTracer.get();
+    }
+
+    Tracer tracer = getTracerBuilder().build();
+    GlobalTracer.register(tracer);
+    log.info("Initialized and registered global tracer={}", tracer);
+    return tracer;
+  }
+
+  @Deprecated
+  private io.opentracing.Tracer getLocalTracer() {
     if (tracer != null) {
       return tracer;
     }
@@ -175,6 +218,12 @@ public class Configuration {
   }
 
   public synchronized void closeTracer() {
+    if (GlobalTracer.isRegistered()) {
+      Tracer tracer = (Tracer) GlobalTracer.get();
+      tracer.close();
+      return;
+    }
+
     if (tracer != null) {
       tracer.close();
     }

@@ -26,6 +26,7 @@ ext.junitVersion = '4.12'
 ext.mockitoVersion = '2.2.28'
 ext.junitDataProviderVersion = '1.10.0'
 ext.awaitilityVersion = '3.0.0'
+ext.logbackVersion = '1.2.3'
 
 task wrapper(type: Wrapper) {
     gradleVersion = '4.0'

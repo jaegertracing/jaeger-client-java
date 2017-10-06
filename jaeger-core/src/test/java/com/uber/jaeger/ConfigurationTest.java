@@ -32,6 +32,9 @@ import com.uber.jaeger.Configuration.ReporterConfiguration;
 import com.uber.jaeger.Configuration.SamplerConfiguration;
 import com.uber.jaeger.samplers.ConstSampler;
 
+import io.opentracing.NoopTracerFactory;
+import io.opentracing.util.GlobalTracer;
+import java.lang.reflect.Field;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,7 +45,7 @@ public class ConfigurationTest {
 
   @Before
   @After
-  public void clearProperties() {
+  public void clearProperties() throws NoSuchFieldException, IllegalAccessException {
     // Explicitly clear all properties
     System.clearProperty(Configuration.JAEGER_AGENT_HOST);
     System.clearProperty(Configuration.JAEGER_AGENT_PORT);
@@ -54,14 +57,29 @@ public class ConfigurationTest {
     System.clearProperty(Configuration.JAEGER_SAMPLER_MANAGER_HOST_PORT);
     System.clearProperty(Configuration.JAEGER_SERVICE_NAME);
     System.clearProperty(Configuration.JAEGER_TAGS);
+    System.clearProperty(Configuration.JAEGER_DISABLE_GLOBAL_TRACER);
 
     System.clearProperty(TEST_PROPERTY);
+
+    // Hack to reset opentracing's global tracer
+    Field field = GlobalTracer.class.getDeclaredField("tracer");
+    field.setAccessible(true);
+    field.set(null, NoopTracerFactory.create());
   }
 
   @Test
   public void testFromEnv() {
     System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
     assertNotNull(Configuration.fromEnv().getTracer());
+    assertTrue(GlobalTracer.isRegistered());
+  }
+
+  @Test
+  public void testDisableGlobalTracer() {
+    System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
+    System.setProperty(Configuration.JAEGER_DISABLE_GLOBAL_TRACER, "true");
+    assertNotNull(Configuration.fromEnv().getTracer());
+    assertFalse(GlobalTracer.isRegistered());
   }
 
   @Test

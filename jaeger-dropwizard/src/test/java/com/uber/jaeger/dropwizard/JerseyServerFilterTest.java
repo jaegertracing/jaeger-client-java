@@ -26,9 +26,10 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
 
 import com.uber.jaeger.Span;
+import com.uber.jaeger.Tracer;
+import com.uber.jaeger.context.TracingUtils;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
-import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -48,21 +49,12 @@ public class JerseyServerFilterTest extends JerseyTest {
 
   @Override
   protected Application configure() {
-    Configuration config = new Configuration("world service", false,
-        new com.uber.jaeger.Configuration.SamplerConfiguration(ConstSampler.TYPE, 1),
-        null);
     reporter = new InMemoryReporter();
-    com.uber.jaeger.Tracer tracer = (com.uber.jaeger.Tracer) config.getTracer();
-    try {
-      Field reporter = com.uber.jaeger.Tracer.class.getDeclaredField("reporter");
-      reporter.setAccessible(true);
-      reporter.set(tracer, this.reporter);
-    } catch (NoSuchFieldException | IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
+    Tracer tracer = new Tracer.Builder("world service", reporter, new ConstSampler(true)).build();
 
-    ResourceConfig resourceConfig = new ResourceConfig(HelloResource.class, StormlordResource.class);
-    undertest = new JerseyServerFilter(tracer, com.uber.jaeger.context.TracingUtils.getTraceContext());
+    ResourceConfig resourceConfig = new ResourceConfig(HelloResource.class,
+                                                       StormlordResource.class);
+    undertest = new JerseyServerFilter(tracer, TracingUtils.getTraceContext());
     resourceConfig.register(undertest);
     return resourceConfig;
   }

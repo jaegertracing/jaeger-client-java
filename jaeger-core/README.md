@@ -50,6 +50,7 @@ JAEGER_SAMPLER_TYPE | no | The sampler type
 JAEGER_SAMPLER_PARAM | no | The sampler parameter (number)
 JAEGER_SAMPLER_MANAGER_HOST_PORT | no | The host name and port when using the remote controlled sampler
 JAEGER_TAGS | no | A comma separated list of `name = value` tracer level tags, which get added to all reported spans. The value can also refer to an environment variable using the format `${envVarName:default}`, where the `:default` is optional, and identifies a value to be used if the environment variable cannot be found
+JAEGER_DISABLE_GLOBAL_TRACER | no | If set, disables registering the tracer with io.opentracing.GlobalTracer
 
 
 #### Obtaining Tracer via TracerResolver
