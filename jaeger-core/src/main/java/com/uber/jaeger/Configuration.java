@@ -188,42 +188,21 @@ public class Configuration {
   }
 
   public synchronized io.opentracing.Tracer getTracer() {
-    if (disableGlobalTracer) {
-      return getLocalTracer();
-    }
-
-    return getGlobalTracer();
-  }
-
-  private io.opentracing.Tracer getGlobalTracer() {
-    if (GlobalTracer.isRegistered()) {
-      return GlobalTracer.get();
-    }
-
-    Tracer tracer = getTracerBuilder().build();
-    GlobalTracer.register(tracer);
-    log.info("Initialized and registered global tracer={}", tracer);
-    return tracer;
-  }
-
-  @Deprecated
-  private io.opentracing.Tracer getLocalTracer() {
     if (tracer != null) {
       return tracer;
     }
 
     tracer = getTracerBuilder().build();
     log.info("Initialized tracer={}", tracer);
+
+    if (!(disableGlobalTracer || GlobalTracer.isRegistered())) {
+      GlobalTracer.register(tracer);
+    }
+
     return tracer;
   }
 
   public synchronized void closeTracer() {
-    if (GlobalTracer.isRegistered()) {
-      Tracer tracer = (Tracer) GlobalTracer.get();
-      tracer.close();
-      return;
-    }
-
     if (tracer != null) {
       tracer.close();
     }
