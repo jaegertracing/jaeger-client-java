@@ -125,8 +125,8 @@ public class Configuration {
   private StatsFactory statsFactory;
 
   /**
-   * Use {@link GlobalTracer} to store the tracer instead of
-   * storing an instance of the tracer in {@link #tracer}.
+   * Don't use {@link GlobalTracer} to store the tracer.
+   * Use the local {@link #tracer} instead.
    */
   private final boolean disableGlobalTracer;
 
@@ -143,7 +143,7 @@ public class Configuration {
       String serviceName,
       SamplerConfiguration samplerConfig,
       ReporterConfiguration reporterConfig) {
-    this(serviceName, samplerConfig, reporterConfig, true);
+    this(serviceName, samplerConfig, reporterConfig, false);
   }
 
   public Configuration(
@@ -177,7 +177,7 @@ public class Configuration {
         getProperty(JAEGER_SERVICE_NAME),
         SamplerConfiguration.fromEnv(),
         ReporterConfiguration.fromEnv(),
-        Boolean.valueOf(getProperty(JAEGER_DISABLE_GLOBAL_TRACER)));
+        getPropertyAsBoolean(JAEGER_DISABLE_GLOBAL_TRACER));
   }
 
   public Tracer.Builder getTracerBuilder() {
@@ -451,11 +451,7 @@ public class Configuration {
   }
 
   private static Boolean getPropertyAsBoolean(String name) {
-    String value = getProperty(name);
-    if (value != null) {
-      return Boolean.valueOf(value);
-    }
-    return null;
+    return Boolean.valueOf(getProperty(name));
   }
 
   private static Map<String, String> tracerTagsFromEnv() {

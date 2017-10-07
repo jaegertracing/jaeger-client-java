@@ -83,6 +83,13 @@ public class ConfigurationTest {
   }
 
   @Test
+  public void testDefaultGlobalTracer() {
+    Configuration config = new Configuration("Test");
+    config.getTracer();
+    assertTrue(GlobalTracer.isRegistered());
+  }
+
+  @Test
   public void testSamplerConst() {
     System.setProperty(Configuration.JAEGER_SAMPLER_TYPE, ConstSampler.TYPE);
     System.setProperty(Configuration.JAEGER_SAMPLER_PARAM, "1");
