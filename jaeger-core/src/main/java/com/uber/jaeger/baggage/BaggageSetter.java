@@ -57,7 +57,7 @@ public class BaggageSetter {
       logFields(span, key, value, prevItem, truncated, restriction.isKeyAllowed());
       return span.context();
     }
-    if (value.length() > restriction.getMaxValueLength()) {
+    if (value != null && value.length() > restriction.getMaxValueLength()) {
       truncated = true;
       value = value.substring(0, restriction.getMaxValueLength());
       metrics.baggageTruncate.inc(1);
