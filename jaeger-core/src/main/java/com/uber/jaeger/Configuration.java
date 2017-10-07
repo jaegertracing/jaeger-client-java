@@ -146,7 +146,7 @@ public class Configuration {
     this(serviceName, samplerConfig, reporterConfig, false);
   }
 
-  public Configuration(
+  private Configuration(
       String serviceName,
       SamplerConfiguration samplerConfig,
       ReporterConfiguration reporterConfig,
