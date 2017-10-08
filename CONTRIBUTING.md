@@ -9,14 +9,6 @@ it easier to get your contribution accepted.
 
 We gratefully welcome improvements to documentation as well as to code.
 
-# Certificate of Origin
-
-By contributing to this project you agree to the [Developer Certificate of
-Origin](https://developercertificate.org/) (DCO). This document was created
-by the Linux Kernel community and is a simple statement that you, as a
-contributor, have the legal right to make the contribution. See the [DCO](DCO)
-file for details.
-
 ## Developing
 
  1. `git submodule update --init`
@@ -49,10 +41,14 @@ Your pull request is most likely to be accepted if it:
 * Has a [good commit message](http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html).
 * Each commit is signed by the author ([see below](#sign-your-work)).
 
-## License
+## License and Certificate of Origin
 
-By contributing your code, you agree to license your contribution under the terms
-of the [Apache License](LICENSE).
+By contributing to this project you agree to license your contribution under the terms
+of the [Apache License](LICENSE), and you agree to the [Developer Certificate of
+Origin](https://developercertificate.org/) (DCO). This document was created
+by the Linux Kernel community and is a simple statement that you, as a
+contributor, have the legal right to make the contribution. See the [DCO](DCO)
+file for details.
 
 If you are adding a new file it should have a header like below.  The easiest
 way to add such header is to run `./gradlew licenseFormat`.
