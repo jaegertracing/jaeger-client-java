@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.uber.jaeger.crossdock.resources.behavior.http;
 
 import static org.junit.Assert.assertEquals;
