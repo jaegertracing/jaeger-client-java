@@ -6,6 +6,10 @@
  * Implement [Java OpenTracing API](https://github.com/opentracing/opentracing-java).
  * Supports Java 1.6 and above
 
+# Contributing and Developing
+
+Please see [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Core Modules
 
 Click through for more detailed docs on specific modules.
@@ -134,33 +138,15 @@ span.setTag("jaeger-debug-id", "some-correlation-id")
 
 This allows using Jaeger UI to find the trace by this tag.
 
-## Developing
-
- 1. `git submodule update --init`
- 2. `./gradlew clean check`
- 
-### Code Style
-
-This project uses [google java style](https://google.github.io/styleguide/javaguide.html) configured 
-via [checkstyle/google_checks.xml](https://github.com/checkstyle/checkstyle/blob/master/src/main/resources/google_checks.xml)
-
-You can also setup the [IntelliJ plugin](https://plugins.jetbrains.com/plugin/8527)
-to reformat code from within your IDE or import code style settings from 
-[google/intellij-java-google-style](https://github.com/google/styleguide/blob/gh-pages/intellij-java-google-style.xml)
-
-### Lombok
-This project uses [Lombok](https://projectlombok.org/) to reduce boilerplate. You can setup
- the [IntelliJ plugin](https://plugins.jetbrains.com/plugin/6317) to add IDE support. 
-
 ## License
   
-  [The MIT License](LICENSE).
+[Apache 2.0 License](./LICENSE).
 
 
 
-  [ci-img]: https://travis-ci.org/jaegertracing/jaeger-client-java.svg?branch=master
-  [ci]: https://travis-ci.org/jaegertracing/jaeger-client-java
-  [cov-img]: https://codecov.io/gh/jaegertracing/jaeger-client-java/branch/master/graph/badge.svg
-  [cov]: https://codecov.io/github/jaegertracing/jaeger-client-java/
-  [maven-img]: https://img.shields.io/maven-central/v/com.uber.jaeger/jaeger-core.svg?maxAge=2000
-  [maven]: http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.uber.jaeger%22
+[ci-img]: https://travis-ci.org/jaegertracing/jaeger-client-java.svg?branch=master
+[ci]: https://travis-ci.org/jaegertracing/jaeger-client-java
+[cov-img]: https://codecov.io/gh/jaegertracing/jaeger-client-java/branch/master/graph/badge.svg
+[cov]: https://codecov.io/github/jaegertracing/jaeger-client-java/
+[maven-img]: https://img.shields.io/maven-central/v/com.uber.jaeger/jaeger-core.svg?maxAge=2000
+[maven]: http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.uber.jaeger%22
