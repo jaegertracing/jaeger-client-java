@@ -17,13 +17,10 @@ We gratefully welcome improvements to documentation as well as to code.
 ### Code Style
 
 This project uses [google java style](https://google.github.io/styleguide/javaguide.html) configured 
-via [checkstyle/google_checks.xml](https://github.com/checkstyle/checkstyle/blob/master/src/main/resources/google_checks.xml)
-
-You can also setup the [IntelliJ plugin](https://plugins.jetbrains.com/plugin/8527)
-to reformat code from within your IDE or import code style settings from 
-[google/intellij-java-google-style](https://github.com/google/styleguide/blob/gh-pages/intellij-java-google-style.xml)
+via [config/checkstyle](./config/checkstyle).
 
 ### Lombok
+
 This project uses [Lombok](https://projectlombok.org/) to reduce boilerplate. You can setup
 the [IntelliJ plugin](https://plugins.jetbrains.com/plugin/6317) to add IDE support. 
 
