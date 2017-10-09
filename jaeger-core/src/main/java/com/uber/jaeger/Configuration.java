@@ -173,19 +173,11 @@ public class Configuration {
   }
 
   public static Configuration fromEnv() {
-    boolean disableGlobalTracer = getPropertyAsBool(JAEGER_DISABLE_GLOBAL_TRACER);
-    if (GlobalTracer.isRegistered() && !disableGlobalTracer) {
-      throw new IllegalStateException(
-          String.format(
-              "There is already a current global Tracer registered. "
-                  + "Set %s to disable automatic registration.",
-              JAEGER_DISABLE_GLOBAL_TRACER));
-    }
     return new Configuration(
         getProperty(JAEGER_SERVICE_NAME),
         SamplerConfiguration.fromEnv(),
         ReporterConfiguration.fromEnv(),
-        disableGlobalTracer);
+        getPropertyAsBool(JAEGER_DISABLE_GLOBAL_TRACER));
   }
 
   public Tracer.Builder getTracerBuilder() {
@@ -203,7 +195,7 @@ public class Configuration {
     tracer = getTracerBuilder().build();
     log.info("Initialized tracer={}", tracer);
 
-    if (!(disableGlobalTracer || GlobalTracer.isRegistered())) {
+    if (!disableGlobalTracer) {
       GlobalTracer.register(tracer);
     }
 
