@@ -61,7 +61,7 @@ public class ConfigurationTest {
 
     System.clearProperty(TEST_PROPERTY);
 
-    // Hack to reset opentracing's global tracer
+    // Reset opentracing's global tracer
     Field field = GlobalTracer.class.getDeclaredField("tracer");
     field.setAccessible(true);
     field.set(null, NoopTracerFactory.create());
@@ -72,6 +72,15 @@ public class ConfigurationTest {
     System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
     assertNotNull(Configuration.fromEnv().getTracer());
     assertTrue(GlobalTracer.isRegistered());
+  }
+
+  @Test (expected = IllegalStateException.class)
+  public void testFromEnvWithoutDisabledTracer() {
+    System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
+    assertNotNull(Configuration.fromEnv().getTracer());
+    assertTrue(GlobalTracer.isRegistered());
+
+    Configuration.fromEnv().getTracer();
   }
 
   @Test
@@ -85,7 +94,7 @@ public class ConfigurationTest {
   @Test
   public void testDefaultGlobalTracer() {
     Configuration config = new Configuration("Test");
-    config.getTracer();
+    assertNotNull(config.getTracer());
     assertTrue(GlobalTracer.isRegistered());
   }
 

@@ -173,11 +173,19 @@ public class Configuration {
   }
 
   public static Configuration fromEnv() {
+    boolean disableGlobalTracer = getPropertyAsBool(JAEGER_DISABLE_GLOBAL_TRACER);
+    if (GlobalTracer.isRegistered() && !disableGlobalTracer) {
+      throw new IllegalStateException(
+          String.format(
+              "There is already a current global Tracer registered. "
+                  + "Set %s to disable automatic registration.",
+              JAEGER_DISABLE_GLOBAL_TRACER));
+    }
     return new Configuration(
         getProperty(JAEGER_SERVICE_NAME),
         SamplerConfiguration.fromEnv(),
         ReporterConfiguration.fromEnv(),
-        getPropertyAsBoolean(JAEGER_DISABLE_GLOBAL_TRACER));
+        disableGlobalTracer);
   }
 
   public Tracer.Builder getTracerBuilder() {
@@ -342,7 +350,7 @@ public class Configuration {
 
     public static ReporterConfiguration fromEnv() {
       return new ReporterConfiguration(
-          getPropertyAsBoolean(JAEGER_REPORTER_LOG_SPANS),
+          getPropertyAsBool(JAEGER_REPORTER_LOG_SPANS),
           getProperty(JAEGER_AGENT_HOST),
           getPropertyAsInt(JAEGER_AGENT_PORT),
           getPropertyAsInt(JAEGER_REPORTER_FLUSH_INTERVAL),
@@ -429,7 +437,12 @@ public class Configuration {
     return null;
   }
 
-  private static Boolean getPropertyAsBoolean(String name) {
+  /**
+   * Gets the system property defined by the name , and returns a boolean value represented by
+   * the name. This method defaults to returning false for a name that doesn't exist.
+   * @param name The name of the system property
+   */
+  private static boolean getPropertyAsBool(String name) {
     return Boolean.valueOf(getProperty(name));
   }
 
