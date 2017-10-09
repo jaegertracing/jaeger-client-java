@@ -21,7 +21,7 @@ import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.when;
 
 import com.uber.jaeger.Span;
-import com.uber.jaeger.context.ThreadLocalTraceContext;
+import com.uber.jaeger.context.ActiveSpanSourceTraceContext;
 import com.uber.jaeger.context.TraceContext;
 import com.uber.jaeger.propagation.FilterIntegrationTest;
 import com.uber.jaeger.reporters.InMemoryReporter;
@@ -40,7 +40,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Tests that {@link ClientFilter} produces a span and sets tags correctly See also:
@@ -64,7 +64,7 @@ public class ClientFilterTest {
     tracer =
         new com.uber.jaeger.Tracer.Builder("Angry Machine", reporter, new ConstSampler(true))
             .build();
-    traceContext = new ThreadLocalTraceContext();
+    traceContext = new ActiveSpanSourceTraceContext(tracer);
     undertest = new ClientFilter(tracer, traceContext);
   }
 

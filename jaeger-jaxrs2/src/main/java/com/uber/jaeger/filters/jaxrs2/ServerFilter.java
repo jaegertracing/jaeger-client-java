@@ -94,10 +94,10 @@ public class ServerFilter implements ContainerRequestFilter, ContainerResponseFi
         // hitting this case means previous filter was not called
         return;
       }
-      serverSpan = traceContext.pop();
+      serverSpan = traceContext.getCurrentSpan();
 
       Tags.HTTP_STATUS.set(serverSpan, containerResponseContext.getStatus());
-      serverSpan.finish();
+      traceContext.pop();
     } catch (Exception e) {
       log.error("Server Filter Response:", e);
     }

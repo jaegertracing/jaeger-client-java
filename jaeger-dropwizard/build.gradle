@@ -7,6 +7,7 @@ dependencies {
     compile group: 'io.dropwizard.metrics', name: 'metrics-core', version: '3.1.0'
     compile group: 'io.dropwizard', name: 'dropwizard-hibernate', version: '0.9.1'
 
+    testCompile project(path: ':jaeger-core', configuration: 'tests')
     testCompile group: 'org.glassfish.jersey.containers', name: 'jersey-container-grizzly2-http', version: jerseyVersion
     testCompile group: 'org.glassfish.jersey.test-framework.providers', name: 'jersey-test-framework-provider-grizzly2', version: jerseyVersion
     testCompile group: 'junit', name: 'junit', version: junitVersion

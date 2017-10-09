@@ -18,6 +18,7 @@ import io.opentracing.Span;
 import java.util.EmptyStackException;
 import java.util.Stack;
 
+@Deprecated
 public class ThreadLocalTraceContext implements TraceContext {
   private final ThreadLocal<Stack<Span>> threadLocal = new SpanStackThreadLocal();
 
