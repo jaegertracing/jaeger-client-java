@@ -97,6 +97,9 @@ public class ServerFilter implements ContainerRequestFilter, ContainerResponseFi
       serverSpan = traceContext.getCurrentSpan();
 
       Tags.HTTP_STATUS.set(serverSpan, containerResponseContext.getStatus());
+
+      // We are relying on the ActiveSpanSource implementation to `close` the span, and
+      // hence don't need to call `finish`.
       traceContext.pop();
     } catch (Exception e) {
       log.error("Server Filter Response:", e);

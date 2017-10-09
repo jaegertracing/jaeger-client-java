@@ -29,12 +29,12 @@ import java.lang.reflect.Field;
  */
 public class ActiveSpanSourceTraceContext implements TraceContext {
 
-  private final Tracer tracer;
+  private final ActiveSpanSource activeSpanSource;
   /**
    * This is a hack to retrieve the span wrapped by the {@link ThreadLocalActiveSpan} implementation
    * to shoehorn into the {@link TraceContext} implementation. This is being done so that
-   * instrumentation relying on {@link Tracer} has a is consistent with instrumentation using
-   * {@link TraceContext}.
+   * instrumentation relying on {@link Tracer} is consistent with instrumentation using {@link
+   * TraceContext}. We expect to remove this when opentracing-api version 0.31 is released.
    */
   private static final Field wrappedSpan;
 
@@ -47,20 +47,20 @@ public class ActiveSpanSourceTraceContext implements TraceContext {
     }
   }
 
-  public ActiveSpanSourceTraceContext(Tracer tracer) {
-    this.tracer = tracer;
+  public ActiveSpanSourceTraceContext(ActiveSpanSource activeSpanSource) {
+    this.activeSpanSource = activeSpanSource;
   }
 
   /** Makes the span active. */
   @Override
   public void push(Span span) {
-    tracer.makeActive(span);
+    activeSpanSource.makeActive(span);
   }
 
   /** Deactivates the current active span. */
   @Override
   public Span pop() {
-    ActiveSpan activeSpan = tracer.activeSpan();
+    ActiveSpan activeSpan = activeSpanSource.activeSpan();
     Span span = getSpan(activeSpan);
     activeSpan.deactivate();
     return span;
@@ -69,23 +69,23 @@ public class ActiveSpanSourceTraceContext implements TraceContext {
   /** Retrieves the current active span. */
   @Override
   public Span getCurrentSpan() {
-    ActiveSpan activeSpan = tracer.activeSpan();
+    ActiveSpan activeSpan = activeSpanSource.activeSpan();
     return getSpan(activeSpan);
   }
 
   @Override
   public boolean isEmpty() {
-    return tracer.activeSpan() == null;
+    return activeSpanSource.activeSpan() == null;
   }
 
   private Span getSpan(ActiveSpan activeSpan) {
-    Span wrappedSpan;
+    Span span;
     try {
-      wrappedSpan = (Span) ActiveSpanSourceTraceContext.wrappedSpan.get(activeSpan);
+      span = (Span) wrappedSpan.get(activeSpan);
     } catch (IllegalAccessException e) {
       throw new RuntimeException(e);
     }
 
-    return wrappedSpan;
+    return span;
   }
 }

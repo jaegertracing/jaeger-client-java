@@ -19,22 +19,26 @@ import io.opentracing.util.GlobalTracer;
 import java.util.concurrent.ExecutorService;
 
 public class TracingUtils {
-  private static final TraceContext traceContext;
-
-  static {
-    if (!GlobalTracer.isRegistered()) {
-      throw new IllegalStateException("Please register a io.opentracing.util.GlobalTracer");
-    }
-    traceContext = new ActiveSpanSourceTraceContext(GlobalTracer.get());
-  }
+  private static TraceContext traceContext;
 
   public static TraceContext getTraceContext() {
+    initializeTraceContext();
     return traceContext;
   }
 
   public static ExecutorService tracedExecutor(ExecutorService wrappedExecutorService) {
+    initializeTraceContext();
     return new TracedExecutorService(wrappedExecutorService, traceContext);
   }
 
-  private TracingUtils(){}
+  private static synchronized void initializeTraceContext() {
+    if (traceContext == null) {
+      if (!GlobalTracer.isRegistered()) {
+        throw new IllegalStateException("Please register a io.opentracing.util.GlobalTracer.");
+      }
+      traceContext = new ActiveSpanSourceTraceContext(GlobalTracer.get());
+    }
+  }
+
+  private TracingUtils() {}
 }
