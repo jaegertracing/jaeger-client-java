@@ -18,6 +18,7 @@ dependencies {
  * `brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/56d8c1eba1e5ac30290dd0c486f4bba37f821e42/Formula/thrift.rb`
  */
 compileThrift {
+    thriftExecutable "${projectDir}/../travis/docker-thrift/thrift"
     sourceDir "${projectDir}/../idl/thrift"
     outputDir 'src/main/gen-java'
     generator 'java', 'private-members'
