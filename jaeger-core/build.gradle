@@ -16,6 +16,7 @@ dependencies {
     testCompile group: 'org.mockito', name: 'mockito-core', version: mockitoVersion
     testCompile group: 'com.tngtech.java', name: 'junit-dataprovider', version: junitDataProviderVersion
     testCompile group: 'org.awaitility', name: 'awaitility', version: awaitilityVersion
+    testCompile group: 'ch.qos.logback', name: 'logback-classic', version: logbackVersion
 
     signature 'org.codehaus.mojo.signature:java16:1.1@signature'
 }

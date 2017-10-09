@@ -38,7 +38,10 @@ import com.uber.jaeger.crossdock.api.TraceResponse;
 import com.uber.jaeger.crossdock.resources.behavior.TraceBehavior;
 import com.uber.jaeger.crossdock.resources.behavior.tchannel.TChannelServer;
 import com.uber.tchannel.api.TChannel.Builder;
+import io.opentracing.NoopTracerFactory;
 import io.opentracing.tag.Tags;
+import io.opentracing.util.GlobalTracer;
+import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -94,8 +97,12 @@ public class TraceBehaviorResourceTest {
   }
 
   @After
-  public void tearDown() {
+  public void tearDown() throws Exception {
     server.shutdown();
+    // Reset opentracing's global tracer
+    Field field = GlobalTracer.class.getDeclaredField("tracer");
+    field.setAccessible(true);
+    field.set(null, NoopTracerFactory.create());
   }
 
   @Test

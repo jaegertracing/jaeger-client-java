@@ -38,6 +38,7 @@ import com.uber.jaeger.samplers.RemoteControlledSampler;
 import com.uber.jaeger.samplers.Sampler;
 import com.uber.jaeger.senders.Sender;
 import com.uber.jaeger.senders.UdpSender;
+import io.opentracing.util.GlobalTracer;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.HashMap;
@@ -105,6 +106,11 @@ public class Configuration {
   public static final String JAEGER_TAGS = JAEGER_PREFIX + "TAGS";
 
   /**
+   * Disables registration with {@link GlobalTracer}.
+   */
+  public static final String JAEGER_DISABLE_GLOBAL_TRACER = JAEGER_PREFIX + "DISABLE_GLOBAL_TRACER";
+
+  /**
    * The serviceName that the tracer will use
    */
   private final String serviceName;
@@ -119,7 +125,13 @@ public class Configuration {
   private StatsFactory statsFactory;
 
   /**
-   * lazy singleton Tracer initialized in getTracer() method
+   * Don't use {@link GlobalTracer} to store the tracer.
+   * Use the local {@link #tracer} instead.
+   */
+  private final boolean disableGlobalTracer;
+
+  /**
+   * lazy singleton Tracer initialized in getTracer() method.
    */
   private Tracer tracer;
 
@@ -131,6 +143,14 @@ public class Configuration {
       String serviceName,
       SamplerConfiguration samplerConfig,
       ReporterConfiguration reporterConfig) {
+    this(serviceName, samplerConfig, reporterConfig, false);
+  }
+
+  private Configuration(
+      String serviceName,
+      SamplerConfiguration samplerConfig,
+      ReporterConfiguration reporterConfig,
+      boolean disableGlobalTracer) {
     if (serviceName == null || serviceName.isEmpty()) {
       throw new IllegalArgumentException("Must provide a service name for Jaeger Configuration");
     }
@@ -148,13 +168,16 @@ public class Configuration {
     this.reporterConfig = reporterConfig;
 
     statsFactory = new StatsFactoryImpl(new NullStatsReporter());
+
+    this.disableGlobalTracer = disableGlobalTracer;
   }
 
   public static Configuration fromEnv() {
     return new Configuration(
         getProperty(JAEGER_SERVICE_NAME),
         SamplerConfiguration.fromEnv(),
-        ReporterConfiguration.fromEnv());
+        ReporterConfiguration.fromEnv(),
+        getPropertyAsBool(JAEGER_DISABLE_GLOBAL_TRACER));
   }
 
   public Tracer.Builder getTracerBuilder() {
@@ -171,6 +194,11 @@ public class Configuration {
 
     tracer = getTracerBuilder().build();
     log.info("Initialized tracer={}", tracer);
+
+    if (!disableGlobalTracer) {
+      GlobalTracer.register(tracer);
+    }
+
     return tracer;
   }
 
@@ -314,7 +342,7 @@ public class Configuration {
 
     public static ReporterConfiguration fromEnv() {
       return new ReporterConfiguration(
-          getPropertyAsBoolean(JAEGER_REPORTER_LOG_SPANS),
+          getPropertyAsBool(JAEGER_REPORTER_LOG_SPANS),
           getProperty(JAEGER_AGENT_HOST),
           getPropertyAsInt(JAEGER_AGENT_PORT),
           getPropertyAsInt(JAEGER_REPORTER_FLUSH_INTERVAL),
@@ -401,12 +429,13 @@ public class Configuration {
     return null;
   }
 
-  private static Boolean getPropertyAsBoolean(String name) {
-    String value = getProperty(name);
-    if (value != null) {
-      return Boolean.valueOf(value);
-    }
-    return null;
+  /**
+   * Gets the system property defined by the name , and returns a boolean value represented by
+   * the name. This method defaults to returning false for a name that doesn't exist.
+   * @param name The name of the system property
+   */
+  private static boolean getPropertyAsBool(String name) {
+    return Boolean.valueOf(getProperty(name));
   }
 
   private static Map<String, String> tracerTagsFromEnv() {
