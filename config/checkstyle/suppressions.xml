@@ -6,5 +6,5 @@
 <suppressions>
   <suppress checks="AbbreviationAsWordInName"
     files="SpanContext.java"
-    lines="185,193,201"/>
+    lines="177,185,193"/>
 </suppressions>
