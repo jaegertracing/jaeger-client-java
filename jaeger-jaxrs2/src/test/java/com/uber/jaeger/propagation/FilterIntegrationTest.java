@@ -29,11 +29,9 @@ import com.uber.jaeger.filters.jaxrs2.ServerRequestCarrier;
 import com.uber.jaeger.metrics.InMemoryStatsReporter;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
-import com.uber.jaeger.utils.TestUtils;
 import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
-import io.opentracing.util.GlobalTracer;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
@@ -68,8 +66,7 @@ public class FilterIntegrationTest {
             .withStatsReporter(metricsReporter)
             .build();
 
-    GlobalTracer.register(tracer);
-    traceContext = new ActiveSpanSourceTraceContext();
+    traceContext = new ActiveSpanSourceTraceContext(tracer);
 
     // start the server
     server = new JerseyServer(tracer, traceContext);
@@ -84,7 +81,6 @@ public class FilterIntegrationTest {
   @After
   public void tearDown() throws Exception {
     server.stop();
-    TestUtils.resetGlobalTracer();
   }
 
   @Test

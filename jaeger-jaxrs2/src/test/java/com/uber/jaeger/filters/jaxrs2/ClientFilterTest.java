@@ -26,17 +26,14 @@ import com.uber.jaeger.context.TraceContext;
 import com.uber.jaeger.propagation.FilterIntegrationTest;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
-import com.uber.jaeger.utils.TestUtils;
 import io.opentracing.Tracer;
 import io.opentracing.tag.Tags;
-import io.opentracing.util.GlobalTracer;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import javax.ws.rs.client.ClientRequestContext;
 import javax.ws.rs.client.ClientResponseContext;
 import javax.ws.rs.core.MultivaluedHashMap;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -67,14 +64,8 @@ public class ClientFilterTest {
     tracer =
         new com.uber.jaeger.Tracer.Builder("Angry Machine", reporter, new ConstSampler(true))
             .build();
-    GlobalTracer.register(tracer);
-    traceContext = new ActiveSpanSourceTraceContext();
+    traceContext = new ActiveSpanSourceTraceContext(tracer);
     undertest = new ClientFilter(tracer, traceContext);
-  }
-
-  @After
-  public void tearDown() throws Exception {
-    TestUtils.resetGlobalTracer();
   }
 
   @Test

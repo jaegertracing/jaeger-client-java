@@ -29,6 +29,7 @@ import java.lang.reflect.Field;
  */
 public class ActiveSpanSourceTraceContext implements TraceContext {
 
+  private final ActiveSpanSource activeSpanSource;
   /**
    * This is a hack to retrieve the span wrapped by the {@link ThreadLocalActiveSpan} implementation
    * to shoehorn into the {@link TraceContext} implementation. This is being done so that
@@ -46,19 +47,20 @@ public class ActiveSpanSourceTraceContext implements TraceContext {
     }
   }
 
-  public ActiveSpanSourceTraceContext() {
+  public ActiveSpanSourceTraceContext(ActiveSpanSource activeSpanSource) {
+    this.activeSpanSource = activeSpanSource;
   }
 
   /** Makes the span active. */
   @Override
   public void push(Span span) {
-    GlobalTracer.get().makeActive(span);
+    activeSpanSource.makeActive(span);
   }
 
   /** Deactivates the current active span. */
   @Override
   public Span pop() {
-    ActiveSpan activeSpan = GlobalTracer.get().activeSpan();
+    ActiveSpan activeSpan = activeSpanSource.activeSpan();
     Span span = getSpan(activeSpan);
     activeSpan.deactivate();
     return span;
@@ -67,13 +69,13 @@ public class ActiveSpanSourceTraceContext implements TraceContext {
   /** Retrieves the current active span. */
   @Override
   public Span getCurrentSpan() {
-    ActiveSpan activeSpan = GlobalTracer.get().activeSpan();
+    ActiveSpan activeSpan = activeSpanSource.activeSpan();
     return getSpan(activeSpan);
   }
 
   @Override
   public boolean isEmpty() {
-    return GlobalTracer.get().activeSpan() == null;
+    return activeSpanSource.activeSpan() == null;
   }
 
   private Span getSpan(ActiveSpan activeSpan) {
