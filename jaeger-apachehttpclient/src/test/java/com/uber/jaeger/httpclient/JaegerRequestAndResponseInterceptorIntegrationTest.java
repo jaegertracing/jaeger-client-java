@@ -22,6 +22,8 @@ import com.uber.jaeger.context.TracingUtils;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
 import com.uber.jaeger.samplers.Sampler;
+import com.uber.jaeger.utils.TestUtils;
+import io.opentracing.util.GlobalTracer;
 import java.util.List;
 import org.apache.http.HttpHost;
 import org.apache.http.concurrent.FutureCallback;
@@ -32,6 +34,7 @@ import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.apache.http.impl.nio.client.HttpAsyncClients;
 import org.apache.http.message.BasicHttpRequest;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -64,12 +67,18 @@ public class JaegerRequestAndResponseInterceptorIntegrationTest {
     reporter = new InMemoryReporter();
     Sampler sampler = new ConstSampler(true);
     tracer = new Tracer.Builder("test_service", reporter, sampler).build();
+    GlobalTracer.register(tracer);
 
     parentSpan = (Span) tracer.buildSpan("parent_operation").startManual();
     parentSpan.setBaggageItem(BAGGAGE_KEY, BAGGAGE_VALUE);
     parentSpan.finish();
     //Set up a parent span context
     TracingUtils.getTraceContext().push(parentSpan);
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    TestUtils.resetGlobalTracer();
   }
 
   @Test

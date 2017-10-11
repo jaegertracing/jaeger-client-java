@@ -27,10 +27,20 @@ shadowJar {
     classifier 'okhttp381'
 }
 
+task testJar(type: Jar, dependsOn: testClasses) {
+    baseName = "test-${project.archivesBaseName}"
+    from sourceSets.test.output
+}
+
+configurations {
+    tests
+}
+
 artifacts {
     archives(shadowJar.archivePath) {
         builtBy shadowJar
     }
+    tests testJar
 }
 
 task jaegerVersion {
@@ -43,3 +53,4 @@ task jaegerVersion {
 }
 
 compileJava.dependsOn jaegerVersion
+

@@ -22,6 +22,8 @@ import com.uber.jaeger.Tracer;
 import com.uber.jaeger.context.TracingUtils;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
+import com.uber.jaeger.utils.TestUtils;
+import io.opentracing.util.GlobalTracer;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -32,6 +34,7 @@ import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Response;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
+import org.junit.After;
 import org.junit.Test;
 
 public class JerseyServerFilterTest extends JerseyTest {
@@ -46,9 +49,16 @@ public class JerseyServerFilterTest extends JerseyTest {
 
     ResourceConfig resourceConfig = new ResourceConfig(HelloResource.class,
                                                        StormlordResource.class);
+    GlobalTracer.register(tracer);
     undertest = new JerseyServerFilter(tracer, TracingUtils.getTraceContext());
     resourceConfig.register(undertest);
     return resourceConfig;
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    super.tearDown();
+    TestUtils.resetGlobalTracer();
   }
 
   @Path("hello")

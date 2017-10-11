@@ -14,18 +14,28 @@
 
 package com.uber.jaeger.context;
 
+import io.opentracing.util.GlobalTracer;
+
 import java.util.concurrent.ExecutorService;
 
 public class TracingUtils {
-  private static final TraceContext traceContext = new ThreadLocalTraceContext();
+  private static TraceContext traceContext = new ActiveSpanSourceTraceContext(GlobalTracer.get());
 
   public static TraceContext getTraceContext() {
+    assertGlobalTracerRegistered();
     return traceContext;
   }
 
   public static ExecutorService tracedExecutor(ExecutorService wrappedExecutorService) {
+    assertGlobalTracerRegistered();
     return new TracedExecutorService(wrappedExecutorService, traceContext);
   }
 
-  private TracingUtils(){}
+  private static void assertGlobalTracerRegistered() {
+    if (!GlobalTracer.isRegistered()) {
+      throw new IllegalStateException("Please register a io.opentracing.util.GlobalTracer.");
+    }
+  }
+
+  private TracingUtils() {}
 }
