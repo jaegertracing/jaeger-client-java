@@ -2,10 +2,13 @@ description = 'A library for thread-local context and utility methods for propag
 
 dependencies {
     compile group: 'io.opentracing', name: 'opentracing-api', version: opentracingVersion
+    compile group: 'io.opentracing', name: 'opentracing-util', version: opentracingVersion
 
     // Testing Frameworks
     testCompile group: 'junit', name: 'junit', version: junitVersion
     testCompile group: 'org.mockito', name: 'mockito-core', version: mockitoVersion
+    testCompile project(path: ':jaeger-core')
+    testCompile project(path: ':jaeger-core', configuration: 'tests')
 
     signature 'org.codehaus.mojo.signature:java16:1.1@signature'
 }
