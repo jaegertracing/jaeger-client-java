@@ -126,7 +126,7 @@ subprojects {
     }
 
     dependencies {
-        compileOnly 'org.projectlombok:lombok:1.16.12'
+        compileOnly 'org.projectlombok:lombok:1.16.18'
         compileOnly 'org.codehaus.mojo:animal-sniffer-annotations:1.15'
     }
 
@@ -165,7 +165,7 @@ task printVersion {
 configure(subprojects.findAll {it.name != 'jaeger-thrift'}) {
    apply plugin: 'net.ltgt.errorprone'
    dependencies {
-     errorprone 'com.google.errorprone:error_prone_core:2.0.15'
+     errorprone 'com.google.errorprone:error_prone_core:2.1.1'
    }
 }
 
