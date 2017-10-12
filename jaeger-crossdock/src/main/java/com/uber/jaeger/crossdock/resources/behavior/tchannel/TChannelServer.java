@@ -18,6 +18,7 @@ import com.uber.jaeger.context.TracingUtils;
 import com.uber.jaeger.crossdock.resources.behavior.TraceBehavior;
 import com.uber.tchannel.api.TChannel;
 import com.uber.tchannel.tracing.TracingContext;
+import io.netty.channel.ChannelFuture;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
 import java.util.EmptyStackException;
@@ -45,7 +46,10 @@ public class TChannelServer {
 
   public void start() throws InterruptedException {
     // listen for incoming connections
-    server.listen().channel().closeFuture();
+    ChannelFuture serverFuture = server.listen().awaitUninterruptibly();
+    if (!serverFuture.isSuccess()) {
+      throw new RuntimeException("Server future unsuccessful");
+    }
   }
 
   public void shutdown() {
