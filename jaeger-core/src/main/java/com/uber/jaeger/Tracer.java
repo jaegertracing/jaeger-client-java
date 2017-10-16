@@ -338,7 +338,7 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
 
       return new SpanContext(
           preferredReference.getTraceId(),
-          Utils.uniqueId(),
+          this.id,
           preferredReference.getSpanId(),
           // should we do OR across passed references?
           preferredReference.getFlags(),
