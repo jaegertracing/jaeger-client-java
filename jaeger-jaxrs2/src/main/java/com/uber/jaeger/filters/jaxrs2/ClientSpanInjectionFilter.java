@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Uber Technologies, Inc
+ * Copyright (c) 2017, Uber Technologies, Inc
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -15,7 +15,10 @@
 package com.uber.jaeger.filters.jaxrs2;
 
 import com.uber.jaeger.context.TraceContext;
+import io.opentracing.Span;
 import io.opentracing.Tracer;
+import io.opentracing.propagation.Format;
+import io.opentracing.tag.Tags;
 import java.io.IOException;
 import javax.ws.rs.ConstrainedTo;
 import javax.ws.rs.RuntimeType;
@@ -29,35 +32,38 @@ import lombok.extern.slf4j.Slf4j;
 @Provider
 @ConstrainedTo(RuntimeType.CLIENT)
 @Slf4j
-public class ClientFilter implements ClientRequestFilter, ClientResponseFilter {
+public class ClientSpanInjectionFilter implements ClientRequestFilter, ClientResponseFilter {
   private final Tracer tracer;
   private final TraceContext traceContext;
 
-  private final ClientSpanCreationFilter spanCreationFilter;
-  private final ClientSpanInjectionFilter spaninjectionFilter;
-
-  public ClientFilter(Tracer tracer, TraceContext traceContext) {
+  public ClientSpanInjectionFilter(Tracer tracer, TraceContext traceContext) {
     this.tracer = tracer;
     this.traceContext = traceContext;
-
-    this.spanCreationFilter = new ClientSpanCreationFilter(tracer, traceContext);
-    this.spaninjectionFilter = new ClientSpanInjectionFilter(tracer, traceContext);
   }
 
   @Override
   public void filter(ClientRequestContext clientRequestContext) throws IOException {
-    try {
-      spanCreationFilter.filter(clientRequestContext);
-      spaninjectionFilter.filter(clientRequestContext);
-    } catch (Exception e) {
-      log.error("Client Filter Request:", e);
-    }
+    Span clientSpan = traceContext.getCurrentSpan();
+
+    tracer.inject(
+        clientSpan.context(),
+        Format.Builtin.HTTP_HEADERS,
+        new ClientRequestCarrier(clientRequestContext));
   }
 
   @Override
-  public void filter(
-      ClientRequestContext clientRequestContext, ClientResponseContext clientResponseContext)
-      throws IOException {
-    spaninjectionFilter.filter(clientRequestContext, clientResponseContext);
+  public void filter(ClientRequestContext clientRequestContext,
+      ClientResponseContext clientResponseContext) throws IOException {
+    try {
+      Span clientSpan =
+          (io.opentracing.Span)
+              clientRequestContext.getProperty(Constants.CURRENT_SPAN_CONTEXT_KEY);
+      if (clientSpan != null) {
+        Tags.HTTP_STATUS.set(clientSpan, clientResponseContext.getStatus());
+        clientSpan.finish();
+      }
+    } catch (Exception e) {
+      log.error("Client Span Injection Filter Response:", e);
+    }
   }
 }
