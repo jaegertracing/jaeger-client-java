@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Uber Technologies, Inc
+ * Copyright (c) 2017, Uber Technologies, Inc
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -15,49 +15,43 @@
 package com.uber.jaeger.filters.jaxrs2;
 
 import com.uber.jaeger.context.TraceContext;
+import io.opentracing.Span;
 import io.opentracing.Tracer;
+import io.opentracing.tag.Tags;
 import java.io.IOException;
 import javax.ws.rs.ConstrainedTo;
 import javax.ws.rs.RuntimeType;
 import javax.ws.rs.client.ClientRequestContext;
 import javax.ws.rs.client.ClientRequestFilter;
-import javax.ws.rs.client.ClientResponseContext;
-import javax.ws.rs.client.ClientResponseFilter;
 import javax.ws.rs.ext.Provider;
 import lombok.extern.slf4j.Slf4j;
 
 @Provider
 @ConstrainedTo(RuntimeType.CLIENT)
 @Slf4j
-public class ClientFilter implements ClientRequestFilter, ClientResponseFilter {
+public class ClientSpanCreationFilter implements ClientRequestFilter {
   private final Tracer tracer;
   private final TraceContext traceContext;
 
-  private final ClientSpanCreationFilter spanCreationFilter;
-  private final ClientSpanInjectionFilter spanInjectionFilter;
-
-  public ClientFilter(Tracer tracer, TraceContext traceContext) {
+  public ClientSpanCreationFilter(Tracer tracer, TraceContext traceContext) {
     this.tracer = tracer;
     this.traceContext = traceContext;
-
-    this.spanCreationFilter = new ClientSpanCreationFilter(tracer, traceContext);
-    this.spanInjectionFilter = new ClientSpanInjectionFilter(tracer, traceContext);
   }
 
   @Override
   public void filter(ClientRequestContext clientRequestContext) throws IOException {
-    try {
-      spanCreationFilter.filter(clientRequestContext);
-      spanInjectionFilter.filter(clientRequestContext);
-    } catch (Exception e) {
-      log.error("Client Filter Request:", e);
+    Tracer.SpanBuilder clientSpanBuilder = tracer.buildSpan(clientRequestContext.getMethod());
+    if (!traceContext.isEmpty()) {
+      clientSpanBuilder.asChildOf(traceContext.getCurrentSpan());
     }
-  }
+    Span clientSpan = clientSpanBuilder.startManual();
 
-  @Override
-  public void filter(
-      ClientRequestContext clientRequestContext, ClientResponseContext clientResponseContext)
-      throws IOException {
-    spanInjectionFilter.filter(clientRequestContext, clientResponseContext);
+    clientRequestContext.setProperty(Constants.CURRENT_SPAN_CONTEXT_KEY, clientSpan);
+
+    Tags.SPAN_KIND.set(clientSpan, Tags.SPAN_KIND_CLIENT);
+    Tags.HTTP_URL.set(clientSpan, clientRequestContext.getUri().toString());
+    Tags.PEER_HOSTNAME.set(clientSpan, clientRequestContext.getUri().getHost());
+
+    traceContext.push(clientSpan);
   }
 }
