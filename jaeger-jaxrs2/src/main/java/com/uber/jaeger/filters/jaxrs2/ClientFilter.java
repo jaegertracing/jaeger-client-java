@@ -34,21 +34,21 @@ public class ClientFilter implements ClientRequestFilter, ClientResponseFilter {
   private final TraceContext traceContext;
 
   private final ClientSpanCreationFilter spanCreationFilter;
-  private final ClientSpanInjectionFilter spaninjectionFilter;
+  private final ClientSpanInjectionFilter spanInjectionFilter;
 
   public ClientFilter(Tracer tracer, TraceContext traceContext) {
     this.tracer = tracer;
     this.traceContext = traceContext;
 
     this.spanCreationFilter = new ClientSpanCreationFilter(tracer, traceContext);
-    this.spaninjectionFilter = new ClientSpanInjectionFilter(tracer, traceContext);
+    this.spanInjectionFilter = new ClientSpanInjectionFilter(tracer, traceContext);
   }
 
   @Override
   public void filter(ClientRequestContext clientRequestContext) throws IOException {
     try {
       spanCreationFilter.filter(clientRequestContext);
-      spaninjectionFilter.filter(clientRequestContext);
+      spanInjectionFilter.filter(clientRequestContext);
     } catch (Exception e) {
       log.error("Client Filter Request:", e);
     }
@@ -58,6 +58,6 @@ public class ClientFilter implements ClientRequestFilter, ClientResponseFilter {
   public void filter(
       ClientRequestContext clientRequestContext, ClientResponseContext clientResponseContext)
       throws IOException {
-    spaninjectionFilter.filter(clientRequestContext, clientResponseContext);
+    spanInjectionFilter.filter(clientRequestContext, clientResponseContext);
   }
 }
