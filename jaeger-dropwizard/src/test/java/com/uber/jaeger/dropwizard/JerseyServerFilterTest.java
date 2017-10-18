@@ -55,6 +55,7 @@ public class JerseyServerFilterTest extends JerseyTest {
     return resourceConfig;
   }
 
+  @Override
   @After
   public void tearDown() throws Exception {
     super.tearDown();

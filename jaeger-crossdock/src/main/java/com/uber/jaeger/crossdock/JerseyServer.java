@@ -36,6 +36,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import org.apache.log4j.BasicConfigurator;
@@ -117,8 +118,8 @@ public class JerseyServer {
         .register(JacksonFeature.class);
   }
 
-  public void shutdown() {
-    server.shutdown();
+  public void shutdown() throws ExecutionException, InterruptedException {
+    server.shutdown().get();
   }
 
   public Tracer getTracer() {

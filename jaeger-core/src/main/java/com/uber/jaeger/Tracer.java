@@ -268,7 +268,7 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
 
       byte flags = 0;
       if (debugId != null) {
-        flags |= SpanContext.flagSampled | SpanContext.flagDebug;
+        flags = (byte) (flags | SpanContext.flagSampled | SpanContext.flagDebug);
         tags.put(Constants.DEBUG_ID_HEADER_KEY, debugId);
         metrics.traceStartedSampled.inc(1);
       } else {

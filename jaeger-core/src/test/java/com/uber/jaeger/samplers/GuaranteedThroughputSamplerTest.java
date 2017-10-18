@@ -20,6 +20,8 @@ import static org.junit.Assert.assertTrue;
 
 import com.uber.jaeger.Constants;
 import java.util.Map;
+
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,6 +32,7 @@ public class GuaranteedThroughputSamplerTest {
 
   private GuaranteedThroughputSampler undertest;
 
+  @After
   public void tearDown() {
     undertest.close();
   }
