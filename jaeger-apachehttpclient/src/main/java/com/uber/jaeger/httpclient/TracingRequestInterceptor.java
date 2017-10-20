@@ -41,39 +41,22 @@ import org.apache.http.protocol.HttpContext;
 @Slf4j
 public class TracingRequestInterceptor implements HttpRequestInterceptor {
   private final Tracer tracer;
+  private final SpanCreationRequestInterceptor spanCreationInterceptor;
+  private final SpanInjectionRequestInterceptor spanInjectionInterceptor;
 
   public TracingRequestInterceptor(Tracer tracer) {
     this.tracer = tracer;
+    this.spanCreationInterceptor = new SpanCreationRequestInterceptor(tracer);
+    this.spanInjectionInterceptor = new SpanInjectionRequestInterceptor(tracer);
   }
 
   @Override
   public void process(HttpRequest httpRequest, HttpContext httpContext)
       throws HttpException, IOException {
     try {
-      TraceContext parentContext = TracingUtils.getTraceContext();
-
-      RequestLine requestLine = httpRequest.getRequestLine();
-      Tracer.SpanBuilder clientSpanBuilder = tracer.buildSpan(getOperationName(httpRequest));
-      if (!parentContext.isEmpty()) {
-        clientSpanBuilder.asChildOf(parentContext.getCurrentSpan());
-      }
-
-      Span clientSpan = clientSpanBuilder.startManual();
-      Tags.SPAN_KIND.set(clientSpan, Tags.SPAN_KIND_CLIENT);
-      Tags.HTTP_URL.set(clientSpan, requestLine.getUri());
-
-      if (httpContext instanceof HttpClientContext) {
-        HttpHost host = ((HttpClientContext) httpContext).getTargetHost();
-        Tags.PEER_HOSTNAME.set(clientSpan, host.getHostName());
-        Tags.PEER_PORT.set(clientSpan, host.getPort());
-      }
-
-      onSpanStarted(clientSpan, httpRequest, httpContext);
-
-      tracer.inject(
-          clientSpan.context(), Format.Builtin.HTTP_HEADERS, new ClientRequestCarrier(httpRequest));
-
-      httpContext.setAttribute(Constants.CURRENT_SPAN_CONTEXT_KEY, clientSpan);
+      this.spanCreationInterceptor.process(httpRequest, httpContext);
+      onSpanStarted(TracingUtils.getTraceContext().getCurrentSpan(), httpRequest, httpContext);
+      this.spanInjectionInterceptor.process(httpRequest, httpContext);
     } catch (Exception e) {
       log.error("Could not start client tracing span.", e);
     }
