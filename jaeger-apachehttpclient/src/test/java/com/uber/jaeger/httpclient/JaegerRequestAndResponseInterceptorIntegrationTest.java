@@ -113,7 +113,7 @@ public class JaegerRequestAndResponseInterceptorIntegrationTest {
     HttpClientBuilder clientBuilder = HttpClients.custom();
     CloseableHttpClient client = TracingInterceptors.addTo(clientBuilder, tracer).build();
 
-    //Make a request to the async client and wait for response
+    //Make a request to the sync client and wait for response
     client.execute(
         new HttpHost("localhost", mockServerRule.getPort()),
         new BasicHttpRequest("GET", "/testing"));
@@ -124,7 +124,7 @@ public class JaegerRequestAndResponseInterceptorIntegrationTest {
   private void verifyTracing(Span parentSpan) {
     //Assert that traces are correctly emitted by the client
     List<Span> spans = reporter.getSpans();
-    assertEquals(2, spans.size());
+    assertEquals(3, spans.size());
     Span span = spans.get(1);
     assertEquals("GET", span.getOperationName());
     assertEquals(parentSpan.context().getSpanId(), span.context().getParentId());
@@ -138,5 +138,27 @@ public class JaegerRequestAndResponseInterceptorIntegrationTest {
     assertEquals(Long.toHexString(span.context().getSpanId()), split[1]);
     String baggage = httpRequests[0].getFirstHeader("uberctx-" + BAGGAGE_KEY);
     assertEquals(BAGGAGE_VALUE, baggage);
+  }
+
+  @Test
+  public void testHttpClientTracingWithSplitSpanCreationInterceptors() throws Exception {
+    HttpClientBuilder clientBuilder = HttpClients.custom();
+    CloseableHttpClient client = CustomTracingInterceptor.addTo(clientBuilder, tracer).build();
+
+    // Make a request to the sync client and wait for response
+    client.execute(
+        new HttpHost("localhost", mockServerRule.getPort()),
+        new BasicHttpRequest("GET", "/testing"));
+
+    verifyTracing(parentSpan);
+  }
+
+  static class CustomTracingInterceptor {
+    static HttpClientBuilder addTo(HttpClientBuilder clientBuilder, Tracer tracer) {
+      return clientBuilder
+          .addInterceptorFirst(new SpanCreationRequestInterceptor(tracer))
+          .addInterceptorLast(new SpanInjectionRequestInterceptor(tracer))
+          .addInterceptorFirst(new TracingResponseInterceptor());
+    }
   }
 }
