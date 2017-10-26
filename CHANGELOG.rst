@@ -1,17 +1,30 @@
 Changes by Version
 ==================
 
-0.22.0-RC1 (2017-10-05)
+0.23.0 (unreleased)
 -------------------
+
 - Bump OpenTracing version to 0.31.0-RC1 (https://github.com/jaegertracing/jaeger-client-java/pull/246), done on branch `v0.22.0`
+
+
+0.22.0-RC2 (2017-10-26)
+-------------------
+
+- Break apart functionality of TracingRequestInterceptor (https://github.com/jaegertracing/jaeger-client-java/pull/248)
+- Split out the jaxrs2 filters (https://github.com/jaegertracing/jaeger-client-java/pull/273)
+- Add TraceContext backed by ActiveSpanSource (https://github.com/jaegertracing/jaeger-client-java/pull/266)
+- Update to Apache License v. 2 (https://github.com/jaegertracing/jaeger-client-java/pull/262)
+- Use io.opentracing.GlobalTracer instead of singleton in Configuration (https://github.com/jaegertracing/jaeger-client-java/pull/255)
 - Tracer implements Closeable (https://github.com/jaegertracing/jaeger-client-java/pull/242)
-- Fix span builder should accept null in asChildOf (https://github.com/jaegertracing/jaeger-client-java/pull/243)
+- Fix: span builder should accept null in asChildOf (https://github.com/jaegertracing/jaeger-client-java/pull/243)
+
 
 0.21.0 (2017-09-15)
 -------------------
 - Support baggage restrictions (https://github.com/uber/jaeger-client-java/pull/217, https://github.com/uber/jaeger-client-java/pull/229)
 - Fix concurrency bug when using multiple senders (https://github.com/uber/jaeger-client-java/pull/233)
 - Support span log fields in zipkin sender (https://github.com/uber/jaeger-client-java/pull/226)
+
 
 0.20.6 (2017-08-01)
 -------------------
