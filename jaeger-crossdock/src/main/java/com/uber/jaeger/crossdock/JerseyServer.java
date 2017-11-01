@@ -49,6 +49,10 @@ import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 
 public class JerseyServer {
+  private static final String SAMPLING_HOST_PORT = "SAMPLING_HOST_PORT";
+  private static final String AGENT_HOST = "AGENT_HOST";
+  private static final String COLLECTOR_HOST_PORT = "AGENT_HOST";
+
   // TODO should not be static
   public static Client client;
 
@@ -133,8 +137,9 @@ public class JerseyServer {
 
     JerseyServer server = new JerseyServer("0.0.0.0:8081", serviceName,
         Arrays.asList(new TraceBehaviorResource(),
-            new EndToEndBehaviorResource(new EndToEndBehavior("test_driver",
-                "crossdock-" + serviceName, senderFromEnv("test_driver"))),
+            new EndToEndBehaviorResource(new EndToEndBehavior(getEvn(SAMPLING_HOST_PORT, "jaeger-agent:5778"),
+                "crossdock-" + serviceName,
+                senderFromEnv(getEvn(COLLECTOR_HOST_PORT, "jaeger-collector:14268"), getEvn(AGENT_HOST, "jaeger-agent")))),
             new HealthResource()));
 
     server.addNetworkListener(new NetworkListener("health", "0.0.0.0", 8080));
@@ -143,12 +148,20 @@ public class JerseyServer {
     new TChannelServer(tchannelBuilder, new TraceBehavior(), server.getTracer()).start();
   }
 
-  private static Sender senderFromEnv(String jaegerHost) {
+  private static String getEvn(String envName, String defaultValue) {
+    String env = System.getenv(envName);
+    if (env == null) {
+      return defaultValue;
+    }
+    return env;
+  }
+
+  private static Sender senderFromEnv(String collectorHostPort, String agentHostPort) {
     String senderEnvVar = System.getenv(Constants.ENV_PROP_SENDER_TYPE);
     if ("http".equalsIgnoreCase(senderEnvVar)) {
-      return new HttpSender(String.format("http://%s:14268/api/traces", jaegerHost));
+      return new HttpSender(String.format("http://%s/api/traces", collectorHostPort));
     } else if ("udp".equalsIgnoreCase(senderEnvVar) || senderEnvVar == null || senderEnvVar.isEmpty()) {
-      return new UdpSender(jaegerHost, 0, 0);
+      return new UdpSender(agentHostPort, 0, 0);
     }
 
     throw new IllegalStateException("Env variable " + Constants.ENV_PROP_SENDER_TYPE
