@@ -51,7 +51,7 @@ import org.glassfish.jersey.server.ResourceConfig;
 public class JerseyServer {
   private static final String SAMPLING_HOST_PORT = "SAMPLING_HOST_PORT";
   private static final String AGENT_HOST = "AGENT_HOST";
-  private static final String COLLECTOR_HOST_PORT = "AGENT_HOST";
+  private static final String COLLECTOR_HOST_PORT = "COLLECTOR_HOST_PORT";
 
   // TODO should not be static
   public static Client client;
