@@ -139,7 +139,8 @@ public class JerseyServer {
         Arrays.asList(new TraceBehaviorResource(),
             new EndToEndBehaviorResource(new EndToEndBehavior(getEvn(SAMPLING_HOST_PORT, "jaeger-agent:5778"),
                 "crossdock-" + serviceName,
-                senderFromEnv(getEvn(COLLECTOR_HOST_PORT, "jaeger-collector:14268"), getEvn(AGENT_HOST, "jaeger-agent")))),
+                senderFromEnv(getEvn(COLLECTOR_HOST_PORT, "jaeger-collector:14268"),
+                    getEvn(AGENT_HOST, "jaeger-agent")))),
             new HealthResource()));
 
     server.addNetworkListener(new NetworkListener("health", "0.0.0.0", 8080));
