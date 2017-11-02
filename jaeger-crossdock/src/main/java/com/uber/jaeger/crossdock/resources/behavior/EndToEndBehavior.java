@@ -40,7 +40,7 @@ public class EndToEndBehavior {
     this.tracers = new HashMap<>(tracers);
   }
 
-  public EndToEndBehavior(String jaegerHost, String serviceName, Sender sender) {
+  public EndToEndBehavior(String samplingHostPort, String serviceName, Sender sender) {
     StatsFactory statsFactory = new StatsFactoryImpl(new NullStatsReporter());
     Metrics metrics = new Metrics(statsFactory);
     Reporter reporter = new RemoteReporter(sender, 1000, 100, metrics);
@@ -48,13 +48,13 @@ public class EndToEndBehavior {
     ConstSampler constSampler = new ConstSampler(true);
 
     tracers = new HashMap<>();
-    tracers.put(RemoteControlledSampler.TYPE, getRemoteTracer(metrics, reporter, serviceName, jaegerHost));
+    tracers.put(RemoteControlledSampler.TYPE, getRemoteTracer(metrics, reporter, serviceName, samplingHostPort));
     tracers.put(ConstSampler.TYPE, new com.uber.jaeger.Tracer.Builder(serviceName, reporter, constSampler).build());
   }
 
-  private Tracer getRemoteTracer(Metrics metrics, Reporter reporter, String serviceName, String jaegerHost) {
+  private Tracer getRemoteTracer(Metrics metrics, Reporter reporter, String serviceName, String samplingHostPort) {
     Sampler initialSampler = new ProbabilisticSampler(1.0);
-    HttpSamplingManager manager = new HttpSamplingManager(jaegerHost + ":5778");
+    HttpSamplingManager manager = new HttpSamplingManager(samplingHostPort);
 
     RemoteControlledSampler remoteSampler = new RemoteControlledSampler(serviceName, manager, initialSampler,
         metrics, 5000);

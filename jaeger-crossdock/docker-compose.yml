@@ -31,6 +31,7 @@ services:
             - BEHAVIOR_ENDTOEND=testdriver,services
 
             - REPORT=compact
+
     go:
         image: jaegertracing/xdock-go
         ports:
@@ -57,14 +58,11 @@ services:
         environment:
             - SENDER=http
 
-    cassandra:
-        image: "cassandra:3.9"
-
     test_driver:
         image: jaegertracing/test-driver
-        links:
-            - cassandra
         depends_on:
-            - cassandra
+            - jaeger-query
+            - jaeger-collector
+            - jaeger-agent
         ports:
             - "8080"
