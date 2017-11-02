@@ -32,8 +32,6 @@ services:
 
             - REPORT=compact
 
-#  TODO remove all links to test_driver
-
     go:
         image: jaegertracing/xdock-go
         ports:
@@ -43,8 +41,6 @@ services:
         image: jaegertracing/xdock-py
         ports:
             - "8080-8082"
-        links:
-            - "jaeger-agent:test_driver"
 
     java-udp:
         depends_on:
