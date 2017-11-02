@@ -157,12 +157,12 @@ public class JerseyServer {
     return env;
   }
 
-  private static Sender senderFromEnv(String collectorHostPort, String agentHostPort) {
+  private static Sender senderFromEnv(String collectorHostPort, String agentHost) {
     String senderEnvVar = System.getenv(Constants.ENV_PROP_SENDER_TYPE);
     if ("http".equalsIgnoreCase(senderEnvVar)) {
       return new HttpSender(String.format("http://%s/api/traces", collectorHostPort));
     } else if ("udp".equalsIgnoreCase(senderEnvVar) || senderEnvVar == null || senderEnvVar.isEmpty()) {
-      return new UdpSender(agentHostPort, 0, 0);
+      return new UdpSender(agentHost, 0, 0);
     }
 
     throw new IllegalStateException("Env variable " + Constants.ENV_PROP_SENDER_TYPE
