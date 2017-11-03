@@ -68,7 +68,8 @@ public final class B3TextMapCodec implements Injector<TextMap>, Extractor<TextMa
     byte flags = 0;
     for (Map.Entry<String, String> entry : carrier) {
       if (entry.getKey().equalsIgnoreCase(SAMPLED_NAME)) {
-        if (entry.getValue().equals("1") || entry.getValue().toLowerCase().equals("true")) {
+        String value = entry.getValue();
+        if ("1".equals(value) || "true".equalsIgnoreCase(value)) {
           flags |= SAMPLED_FLAG;
         }
       } else if (entry.getKey().equalsIgnoreCase(TRACE_ID_NAME)) {
