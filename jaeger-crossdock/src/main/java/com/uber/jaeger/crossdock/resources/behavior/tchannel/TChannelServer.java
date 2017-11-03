@@ -24,7 +24,7 @@ import io.opentracing.Tracer;
 import java.util.EmptyStackException;
 
 public class TChannelServer {
-  // TODO should not be static
+  // TODO should not be static, should be final
   public static TChannel server;
 
   public TChannelServer(TChannel.Builder tchannelBuilder, TraceBehavior behavior, Tracer tracer) {
