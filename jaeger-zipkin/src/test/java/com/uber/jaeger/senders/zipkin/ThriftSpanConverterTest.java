@@ -134,8 +134,9 @@ public class ThriftSpanConverterTest {
     com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan(span);
 
     List<BinaryAnnotation> annotations = zipkinSpan.getBinary_annotations();
-    for (String key : expectedTags.keySet()) {
-      Object expectedValue = expectedTags.get(key);
+    for (Map.Entry<String, String> entry : expectedTags.entrySet()) {
+      String key = entry.getKey();
+      Object expectedValue = entry.getValue();
       BinaryAnnotation anno = findBinaryAnnotation(annotations, key);
       if (expectedValue.equals(UNDEF)) {
         assertNull("Not expecting " + key + " for " + spanType, anno);
