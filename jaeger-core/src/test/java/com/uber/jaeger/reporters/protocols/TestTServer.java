@@ -58,7 +58,7 @@ public class TestTServer implements Runnable {
     long expire = timeout + System.currentTimeMillis();
     while (System.currentTimeMillis() < expire) {
       Batch receivedBatch = handler.getBatch();
-      if (receivedBatch != null && receivedBatch.getSpans() != null) {
+      if (receivedBatch.getSpans() != null) {
         batch.getSpans().addAll(receivedBatch.getSpans());
         batch.setProcess(receivedBatch.getProcess());
       }
