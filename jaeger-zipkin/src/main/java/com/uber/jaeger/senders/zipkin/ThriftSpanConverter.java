@@ -96,9 +96,10 @@ public class ThriftSpanConverter {
       Map<String, ?> processTags = span.getTracer().tags();
       // add tracer tags to first zipkin span in a process but remove "ip" tag as it is
       // taken care of separately.
-      for (String tagKey : processTags.keySet()) {
-        if (!tagKey.equals(Constants.TRACER_IP_TAG_KEY)) {
-          Object tagValue = processTags.get(tagKey);
+      for (Map.Entry<String, ?> entry : processTags.entrySet()) {
+        String tagKey = entry.getKey();
+        if (!Constants.TRACER_IP_TAG_KEY.equals(tagKey)) {
+          Object tagValue = entry.getValue();
           // add a tracer. prefix to process tags for zipkin
           binaryAnnotations.add(buildBinaryAnnotation("tracer." + tagKey, tagValue));
         }
@@ -137,10 +138,11 @@ public class ThriftSpanConverter {
     }
 
     if (tags != null) {
-      for (String tagKey : tags.keySet()) {
+      for (Map.Entry<String, Object> entry : tags.entrySet()) {
+        String tagKey = entry.getKey();
         // Every value is converted to string because zipkin search doesn't
         // work well with ints, and bytes.
-        Object tagValue = tags.get(tagKey);
+        Object tagValue = entry.getValue();
         binaryAnnotations.add(buildBinaryAnnotation(tagKey, tagValue));
       }
     }
