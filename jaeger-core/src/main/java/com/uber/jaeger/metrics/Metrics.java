@@ -32,14 +32,14 @@ public class Metrics {
         continue;
       }
 
-      String metricName = "jaeger.";
+      StringBuilder metricBuilder = new StringBuilder("jaeger.");
       HashMap<String, String> tags = new HashMap<String, String>();
 
       Annotation[] annotations = field.getAnnotations();
       for (Annotation anno : annotations) {
         if (anno.annotationType().equals(Metric.class)) {
           Metric metricAnno = (Metric) anno;
-          metricName += metricAnno.name();
+          metricBuilder.append(metricAnno.name());
 
           Tag[] entries = metricAnno.tags();
           for (Tag t : entries) {
@@ -48,6 +48,7 @@ public class Metrics {
         }
       }
 
+      String metricName = metricBuilder.toString();
       try {
         if (field.getType().equals(Counter.class)) {
           field.set(this, factory.createCounter(metricName, tags));
