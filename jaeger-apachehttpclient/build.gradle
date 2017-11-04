@@ -3,9 +3,9 @@ description = 'Instrumentation library for apache http client'
 dependencies {
     compile project(':jaeger-core')
     compile project(':jaeger-context')
-    compile group: 'org.apache.httpcomponents', name: 'httpcore', version: apacheHttpComponentsVersion
-    compile group: 'org.apache.httpcomponents', name: 'httpclient', version: apacheHttpComponentsVersion
-    compile group: 'org.apache.httpcomponents', name: 'httpasyncclient', version: apacheHttpComponentsVersion
+    compile group: 'org.apache.httpcomponents', name: 'httpcore', version: '4.4.7'
+    compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.3'
+    compile group: 'org.apache.httpcomponents', name: 'httpasyncclient', version: '4.1.3'
 
     testCompile project(path: ':jaeger-core', configuration: 'tests')
     testCompile group: 'org.mock-server', name: 'mockserver-netty', version: '3.10.4'
