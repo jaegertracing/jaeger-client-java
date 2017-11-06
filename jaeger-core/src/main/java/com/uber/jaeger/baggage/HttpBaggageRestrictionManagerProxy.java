@@ -30,6 +30,7 @@ import java.util.List;
 
 public class HttpBaggageRestrictionManagerProxy implements BaggageRestrictionManagerProxy {
   private static final String DEFAULT_HOST_PORT = "localhost:5778";
+  private static final Type LIST_TYPE = new TypeToken<ArrayList<BaggageRestrictionResponse>>(){}.getType();
   private final Gson gson = new Gson();
   private final String hostPort;
 
@@ -39,8 +40,7 @@ public class HttpBaggageRestrictionManagerProxy implements BaggageRestrictionMan
 
   List<BaggageRestrictionResponse> parseJson(String json) throws BaggageRestrictionManagerException {
     try {
-      Type listType = new TypeToken<ArrayList<BaggageRestrictionResponse>>(){}.getType();
-      return gson.fromJson(json, listType);
+      return gson.fromJson(json, LIST_TYPE);
     } catch (JsonSyntaxException e) {
       throw new BaggageRestrictionManagerException("Cannot deserialize json", e);
     }

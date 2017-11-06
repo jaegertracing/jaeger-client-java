@@ -53,7 +53,7 @@ public class JerseyServer {
   private static final String AGENT_HOST = "AGENT_HOST";
   private static final String COLLECTOR_HOST_PORT = "COLLECTOR_HOST_PORT";
 
-  // TODO should not be static
+  // TODO should not be static, should be final
   public static Client client;
 
   private final HttpServer server;
