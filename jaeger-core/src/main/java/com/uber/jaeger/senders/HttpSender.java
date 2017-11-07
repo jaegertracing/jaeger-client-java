@@ -19,6 +19,8 @@ import com.uber.jaeger.thriftjava.Process;
 import com.uber.jaeger.thriftjava.Span;
 import java.io.IOException;
 import java.util.List;
+
+import lombok.ToString;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -29,6 +31,7 @@ import org.apache.thrift.TException;
 import org.apache.thrift.TSerializer;
 import org.apache.thrift.protocol.TBinaryProtocol;
 
+@ToString(exclude = {"httpClient", "serializer", "requestBuilder"})
 public class HttpSender extends ThriftSender {
 
   private static final String HTTP_COLLECTOR_JAEGER_THRIFT_FORMAT_PARAM = "format=jaeger.thrift";
@@ -58,13 +61,17 @@ public class HttpSender extends ThriftSender {
     this(endpoint, maxPayloadBytes, new OkHttpClient());
   }
 
+  public HttpSender(String endpoint, OkHttpClient client) {
+    this(endpoint, ONE_MB_IN_BYTES, client);
+  }
+
   /**
    * @param endpoint Jaeger REST endpoint consuming jaeger.thrift, e.g
    * http://localhost:14268/api/traces
    * @param maxPayloadBytes max bytes to serialize as payload
    * @param client a client used to make http requests
    */
-  private HttpSender(String endpoint, int maxPayloadBytes, OkHttpClient client) {
+  public HttpSender(String endpoint, int maxPayloadBytes, OkHttpClient client) {
     super(new TBinaryProtocol.Factory(), maxPayloadBytes);
     HttpUrl collectorUrl = HttpUrl
         .parse(String.format("%s?%s", endpoint, HTTP_COLLECTOR_JAEGER_THRIFT_FORMAT_PARAM));
