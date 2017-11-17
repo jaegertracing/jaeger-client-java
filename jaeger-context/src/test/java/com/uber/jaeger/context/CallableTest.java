@@ -14,7 +14,6 @@
 
 package com.uber.jaeger.context;
 
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -23,15 +22,21 @@ import static org.mockito.Mockito.when;
 import io.opentracing.Span;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class CallableTest {
+  @Mock
   TraceContext traceContext;
+  @Mock
   Span span;
+  @Mock
+  Callable<Span> wrappedCallable;
 
   @Before
-  public void setUp() {
-    span = mock(Span.class);
-    traceContext = mock(TraceContext.class);
+  public void setUp() throws Exception {
     when(traceContext.getCurrentSpan()).thenReturn(span);
     when(traceContext.pop()).thenReturn(span);
     when(traceContext.isEmpty()).thenReturn(false);
@@ -39,7 +44,6 @@ public class CallableTest {
 
   @Test
   public void testInstrumentedCallable() throws Exception {
-    Callable wrappedCallable = mock(Callable.class);
     when(wrappedCallable.call()).thenReturn(span);
 
     Callable<Span> jaegerCallable = new Callable<>(wrappedCallable, traceContext);
@@ -56,8 +60,6 @@ public class CallableTest {
 
   @Test
   public void testInstrumentedCallableNoCurrentSpan() throws Exception {
-    Callable wrappedCallable = mock(Callable.class);
-    when(wrappedCallable.call()).thenReturn(span);
     when(traceContext.isEmpty()).thenReturn(true);
 
     Callable<Span> jaegerCallable = new Callable<>(wrappedCallable, traceContext);
