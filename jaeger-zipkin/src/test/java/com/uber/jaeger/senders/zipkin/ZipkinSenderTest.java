@@ -15,6 +15,7 @@
 package com.uber.jaeger.senders.zipkin;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import com.uber.jaeger.Span;
 import com.uber.jaeger.SpanContext;
@@ -78,6 +79,7 @@ public class ZipkinSenderTest {
     jaegerSpan.log(msg, new Object());
     try {
       sender.append(jaegerSpan);
+      fail("The line above shoud throw");
     } catch (SenderException e) {
       assertEquals(e.getDroppedSpanCount(), 1);
     }
@@ -92,7 +94,7 @@ public class ZipkinSenderTest {
     com.twitter.zipkin.thriftjava.Span span = ThriftSpanConverter.convertSpan(jaegerSpan);
 
     int expectedNumSpans = 11;
-    List<byte[]> spansToSend = new ArrayList(expectedNumSpans);
+    List<byte[]> spansToSend = new ArrayList<>(expectedNumSpans);
     for (int i = 0; i < expectedNumSpans; i++) {
       spansToSend.add(new ThriftSpanEncoder().encode(sender.backFillHostOnAnnotations(span)));
     }

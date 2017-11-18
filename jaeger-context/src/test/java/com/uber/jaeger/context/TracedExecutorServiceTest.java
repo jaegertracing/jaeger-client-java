@@ -17,8 +17,8 @@ package com.uber.jaeger.context;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -26,37 +26,46 @@ import static org.mockito.Mockito.when;
 
 import io.opentracing.Span;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class TracedExecutorServiceTest {
 
   private static final TimeUnit TIME_UNIT = TimeUnit.MILLISECONDS;
-  TracedExecutorService tracedExecutorService;
-  ExecutorService wrappedExecutorService;
-  Span span;
-  TraceContext traceContext;
+
   List<java.util.concurrent.Callable<Span>> callableList;
+
+  @Mock
+  ExecutorService wrappedExecutorService;
+  @Mock
+  Span span;
+  @Mock
+  TraceContext traceContext;
+  @Mock
+  Callable<Span> callable1;
+  @Mock
+  Callable<Span> callable2;
+  @Mock
+  Callable wrappedCallable;
+  @Mock
+  Runnable wrappedRunnable;
+
+  TracedExecutorService tracedExecutorService;
 
   @Before
   public void setUp() {
-    wrappedExecutorService = mock(ExecutorService.class);
-    span = mock(Span.class);
-    traceContext = mock(TraceContext.class);
-    when(traceContext.pop()).thenReturn(span);
     when(traceContext.getCurrentSpan()).thenReturn(span);
     when(traceContext.isEmpty()).thenReturn(false);
     tracedExecutorService = new TracedExecutorService(wrappedExecutorService, traceContext);
-    callableList =
-        new ArrayList<java.util.concurrent.Callable<Span>>() {
-          {
-            add(mock(java.util.concurrent.Callable.class));
-            add(mock(java.util.concurrent.Callable.class));
-          }
-        };
+    callableList = Arrays.asList(new Callable[] {callable1, callable2});
   }
 
   @Test
@@ -101,8 +110,6 @@ public class TracedExecutorServiceTest {
 
   @Test
   public void testSubmitCallableOfT() {
-    java.util.concurrent.Callable<Span> wrappedCallable = mock(java.util.concurrent.Callable.class);
-
     tracedExecutorService.submit(wrappedCallable);
 
     verify(traceContext, times(1)).isEmpty();
@@ -113,8 +120,6 @@ public class TracedExecutorServiceTest {
 
   @Test
   public void testSubmitRunnable() {
-    java.lang.Runnable wrappedRunnable = mock(java.lang.Runnable.class);
-
     tracedExecutorService.submit(wrappedRunnable);
 
     verify(traceContext, times(1)).isEmpty();
@@ -127,7 +132,7 @@ public class TracedExecutorServiceTest {
   public void testInvokeAll() throws Exception {
     tracedExecutorService.invokeAll(callableList);
 
-    verify(wrappedExecutorService).invokeAll(any(List.class));
+    verify(wrappedExecutorService).invokeAll(anyList());
     verify(traceContext, times(callableList.size())).isEmpty();
     verify(traceContext, times(callableList.size())).getCurrentSpan();
     verifyNoMoreInteractions(wrappedExecutorService, traceContext);
@@ -137,7 +142,7 @@ public class TracedExecutorServiceTest {
   public void testInvokeAny() throws Exception {
     tracedExecutorService.invokeAny(callableList);
 
-    verify(wrappedExecutorService).invokeAny(any(List.class));
+    verify(wrappedExecutorService).invokeAny(anyList());
     verify(traceContext, times(callableList.size())).isEmpty();
     verify(traceContext, times(callableList.size())).getCurrentSpan();
     verifyNoMoreInteractions(wrappedExecutorService, traceContext);
@@ -145,8 +150,6 @@ public class TracedExecutorServiceTest {
 
   @Test
   public void testExecute() {
-    java.lang.Runnable wrappedRunnable = mock(java.lang.Runnable.class);
-
     tracedExecutorService.execute(wrappedRunnable);
 
     verify(traceContext, times(1)).isEmpty();
