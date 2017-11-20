@@ -3,7 +3,7 @@ description = 'Instrumentation library for apache http client'
 dependencies {
     compile project(':jaeger-core')
     compile project(':jaeger-context')
-    compile group: 'org.apache.httpcomponents', name: 'httpcore', version: '4.4.7'
+    compile group: 'org.apache.httpcomponents', name: 'httpcore', version: '4.4.8'
     compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.3'
     compile group: 'org.apache.httpcomponents', name: 'httpasyncclient', version: '4.1.3'
 
