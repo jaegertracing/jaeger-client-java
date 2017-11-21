@@ -66,13 +66,14 @@ public class ConfigurationTest {
     assertTrue(GlobalTracer.isRegistered());
   }
 
-  @Test (expected = IllegalStateException.class)
+  @Test
   public void testFromEnvWithoutDisabledTracer() {
     System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
     assertNotNull(Configuration.fromEnv().getTracer());
     assertTrue(GlobalTracer.isRegistered());
 
-    Configuration.fromEnv().getTracer();
+    // a consecutive call doesn't throw an exception
+    assertNotNull(Configuration.fromEnv().getTracer());
   }
 
   @Test

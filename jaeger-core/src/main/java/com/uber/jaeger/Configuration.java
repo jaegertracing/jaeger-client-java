@@ -184,6 +184,10 @@ public class Configuration {
       return tracer;
     }
 
+    if (GlobalTracer.isRegistered()) {
+      return GlobalTracer.get();
+    }
+
     tracer = getTracerBuilder().build();
     log.info("Initialized tracer={}", tracer);
 
