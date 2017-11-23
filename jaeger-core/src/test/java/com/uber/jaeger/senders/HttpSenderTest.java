@@ -14,18 +14,26 @@
 
 package com.uber.jaeger.senders;
 
+import static org.junit.Assert.assertTrue;
+
+import com.uber.jaeger.Configuration;
 import com.uber.jaeger.thriftjava.Process;
 import com.uber.jaeger.thriftjava.Span;
+
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Response;
+
 import org.apache.thrift.TException;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -34,6 +42,16 @@ import org.junit.Test;
  * See  {@link com.uber.jaeger.crossdock.JerseyServer} for integration tests.
  */
 public class HttpSenderTest extends JerseyTest {
+
+  @Before
+  public void reset() {
+    System.clearProperty(Configuration.JAEGER_AGENT_HOST);
+    System.clearProperty(Configuration.JAEGER_AGENT_PORT);
+    System.clearProperty(Configuration.JAEGER_ENDPOINT);
+    System.clearProperty(Configuration.JAEGER_AUTH_TOKEN);
+    System.clearProperty(Configuration.JAEGER_USER);
+    System.clearProperty(Configuration.JAEGER_PASSWORD);
+  }
 
   @Override
   protected Application configure() {
@@ -63,6 +81,47 @@ public class HttpSenderTest extends JerseyTest {
     sender.send(new Process("robotrock"), generateSpans());
   }
 
+  @Test
+  public void sendWithoutAuthData() throws Exception {
+    System.setProperty(Configuration.JAEGER_ENDPOINT, target("/api/traces").getUri().toString());
+
+    HttpSender sender = (HttpSender) Configuration.SenderConfiguration.fromEnv().getSender();
+    sender.send(new Process("robotrock"), generateSpans());
+  }
+
+  @Test
+  public void sendWithBasicAuth() throws Exception {
+    System.setProperty(Configuration.JAEGER_ENDPOINT, target("/api/basic-auth").getUri().toString());
+    System.setProperty(Configuration.JAEGER_USER, "jdoe");
+    System.setProperty(Configuration.JAEGER_PASSWORD, "password");
+
+    HttpSender sender = (HttpSender) Configuration.SenderConfiguration.fromEnv().getSender();
+    sender.send(new Process("robotrock"), generateSpans());
+  }
+
+  @Test
+  public void sendWithTokenAuth() throws Exception {
+    System.setProperty(Configuration.JAEGER_ENDPOINT, target("/api/bearer").getUri().toString());
+    System.setProperty(Configuration.JAEGER_AUTH_TOKEN, "thetoken");
+
+    HttpSender sender = (HttpSender) Configuration.SenderConfiguration.fromEnv().getSender();
+    sender.send(new Process("robotrock"), generateSpans());
+  }
+
+  @Test
+  public void sanityTestForTokenAuthTest() throws Exception {
+    System.setProperty(Configuration.JAEGER_ENDPOINT, target("/api/bearer").getUri().toString());
+    System.setProperty(Configuration.JAEGER_AUTH_TOKEN, "invalid-token");
+
+    HttpSender sender = (HttpSender) Configuration.SenderConfiguration.fromEnv().getSender();
+
+    try {
+      sender.send(new Process("robotrock"), generateSpans());
+    } catch (TException te) {
+      assertTrue(te.getMessage().contains("response 401"));
+    }
+  }
+
   private List<Span> generateSpans() {
     ArrayList<Span> spans = new ArrayList<>();
     Span span = new Span();
@@ -74,8 +133,38 @@ public class HttpSenderTest extends JerseyTest {
   @Path("api")
   public static class TraceAccepter {
 
+    @Path("basic-auth")
+    @POST
+    public Response basicAuth(@HeaderParam("Authorization") String authHeader) {
+      if (!authHeader.startsWith("Basic")) {
+        return Response.status(Response.Status.BAD_REQUEST).build();
+      }
+
+      String userAndPass = new String(Base64.getDecoder().decode(authHeader.split("\\s+")[1]));
+      if (!userAndPass.equals("jdoe:password")) {
+        return Response.status(Response.Status.UNAUTHORIZED).build();
+      }
+
+      return Response.ok().build();
+    }
+
+    @Path("bearer")
+    @POST
+    public Response tokenAuth(@HeaderParam("Authorization") String authHeader) {
+      if (!authHeader.startsWith("Bearer")) {
+        return Response.status(Response.Status.BAD_REQUEST).build();
+      }
+
+      String token = authHeader.split("\\s+")[1];
+      if (!token.equals("thetoken")) {
+        return Response.status(Response.Status.UNAUTHORIZED).build();
+      }
+
+      return Response.ok().build();
+    }
+
     @Path("traces")
-    @POST()
+    @POST
     public void postHappy(@QueryParam("format") String format, String data) {
     }
 

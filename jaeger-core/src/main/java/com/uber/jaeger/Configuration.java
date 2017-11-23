@@ -28,15 +28,23 @@ import com.uber.jaeger.samplers.ProbabilisticSampler;
 import com.uber.jaeger.samplers.RateLimitingSampler;
 import com.uber.jaeger.samplers.RemoteControlledSampler;
 import com.uber.jaeger.samplers.Sampler;
+import com.uber.jaeger.senders.HttpSender;
 import com.uber.jaeger.senders.Sender;
 import com.uber.jaeger.senders.UdpSender;
 import io.opentracing.util.GlobalTracer;
+
+import java.io.IOException;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.Credentials;
+import okhttp3.Interceptor;
+import okhttp3.OkHttpClient;
+import okhttp3.Response;
 
 @Slf4j
 public class Configuration {
@@ -46,6 +54,26 @@ public class Configuration {
    * Prefix for all properties used to configure the Jaeger tracer.
    */
   public static final String JAEGER_PREFIX = "JAEGER_";
+
+  /**
+   * The full URL to the {@code traces} endpoint, like https://jaeger-collector:14268/api/traces
+   */
+  public static final String JAEGER_ENDPOINT = JAEGER_PREFIX + "ENDPOINT";
+
+  /**
+   * The Auth Token to be added as "Bearer" on Authorization headers for requests sent to the endpoint
+   */
+  public static final String JAEGER_AUTH_TOKEN = JAEGER_PREFIX + "AUTH_TOKEN";
+
+  /**
+   * The Basic Auth username to be added on Authorization headers for requests sent to the endpoint
+   */
+  public static final String JAEGER_USER = JAEGER_PREFIX + "USER";
+
+  /**
+   * The Basic Auth password to be added on Authorization headers for requests sent to the endpoint
+   */
+  public static final String JAEGER_PASSWORD = JAEGER_PREFIX + "PASSWORD";
 
   /**
    * The host name used to locate the agent.
@@ -304,19 +332,17 @@ public class Configuration {
     private static final int DEFAULT_MAX_QUEUE_SIZE = 100;
 
     private Boolean logSpans;
-    private String agentHost;
-    private Integer agentPort;
     private Integer flushIntervalMs;
     private Integer maxQueueSize;
 
-    private Sender sender;
+    private SenderConfiguration senderConfiguration;
 
     public ReporterConfiguration() {
       this(null, null, null, null, null);
     }
 
     public ReporterConfiguration(Sender sender) {
-      this.sender = sender;
+      this.senderConfiguration = new Configuration.SenderConfiguration.Builder().sender(sender).build();
     }
 
     public ReporterConfiguration(
@@ -326,33 +352,37 @@ public class Configuration {
         Integer flushIntervalMs,
         Integer maxQueueSize) {
       this.logSpans = logSpans;
-      this.agentHost = agentHost;
-      this.agentPort = agentPort;
       this.flushIntervalMs = flushIntervalMs;
       this.maxQueueSize = maxQueueSize;
+      this.senderConfiguration = new Configuration.SenderConfiguration.Builder()
+              .agentHost(agentHost)
+              .agentPort(agentPort)
+              .build();
+    }
+
+    public ReporterConfiguration(
+        Boolean logSpans,
+        Integer flushIntervalMs,
+        Integer maxQueueSize,
+        SenderConfiguration senderConfiguration) {
+      this.logSpans = logSpans;
+      this.flushIntervalMs = flushIntervalMs;
+      this.maxQueueSize = maxQueueSize;
+      this.senderConfiguration = senderConfiguration;
     }
 
     public static ReporterConfiguration fromEnv() {
       return new ReporterConfiguration(
           getPropertyAsBool(JAEGER_REPORTER_LOG_SPANS),
-          getProperty(JAEGER_AGENT_HOST),
-          getPropertyAsInt(JAEGER_AGENT_PORT),
           getPropertyAsInt(JAEGER_REPORTER_FLUSH_INTERVAL),
-          getPropertyAsInt(JAEGER_REPORTER_MAX_QUEUE_SIZE));
-    }
-
-    private Sender getSender() {
-      return this.sender != null ? this.sender :
-          new UdpSender(
-              stringOrDefault(this.agentHost, UdpSender.DEFAULT_AGENT_UDP_HOST),
-              numberOrDefault(this.agentPort, UdpSender.DEFAULT_AGENT_UDP_COMPACT_PORT).intValue(),
-              0 /* max packet size */);
+          getPropertyAsInt(JAEGER_REPORTER_MAX_QUEUE_SIZE),
+          SenderConfiguration.fromEnv());
     }
 
     private Reporter getReporter(Metrics metrics) {
       Reporter reporter =
           new RemoteReporter(
-              getSender(),
+              this.senderConfiguration.getSender(),
               numberOrDefault(this.flushIntervalMs, DEFAULT_FLUSH_INTERVAL_MS).intValue(),
               numberOrDefault(this.maxQueueSize, DEFAULT_MAX_QUEUE_SIZE).intValue(),
               metrics);
@@ -369,11 +399,19 @@ public class Configuration {
     }
 
     public String getAgentHost() {
-      return agentHost;
+      if (null == this.senderConfiguration) {
+        return null;
+      }
+
+      return this.senderConfiguration.agentHost;
     }
 
     public Integer getAgentPort() {
-      return agentPort;
+      if (null == this.senderConfiguration) {
+        return null;
+      }
+
+      return this.senderConfiguration.agentPort;
     }
 
     public Integer getFlushIntervalMs() {
@@ -382,6 +420,201 @@ public class Configuration {
 
     public Integer getMaxQueueSize() {
       return maxQueueSize;
+    }
+  }
+
+  /**
+   * Holds the configuration related to the sender. A sender can be a {@link HttpSender} or {@link UdpSender}
+   *
+   */
+  @Getter
+  public static class SenderConfiguration {
+    /**
+     * A custom sender set by our consumers. If set, nothing else has effect. Optional.
+     */
+    private Sender sender;
+
+    /**
+     * The Agent Host. Has no effect if the sender is set. Optional.
+     */
+    private String agentHost;
+
+    /**
+     * The Agent Port. Has no effect if the sender is set. Optional.
+     */
+    private Integer agentPort;
+
+    /**
+     * The endpoint, like https://jaeger-collector:14268/api/traces
+     */
+    private String endpoint;
+
+    /**
+     * The Auth Token to be added as "Bearer" on Authorization headers for requests sent to the endpoint
+     */
+    private String authToken;
+
+    /**
+     * The Basic Auth username to be added on Authorization headers for requests sent to the endpoint
+     */
+    private String authUsername;
+
+    /**
+     * The Basic Auth password to be added on Authorization headers for requests sent to the endpoint
+     */
+    private String authPassword;
+
+    /**
+     * New instances of this class are provided via the Builder
+     */
+    private SenderConfiguration() {
+    }
+
+    private SenderConfiguration(SenderConfiguration.Builder builder) {
+      this.sender = builder.sender;
+      this.agentHost = builder.agentHost;
+      this.agentPort = builder.agentPort;
+      this.endpoint = builder.endpoint;
+      this.authToken = builder.authToken;
+      this.authUsername = builder.authUsername;
+      this.authPassword = builder.authPassword;
+    }
+
+    /**
+     * Returns a sender if one was given when creating the configuration, or attempts to create a sender based on the
+     * configuration's state.
+     * @return the sender passed via the constructor or a properly configured sender
+     */
+    public Sender getSender() {
+      // if we have a sender, that's the one we return
+      if (null != this.sender) {
+        return this.sender;
+      }
+
+      if (null != endpoint && !endpoint.isEmpty()) {
+        log.debug("The endpoint is set. Attempting to configure HttpSender for it.");
+        Interceptor authInterceptor = null;
+
+        if (null != authUsername && !authUsername.isEmpty()
+                && null != authPassword && !authPassword.isEmpty()) {
+          log.debug("Using HTTP Basic authentication with data from the environment variables.");
+          authInterceptor = getAddBasicAuthInterceptor(authUsername, authPassword);
+        } else if (null != authToken && !authToken.isEmpty()) {
+          log.debug("Auth Token environment variable found.");
+          authInterceptor = getAddTokenInterceptor(authToken);
+        }
+
+        // at this point, the authInterceptor can still be null
+        OkHttpClient.Builder builder = new OkHttpClient.Builder();
+
+        if (null != authInterceptor) {
+          log.debug("All requests to the endpoint will have an Authentication header set.");
+          builder.addInterceptor(authInterceptor);
+        }
+
+        log.debug("Using the HTTP Sender to send spans directly to the endpoint.");
+        return new HttpSender(endpoint, builder.build());
+      }
+
+      log.debug("Using the UDP Sender to send spans to the agent.");
+      return new UdpSender(
+              stringOrDefault(this.agentHost, UdpSender.DEFAULT_AGENT_UDP_HOST),
+              numberOrDefault(this.agentPort, UdpSender.DEFAULT_AGENT_UDP_COMPACT_PORT).intValue(),
+              0 /* max packet size */);
+    }
+
+    /**
+     * Attempts to create a new {@link SenderConfiguration} based on the environment variables
+     * @return a new sender configuration based on environment variables
+     */
+    public static SenderConfiguration fromEnv() {
+      String agentHost = getProperty(JAEGER_AGENT_HOST);
+      Integer agentPort = getPropertyAsInt(JAEGER_AGENT_PORT);
+
+      String collectorEndpoint = getProperty(JAEGER_ENDPOINT);
+      String authToken = getProperty(JAEGER_AUTH_TOKEN);
+      String authUsername = getProperty(JAEGER_USER);
+      String authPassword = getProperty(JAEGER_PASSWORD);
+
+      return new Configuration.SenderConfiguration.Builder()
+              .agentHost(agentHost)
+              .agentPort(agentPort)
+              .endpoint(collectorEndpoint)
+              .authToken(authToken)
+              .authUsername(authUsername)
+              .authPassword(authPassword)
+              .build();
+    }
+
+    private Interceptor getAddTokenInterceptor(final String authToken) {
+      return getAuthInterceptor("Bearer " + authToken);
+    }
+
+    private Interceptor getAddBasicAuthInterceptor(final String username, final String password) {
+      return getAuthInterceptor(Credentials.basic(username, password));
+    }
+
+    private Interceptor getAuthInterceptor(final String headerValue) {
+      return new Interceptor() {
+        @Override
+        public Response intercept(Chain chain) throws IOException {
+          return chain.proceed(
+                  chain.request()
+                          .newBuilder()
+                          .addHeader("Authorization", headerValue)
+                          .build()
+          );
+        }
+      };
+    }
+
+    public static class Builder {
+      private Sender sender;
+      private String agentHost = null;
+      private Integer agentPort = null;
+      private String endpoint = null;
+      private String authToken = null;
+      private String authUsername = null;
+      private String authPassword = null;
+
+      public Builder sender(Sender sender) {
+        this.sender = sender;
+        return this;
+      }
+
+      public Builder agentHost(String agentHost) {
+        this.agentHost = agentHost;
+        return this;
+      }
+
+      public Builder agentPort(Integer agentPort) {
+        this.agentPort = agentPort;
+        return this;
+      }
+
+      public Builder endpoint(String endpoint) {
+        this.endpoint = endpoint;
+        return this;
+      }
+
+      public Builder authToken(String authToken) {
+        this.authToken = authToken;
+        return this;
+      }
+
+      public Builder authUsername(String authUsername) {
+        this.authUsername = authUsername;
+        return this;
+      }
+
+      public Builder authPassword(String authPassword) {
+        this.authPassword = authPassword;
+        return this;
+      }
+
+      public Configuration.SenderConfiguration build() {
+        return new Configuration.SenderConfiguration(this);
+      }
     }
   }
 

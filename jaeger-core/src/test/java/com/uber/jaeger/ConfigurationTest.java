@@ -24,9 +24,13 @@ import com.uber.jaeger.Configuration.ReporterConfiguration;
 import com.uber.jaeger.Configuration.SamplerConfiguration;
 import com.uber.jaeger.samplers.ConstSampler;
 
+import com.uber.jaeger.senders.HttpSender;
+import com.uber.jaeger.senders.Sender;
 import io.opentracing.NoopTracerFactory;
 import io.opentracing.util.GlobalTracer;
 import java.lang.reflect.Field;
+import java.net.SocketException;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -50,6 +54,10 @@ public class ConfigurationTest {
     System.clearProperty(Configuration.JAEGER_SERVICE_NAME);
     System.clearProperty(Configuration.JAEGER_TAGS);
     System.clearProperty(Configuration.JAEGER_DISABLE_GLOBAL_TRACER);
+    System.clearProperty(Configuration.JAEGER_ENDPOINT);
+    System.clearProperty(Configuration.JAEGER_AUTH_TOKEN);
+    System.clearProperty(Configuration.JAEGER_USER);
+    System.clearProperty(Configuration.JAEGER_PASSWORD);
 
     System.clearProperty(TEST_PROPERTY);
 
@@ -171,4 +179,99 @@ public class ConfigurationTest {
     assertEquals("goodbye", tracer.tags().get("testTag1"));
   }
 
+  @Test
+  public void testSenderWithEndpointWithoutAuthData() {
+    System.setProperty(Configuration.JAEGER_ENDPOINT, "https://jaeger-collector:14268/api/traces");
+    Sender sender = Configuration.SenderConfiguration.fromEnv().getSender();
+    assertTrue(sender instanceof HttpSender);
+  }
+
+  @Test
+  public void testSenderWithAgentDataFromEnv() {
+    System.setProperty(Configuration.JAEGER_AGENT_HOST, "jaeger-agent");
+    System.setProperty(Configuration.JAEGER_AGENT_PORT, "6832");
+    try {
+      Configuration.SenderConfiguration.fromEnv().getSender();
+    } catch (RuntimeException re) {
+      // we need to catch it here instead of using @Test(expected = ...) because the SocketException is
+      // wrapped into a runtime exception
+      assertTrue(re.getCause() instanceof SocketException);
+    }
+  }
+
+  @Test
+  public void testSenderBackwardsCompatibilityGettingAgentHostAndPort() {
+    System.setProperty(Configuration.JAEGER_AGENT_HOST, "jaeger-agent");
+    System.setProperty(Configuration.JAEGER_AGENT_PORT, "6832");
+    assertEquals("jaeger-agent", Configuration.ReporterConfiguration.fromEnv().getAgentHost());
+    assertEquals(new Integer(6832), Configuration.ReporterConfiguration.fromEnv().getAgentPort());
+  }
+
+  @Test
+  public void testNoNullPointerOnNullSender() {
+    Configuration.ReporterConfiguration reporterConfiguration =
+            new Configuration.ReporterConfiguration(null, null, null, null);
+    assertNull(reporterConfiguration.getAgentHost());
+    assertNull(reporterConfiguration.getAgentPort());
+
+    reporterConfiguration = new Configuration.ReporterConfiguration(null);
+    assertNull(reporterConfiguration.getAgentHost());
+    assertNull(reporterConfiguration.getAgentPort());
+
+    reporterConfiguration = new Configuration.ReporterConfiguration();
+    assertNull(reporterConfiguration.getAgentHost());
+    assertNull(reporterConfiguration.getAgentPort());
+  }
+
+  @Test
+  public void testCustomSender() {
+    String endpoint = "https://custom-sender-endpoint:14268/api/traces";
+    System.setProperty(Configuration.JAEGER_ENDPOINT, "https://jaeger-collector:14268/api/traces");
+    CustomSender customSender = new CustomSender(endpoint);
+    Configuration.SenderConfiguration senderConfiguration = new Configuration.SenderConfiguration.Builder()
+            .sender(customSender)
+            .build();
+    assertEquals(endpoint, ((CustomSender)senderConfiguration.getSender()).getEndpoint());
+  }
+
+  @Test
+  public void testSenderWithBasicAuthUsesHttpSender() {
+    Configuration.SenderConfiguration senderConfiguration = new Configuration.SenderConfiguration.Builder()
+            .endpoint("https://jaeger-collector:14268/api/traces")
+            .authUsername("username")
+            .authPassword("password")
+            .build();
+    assertTrue(senderConfiguration.getSender() instanceof HttpSender);
+  }
+
+  @Test
+  public void testSenderWithAuthTokenUsesHttpSender() {
+    Configuration.SenderConfiguration senderConfiguration = new Configuration.SenderConfiguration.Builder()
+            .endpoint("https://jaeger-collector:14268/api/traces")
+            .authToken("authToken")
+            .build();
+    assertTrue(senderConfiguration.getSender() instanceof HttpSender);
+  }
+
+  @Test
+  public void testSenderWithAllPropertiesReturnsHttpSender() {
+    System.setProperty(Configuration.JAEGER_ENDPOINT, "https://jaeger-collector:14268/api/traces");
+    System.setProperty(Configuration.JAEGER_AGENT_HOST, "jaeger-agent");
+    System.setProperty(Configuration.JAEGER_AGENT_PORT, "6832");
+
+    assertTrue(Configuration.SenderConfiguration.fromEnv().getSender() instanceof HttpSender);
+  }
+
+  private class CustomSender extends HttpSender {
+    private String endpoint;
+
+    public CustomSender(String endpoint) {
+      super(endpoint);
+      this.endpoint = endpoint;
+    }
+
+    public String getEndpoint() {
+      return endpoint;
+    }
+  }
 }
