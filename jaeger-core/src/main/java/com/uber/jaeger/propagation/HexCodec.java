@@ -12,16 +12,16 @@
  * the License.
  */
 
-package com.uber.jaeger.propagation.b3;
+package com.uber.jaeger.propagation;
 
 // copy/pasted from brave.internal.HexCodec 4.1.1 to avoid build complexity
-final class HexCodec {
+public final class HexCodec {
 
   /**
    * Parses a 1 to 32 character lower-hex string with no prefix into an unsigned long, tossing any
    * bits higher than 64.
    */
-  static long lowerHexToUnsignedLong(String lowerHex) {
+  public static long lowerHexToUnsignedLong(String lowerHex) {
     int length = lowerHex.length();
     if (length < 1 || length > 32) {
       throw isntLowerHexLong(lowerHex);
@@ -75,7 +75,7 @@ final class HexCodec {
   /**
    * Inspired by {@code okio.Buffer.writeLong}
    */
-  static String toLowerHex(long v) {
+  public static String toLowerHex(long v) {
     char[] data = new char[16];
     writeHexLong(data, 0, v);
     return new String(data);

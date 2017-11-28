@@ -26,6 +26,8 @@ import com.github.kristofa.brave.http.HttpClientRequestAdapter;
 import com.github.kristofa.brave.http.HttpServerRequest;
 import com.github.kristofa.brave.http.HttpServerRequestAdapter;
 import com.uber.jaeger.SpanContext;
+import com.uber.jaeger.propagation.HexCodec;
+
 import io.opentracing.propagation.TextMap;
 import java.net.URI;
 import java.util.Iterator;

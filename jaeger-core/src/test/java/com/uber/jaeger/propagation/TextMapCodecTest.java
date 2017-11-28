@@ -27,12 +27,14 @@ public class TextMapCodecTest {
         .withUrlEncoding(true)
         .withSpanContextKey("jaeger-trace-id")
         .withBaggagePrefix("jaeger-baggage-")
+        .withB3(true)
         .build();
     assertNotNull(codec);
     String str = codec.toString();
     assertTrue(str.contains("contextKey=jaeger-trace-id"));
     assertTrue(str.contains("baggagePrefix=jaeger-baggage-"));
     assertTrue(str.contains("urlEncoding=true"));
+    assertTrue(str.contains("b3=true"));
   }
 
   @Test
@@ -42,6 +44,7 @@ public class TextMapCodecTest {
     assertTrue(str.contains("contextKey=uber-trace-id"));
     assertTrue(str.contains("baggagePrefix=uberctx-"));
     assertTrue(str.contains("urlEncoding=false"));
+    assertTrue(str.contains("b3=false"));
   }
 
 }

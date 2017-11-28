@@ -16,7 +16,10 @@ package com.uber.jaeger.propagation.b3;
 
 import com.uber.jaeger.SpanContext;
 import com.uber.jaeger.propagation.Extractor;
+import com.uber.jaeger.propagation.HexCodec;
 import com.uber.jaeger.propagation.Injector;
+import com.uber.jaeger.propagation.TextMapCodec;
+
 import io.opentracing.propagation.TextMap;
 import java.util.Map;
 
@@ -37,57 +40,22 @@ import java.util.Map;
  * <p>
  * See <a href="http://zipkin.io/pages/instrumenting.html">Instrumenting a Library</a>
  */
-public final class B3TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
-  static final String TRACE_ID_NAME = "X-B3-TraceId";
-  static final String SPAN_ID_NAME = "X-B3-SpanId";
-  static final String PARENT_SPAN_ID_NAME = "X-B3-ParentSpanId";
-  static final String SAMPLED_NAME = "X-B3-Sampled";
-  static final String FLAGS_NAME = "X-B3-Flags";
-  // NOTE: uber's flags aren't the same as B3/Finagle ones
-  static final byte SAMPLED_FLAG = 1;
-  static final byte DEBUG_FLAG = 2;
+public final class B3TextMapCodec extends TextMapCodec {
+
+  static final String TRACE_ID_NAME = TextMapCodec.TRACE_ID_NAME;
+  static final String SPAN_ID_NAME = TextMapCodec.SPAN_ID_NAME;
+
+  public B3TextMapCodec() {
+    super(true);
+  }
 
   @Override
   public void inject(SpanContext spanContext, TextMap carrier) {
-    carrier.put(TRACE_ID_NAME, HexCodec.toLowerHex(spanContext.getTraceId()));
-    if (spanContext.getParentId() != 0L) { // Conventionally, parent id == 0 means the root span
-      carrier.put(PARENT_SPAN_ID_NAME, HexCodec.toLowerHex(spanContext.getParentId()));
-    }
-    carrier.put(SPAN_ID_NAME, HexCodec.toLowerHex(spanContext.getSpanId()));
-    carrier.put(SAMPLED_NAME, spanContext.isSampled() ? "1" : "0");
-    if (spanContext.isDebug()) {
-      carrier.put(FLAGS_NAME, "1");
-    }
+    super.injectB3(spanContext, carrier);
   }
 
   @Override
   public SpanContext extract(TextMap carrier) {
-    Long traceId = null;
-    Long spanId = null;
-    long parentId = 0L; // Conventionally, parent id == 0 means the root span
-    byte flags = 0;
-    for (Map.Entry<String, String> entry : carrier) {
-      if (entry.getKey().equalsIgnoreCase(SAMPLED_NAME)) {
-        String value = entry.getValue();
-        if ("1".equals(value) || "true".equalsIgnoreCase(value)) {
-          flags |= SAMPLED_FLAG;
-        }
-      } else if (entry.getKey().equalsIgnoreCase(TRACE_ID_NAME)) {
-        traceId = HexCodec.lowerHexToUnsignedLong(entry.getValue());
-      } else if (entry.getKey().equalsIgnoreCase(PARENT_SPAN_ID_NAME)) {
-        parentId = HexCodec.lowerHexToUnsignedLong(entry.getValue());
-      } else if (entry.getKey().equalsIgnoreCase(SPAN_ID_NAME)) {
-        spanId = HexCodec.lowerHexToUnsignedLong(entry.getValue());
-      } else if (entry.getKey().equalsIgnoreCase(FLAGS_NAME)) {
-        if (entry.getValue().equals("1")) {
-          flags |= DEBUG_FLAG;
-        }
-      }
-    }
-
-    if (traceId != null && spanId != null) {
-      return new SpanContext(traceId, spanId, parentId, flags);
-    }
-    return null;
+    return super.extractB3(carrier);
   }
 }

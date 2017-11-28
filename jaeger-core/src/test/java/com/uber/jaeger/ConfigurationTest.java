@@ -27,9 +27,15 @@ import com.uber.jaeger.samplers.ConstSampler;
 import com.uber.jaeger.senders.HttpSender;
 import com.uber.jaeger.senders.Sender;
 import io.opentracing.NoopTracerFactory;
+import io.opentracing.propagation.Format;
+import io.opentracing.propagation.TextMap;
 import io.opentracing.util.GlobalTracer;
 import java.lang.reflect.Field;
 import java.net.SocketException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.junit.After;
 import org.junit.Before;
@@ -58,6 +64,7 @@ public class ConfigurationTest {
     System.clearProperty(Configuration.JAEGER_AUTH_TOKEN);
     System.clearProperty(Configuration.JAEGER_USER);
     System.clearProperty(Configuration.JAEGER_PASSWORD);
+    System.clearProperty(Configuration.JAEGER_B3_CODEC);
 
     System.clearProperty(TEST_PROPERTY);
 
@@ -260,6 +267,60 @@ public class ConfigurationTest {
     System.setProperty(Configuration.JAEGER_AGENT_PORT, "6832");
 
     assertTrue(Configuration.SenderConfiguration.fromEnv().getSender() instanceof HttpSender);
+  }
+
+  @Test
+  public void testB3CodecEnabled() {
+    System.setProperty(Configuration.JAEGER_B3_CODEC, "true");
+    System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
+
+    long traceId = 1234;
+    long spanId = 5678;
+
+    TestTextMap textMap = new TestTextMap();
+    SpanContext spanContext = new SpanContext(traceId, spanId, 0, (byte)0);
+
+    io.opentracing.Tracer tracer = Configuration.fromEnv().getTracer();
+    tracer.inject(spanContext, Format.Builtin.TEXT_MAP, textMap);
+
+    assertNotNull(textMap.get("X-B3-TraceId"));
+    assertNotNull(textMap.get("X-B3-SpanId"));
+
+    SpanContext extractedContext = (SpanContext)tracer.extract(Format.Builtin.TEXT_MAP, textMap);
+    assertEquals(traceId, extractedContext.getTraceId());
+    assertEquals(spanId, extractedContext.getSpanId());
+  }
+
+  @Test
+  public void testB3CodecDisabled() {
+    System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
+
+    TestTextMap textMap = new TestTextMap();
+    SpanContext spanContext = new SpanContext(1234, 5678, 0, (byte)0);
+
+    Configuration.fromEnv().getTracer().inject(spanContext, Format.Builtin.TEXT_MAP, textMap);
+
+    assertNull(textMap.get("X-B3-TraceId"));
+    assertNull(textMap.get("X-B3-SpanId"));
+  }
+
+  static class TestTextMap implements TextMap {
+
+    private Map<String,String> values = new HashMap<>();
+
+    @Override
+    public Iterator<Entry<String, String>> iterator() {
+      return values.entrySet().iterator();
+    }
+
+    @Override
+    public void put(String key, String value) {
+      values.put(key, value);
+    }
+
+    public String get(String key) {
+      return values.get(key);
+    }
   }
 
   private class CustomSender extends HttpSender {

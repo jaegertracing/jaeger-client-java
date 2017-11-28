@@ -18,6 +18,7 @@ import com.uber.jaeger.metrics.Metrics;
 import com.uber.jaeger.metrics.NullStatsReporter;
 import com.uber.jaeger.metrics.StatsFactory;
 import com.uber.jaeger.metrics.StatsFactoryImpl;
+import com.uber.jaeger.propagation.TextMapCodec;
 import com.uber.jaeger.reporters.CompositeReporter;
 import com.uber.jaeger.reporters.LoggingReporter;
 import com.uber.jaeger.reporters.RemoteReporter;
@@ -31,6 +32,8 @@ import com.uber.jaeger.samplers.Sampler;
 import com.uber.jaeger.senders.HttpSender;
 import com.uber.jaeger.senders.Sender;
 import com.uber.jaeger.senders.UdpSender;
+
+import io.opentracing.propagation.Format;
 import io.opentracing.util.GlobalTracer;
 
 import java.io.IOException;
@@ -131,6 +134,11 @@ public class Configuration {
   public static final String JAEGER_DISABLE_GLOBAL_TRACER = JAEGER_PREFIX + "DISABLE_GLOBAL_TRACER";
 
   /**
+   * Boolean to determine if trace context should be propagated also using B3 format. Default is false.
+   */
+  public static final String JAEGER_B3_CODEC = JAEGER_PREFIX + "B3_CODEC";
+
+  /**
    * The serviceName that the tracer will use
    */
   private final String serviceName;
@@ -151,6 +159,11 @@ public class Configuration {
   private final boolean disableGlobalTracer;
 
   /**
+   * Whether trace context propagation should handle B3 header properties as well.
+   */
+  private final boolean b3codec;
+
+  /**
    * lazy singleton Tracer initialized in getTracer() method.
    */
   private Tracer tracer;
@@ -163,14 +176,15 @@ public class Configuration {
       String serviceName,
       SamplerConfiguration samplerConfig,
       ReporterConfiguration reporterConfig) {
-    this(serviceName, samplerConfig, reporterConfig, false);
+    this(serviceName, samplerConfig, reporterConfig, false, false);
   }
 
   private Configuration(
       String serviceName,
       SamplerConfiguration samplerConfig,
       ReporterConfiguration reporterConfig,
-      boolean disableGlobalTracer) {
+      boolean disableGlobalTracer,
+      boolean b3codec) {
     if (serviceName == null || serviceName.isEmpty()) {
       throw new IllegalArgumentException("Must provide a service name for Jaeger Configuration");
     }
@@ -190,6 +204,7 @@ public class Configuration {
     statsFactory = new StatsFactoryImpl(new NullStatsReporter());
 
     this.disableGlobalTracer = disableGlobalTracer;
+    this.b3codec = b3codec;
   }
 
   public static Configuration fromEnv() {
@@ -197,14 +212,26 @@ public class Configuration {
         getProperty(JAEGER_SERVICE_NAME),
         SamplerConfiguration.fromEnv(),
         ReporterConfiguration.fromEnv(),
-        getPropertyAsBool(JAEGER_DISABLE_GLOBAL_TRACER));
+        getPropertyAsBool(JAEGER_DISABLE_GLOBAL_TRACER),
+        getPropertyAsBool(JAEGER_B3_CODEC));
   }
 
   public Tracer.Builder getTracerBuilder() {
     Metrics metrics = new Metrics(statsFactory);
     Reporter reporter = reporterConfig.getReporter(metrics);
     Sampler sampler = samplerConfig.createSampler(serviceName, metrics);
-    return new Tracer.Builder(serviceName, reporter, sampler).withMetrics(metrics).withTags(tracerTagsFromEnv());
+    Tracer.Builder builder = new Tracer.Builder(serviceName,
+        reporter, sampler).withMetrics(metrics).withTags(tracerTagsFromEnv());
+    if (b3codec) {
+      // Replace the codec with a B3 enabled instance
+      TextMapCodec textMapCodec = TextMapCodec.builder().withUrlEncoding(false).withB3(b3codec).build();
+      builder.registerInjector(Format.Builtin.TEXT_MAP, textMapCodec);
+      builder.registerExtractor(Format.Builtin.TEXT_MAP, textMapCodec);
+      TextMapCodec httpCodec = TextMapCodec.builder().withUrlEncoding(true).withB3(b3codec).build();
+      builder.registerInjector(Format.Builtin.HTTP_HEADERS, httpCodec);
+      builder.registerExtractor(Format.Builtin.HTTP_HEADERS, httpCodec);
+    }
+    return builder;
   }
 
   public synchronized io.opentracing.Tracer getTracer() {
