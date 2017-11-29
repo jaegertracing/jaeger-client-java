@@ -21,7 +21,7 @@ public final class HexCodec {
    * Parses a 1 to 32 character lower-hex string with no prefix into an unsigned long, tossing any
    * bits higher than 64.
    */
-  public static long lowerHexToUnsignedLong(String lowerHex) {
+  static long lowerHexToUnsignedLong(String lowerHex) {
     int length = lowerHex.length();
     if (length < 1 || length > 32) {
       throw isntLowerHexLong(lowerHex);
@@ -75,7 +75,7 @@ public final class HexCodec {
   /**
    * Inspired by {@code okio.Buffer.writeLong}
    */
-  public static String toLowerHex(long v) {
+  static String toLowerHex(long v) {
     char[] data = new char[16];
     writeHexLong(data, 0, v);
     return new String(data);

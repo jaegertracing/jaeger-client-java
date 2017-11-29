@@ -191,7 +191,7 @@ public class TextMapCodec implements Codec<TextMap> {
       return this;
     }
 
-    public Builder withCodec(List<Codec<TextMap>> codecs) {
+    public Builder withCodecs(List<Codec<TextMap>> codecs) {
       if (this.codecs == null) {
         this.codecs = new LinkedList<Codec<TextMap>>();
       }

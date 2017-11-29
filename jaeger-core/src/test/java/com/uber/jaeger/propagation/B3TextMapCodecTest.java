@@ -14,6 +14,10 @@
 
 package com.uber.jaeger.propagation;
 
+import static com.uber.jaeger.propagation.B3TextMapCodec.DEBUG_FLAG;
+import static com.uber.jaeger.propagation.B3TextMapCodec.FLAGS_NAME;
+import static com.uber.jaeger.propagation.B3TextMapCodec.SAMPLED_FLAG;
+import static com.uber.jaeger.propagation.B3TextMapCodec.SAMPLED_NAME;
 import static com.uber.jaeger.propagation.B3TextMapCodec.SPAN_ID_NAME;
 import static com.uber.jaeger.propagation.B3TextMapCodec.TRACE_ID_NAME;
 import static org.junit.Assert.assertEquals;
@@ -41,18 +45,21 @@ public class B3TextMapCodecTest {
   B3TextMapCodec b3Codec = new B3TextMapCodec();
 
   @Test
-  public void testExtract() throws Exception {
+  public void downgrades128BitTraceIdToLower64Bits() throws Exception {
     String hex128Bits = "463ac35c9f6413ad48485a3953bb6124";
     String lower64Bits = "48485a3953bb6124";
 
     DelegatingTextMap textMap = new DelegatingTextMap();
     textMap.put(TRACE_ID_NAME, hex128Bits);
     textMap.put(SPAN_ID_NAME, lower64Bits);
+    textMap.put(SAMPLED_NAME, "1");
+    textMap.put(FLAGS_NAME, "1");
 
     SpanContext context = b3Codec.extract(textMap);
 
     assertEquals(HexCodec.lowerHexToUnsignedLong(lower64Bits), context.getTraceId());
     assertEquals(HexCodec.lowerHexToUnsignedLong(lower64Bits), context.getSpanId());
+    assertEquals(SAMPLED_FLAG | DEBUG_FLAG, context.getFlags());
   }
 
   @Test

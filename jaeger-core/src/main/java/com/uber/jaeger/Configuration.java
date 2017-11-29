@@ -375,10 +375,10 @@ public class Configuration {
       if (!codecs.isEmpty()) {
         // Replace existing TEXT_MAP and HTTP_HEADERS codec with one that also includes the
         // list of configured codecs
-        TextMapCodec textMapCodec = TextMapCodec.builder().withUrlEncoding(false).withCodec(codecs).build();
+        TextMapCodec textMapCodec = TextMapCodec.builder().withUrlEncoding(false).withCodecs(codecs).build();
         builder.registerInjector(Format.Builtin.TEXT_MAP, textMapCodec);
         builder.registerExtractor(Format.Builtin.TEXT_MAP, textMapCodec);
-        TextMapCodec httpCodec = TextMapCodec.builder().withUrlEncoding(true).withCodec(codecs).build();
+        TextMapCodec httpCodec = TextMapCodec.builder().withUrlEncoding(true).withCodecs(codecs).build();
         builder.registerInjector(Format.Builtin.HTTP_HEADERS, httpCodec);
         builder.registerExtractor(Format.Builtin.HTTP_HEADERS, httpCodec);
       }

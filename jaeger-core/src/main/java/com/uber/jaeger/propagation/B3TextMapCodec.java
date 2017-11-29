@@ -19,7 +19,7 @@ import io.opentracing.propagation.TextMap;
 import java.util.Map;
 
 /**
- * This format is compatible with other trace libraries such as Brave, Wingtips, zipkin-js, etc.
+ * This format is compatible with other Zipkin based trace libraries such as Brave, Wingtips, zipkin-js, etc.
  *
  * <p>
  * Example usage:
