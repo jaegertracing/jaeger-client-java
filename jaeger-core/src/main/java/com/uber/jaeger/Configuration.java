@@ -19,6 +19,7 @@ import com.uber.jaeger.metrics.NullStatsReporter;
 import com.uber.jaeger.metrics.StatsFactory;
 import com.uber.jaeger.metrics.StatsFactoryImpl;
 import com.uber.jaeger.propagation.B3TextMapCodec;
+import com.uber.jaeger.propagation.Codec;
 import com.uber.jaeger.propagation.TextMapCodec;
 import com.uber.jaeger.reporters.CompositeReporter;
 import com.uber.jaeger.reporters.LoggingReporter;
@@ -35,12 +36,16 @@ import com.uber.jaeger.senders.Sender;
 import com.uber.jaeger.senders.UdpSender;
 
 import io.opentracing.propagation.Format;
+import io.opentracing.propagation.TextMap;
 import io.opentracing.util.GlobalTracer;
 
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.text.ParseException;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import lombok.Getter;
@@ -148,6 +153,8 @@ public class Configuration {
 
   private final ReporterConfiguration reporterConfig;
 
+  private final CodecConfiguration codecConfig;
+
   /**
    * A interface that wraps an underlying metrics generator in order to report Jaeger's metrics.
    */
@@ -158,11 +165,6 @@ public class Configuration {
    * Use the local {@link #tracer} instead.
    */
   private final boolean disableGlobalTracer;
-
-  /**
-   * Whether trace context propagation should handle B3 header properties as well.
-   */
-  private final boolean b3codec;
 
   /**
    * lazy singleton Tracer initialized in getTracer() method.
@@ -177,15 +179,15 @@ public class Configuration {
       String serviceName,
       SamplerConfiguration samplerConfig,
       ReporterConfiguration reporterConfig) {
-    this(serviceName, samplerConfig, reporterConfig, false, false);
+    this(serviceName, samplerConfig, reporterConfig, null, false);
   }
 
   private Configuration(
       String serviceName,
       SamplerConfiguration samplerConfig,
       ReporterConfiguration reporterConfig,
-      boolean disableGlobalTracer,
-      boolean b3codec) {
+      CodecConfiguration codecConfig,
+      boolean disableGlobalTracer) {
     if (serviceName == null || serviceName.isEmpty()) {
       throw new IllegalArgumentException("Must provide a service name for Jaeger Configuration");
     }
@@ -202,10 +204,14 @@ public class Configuration {
     }
     this.reporterConfig = reporterConfig;
 
+    if (codecConfig == null) {
+      codecConfig = new CodecConfiguration(Collections.<Codec<TextMap>>emptyList());
+    }
+    this.codecConfig = codecConfig;
+
     statsFactory = new StatsFactoryImpl(new NullStatsReporter());
 
     this.disableGlobalTracer = disableGlobalTracer;
-    this.b3codec = b3codec;
   }
 
   public static Configuration fromEnv() {
@@ -213,8 +219,8 @@ public class Configuration {
         getProperty(JAEGER_SERVICE_NAME),
         SamplerConfiguration.fromEnv(),
         ReporterConfiguration.fromEnv(),
-        getPropertyAsBool(JAEGER_DISABLE_GLOBAL_TRACER),
-        getPropertyAsBool(JAEGER_B3_CODEC));
+        CodecConfiguration.fromEnv(),
+        getPropertyAsBool(JAEGER_DISABLE_GLOBAL_TRACER));
   }
 
   public Tracer.Builder getTracerBuilder() {
@@ -223,15 +229,7 @@ public class Configuration {
     Sampler sampler = samplerConfig.createSampler(serviceName, metrics);
     Tracer.Builder builder = new Tracer.Builder(serviceName,
         reporter, sampler).withMetrics(metrics).withTags(tracerTagsFromEnv());
-    if (b3codec) {
-      // Replace the codec with a B3 enabled instance
-      TextMapCodec textMapCodec = TextMapCodec.builder().withUrlEncoding(false).withCodec(new B3TextMapCodec()).build();
-      builder.registerInjector(Format.Builtin.TEXT_MAP, textMapCodec);
-      builder.registerExtractor(Format.Builtin.TEXT_MAP, textMapCodec);
-      TextMapCodec httpCodec = TextMapCodec.builder().withUrlEncoding(true).withCodec(new B3TextMapCodec()).build();
-      builder.registerInjector(Format.Builtin.HTTP_HEADERS, httpCodec);
-      builder.registerExtractor(Format.Builtin.HTTP_HEADERS, httpCodec);
-    }
+    codecConfig.config(builder);
     return builder;
   }
 
@@ -352,6 +350,38 @@ public class Configuration {
 
     public String getManagerHostPort() {
       return managerHostPort;
+    }
+  }
+
+  /**
+   * CodecConfiguration can be used to support additional trace context propagation codec.
+   */
+  public static class CodecConfiguration {
+    private List<Codec<TextMap>> codecs;
+
+    public CodecConfiguration(List<Codec<TextMap>> codecs) {
+      this.codecs = codecs;
+    }
+
+    public static CodecConfiguration fromEnv() {
+      List<Codec<TextMap>> codecs = new LinkedList<Codec<TextMap>>();
+      if (getPropertyAsBool(JAEGER_B3_CODEC)) {
+        codecs.add(new B3TextMapCodec());
+      }
+      return new CodecConfiguration(codecs);
+    }
+
+    public void config(Tracer.Builder builder) {
+      if (!codecs.isEmpty()) {
+        // Replace existing TEXT_MAP and HTTP_HEADERS codec with one that also includes the
+        // list of configured codecs
+        TextMapCodec textMapCodec = TextMapCodec.builder().withUrlEncoding(false).withCodec(codecs).build();
+        builder.registerInjector(Format.Builtin.TEXT_MAP, textMapCodec);
+        builder.registerExtractor(Format.Builtin.TEXT_MAP, textMapCodec);
+        TextMapCodec httpCodec = TextMapCodec.builder().withUrlEncoding(true).withCodec(codecs).build();
+        builder.registerInjector(Format.Builtin.HTTP_HEADERS, httpCodec);
+        builder.registerExtractor(Format.Builtin.HTTP_HEADERS, httpCodec);
+      }
     }
   }
 

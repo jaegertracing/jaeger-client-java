@@ -23,6 +23,7 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -187,6 +188,14 @@ public class TextMapCodec implements Codec<TextMap> {
         this.codecs = new LinkedList<Codec<TextMap>>();
       }
       this.codecs.add(codec);
+      return this;
+    }
+
+    public Builder withCodec(List<Codec<TextMap>> codecs) {
+      if (this.codecs == null) {
+        this.codecs = new LinkedList<Codec<TextMap>>();
+      }
+      this.codecs.addAll(codecs);
       return this;
     }
 
