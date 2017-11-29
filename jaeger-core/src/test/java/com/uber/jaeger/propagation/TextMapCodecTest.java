@@ -18,15 +18,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import com.uber.jaeger.SpanContext;
+
+import io.opentracing.propagation.TextMap;
+
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.junit.Test;
-
-import com.uber.jaeger.SpanContext;
-
-import io.opentracing.propagation.TextMap;
 
 public class TextMapCodecTest {
 
@@ -104,7 +104,7 @@ public class TextMapCodecTest {
   }
 
   static class TestCodec implements Codec<TextMap> {
-    final static String KEY = "TestKey";
+    static final String KEY = "TestKey";
 
     @Override
     public void inject(SpanContext spanContext, TextMap carrier) {
