@@ -26,7 +26,6 @@ import com.uber.jaeger.context.TraceContext;
 import com.uber.jaeger.context.TracingUtils;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
-import io.opentracing.propagation.Format;
 import io.opentracing.tag.Tags;
 import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
@@ -66,9 +65,6 @@ public class SpanCreationRequestInterceptor implements HttpRequestInterceptor {
       }
 
       Span clientSpan = clientSpanBuilder.startManual();
-      // putting newly created span on the trace context so that
-      // other interceptors in the chain
-      parentContext.push(clientSpan);
 
       RequestLine requestLine = httpRequest.getRequestLine();
 

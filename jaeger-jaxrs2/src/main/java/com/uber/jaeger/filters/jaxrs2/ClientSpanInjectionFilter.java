@@ -34,16 +34,22 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ClientSpanInjectionFilter implements ClientRequestFilter, ClientResponseFilter {
   private final Tracer tracer;
-  private final TraceContext traceContext;
 
+  /**
+   * @deprecated use {@link ClientSpanInjectionFilter(Tracer)}
+   */
+  @Deprecated
   public ClientSpanInjectionFilter(Tracer tracer, TraceContext traceContext) {
+    this(tracer);
+  }
+
+  public ClientSpanInjectionFilter(Tracer tracer) {
     this.tracer = tracer;
-    this.traceContext = traceContext;
   }
 
   @Override
   public void filter(ClientRequestContext clientRequestContext) throws IOException {
-    Span clientSpan = traceContext.getCurrentSpan();
+    Span clientSpan = (Span) clientRequestContext.getProperty(Constants.CURRENT_SPAN_CONTEXT_KEY);
 
     tracer.inject(
         clientSpan.context(),
