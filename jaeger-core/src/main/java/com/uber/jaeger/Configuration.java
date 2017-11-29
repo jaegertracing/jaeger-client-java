@@ -18,6 +18,7 @@ import com.uber.jaeger.metrics.Metrics;
 import com.uber.jaeger.metrics.NullStatsReporter;
 import com.uber.jaeger.metrics.StatsFactory;
 import com.uber.jaeger.metrics.StatsFactoryImpl;
+import com.uber.jaeger.propagation.B3TextMapCodec;
 import com.uber.jaeger.propagation.TextMapCodec;
 import com.uber.jaeger.reporters.CompositeReporter;
 import com.uber.jaeger.reporters.LoggingReporter;
@@ -224,10 +225,10 @@ public class Configuration {
         reporter, sampler).withMetrics(metrics).withTags(tracerTagsFromEnv());
     if (b3codec) {
       // Replace the codec with a B3 enabled instance
-      TextMapCodec textMapCodec = TextMapCodec.builder().withUrlEncoding(false).withB3(b3codec).build();
+      TextMapCodec textMapCodec = TextMapCodec.builder().withUrlEncoding(false).withCodec(new B3TextMapCodec()).build();
       builder.registerInjector(Format.Builtin.TEXT_MAP, textMapCodec);
       builder.registerExtractor(Format.Builtin.TEXT_MAP, textMapCodec);
-      TextMapCodec httpCodec = TextMapCodec.builder().withUrlEncoding(true).withB3(b3codec).build();
+      TextMapCodec httpCodec = TextMapCodec.builder().withUrlEncoding(true).withCodec(new B3TextMapCodec()).build();
       builder.registerInjector(Format.Builtin.HTTP_HEADERS, httpCodec);
       builder.registerExtractor(Format.Builtin.HTTP_HEADERS, httpCodec);
     }

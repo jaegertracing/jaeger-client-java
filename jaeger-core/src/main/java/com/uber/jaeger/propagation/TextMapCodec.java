@@ -22,10 +22,11 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Locale;
 import java.util.Map;
 
-public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
+public class TextMapCodec implements Codec<TextMap> {
   /**
    * Key used to store serialized span context representation
    */
@@ -36,15 +37,6 @@ public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
    */
   private static final String BAGGAGE_KEY_PREFIX = "uberctx-";
 
-  protected static final String TRACE_ID_NAME = "X-B3-TraceId";
-  protected static final String SPAN_ID_NAME = "X-B3-SpanId";
-  protected static final String PARENT_SPAN_ID_NAME = "X-B3-ParentSpanId";
-  protected static final String SAMPLED_NAME = "X-B3-Sampled";
-  protected static final String FLAGS_NAME = "X-B3-Flags";
-  // NOTE: uber's flags aren't the same as B3/Finagle ones
-  protected static final byte SAMPLED_FLAG = 1;
-  protected static final byte DEBUG_FLAG = 2;
-
   private static final PrefixedKeys keys = new PrefixedKeys();
 
   private final String contextKey;
@@ -53,7 +45,7 @@ public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
 
   private final boolean urlEncoding;
 
-  private final boolean b3;
+  private final java.util.List<Codec<TextMap>> codecs;
 
   public TextMapCodec(boolean urlEncoding) {
     this(builder().withUrlEncoding(urlEncoding));
@@ -63,7 +55,7 @@ public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
     this.urlEncoding = builder.urlEncoding;
     this.contextKey = builder.spanContextKey;
     this.baggagePrefix = builder.baggagePrefix;
-    this.b3 = builder.b3;
+    this.codecs = builder.codecs;
   }
 
   @Override
@@ -72,20 +64,10 @@ public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
     for (Map.Entry<String, String> entry : spanContext.baggageItems()) {
       carrier.put(keys.prefixedKey(entry.getKey(), baggagePrefix), encodedValue(entry.getValue()));
     }
-    if (b3) {
-      injectB3(spanContext, carrier);
-    }
-  }
-
-  protected void injectB3(SpanContext spanContext, TextMap carrier) {
-    carrier.put(TRACE_ID_NAME, HexCodec.toLowerHex(spanContext.getTraceId()));
-    if (spanContext.getParentId() != 0L) { // Conventionally, parent id == 0 means the root span
-      carrier.put(PARENT_SPAN_ID_NAME, HexCodec.toLowerHex(spanContext.getParentId()));
-    }
-    carrier.put(SPAN_ID_NAME, HexCodec.toLowerHex(spanContext.getSpanId()));
-    carrier.put(SAMPLED_NAME, spanContext.isSampled() ? "1" : "0");
-    if (spanContext.isDebug()) {
-      carrier.put(FLAGS_NAME, "1");
+    if (codecs != null) {
+      for (Codec<TextMap> codec : codecs) {
+        codec.inject(spanContext, carrier);
+      }
     }
   }
 
@@ -108,8 +90,13 @@ public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
         baggage.put(keys.unprefixedKey(key, baggagePrefix), decodedValue(entry.getValue()));
       }
     }
-    if (context == null && b3) {
-      context = extractB3(carrier);
+    if (context == null && codecs != null) {
+      for (Codec<TextMap> codec : codecs) {
+        context = codec.extract(carrier);
+        if (context != null) {
+          break;
+        }
+      }
     }
     if (context == null) {
       if (debugId != null) {
@@ -121,36 +108,6 @@ public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
       return context;
     }
     return context.withBaggage(baggage);
-  }
-
-  protected SpanContext extractB3(TextMap carrier) {
-    Long traceId = null;
-    Long spanId = null;
-    long parentId = 0L; // Conventionally, parent id == 0 means the root span
-    byte flags = 0;
-    for (Map.Entry<String, String> entry : carrier) {
-      if (entry.getKey().equalsIgnoreCase(SAMPLED_NAME)) {
-        String value = entry.getValue();
-        if ("1".equals(value) || "true".equalsIgnoreCase(value)) {
-          flags |= SAMPLED_FLAG;
-        }
-      } else if (entry.getKey().equalsIgnoreCase(TRACE_ID_NAME)) {
-        traceId = HexCodec.lowerHexToUnsignedLong(entry.getValue());
-      } else if (entry.getKey().equalsIgnoreCase(PARENT_SPAN_ID_NAME)) {
-        parentId = HexCodec.lowerHexToUnsignedLong(entry.getValue());
-      } else if (entry.getKey().equalsIgnoreCase(SPAN_ID_NAME)) {
-        spanId = HexCodec.lowerHexToUnsignedLong(entry.getValue());
-      } else if (entry.getKey().equalsIgnoreCase(FLAGS_NAME)) {
-        if (entry.getValue().equals("1")) {
-          flags |= DEBUG_FLAG;
-        }
-      }
-    }
-
-    if (traceId != null && spanId != null) {
-      return new SpanContext(traceId, spanId, parentId, flags);
-    }
-    return null;
   }
 
   @Override
@@ -166,9 +123,6 @@ public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
         .append(',')
         .append("urlEncoding=")
         .append(urlEncoding)
-        .append(',')
-        .append("b3=")
-        .append(b3)
         .append('}');
     return buffer.toString();
   }
@@ -211,7 +165,7 @@ public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
     private boolean urlEncoding;
     private String spanContextKey = SPAN_CONTEXT_KEY;
     private String baggagePrefix = BAGGAGE_KEY_PREFIX;
-    private boolean b3 = false;
+    private java.util.List<Codec<TextMap>> codecs;
 
     public Builder withUrlEncoding(boolean urlEncoding) {
       this.urlEncoding = urlEncoding;
@@ -228,8 +182,11 @@ public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
       return this;
     }
 
-    public Builder withB3(boolean b3) {
-      this.b3 = b3;
+    public Builder withCodec(Codec<TextMap> codec) {
+      if (this.codecs == null) {
+        this.codecs = new LinkedList<Codec<TextMap>>();
+      }
+      this.codecs.add(codec);
       return this;
     }
 

@@ -14,15 +14,6 @@
 
 package com.uber.jaeger.propagation.b3;
 
-import com.uber.jaeger.SpanContext;
-import com.uber.jaeger.propagation.Extractor;
-import com.uber.jaeger.propagation.HexCodec;
-import com.uber.jaeger.propagation.Injector;
-import com.uber.jaeger.propagation.TextMapCodec;
-
-import io.opentracing.propagation.TextMap;
-import java.util.Map;
-
 /**
  * This format is compatible with other trace libraries such as Brave, Wingtips, zipkin-js, etc.
  *
@@ -40,22 +31,9 @@ import java.util.Map;
  * <p>
  * See <a href="http://zipkin.io/pages/instrumenting.html">Instrumenting a Library</a>
  */
-public final class B3TextMapCodec extends TextMapCodec {
+public final class B3TextMapCodec extends com.uber.jaeger.propagation.B3TextMapCodec {
 
-  static final String TRACE_ID_NAME = TextMapCodec.TRACE_ID_NAME;
-  static final String SPAN_ID_NAME = TextMapCodec.SPAN_ID_NAME;
+  static final String TRACE_ID_NAME = com.uber.jaeger.propagation.B3TextMapCodec.TRACE_ID_NAME;
+  static final String SPAN_ID_NAME = com.uber.jaeger.propagation.B3TextMapCodec.SPAN_ID_NAME;
 
-  public B3TextMapCodec() {
-    super(true);
-  }
-
-  @Override
-  public void inject(SpanContext spanContext, TextMap carrier) {
-    super.injectB3(spanContext, carrier);
-  }
-
-  @Override
-  public SpanContext extract(TextMap carrier) {
-    return super.extractB3(carrier);
-  }
 }
