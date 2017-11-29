@@ -32,6 +32,7 @@ public class Span implements io.opentracing.Span {
   private final List<Reference> references;
   private SpanContext context;
   private List<LogData> logs;
+  private boolean finished = false; // to prevent the same span from getting reported multiple times
 
   Span(
       Tracer tracer,
@@ -162,6 +163,11 @@ public class Span implements io.opentracing.Span {
 
   private void finishWithDuration(long durationMicros) {
     synchronized (this) {
+      if (finished) {
+        return;
+      }
+      finished = true;
+
       this.durationMicroseconds = durationMicros;
     }
 

@@ -154,6 +154,22 @@ public class SpanTest {
   }
 
   @Test
+  public void testMultipleSpanFinishDoesNotCauseMultipleReportCalls() {
+    Span span = (Span) tracer.buildSpan("test-service-name").startManual();
+    span.finish();
+
+    assertEquals(1, reporter.getSpans().size());
+
+    Span reportedSpan = reporter.getSpans().get(0);
+
+    // new finish calls will not affect size of reporter.getSpans()
+    span.finish();
+
+    assertEquals(1, reporter.getSpans().size());
+    assertEquals(reportedSpan, reporter.getSpans().get(0));
+  }
+
+  @Test
   public void testWithoutTimestampsAccurateClock() {
     when(clock.isMicrosAccurate()).thenReturn(true);
     when(clock.currentTimeMicros()).thenReturn(1L).thenReturn(5L);
