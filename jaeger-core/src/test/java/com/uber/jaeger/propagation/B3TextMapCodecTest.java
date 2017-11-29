@@ -16,6 +16,7 @@ package com.uber.jaeger.propagation;
 
 import static com.uber.jaeger.propagation.B3TextMapCodec.DEBUG_FLAG;
 import static com.uber.jaeger.propagation.B3TextMapCodec.FLAGS_NAME;
+import static com.uber.jaeger.propagation.B3TextMapCodec.PARENT_SPAN_ID_NAME;
 import static com.uber.jaeger.propagation.B3TextMapCodec.SAMPLED_FLAG;
 import static com.uber.jaeger.propagation.B3TextMapCodec.SAMPLED_NAME;
 import static com.uber.jaeger.propagation.B3TextMapCodec.SPAN_ID_NAME;
@@ -52,6 +53,7 @@ public class B3TextMapCodecTest {
     DelegatingTextMap textMap = new DelegatingTextMap();
     textMap.put(TRACE_ID_NAME, hex128Bits);
     textMap.put(SPAN_ID_NAME, lower64Bits);
+    textMap.put(PARENT_SPAN_ID_NAME, "0");
     textMap.put(SAMPLED_NAME, "1");
     textMap.put(FLAGS_NAME, "1");
 
@@ -59,6 +61,7 @@ public class B3TextMapCodecTest {
 
     assertEquals(HexCodec.lowerHexToUnsignedLong(lower64Bits), context.getTraceId());
     assertEquals(HexCodec.lowerHexToUnsignedLong(lower64Bits), context.getSpanId());
+    assertEquals(0, context.getParentId());
     assertEquals(SAMPLED_FLAG | DEBUG_FLAG, context.getFlags());
   }
 

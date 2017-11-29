@@ -15,7 +15,7 @@
 package com.uber.jaeger.propagation;
 
 // copy/pasted from brave.internal.HexCodec 4.1.1 to avoid build complexity
-public final class HexCodec {
+final class HexCodec {
 
   /**
    * Parses a 1 to 32 character lower-hex string with no prefix into an unsigned long, tossing any
