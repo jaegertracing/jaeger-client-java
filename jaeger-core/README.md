@@ -43,6 +43,7 @@ Property | Required | Description
 JAEGER_SERVICE_NAME | yes | The service name
 JAEGER_AGENT_HOST | no | The hostname for communicating with agent via UDP
 JAEGER_AGENT_PORT | no | The port for communicating with agent via UDP
+JAEGER_B3_CODEC | false | Whether to support B3 trace context propagation headers
 JAEGER_ENDPOINT | no | The traces endpoint, in case the client should connect directly to the Collector, like http://jaeger-collector:14268/api/traces
 JAEGER_AUTH_TOKEN | no | Authentication Token to send as "Bearer" to the endpoint
 JAEGER_USER | no | Username to send as part of "Basic" authentication to the endpoint
