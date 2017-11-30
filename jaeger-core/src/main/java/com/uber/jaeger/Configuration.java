@@ -205,7 +205,7 @@ public class Configuration {
     this.reporterConfig = reporterConfig;
 
     if (codecConfig == null) {
-      codecConfig = new CodecConfiguration(Collections.<Codec<TextMap>>emptyList());
+      codecConfig = new CodecConfiguration(Collections.<Format<?>, List<Codec<TextMap>>>emptyMap());
     }
     this.codecConfig = codecConfig;
 
@@ -357,30 +357,43 @@ public class Configuration {
    * CodecConfiguration can be used to support additional trace context propagation codec.
    */
   public static class CodecConfiguration {
-    private List<Codec<TextMap>> codecs;
+    private Map<Format<?>, List<Codec<TextMap>>> codecs;
 
-    public CodecConfiguration(List<Codec<TextMap>> codecs) {
+    private CodecConfiguration(Map<Format<?>, List<Codec<TextMap>>> codecs) {
       this.codecs = codecs;
     }
 
     public static CodecConfiguration fromEnv() {
-      List<Codec<TextMap>> codecs = new LinkedList<Codec<TextMap>>();
+      Map<Format<?>, List<Codec<TextMap>>> codecs = new HashMap<Format<?>, List<Codec<TextMap>>>();
+      List<Codec<TextMap>> httpHeadersCodecs = new LinkedList<Codec<TextMap>>();
+      List<Codec<TextMap>> textMapCodecs = new LinkedList<Codec<TextMap>>();
       if (getPropertyAsBool(JAEGER_B3_CODEC)) {
-        codecs.add(new B3TextMapCodec());
+        httpHeadersCodecs.add(new B3TextMapCodec());
+        textMapCodecs.add(new B3TextMapCodec());
+      }
+      if (!httpHeadersCodecs.isEmpty()) {
+        codecs.put(Format.Builtin.HTTP_HEADERS, httpHeadersCodecs);
+      }
+      if (!textMapCodecs.isEmpty()) {
+        codecs.put(Format.Builtin.TEXT_MAP, textMapCodecs);
       }
       return new CodecConfiguration(codecs);
     }
 
     public void config(Tracer.Builder builder) {
-      if (!codecs.isEmpty()) {
-        // Replace existing TEXT_MAP and HTTP_HEADERS codec with one that also includes the
-        // list of configured codecs
-        TextMapCodec textMapCodec = TextMapCodec.builder().withUrlEncoding(false).withCodecs(codecs).build();
-        builder.registerInjector(Format.Builtin.TEXT_MAP, textMapCodec);
-        builder.registerExtractor(Format.Builtin.TEXT_MAP, textMapCodec);
-        TextMapCodec httpCodec = TextMapCodec.builder().withUrlEncoding(true).withCodecs(codecs).build();
+      if (codecs.containsKey(Format.Builtin.HTTP_HEADERS)) {
+        TextMapCodec httpCodec = TextMapCodec.builder().withUrlEncoding(true)
+            .withCodecs(codecs.get(Format.Builtin.HTTP_HEADERS)).build();
         builder.registerInjector(Format.Builtin.HTTP_HEADERS, httpCodec);
         builder.registerExtractor(Format.Builtin.HTTP_HEADERS, httpCodec);
+      }
+      if (codecs.containsKey(Format.Builtin.TEXT_MAP)) {
+        // Replace existing TEXT_MAP and HTTP_HEADERS codec with one that also includes the
+        // list of configured codecs
+        TextMapCodec textMapCodec = TextMapCodec.builder().withUrlEncoding(false)
+            .withCodecs(codecs.get(Format.Builtin.TEXT_MAP)).build();
+        builder.registerInjector(Format.Builtin.TEXT_MAP, textMapCodec);
+        builder.registerExtractor(Format.Builtin.TEXT_MAP, textMapCodec);
       }
     }
   }
