@@ -51,7 +51,5 @@ public class ClientSpanCreationFilter implements ClientRequestFilter {
     Tags.SPAN_KIND.set(clientSpan, Tags.SPAN_KIND_CLIENT);
     Tags.HTTP_URL.set(clientSpan, clientRequestContext.getUri().toString());
     Tags.PEER_HOSTNAME.set(clientSpan, clientRequestContext.getUri().getHost());
-
-    traceContext.push(clientSpan);
   }
 }

@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import javax.ws.rs.client.ClientRequestContext;
 import javax.ws.rs.client.ClientResponseContext;
-import javax.ws.rs.core.MultivaluedHashMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -73,7 +72,6 @@ public class ClientFilterTest {
     String method = "GET";
     when(clientRequestContext.getMethod()).thenReturn(method);
     when(clientRequestContext.getUri()).thenReturn(new URI("http://localhost/path"));
-    when(clientRequestContext.getHeaders()).thenReturn(new MultivaluedHashMap<String, Object>());
 
     when(clientResponseContext.getStatus()).thenReturn(200);
 

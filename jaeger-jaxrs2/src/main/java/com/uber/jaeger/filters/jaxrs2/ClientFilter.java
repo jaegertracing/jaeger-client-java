@@ -30,18 +30,12 @@ import lombok.extern.slf4j.Slf4j;
 @ConstrainedTo(RuntimeType.CLIENT)
 @Slf4j
 public class ClientFilter implements ClientRequestFilter, ClientResponseFilter {
-  private final Tracer tracer;
-  private final TraceContext traceContext;
-
   private final ClientSpanCreationFilter spanCreationFilter;
   private final ClientSpanInjectionFilter spanInjectionFilter;
 
   public ClientFilter(Tracer tracer, TraceContext traceContext) {
-    this.tracer = tracer;
-    this.traceContext = traceContext;
-
     this.spanCreationFilter = new ClientSpanCreationFilter(tracer, traceContext);
-    this.spanInjectionFilter = new ClientSpanInjectionFilter(tracer, traceContext);
+    this.spanInjectionFilter = new ClientSpanInjectionFilter(tracer);
   }
 
   @Override

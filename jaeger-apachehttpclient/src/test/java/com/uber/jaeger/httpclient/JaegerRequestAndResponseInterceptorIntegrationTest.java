@@ -88,6 +88,9 @@ public class JaegerRequestAndResponseInterceptorIntegrationTest {
 
     client.start();
 
+    // Verify that parent span is on top of the stack _before_ request is made
+    assertEquals(parentSpan, TracingUtils.getTraceContext().getCurrentSpan());
+
     //Make a request to the async client and wait for response
     client
         .execute(
@@ -104,6 +107,9 @@ public class JaegerRequestAndResponseInterceptorIntegrationTest {
               public void cancelled() {}
             })
         .get();
+
+    // Verify that parent span is on top of the stack _after_ request is made
+    assertEquals(parentSpan, TracingUtils.getTraceContext().getCurrentSpan());
 
     verifyTracing(parentSpan);
   }
@@ -124,7 +130,7 @@ public class JaegerRequestAndResponseInterceptorIntegrationTest {
   private void verifyTracing(Span parentSpan) {
     //Assert that traces are correctly emitted by the client
     List<Span> spans = reporter.getSpans();
-    assertEquals(3, spans.size());
+    assertEquals(2, spans.size());
     Span span = spans.get(1);
     assertEquals("GET", span.getOperationName());
     assertEquals(parentSpan.context().getSpanId(), span.context().getParentId());

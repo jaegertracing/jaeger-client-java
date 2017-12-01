@@ -22,20 +22,14 @@
 
 package com.uber.jaeger.httpclient;
 
-import com.uber.jaeger.context.TraceContext;
-import com.uber.jaeger.context.TracingUtils;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
-import io.opentracing.tag.Tags;
 import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpException;
-import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
-import org.apache.http.RequestLine;
-import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.protocol.HttpContext;
 
 /**
@@ -58,9 +52,7 @@ public class SpanInjectionRequestInterceptor implements HttpRequestInterceptor {
   public void process(HttpRequest httpRequest, HttpContext httpContext)
       throws HttpException, IOException {
     try {
-      TraceContext parentContext = TracingUtils.getTraceContext();
-
-      Span clientSpan = parentContext.pop();
+      Span clientSpan = (Span) httpContext.getAttribute(Constants.CURRENT_SPAN_CONTEXT_KEY);
 
       tracer.inject(
           clientSpan.context(), Format.Builtin.HTTP_HEADERS, new ClientRequestCarrier(httpRequest));
