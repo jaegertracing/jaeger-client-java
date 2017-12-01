@@ -155,12 +155,12 @@ public class Configuration {
     /**
      * The default Jaeger trace context propagation format.
      */
-    jaeger,
+    JAEGER,
 
     /**
      * The Zipkin B3 trace context propagation format.
      */
-    b3
+    B3
   }
 
   /**
@@ -248,7 +248,7 @@ public class Configuration {
     Sampler sampler = samplerConfig.createSampler(serviceName, metrics);
     Tracer.Builder builder = new Tracer.Builder(serviceName,
         reporter, sampler).withMetrics(metrics).withTags(tracerTagsFromEnv());
-    codecConfig.config(builder);
+    codecConfig.apply(builder);
     return builder;
   }
 
@@ -386,25 +386,23 @@ public class Configuration {
       Map<Format<?>, List<Codec<TextMap>>> codecs = new HashMap<Format<?>, List<Codec<TextMap>>>();
       String propagation = getProperty(JAEGER_PROPAGATION);
       if (propagation != null) {
-        for (String format : Arrays.asList(propagation.split("[, ]"))) {
-          if (format.trim().length() > 0) {
-            try {
-              switch (Configuration.Propagation.valueOf(format)) {
-                case jaeger:
-                  addCodec(codecs, Format.Builtin.HTTP_HEADERS, new TextMapCodec(true));
-                  addCodec(codecs, Format.Builtin.TEXT_MAP, new TextMapCodec(false));
-                  break;
-                case b3:
-                  addCodec(codecs, Format.Builtin.HTTP_HEADERS, new B3TextMapCodec());
-                  addCodec(codecs, Format.Builtin.TEXT_MAP, new B3TextMapCodec());
-                  break;
-                default:
-                  log.error("Unhandled propagation format '" + format + "'");
-                  break;
-              }
-            } catch (IllegalArgumentException iae) {
-              log.error("Unknown propagation format '" + format + "'");
+        for (String format : Arrays.asList(propagation.split(","))) {
+          try {
+            switch (Configuration.Propagation.valueOf(format.toUpperCase())) {
+              case JAEGER:
+                addCodec(codecs, Format.Builtin.HTTP_HEADERS, new TextMapCodec(true));
+                addCodec(codecs, Format.Builtin.TEXT_MAP, new TextMapCodec(false));
+                break;
+              case B3:
+                addCodec(codecs, Format.Builtin.HTTP_HEADERS, new B3TextMapCodec());
+                addCodec(codecs, Format.Builtin.TEXT_MAP, new B3TextMapCodec());
+                break;
+              default:
+                log.error("Unhandled propagation format '" + format + "'");
+                break;
             }
+          } catch (IllegalArgumentException iae) {
+            log.error("Unknown propagation format '" + format + "'");
           }
         }
       }
@@ -420,7 +418,7 @@ public class Configuration {
       codecList.add(codec);
     }
 
-    public void config(Tracer.Builder builder) {
+    public void apply(Tracer.Builder builder) {
       // Replace existing TEXT_MAP and HTTP_HEADERS codec with one that represents the
       // configured propagation formats
       registerCodec(builder, Format.Builtin.HTTP_HEADERS);

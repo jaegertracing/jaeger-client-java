@@ -294,7 +294,7 @@ public class ConfigurationTest {
 
   @Test
   public void testPropagationJaegerAndB3() {
-    System.setProperty(Configuration.JAEGER_PROPAGATION, "jaeger, b3");
+    System.setProperty(Configuration.JAEGER_PROPAGATION, "jaeger,b3");
     System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
 
     long traceId = 1234;
@@ -331,7 +331,7 @@ public class ConfigurationTest {
 
   @Test
   public void testPropagationValidFormat() {
-    System.setProperty(Configuration.JAEGER_PROPAGATION, "jaeger, invalid");
+    System.setProperty(Configuration.JAEGER_PROPAGATION, "jaeger,invalid");
     System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
 
     TestTextMap textMap = new TestTextMap();
