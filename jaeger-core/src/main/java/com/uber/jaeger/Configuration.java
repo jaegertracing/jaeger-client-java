@@ -126,7 +126,7 @@ public class Configuration {
   public static final String JAEGER_TAGS = JAEGER_PREFIX + "TAGS";
 
   /**
-   * Disables registration with {@link GlobalTracer}.
+   * Enables registration with {@link GlobalTracer}.
    */
   public static final String JAEGER_ENABLE_GLOBAL_TRACER = JAEGER_PREFIX + "ENABLE_GLOBAL_TRACER";
 
@@ -145,8 +145,7 @@ public class Configuration {
   private StatsFactory statsFactory;
 
   /**
-   * Don't use {@link GlobalTracer} to store the tracer.
-   * Use the local {@link #tracer} instead.
+   * Use {@link GlobalTracer} to store the tracer.
    */
   private final boolean enableGlobalTracer;
 
