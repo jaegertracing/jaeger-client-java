@@ -126,9 +126,9 @@ public class Configuration {
   public static final String JAEGER_TAGS = JAEGER_PREFIX + "TAGS";
 
   /**
-   * Disables registration with {@link GlobalTracer}.
+   * Enables registration with {@link GlobalTracer}.
    */
-  public static final String JAEGER_DISABLE_GLOBAL_TRACER = JAEGER_PREFIX + "DISABLE_GLOBAL_TRACER";
+  public static final String JAEGER_ENABLE_GLOBAL_TRACER = JAEGER_PREFIX + "ENABLE_GLOBAL_TRACER";
 
   /**
    * The serviceName that the tracer will use
@@ -145,10 +145,9 @@ public class Configuration {
   private StatsFactory statsFactory;
 
   /**
-   * Don't use {@link GlobalTracer} to store the tracer.
-   * Use the local {@link #tracer} instead.
+   * Use {@link GlobalTracer} to store the tracer.
    */
-  private final boolean disableGlobalTracer;
+  private final boolean enableGlobalTracer;
 
   /**
    * lazy singleton Tracer initialized in getTracer() method.
@@ -170,7 +169,7 @@ public class Configuration {
       String serviceName,
       SamplerConfiguration samplerConfig,
       ReporterConfiguration reporterConfig,
-      boolean disableGlobalTracer) {
+      boolean enableGlobalTracer) {
     if (serviceName == null || serviceName.isEmpty()) {
       throw new IllegalArgumentException("Must provide a service name for Jaeger Configuration");
     }
@@ -189,7 +188,7 @@ public class Configuration {
 
     statsFactory = new StatsFactoryImpl(new NullStatsReporter());
 
-    this.disableGlobalTracer = disableGlobalTracer;
+    this.enableGlobalTracer = enableGlobalTracer;
   }
 
   public static Configuration fromEnv() {
@@ -197,7 +196,7 @@ public class Configuration {
         getProperty(JAEGER_SERVICE_NAME),
         SamplerConfiguration.fromEnv(),
         ReporterConfiguration.fromEnv(),
-        getPropertyAsBool(JAEGER_DISABLE_GLOBAL_TRACER));
+        getPropertyAsBool(JAEGER_ENABLE_GLOBAL_TRACER));
   }
 
   public Tracer.Builder getTracerBuilder() {
@@ -215,7 +214,7 @@ public class Configuration {
     tracer = getTracerBuilder().build();
     log.info("Initialized tracer={}", tracer);
 
-    if (!disableGlobalTracer) {
+    if (enableGlobalTracer) {
       GlobalTracer.register(tracer);
     }
 
