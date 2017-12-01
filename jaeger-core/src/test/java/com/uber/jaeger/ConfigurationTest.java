@@ -64,7 +64,7 @@ public class ConfigurationTest {
     System.clearProperty(Configuration.JAEGER_AUTH_TOKEN);
     System.clearProperty(Configuration.JAEGER_USER);
     System.clearProperty(Configuration.JAEGER_PASSWORD);
-    System.clearProperty(Configuration.JAEGER_B3_CODEC);
+    System.clearProperty(Configuration.JAEGER_PROPAGATION);
 
     System.clearProperty(TEST_PROPERTY);
 
@@ -270,8 +270,8 @@ public class ConfigurationTest {
   }
 
   @Test
-  public void testB3CodecEnabled() {
-    System.setProperty(Configuration.JAEGER_B3_CODEC, "true");
+  public void testPropagationB3Only() {
+    System.setProperty(Configuration.JAEGER_PROPAGATION, "b3");
     System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
 
     long traceId = 1234;
@@ -285,6 +285,7 @@ public class ConfigurationTest {
 
     assertNotNull(textMap.get("X-B3-TraceId"));
     assertNotNull(textMap.get("X-B3-SpanId"));
+    assertNull(textMap.get("uber-trace-id"));
 
     SpanContext extractedContext = (SpanContext)tracer.extract(Format.Builtin.TEXT_MAP, textMap);
     assertEquals(traceId, extractedContext.getTraceId());
@@ -292,7 +293,30 @@ public class ConfigurationTest {
   }
 
   @Test
-  public void testB3CodecDisabled() {
+  public void testPropagationJaegerAndB3() {
+    System.setProperty(Configuration.JAEGER_PROPAGATION, "jaeger, b3");
+    System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
+
+    long traceId = 1234;
+    long spanId = 5678;
+
+    TestTextMap textMap = new TestTextMap();
+    SpanContext spanContext = new SpanContext(traceId, spanId, 0, (byte)0);
+
+    io.opentracing.Tracer tracer = Configuration.fromEnv().getTracer();
+    tracer.inject(spanContext, Format.Builtin.TEXT_MAP, textMap);
+
+    assertNotNull(textMap.get("uber-trace-id"));
+    assertNotNull(textMap.get("X-B3-TraceId"));
+    assertNotNull(textMap.get("X-B3-SpanId"));
+
+    SpanContext extractedContext = (SpanContext)tracer.extract(Format.Builtin.TEXT_MAP, textMap);
+    assertEquals(traceId, extractedContext.getTraceId());
+    assertEquals(spanId, extractedContext.getSpanId());
+  }
+
+  @Test
+  public void testPropagationDefault() {
     System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
 
     TestTextMap textMap = new TestTextMap();
@@ -300,6 +324,7 @@ public class ConfigurationTest {
 
     Configuration.fromEnv().getTracer().inject(spanContext, Format.Builtin.TEXT_MAP, textMap);
 
+    assertNotNull(textMap.get("uber-trace-id"));
     assertNull(textMap.get("X-B3-TraceId"));
     assertNull(textMap.get("X-B3-SpanId"));
   }

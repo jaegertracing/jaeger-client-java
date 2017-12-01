@@ -16,14 +16,11 @@ package com.uber.jaeger.propagation;
 
 import com.uber.jaeger.Constants;
 import com.uber.jaeger.SpanContext;
-
 import io.opentracing.propagation.TextMap;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -46,8 +43,6 @@ public class TextMapCodec implements Codec<TextMap> {
 
   private final boolean urlEncoding;
 
-  private final java.util.List<Codec<TextMap>> codecs;
-
   public TextMapCodec(boolean urlEncoding) {
     this(builder().withUrlEncoding(urlEncoding));
   }
@@ -56,7 +51,6 @@ public class TextMapCodec implements Codec<TextMap> {
     this.urlEncoding = builder.urlEncoding;
     this.contextKey = builder.spanContextKey;
     this.baggagePrefix = builder.baggagePrefix;
-    this.codecs = builder.codecs;
   }
 
   @Override
@@ -64,11 +58,6 @@ public class TextMapCodec implements Codec<TextMap> {
     carrier.put(contextKey, encodedValue(spanContext.contextAsString()));
     for (Map.Entry<String, String> entry : spanContext.baggageItems()) {
       carrier.put(keys.prefixedKey(entry.getKey(), baggagePrefix), encodedValue(entry.getValue()));
-    }
-    if (codecs != null) {
-      for (Codec<TextMap> codec : codecs) {
-        codec.inject(spanContext, carrier);
-      }
     }
   }
 
@@ -89,14 +78,6 @@ public class TextMapCodec implements Codec<TextMap> {
           baggage = new HashMap<String, String>();
         }
         baggage.put(keys.unprefixedKey(key, baggagePrefix), decodedValue(entry.getValue()));
-      }
-    }
-    if (context == null && codecs != null) {
-      for (Codec<TextMap> codec : codecs) {
-        context = codec.extract(carrier);
-        if (context != null) {
-          break;
-        }
       }
     }
     if (context == null) {
@@ -166,7 +147,6 @@ public class TextMapCodec implements Codec<TextMap> {
     private boolean urlEncoding;
     private String spanContextKey = SPAN_CONTEXT_KEY;
     private String baggagePrefix = BAGGAGE_KEY_PREFIX;
-    private java.util.List<Codec<TextMap>> codecs;
 
     public Builder withUrlEncoding(boolean urlEncoding) {
       this.urlEncoding = urlEncoding;
@@ -180,22 +160,6 @@ public class TextMapCodec implements Codec<TextMap> {
 
     public Builder withBaggagePrefix(String baggagePrefix) {
       this.baggagePrefix = baggagePrefix;
-      return this;
-    }
-
-    public Builder withCodec(Codec<TextMap> codec) {
-      if (this.codecs == null) {
-        this.codecs = new LinkedList<Codec<TextMap>>();
-      }
-      this.codecs.add(codec);
-      return this;
-    }
-
-    public Builder withCodecs(List<Codec<TextMap>> codecs) {
-      if (this.codecs == null) {
-        this.codecs = new LinkedList<Codec<TextMap>>();
-      }
-      this.codecs.addAll(codecs);
       return this;
     }
 

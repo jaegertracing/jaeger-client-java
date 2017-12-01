@@ -20,6 +20,7 @@ import com.uber.jaeger.metrics.StatsFactory;
 import com.uber.jaeger.metrics.StatsFactoryImpl;
 import com.uber.jaeger.propagation.B3TextMapCodec;
 import com.uber.jaeger.propagation.Codec;
+import com.uber.jaeger.propagation.CompositeCodec;
 import com.uber.jaeger.propagation.TextMapCodec;
 import com.uber.jaeger.reporters.CompositeReporter;
 import com.uber.jaeger.reporters.LoggingReporter;
@@ -42,6 +43,7 @@ import io.opentracing.util.GlobalTracer;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.text.ParseException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -140,9 +142,26 @@ public class Configuration {
   public static final String JAEGER_DISABLE_GLOBAL_TRACER = JAEGER_PREFIX + "DISABLE_GLOBAL_TRACER";
 
   /**
-   * Boolean to determine if trace context should be propagated also using B3 format. Default is false.
+   * Comma separated list of formats to use for propagating the trace context. Default will the
+   * standard Jaeger format. Valid values are jaeger and b3.
    */
-  public static final String JAEGER_B3_CODEC = JAEGER_PREFIX + "B3_CODEC";
+  public static final String JAEGER_PROPAGATION = JAEGER_PREFIX + "PROPAGATION";
+
+  /**
+   * The supported trace context propagation formats.
+   */
+  public enum Propagation {
+
+    /**
+     * The default Jaeger trace context propagation format.
+     */
+    jaeger,
+
+    /**
+     * The Zipkin B3 trace context propagation format.
+     */
+    b3
+  }
 
   /**
    * The serviceName that the tracer will use
@@ -365,35 +384,56 @@ public class Configuration {
 
     public static CodecConfiguration fromEnv() {
       Map<Format<?>, List<Codec<TextMap>>> codecs = new HashMap<Format<?>, List<Codec<TextMap>>>();
-      List<Codec<TextMap>> httpHeadersCodecs = new LinkedList<Codec<TextMap>>();
-      List<Codec<TextMap>> textMapCodecs = new LinkedList<Codec<TextMap>>();
-      if (getPropertyAsBool(JAEGER_B3_CODEC)) {
-        httpHeadersCodecs.add(new B3TextMapCodec());
-        textMapCodecs.add(new B3TextMapCodec());
-      }
-      if (!httpHeadersCodecs.isEmpty()) {
-        codecs.put(Format.Builtin.HTTP_HEADERS, httpHeadersCodecs);
-      }
-      if (!textMapCodecs.isEmpty()) {
-        codecs.put(Format.Builtin.TEXT_MAP, textMapCodecs);
+      String propagation = getProperty(JAEGER_PROPAGATION);
+      if (propagation != null) {
+        for (String format : Arrays.asList(propagation.split("[, ]"))) {
+          if (format.trim().length() > 0) {
+            try {
+              switch (Configuration.Propagation.valueOf(format)) {
+                case jaeger:
+                  addCodec(codecs, Format.Builtin.HTTP_HEADERS, new TextMapCodec(true));
+                  addCodec(codecs, Format.Builtin.TEXT_MAP, new TextMapCodec(false));
+                  break;
+                case b3:
+                  addCodec(codecs, Format.Builtin.HTTP_HEADERS, new B3TextMapCodec());
+                  addCodec(codecs, Format.Builtin.TEXT_MAP, new B3TextMapCodec());
+                  break;
+                default:
+                  log.error("Unhandled propagation format '" + format + "'");
+                  break;
+              }
+            } catch (IllegalArgumentException iae) {
+              log.error("Unknown propagation format '" + format + "'");
+            }
+          }
+        }
       }
       return new CodecConfiguration(codecs);
     }
 
-    public void config(Tracer.Builder builder) {
-      if (codecs.containsKey(Format.Builtin.HTTP_HEADERS)) {
-        TextMapCodec httpCodec = TextMapCodec.builder().withUrlEncoding(true)
-            .withCodecs(codecs.get(Format.Builtin.HTTP_HEADERS)).build();
-        builder.registerInjector(Format.Builtin.HTTP_HEADERS, httpCodec);
-        builder.registerExtractor(Format.Builtin.HTTP_HEADERS, httpCodec);
+    private static void addCodec(Map<Format<?>, List<Codec<TextMap>>> codecs, Format<?> format, Codec<TextMap> codec) {
+      List<Codec<TextMap>> codecList = codecs.get(format);
+      if (codecList == null) {
+        codecList = new LinkedList<Codec<TextMap>>();
+        codecs.put(format, codecList);
       }
-      if (codecs.containsKey(Format.Builtin.TEXT_MAP)) {
-        // Replace existing TEXT_MAP and HTTP_HEADERS codec with one that also includes the
-        // list of configured codecs
-        TextMapCodec textMapCodec = TextMapCodec.builder().withUrlEncoding(false)
-            .withCodecs(codecs.get(Format.Builtin.TEXT_MAP)).build();
-        builder.registerInjector(Format.Builtin.TEXT_MAP, textMapCodec);
-        builder.registerExtractor(Format.Builtin.TEXT_MAP, textMapCodec);
+      codecList.add(codec);
+    }
+
+    public void config(Tracer.Builder builder) {
+      // Replace existing TEXT_MAP and HTTP_HEADERS codec with one that represents the
+      // configured propagation formats
+      registerCodec(builder, Format.Builtin.HTTP_HEADERS);
+      registerCodec(builder, Format.Builtin.TEXT_MAP);
+    }
+
+    protected void registerCodec(Tracer.Builder builder, Format<TextMap> format) {
+      if (codecs.containsKey(format)) {
+        List<Codec<TextMap>> codecsForFormat = codecs.get(format);
+        Codec<TextMap> codec = codecsForFormat.size() == 1
+            ? codecsForFormat.get(0) : new CompositeCodec<TextMap>(codecsForFormat);
+        builder.registerInjector(format, codec);
+        builder.registerExtractor(format, codec);
       }
     }
   }

@@ -43,11 +43,11 @@ Property | Required | Description
 JAEGER_SERVICE_NAME | yes | The service name
 JAEGER_AGENT_HOST | no | The hostname for communicating with agent via UDP
 JAEGER_AGENT_PORT | no | The port for communicating with agent via UDP
-JAEGER_B3_CODEC | false | Whether to support B3 trace context propagation headers
 JAEGER_ENDPOINT | no | The traces endpoint, in case the client should connect directly to the Collector, like http://jaeger-collector:14268/api/traces
 JAEGER_AUTH_TOKEN | no | Authentication Token to send as "Bearer" to the endpoint
 JAEGER_USER | no | Username to send as part of "Basic" authentication to the endpoint
 JAEGER_PASSWORD | no | Password to send as part of "Basic" authentication to the endpoint
+JAEGER_PROPAGATION | no | Comma separated list of formats to use for propagating the trace context. Default will the standard Jaeger format. Valid values are **jaeger** and **b3**
 JAEGER_REPORTER_LOG_SPANS | no | Whether the reporter should also log the spans
 JAEGER_REPORTER_MAX_QUEUE_SIZE | no | The reporter's maximum queue size
 JAEGER_REPORTER_FLUSH_INTERVAL | no | The reporter's flush interval (ms)
