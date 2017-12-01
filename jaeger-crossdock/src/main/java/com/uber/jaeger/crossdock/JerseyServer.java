@@ -32,6 +32,7 @@ import com.uber.jaeger.senders.Sender;
 import com.uber.jaeger.senders.UdpSender;
 import com.uber.tchannel.api.TChannel.Builder;
 import io.opentracing.Tracer;
+import io.opentracing.util.GlobalTracer;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -76,7 +77,10 @@ public class JerseyServer {
 
     resources.forEach(rc::register);
 
-    rc.register(TracingUtils.serverFilter(config.getTracer()))
+    Tracer tracer = config.getTracer();
+    GlobalTracer.register(tracer);
+    
+    rc.register(TracingUtils.serverFilter(tracer))
         .register(LoggingFilter.class)
         .register(ExceptionMapper.class)
         .register(JacksonFeature.class)

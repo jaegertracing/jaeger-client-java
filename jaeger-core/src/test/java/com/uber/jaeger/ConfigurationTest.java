@@ -53,7 +53,7 @@ public class ConfigurationTest {
     System.clearProperty(Configuration.JAEGER_SAMPLER_MANAGER_HOST_PORT);
     System.clearProperty(Configuration.JAEGER_SERVICE_NAME);
     System.clearProperty(Configuration.JAEGER_TAGS);
-    System.clearProperty(Configuration.JAEGER_DISABLE_GLOBAL_TRACER);
+    System.clearProperty(Configuration.JAEGER_ENABLE_GLOBAL_TRACER);
     System.clearProperty(Configuration.JAEGER_ENDPOINT);
     System.clearProperty(Configuration.JAEGER_AUTH_TOKEN);
     System.clearProperty(Configuration.JAEGER_USER);
@@ -71,12 +71,13 @@ public class ConfigurationTest {
   public void testFromEnv() {
     System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
     assertNotNull(Configuration.fromEnv().getTracer());
-    assertTrue(GlobalTracer.isRegistered());
+    assertFalse(GlobalTracer.isRegistered());
   }
 
   @Test (expected = IllegalStateException.class)
-  public void testFromEnvWithoutDisabledTracer() {
+  public void testFromEnvWithEnabledTracer() {
     System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
+    System.setProperty(Configuration.JAEGER_ENABLE_GLOBAL_TRACER, "true");
     assertNotNull(Configuration.fromEnv().getTracer());
     assertTrue(GlobalTracer.isRegistered());
 
@@ -84,18 +85,18 @@ public class ConfigurationTest {
   }
 
   @Test
-  public void testDisableGlobalTracer() {
+  public void testEnableGlobalTracer() {
     System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
-    System.setProperty(Configuration.JAEGER_DISABLE_GLOBAL_TRACER, "true");
+    System.setProperty(Configuration.JAEGER_ENABLE_GLOBAL_TRACER, "true");
     assertNotNull(Configuration.fromEnv().getTracer());
-    assertFalse(GlobalTracer.isRegistered());
+    assertTrue(GlobalTracer.isRegistered());
   }
 
   @Test
   public void testDefaultGlobalTracer() {
     Configuration config = new Configuration("Test");
     assertNotNull(config.getTracer());
-    assertTrue(GlobalTracer.isRegistered());
+    assertFalse(GlobalTracer.isRegistered());
   }
 
   @Test

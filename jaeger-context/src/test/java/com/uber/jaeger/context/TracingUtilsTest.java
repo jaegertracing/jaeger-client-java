@@ -17,6 +17,7 @@ package com.uber.jaeger.context;
 import com.uber.jaeger.Configuration;
 import com.uber.jaeger.utils.TestUtils;
 import io.opentracing.Tracer;
+import io.opentracing.util.GlobalTracer;
 import java.util.concurrent.Executors;
 import org.junit.After;
 import org.junit.Assert;
@@ -37,6 +38,7 @@ public class TracingUtilsTest {
   @Test
   public void getTraceContext() {
     Tracer tracer = new Configuration("boop").getTracer();
+    GlobalTracer.register(tracer);
     Assert.assertNotNull(tracer);
     Assert.assertNotNull(TracingUtils.getTraceContext());
   }
@@ -49,6 +51,7 @@ public class TracingUtilsTest {
   @Test()
   public void tracedExecutor() throws Exception {
     Tracer tracer = new Configuration("boop").getTracer();
+    GlobalTracer.register(tracer);
     Assert.assertNotNull(tracer);
     Assert.assertNotNull(TracingUtils.tracedExecutor(Executors.newSingleThreadExecutor()));
   }
