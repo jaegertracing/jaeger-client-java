@@ -20,8 +20,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Span implements io.opentracing.Span {
+  private static final Logger logger = LoggerFactory.getLogger(Span.class);
   private final Tracer tracer;
   private final long startTimeMicroseconds;
   private final long startTimeNanoTicks;
@@ -164,6 +167,7 @@ public class Span implements io.opentracing.Span {
   private void finishWithDuration(long durationMicros) {
     synchronized (this) {
       if (finished) {
+        logger.warn("Span has already been finished; will not be reported again.");
         return;
       }
       finished = true;
