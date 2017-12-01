@@ -15,7 +15,7 @@
 package com.uber.jaeger.propagation;
 
 import static org.junit.Assert.assertEquals;
-
+import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -70,6 +70,22 @@ public class CompositeCodecTest {
     assertEquals(mockContext, composite.extract(mockCarrier));
     verify(mockCodec1, times(1)).extract(mockCarrier);
     verify(mockCodec2, times(1)).extract(mockCarrier);
+  }
+
+  @Test
+  public void testExtractFromNoCodec() {
+    CompositeCodec<TextMap> composite = new CompositeCodec<TextMap>(Arrays.asList(mockCodec1, mockCodec2));
+    assertNull(composite.extract(mockCarrier));
+    verify(mockCodec1, times(1)).extract(mockCarrier);
+    verify(mockCodec2, times(1)).extract(mockCarrier);
+  }
+
+  @Test
+  public void testToString() {
+    when(mockCodec1.toString()).thenReturn("codec1");
+    when(mockCodec2.toString()).thenReturn("codec2");
+    CompositeCodec<TextMap> composite = new CompositeCodec<TextMap>(Arrays.asList(mockCodec1, mockCodec2));
+    assertEquals("codec1 : codec2", composite.toString());
   }
 
 }

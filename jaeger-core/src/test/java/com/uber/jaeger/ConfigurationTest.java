@@ -329,6 +329,20 @@ public class ConfigurationTest {
     assertNull(textMap.get("X-B3-SpanId"));
   }
 
+  @Test
+  public void testPropagationValidFormat() {
+    System.setProperty(Configuration.JAEGER_PROPAGATION, "jaeger, invalid");
+    System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
+
+    TestTextMap textMap = new TestTextMap();
+    SpanContext spanContext = new SpanContext(1234, 5678, 0, (byte)0);
+
+    Configuration.fromEnv().getTracer().inject(spanContext, Format.Builtin.TEXT_MAP, textMap);
+
+    // Check that jaeger context still available even though invalid format specified
+    assertNotNull(textMap.get("uber-trace-id"));
+  }
+
   static class TestTextMap implements TextMap {
 
     private Map<String,String> values = new HashMap<>();
