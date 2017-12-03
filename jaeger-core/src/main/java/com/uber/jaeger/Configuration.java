@@ -18,6 +18,10 @@ import com.uber.jaeger.metrics.Metrics;
 import com.uber.jaeger.metrics.NullStatsReporter;
 import com.uber.jaeger.metrics.StatsFactory;
 import com.uber.jaeger.metrics.StatsFactoryImpl;
+import com.uber.jaeger.propagation.B3TextMapCodec;
+import com.uber.jaeger.propagation.Codec;
+import com.uber.jaeger.propagation.CompositeCodec;
+import com.uber.jaeger.propagation.TextMapCodec;
 import com.uber.jaeger.reporters.CompositeReporter;
 import com.uber.jaeger.reporters.LoggingReporter;
 import com.uber.jaeger.reporters.RemoteReporter;
@@ -31,12 +35,19 @@ import com.uber.jaeger.samplers.Sampler;
 import com.uber.jaeger.senders.HttpSender;
 import com.uber.jaeger.senders.Sender;
 import com.uber.jaeger.senders.UdpSender;
+
+import io.opentracing.propagation.Format;
+import io.opentracing.propagation.TextMap;
 import io.opentracing.util.GlobalTracer;
 
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.text.ParseException;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import lombok.Getter;
@@ -131,6 +142,28 @@ public class Configuration {
   public static final String JAEGER_DISABLE_GLOBAL_TRACER = JAEGER_PREFIX + "DISABLE_GLOBAL_TRACER";
 
   /**
+   * Comma separated list of formats to use for propagating the trace context. Default will the
+   * standard Jaeger format. Valid values are jaeger and b3.
+   */
+  public static final String JAEGER_PROPAGATION = JAEGER_PREFIX + "PROPAGATION";
+
+  /**
+   * The supported trace context propagation formats.
+   */
+  public enum Propagation {
+
+    /**
+     * The default Jaeger trace context propagation format.
+     */
+    JAEGER,
+
+    /**
+     * The Zipkin B3 trace context propagation format.
+     */
+    B3
+  }
+
+  /**
    * The serviceName that the tracer will use
    */
   private final String serviceName;
@@ -138,6 +171,8 @@ public class Configuration {
   private final SamplerConfiguration samplerConfig;
 
   private final ReporterConfiguration reporterConfig;
+
+  private final CodecConfiguration codecConfig;
 
   /**
    * A interface that wraps an underlying metrics generator in order to report Jaeger's metrics.
@@ -163,13 +198,14 @@ public class Configuration {
       String serviceName,
       SamplerConfiguration samplerConfig,
       ReporterConfiguration reporterConfig) {
-    this(serviceName, samplerConfig, reporterConfig, false);
+    this(serviceName, samplerConfig, reporterConfig, null, false);
   }
 
   private Configuration(
       String serviceName,
       SamplerConfiguration samplerConfig,
       ReporterConfiguration reporterConfig,
+      CodecConfiguration codecConfig,
       boolean disableGlobalTracer) {
     if (serviceName == null || serviceName.isEmpty()) {
       throw new IllegalArgumentException("Must provide a service name for Jaeger Configuration");
@@ -187,6 +223,11 @@ public class Configuration {
     }
     this.reporterConfig = reporterConfig;
 
+    if (codecConfig == null) {
+      codecConfig = new CodecConfiguration(Collections.<Format<?>, List<Codec<TextMap>>>emptyMap());
+    }
+    this.codecConfig = codecConfig;
+
     statsFactory = new StatsFactoryImpl(new NullStatsReporter());
 
     this.disableGlobalTracer = disableGlobalTracer;
@@ -197,6 +238,7 @@ public class Configuration {
         getProperty(JAEGER_SERVICE_NAME),
         SamplerConfiguration.fromEnv(),
         ReporterConfiguration.fromEnv(),
+        CodecConfiguration.fromEnv(),
         getPropertyAsBool(JAEGER_DISABLE_GLOBAL_TRACER));
   }
 
@@ -204,7 +246,10 @@ public class Configuration {
     Metrics metrics = new Metrics(statsFactory);
     Reporter reporter = reporterConfig.getReporter(metrics);
     Sampler sampler = samplerConfig.createSampler(serviceName, metrics);
-    return new Tracer.Builder(serviceName, reporter, sampler).withMetrics(metrics).withTags(tracerTagsFromEnv());
+    Tracer.Builder builder = new Tracer.Builder(serviceName,
+        reporter, sampler).withMetrics(metrics).withTags(tracerTagsFromEnv());
+    codecConfig.apply(builder);
+    return builder;
   }
 
   public synchronized io.opentracing.Tracer getTracer() {
@@ -324,6 +369,70 @@ public class Configuration {
 
     public String getManagerHostPort() {
       return managerHostPort;
+    }
+  }
+
+  /**
+   * CodecConfiguration can be used to support additional trace context propagation codec.
+   */
+  public static class CodecConfiguration {
+    private Map<Format<?>, List<Codec<TextMap>>> codecs;
+
+    private CodecConfiguration(Map<Format<?>, List<Codec<TextMap>>> codecs) {
+      this.codecs = codecs;
+    }
+
+    public static CodecConfiguration fromEnv() {
+      Map<Format<?>, List<Codec<TextMap>>> codecs = new HashMap<Format<?>, List<Codec<TextMap>>>();
+      String propagation = getProperty(JAEGER_PROPAGATION);
+      if (propagation != null) {
+        for (String format : Arrays.asList(propagation.split(","))) {
+          try {
+            switch (Configuration.Propagation.valueOf(format.toUpperCase())) {
+              case JAEGER:
+                addCodec(codecs, Format.Builtin.HTTP_HEADERS, new TextMapCodec(true));
+                addCodec(codecs, Format.Builtin.TEXT_MAP, new TextMapCodec(false));
+                break;
+              case B3:
+                addCodec(codecs, Format.Builtin.HTTP_HEADERS, new B3TextMapCodec());
+                addCodec(codecs, Format.Builtin.TEXT_MAP, new B3TextMapCodec());
+                break;
+              default:
+                log.error("Unhandled propagation format '" + format + "'");
+                break;
+            }
+          } catch (IllegalArgumentException iae) {
+            log.error("Unknown propagation format '" + format + "'");
+          }
+        }
+      }
+      return new CodecConfiguration(codecs);
+    }
+
+    private static void addCodec(Map<Format<?>, List<Codec<TextMap>>> codecs, Format<?> format, Codec<TextMap> codec) {
+      List<Codec<TextMap>> codecList = codecs.get(format);
+      if (codecList == null) {
+        codecList = new LinkedList<Codec<TextMap>>();
+        codecs.put(format, codecList);
+      }
+      codecList.add(codec);
+    }
+
+    public void apply(Tracer.Builder builder) {
+      // Replace existing TEXT_MAP and HTTP_HEADERS codec with one that represents the
+      // configured propagation formats
+      registerCodec(builder, Format.Builtin.HTTP_HEADERS);
+      registerCodec(builder, Format.Builtin.TEXT_MAP);
+    }
+
+    protected void registerCodec(Tracer.Builder builder, Format<TextMap> format) {
+      if (codecs.containsKey(format)) {
+        List<Codec<TextMap>> codecsForFormat = codecs.get(format);
+        Codec<TextMap> codec = codecsForFormat.size() == 1
+            ? codecsForFormat.get(0) : new CompositeCodec<TextMap>(codecsForFormat);
+        builder.registerInjector(format, codec);
+        builder.registerExtractor(format, codec);
+      }
     }
   }
 

@@ -24,7 +24,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-public class TextMapCodec implements Injector<TextMap>, Extractor<TextMap> {
+public class TextMapCodec implements Codec<TextMap> {
   /**
    * Key used to store serialized span context representation
    */

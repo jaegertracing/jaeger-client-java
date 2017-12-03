@@ -12,7 +12,7 @@
  * the License.
  */
 
-package com.uber.jaeger.propagation.b3;
+package com.uber.jaeger.propagation;
 
 // copy/pasted from brave.internal.HexCodec 4.1.1 to avoid build complexity
 final class HexCodec {
