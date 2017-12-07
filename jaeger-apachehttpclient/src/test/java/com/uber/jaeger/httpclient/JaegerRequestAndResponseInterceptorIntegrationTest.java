@@ -22,7 +22,6 @@ import com.uber.jaeger.context.TracingUtils;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
 import com.uber.jaeger.samplers.Sampler;
-import io.opentracing.NoopTracerFactory;
 import java.lang.reflect.Field;
 import java.util.List;
 import org.apache.http.HttpHost;
@@ -80,7 +79,7 @@ public class JaegerRequestAndResponseInterceptorIntegrationTest {
   public void tearDown() throws Exception {
     Field field = TracingUtils.class.getDeclaredField("tracer");
     field.setAccessible(true);
-    field.set(null, NoopTracerFactory.create());
+    field.set(null, null);
   }
 
   @Test

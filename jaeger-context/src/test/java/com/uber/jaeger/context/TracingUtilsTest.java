@@ -15,7 +15,6 @@
 package com.uber.jaeger.context;
 
 import com.uber.jaeger.Configuration;
-import io.opentracing.NoopTracerFactory;
 import io.opentracing.Tracer;
 import java.lang.reflect.Field;
 import java.util.concurrent.Executors;
@@ -29,7 +28,7 @@ public class TracingUtilsTest {
   public void tearDown() throws Exception {
     Field field = TracingUtils.class.getDeclaredField("tracer");
     field.setAccessible(true);
-    field.set(null, NoopTracerFactory.create());
+    field.set(null, null);
   }
 
   @Test(expected = IllegalStateException.class)

@@ -22,7 +22,6 @@ import com.uber.jaeger.Tracer;
 import com.uber.jaeger.context.TracingUtils;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
-import io.opentracing.NoopTracerFactory;
 import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Map;
@@ -63,7 +62,7 @@ public class JerseyServerFilterTest extends JerseyTest {
     // clean up tracing utils tracer instance
     Field field = TracingUtils.class.getDeclaredField("tracer");
     field.setAccessible(true);
-    field.set(null, NoopTracerFactory.create());
+    field.set(null, null);
   }
 
   @Path("hello")

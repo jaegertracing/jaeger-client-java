@@ -25,25 +25,25 @@ import java.util.concurrent.ExecutorService;
 @Deprecated
 public class TracingUtils {
 
-  public static void setTracer(io.opentracing.Tracer tracer) {
+  public static synchronized void setTracer(io.opentracing.Tracer tracer) {
     com.uber.jaeger.context.TracingUtils.setTracer(tracer);
   }
 
   @Deprecated
-  public static TraceContext getTraceContext() {
+  public static synchronized TraceContext getTraceContext() {
     return com.uber.jaeger.context.TracingUtils.getTraceContext();
   }
 
   @Deprecated
-  public static ExecutorService tracedExecutor(ExecutorService wrappedExecutorService) {
+  public static synchronized ExecutorService tracedExecutor(ExecutorService wrappedExecutorService) {
     return com.uber.jaeger.context.TracingUtils.tracedExecutor(wrappedExecutorService);
   }
 
-  public static ClientFilter clientFilter(Tracer tracer) {
+  public static synchronized ClientFilter clientFilter(Tracer tracer) {
     return new ClientFilter(tracer, getTraceContext());
   }
 
-  public static ServerFilter serverFilter(Tracer tracer) {
+  public static synchronized ServerFilter serverFilter(Tracer tracer) {
     return new ServerFilter(tracer, getTraceContext());
   }
 
