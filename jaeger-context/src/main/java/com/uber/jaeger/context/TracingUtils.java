@@ -18,8 +18,17 @@ import io.opentracing.util.GlobalTracer;
 
 import java.util.concurrent.ExecutorService;
 
+/**
+ * TracingUtils is going to be deprecated. To use its method please provide a tracer via
+ * {@link com.uber.jaeger.context.TracingUtils#setTracer(io.opentracing.Tracer)}.
+ */
+@Deprecated
 public class TracingUtils {
   private static TraceContext traceContext = new ActiveSpanSourceTraceContext(GlobalTracer.get());
+
+  public static void setTracer(io.opentracing.Tracer tracer) {
+    GlobalTracer.register(tracer);
+  }
 
   public static TraceContext getTraceContext() {
     assertGlobalTracerRegistered();

@@ -38,6 +38,8 @@ public class TracingUtilsTest {
   public void getTraceContext() {
     Tracer tracer = new Configuration("boop").getTracer();
     Assert.assertNotNull(tracer);
+
+    TracingUtils.setTracer(tracer);
     Assert.assertNotNull(TracingUtils.getTraceContext());
   }
 
@@ -50,6 +52,7 @@ public class TracingUtilsTest {
   public void tracedExecutor() throws Exception {
     Tracer tracer = new Configuration("boop").getTracer();
     Assert.assertNotNull(tracer);
+    TracingUtils.setTracer(tracer);
     Assert.assertNotNull(TracingUtils.tracedExecutor(Executors.newSingleThreadExecutor()));
   }
 }

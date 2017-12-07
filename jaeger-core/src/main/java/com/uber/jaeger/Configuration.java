@@ -35,11 +35,8 @@ import com.uber.jaeger.samplers.Sampler;
 import com.uber.jaeger.senders.HttpSender;
 import com.uber.jaeger.senders.Sender;
 import com.uber.jaeger.senders.UdpSender;
-
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
-import io.opentracing.util.GlobalTracer;
-
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -49,7 +46,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.Credentials;
@@ -137,11 +133,6 @@ public class Configuration {
   public static final String JAEGER_TAGS = JAEGER_PREFIX + "TAGS";
 
   /**
-   * Disables registration with {@link GlobalTracer}.
-   */
-  public static final String JAEGER_DISABLE_GLOBAL_TRACER = JAEGER_PREFIX + "DISABLE_GLOBAL_TRACER";
-
-  /**
    * Comma separated list of formats to use for propagating the trace context. Default will the
    * standard Jaeger format. Valid values are jaeger and b3.
    */
@@ -180,12 +171,6 @@ public class Configuration {
   private StatsFactory statsFactory;
 
   /**
-   * Don't use {@link GlobalTracer} to store the tracer.
-   * Use the local {@link #tracer} instead.
-   */
-  private final boolean disableGlobalTracer;
-
-  /**
    * lazy singleton Tracer initialized in getTracer() method.
    */
   private Tracer tracer;
@@ -198,15 +183,14 @@ public class Configuration {
       String serviceName,
       SamplerConfiguration samplerConfig,
       ReporterConfiguration reporterConfig) {
-    this(serviceName, samplerConfig, reporterConfig, null, false);
+    this(serviceName, samplerConfig, reporterConfig, null);
   }
 
   private Configuration(
       String serviceName,
       SamplerConfiguration samplerConfig,
       ReporterConfiguration reporterConfig,
-      CodecConfiguration codecConfig,
-      boolean disableGlobalTracer) {
+      CodecConfiguration codecConfig) {
     if (serviceName == null || serviceName.isEmpty()) {
       throw new IllegalArgumentException("Must provide a service name for Jaeger Configuration");
     }
@@ -229,8 +213,6 @@ public class Configuration {
     this.codecConfig = codecConfig;
 
     statsFactory = new StatsFactoryImpl(new NullStatsReporter());
-
-    this.disableGlobalTracer = disableGlobalTracer;
   }
 
   public static Configuration fromEnv() {
@@ -238,8 +220,7 @@ public class Configuration {
         getProperty(JAEGER_SERVICE_NAME),
         SamplerConfiguration.fromEnv(),
         ReporterConfiguration.fromEnv(),
-        CodecConfiguration.fromEnv(),
-        getPropertyAsBool(JAEGER_DISABLE_GLOBAL_TRACER));
+        CodecConfiguration.fromEnv());
   }
 
   public Tracer.Builder getTracerBuilder() {
@@ -259,10 +240,6 @@ public class Configuration {
 
     tracer = getTracerBuilder().build();
     log.info("Initialized tracer={}", tracer);
-
-    if (!disableGlobalTracer) {
-      GlobalTracer.register(tracer);
-    }
 
     return tracer;
   }
