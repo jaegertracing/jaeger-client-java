@@ -22,8 +22,8 @@ import com.uber.jaeger.context.TracingUtils;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
 import com.uber.jaeger.samplers.Sampler;
-import com.uber.jaeger.utils.TestUtils;
-import io.opentracing.util.GlobalTracer;
+import io.opentracing.NoopTracerFactory;
+import java.lang.reflect.Field;
 import java.util.List;
 import org.apache.http.HttpHost;
 import org.apache.http.concurrent.FutureCallback;
@@ -67,7 +67,7 @@ public class JaegerRequestAndResponseInterceptorIntegrationTest {
     reporter = new InMemoryReporter();
     Sampler sampler = new ConstSampler(true);
     tracer = new Tracer.Builder("test_service", reporter, sampler).build();
-    GlobalTracer.register(tracer);
+    TracingUtils.setTracer(tracer);
 
     parentSpan = (Span) tracer.buildSpan("parent_operation").startManual();
     parentSpan.setBaggageItem(BAGGAGE_KEY, BAGGAGE_VALUE);
@@ -78,7 +78,9 @@ public class JaegerRequestAndResponseInterceptorIntegrationTest {
 
   @After
   public void tearDown() throws Exception {
-    TestUtils.resetGlobalTracer();
+    Field field = TracingUtils.class.getDeclaredField("tracer");
+    field.setAccessible(true);
+    field.set(null, NoopTracerFactory.create());
   }
 
   @Test

@@ -14,8 +14,8 @@
 
 package com.uber.jaeger.context;
 
-import io.opentracing.util.GlobalTracer;
-
+import io.opentracing.NoopTracer;
+import io.opentracing.NoopTracerFactory;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -24,25 +24,27 @@ import java.util.concurrent.ExecutorService;
  */
 @Deprecated
 public class TracingUtils {
-  private static TraceContext traceContext = new ActiveSpanSourceTraceContext(GlobalTracer.get());
+  private static io.opentracing.Tracer tracer = NoopTracerFactory.create();
+  private static TraceContext traceContext;
 
   public static void setTracer(io.opentracing.Tracer tracer) {
-    GlobalTracer.register(tracer);
+    TracingUtils.tracer = tracer;
+    TracingUtils.traceContext = new ActiveSpanSourceTraceContext(tracer);
   }
 
   public static TraceContext getTraceContext() {
-    assertGlobalTracerRegistered();
+    assertTracerRegistered();
     return traceContext;
   }
 
   public static ExecutorService tracedExecutor(ExecutorService wrappedExecutorService) {
-    assertGlobalTracerRegistered();
+    assertTracerRegistered();
     return new TracedExecutorService(wrappedExecutorService, traceContext);
   }
 
-  private static void assertGlobalTracerRegistered() {
-    if (!GlobalTracer.isRegistered()) {
-      throw new IllegalStateException("Please register a io.opentracing.util.GlobalTracer.");
+  private static void assertTracerRegistered() {
+    if (tracer instanceof NoopTracer) {
+      throw new IllegalStateException("Please set a tracer using `setTracer(..)` before calling any functions in this class.");
     }
   }
 

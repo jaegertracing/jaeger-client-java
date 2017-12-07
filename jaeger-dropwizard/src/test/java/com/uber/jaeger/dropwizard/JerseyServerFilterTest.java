@@ -22,8 +22,8 @@ import com.uber.jaeger.Tracer;
 import com.uber.jaeger.context.TracingUtils;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
-import com.uber.jaeger.utils.TestUtils;
-import io.opentracing.util.GlobalTracer;
+import io.opentracing.NoopTracerFactory;
+import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -49,7 +49,7 @@ public class JerseyServerFilterTest extends JerseyTest {
 
     ResourceConfig resourceConfig = new ResourceConfig(HelloResource.class,
                                                        StormlordResource.class);
-    GlobalTracer.register(tracer);
+    TracingUtils.setTracer(tracer);
     undertest = new JerseyServerFilter(tracer, TracingUtils.getTraceContext());
     resourceConfig.register(undertest);
     return resourceConfig;
@@ -59,7 +59,11 @@ public class JerseyServerFilterTest extends JerseyTest {
   @After
   public void tearDown() throws Exception {
     super.tearDown();
-    TestUtils.resetGlobalTracer();
+
+    // clean up tracing utils tracer instance
+    Field field = TracingUtils.class.getDeclaredField("tracer");
+    field.setAccessible(true);
+    field.set(null, NoopTracerFactory.create());
   }
 
   @Path("hello")

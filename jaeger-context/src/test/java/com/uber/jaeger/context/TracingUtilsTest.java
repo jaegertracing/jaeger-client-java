@@ -15,8 +15,9 @@
 package com.uber.jaeger.context;
 
 import com.uber.jaeger.Configuration;
-import com.uber.jaeger.utils.TestUtils;
+import io.opentracing.NoopTracerFactory;
 import io.opentracing.Tracer;
+import java.lang.reflect.Field;
 import java.util.concurrent.Executors;
 import org.junit.After;
 import org.junit.Assert;
@@ -26,11 +27,13 @@ public class TracingUtilsTest {
 
   @After
   public void tearDown() throws Exception {
-    TestUtils.resetGlobalTracer();
+    Field field = TracingUtils.class.getDeclaredField("tracer");
+    field.setAccessible(true);
+    field.set(null, NoopTracerFactory.create());
   }
 
   @Test(expected = IllegalStateException.class)
-  public void getTraceContextWithoutGlobalTracer() throws Exception {
+  public void getTraceContextWithoutRegisteredTracer() throws Exception {
     TracingUtils.getTraceContext();
   }
 
@@ -44,7 +47,7 @@ public class TracingUtilsTest {
   }
 
   @Test(expected = IllegalStateException.class)
-  public void tracedExecutorWithoutGlobalTracer() throws Exception {
+  public void tracedExecutorWithoutRegisteredTracer() throws Exception {
     TracingUtils.tracedExecutor(null);
   }
 

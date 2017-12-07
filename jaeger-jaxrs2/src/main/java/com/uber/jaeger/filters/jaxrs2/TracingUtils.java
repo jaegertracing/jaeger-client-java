@@ -16,7 +16,6 @@ package com.uber.jaeger.filters.jaxrs2;
 
 import com.uber.jaeger.context.TraceContext;
 import io.opentracing.Tracer;
-import io.opentracing.util.GlobalTracer;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -27,7 +26,7 @@ import java.util.concurrent.ExecutorService;
 public class TracingUtils {
 
   public static void setTracer(io.opentracing.Tracer tracer) {
-    GlobalTracer.register(tracer);
+    com.uber.jaeger.context.TracingUtils.setTracer(tracer);
   }
 
   @Deprecated
