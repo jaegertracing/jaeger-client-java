@@ -59,7 +59,6 @@ public class ConfigurationTest {
     System.clearProperty(Configuration.JAEGER_SAMPLER_MANAGER_HOST_PORT);
     System.clearProperty(Configuration.JAEGER_SERVICE_NAME);
     System.clearProperty(Configuration.JAEGER_TAGS);
-    System.clearProperty(Configuration.JAEGER_DISABLE_GLOBAL_TRACER);
     System.clearProperty(Configuration.JAEGER_ENDPOINT);
     System.clearProperty(Configuration.JAEGER_AUTH_TOKEN);
     System.clearProperty(Configuration.JAEGER_USER);
@@ -78,31 +77,7 @@ public class ConfigurationTest {
   public void testFromEnv() {
     System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
     assertNotNull(Configuration.fromEnv().getTracer());
-    assertTrue(GlobalTracer.isRegistered());
-  }
-
-  @Test (expected = IllegalStateException.class)
-  public void testFromEnvWithoutDisabledTracer() {
-    System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
-    assertNotNull(Configuration.fromEnv().getTracer());
-    assertTrue(GlobalTracer.isRegistered());
-
-    Configuration.fromEnv().getTracer();
-  }
-
-  @Test
-  public void testDisableGlobalTracer() {
-    System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
-    System.setProperty(Configuration.JAEGER_DISABLE_GLOBAL_TRACER, "true");
-    assertNotNull(Configuration.fromEnv().getTracer());
     assertFalse(GlobalTracer.isRegistered());
-  }
-
-  @Test
-  public void testDefaultGlobalTracer() {
-    Configuration config = new Configuration("Test");
-    assertNotNull(config.getTracer());
-    assertTrue(GlobalTracer.isRegistered());
   }
 
   @Test

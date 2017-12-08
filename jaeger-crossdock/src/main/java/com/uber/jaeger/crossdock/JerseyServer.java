@@ -76,7 +76,11 @@ public class JerseyServer {
 
     resources.forEach(rc::register);
 
-    rc.register(TracingUtils.serverFilter(config.getTracer()))
+    // register a tracer with TracingUtils before proceeding
+    io.opentracing.Tracer tracer = config.getTracer();
+    TracingUtils.setTracer(tracer);
+
+    rc.register(TracingUtils.serverFilter(tracer))
         .register(LoggingFilter.class)
         .register(ExceptionMapper.class)
         .register(JacksonFeature.class)

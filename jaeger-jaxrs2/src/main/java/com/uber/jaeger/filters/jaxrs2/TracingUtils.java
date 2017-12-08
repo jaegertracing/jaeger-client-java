@@ -18,7 +18,17 @@ import com.uber.jaeger.context.TraceContext;
 import io.opentracing.Tracer;
 import java.util.concurrent.ExecutorService;
 
+/**
+ * TracingUtils is going to be deprecated. To use its method please provide a tracer via
+ * {@link com.uber.jaeger.filters.jaxrs2.TracingUtils#setTracer(io.opentracing.Tracer)}.
+ */
+@Deprecated
 public class TracingUtils {
+
+  public static void setTracer(io.opentracing.Tracer tracer) {
+    com.uber.jaeger.context.TracingUtils.setTracer(tracer);
+  }
+
   @Deprecated
   public static TraceContext getTraceContext() {
     return com.uber.jaeger.context.TracingUtils.getTraceContext();
