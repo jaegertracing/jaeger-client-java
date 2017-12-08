@@ -42,7 +42,8 @@ public class TracingUtils {
 
   private static void assertTracerRegistered() {
     if (tracer == null) {
-      throw new IllegalStateException("Please set a tracer using `setTracer(..)` before calling any functions in this class.");
+      throw new IllegalStateException(
+          "Please set a tracer using `setTracer(..)` before calling any functions in this class.");
     }
   }
 
