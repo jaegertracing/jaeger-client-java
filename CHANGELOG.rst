@@ -7,6 +7,15 @@ Changes by Version
 - Bump OpenTracing version to 0.31.0-RC1 (https://github.com/jaegertracing/jaeger-client-java/pull/246), done on branch `v0.22.0`
 
 
+0.22.0-RC3 (2017-12-08)
+
+- Remove dependency on GlobalTracer (#302) <Debosmit Ray>
+- Add configuration support for B3 trace context propagation (#296) <Gary Brown>
+- Prevent Span from being reported twice on multiple calls to finish() (#299) <Debosmit Ray>
+- Do not store client span in thread-local in apache and jax-rs2 instrumentation (#297) <Debosmit Ray>
+- Add auth options to HttpSender (#285) <Juraci Paixão Kröhling>
+
+
 0.22.0-RC2 (2017-10-26)
 -------------------
 
