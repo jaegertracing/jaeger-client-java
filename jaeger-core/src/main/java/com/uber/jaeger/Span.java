@@ -118,7 +118,8 @@ public class Span implements io.opentracing.Span {
 
   @Override
   public Span setBaggageItem(String key, String value) {
-    if (key == null || value == null) {
+    if (key == null || (value == null && context.getBaggageItem(key) == null)) {
+      //Ignore attempts to add new baggage items with null values, they're not accessible anyway
       return this;
     }
     synchronized (this) {
