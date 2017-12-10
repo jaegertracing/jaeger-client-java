@@ -16,6 +16,7 @@ package com.uber.jaeger.context;
 
 import io.opentracing.Span;
 
+@SuppressWarnings("JavaLangClash") // this class will be deprecated in the future
 public class Runnable implements java.lang.Runnable {
   private final java.lang.Runnable wrappedRunnable;
   private final TraceContext traceContext;

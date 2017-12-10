@@ -15,11 +15,13 @@
 package com.uber.jaeger.senders;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import com.uber.jaeger.Configuration;
 import com.uber.jaeger.thriftjava.Process;
 import com.uber.jaeger.thriftjava.Span;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -117,6 +119,7 @@ public class HttpSenderTest extends JerseyTest {
 
     try {
       sender.send(new Process("robotrock"), generateSpans());
+      fail("expecting exception");
     } catch (TException te) {
       assertTrue(te.getMessage().contains("response 401"));
     }
@@ -140,7 +143,9 @@ public class HttpSenderTest extends JerseyTest {
         return Response.status(Response.Status.BAD_REQUEST).build();
       }
 
-      String userAndPass = new String(Base64.getDecoder().decode(authHeader.split("\\s+")[1]));
+      String userAndPass = new String(
+          Base64.getDecoder().decode(authHeader.split("\\s+")[1]),
+          StandardCharsets.US_ASCII);
       if (!userAndPass.equals("jdoe:password")) {
         return Response.status(Response.Status.UNAUTHORIZED).build();
       }
