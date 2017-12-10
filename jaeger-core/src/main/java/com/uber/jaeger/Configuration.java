@@ -251,6 +251,7 @@ public class Configuration {
   }
 
   /**
+   * @param statsFactory the fatory factory
    * @deprecated Use {@link #setStatsFactory(StatsFactory)} instead
    */
   @Deprecated
