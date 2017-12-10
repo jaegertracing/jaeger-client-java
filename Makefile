@@ -10,4 +10,4 @@ test:
 
 .PHONY: release
 release: clean
-	./gradlew uploadArchives
+	./gradlew -i uploadArchives
