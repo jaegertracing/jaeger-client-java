@@ -41,10 +41,22 @@ public class ActiveSpanSourceTraceContextTest {
   }
 
   @Test
+  public void popNull() throws Exception {
+    Span actual = traceContext.pop();
+    Assert.assertNull(actual);
+  }
+
+  @Test
   public void getCurrentSpan() throws Exception {
     traceContext.push(span);
     Span actual = traceContext.getCurrentSpan();
     Assert.assertEquals(span, actual);
+  }
+
+  @Test
+  public void getCurrentSpanNull() throws Exception {
+    Span actual = traceContext.getCurrentSpan();
+    Assert.assertNull(actual);
   }
 
   @Test

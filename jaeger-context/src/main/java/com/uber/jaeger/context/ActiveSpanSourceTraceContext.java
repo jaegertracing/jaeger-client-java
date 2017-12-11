@@ -57,19 +57,25 @@ public class ActiveSpanSourceTraceContext implements TraceContext {
     activeSpanSource.makeActive(span);
   }
 
-  /** Deactivates the current active span. */
+  /** Deactivates the current active span and returns it. If there is no active span returns null. */
   @Override
   public Span pop() {
     ActiveSpan activeSpan = activeSpanSource.activeSpan();
+    if (activeSpan == null) {
+      return null;
+    }
     Span span = getSpan(activeSpan);
     activeSpan.deactivate();
     return span;
   }
 
-  /** Retrieves the current active span. */
+  /** Retrieves the current active span or null if there is no active span. */
   @Override
   public Span getCurrentSpan() {
     ActiveSpan activeSpan = activeSpanSource.activeSpan();
+    if (activeSpan == null) {
+      return null;
+    }
     return getSpan(activeSpan);
   }
 
