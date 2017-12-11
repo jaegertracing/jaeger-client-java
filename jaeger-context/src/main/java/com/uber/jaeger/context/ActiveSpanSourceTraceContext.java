@@ -70,6 +70,9 @@ public class ActiveSpanSourceTraceContext implements TraceContext {
   @Override
   public Span getCurrentSpan() {
     ActiveSpan activeSpan = activeSpanSource.activeSpan();
+    if (activeSpan == null) {
+      return null;
+    }
     return getSpan(activeSpan);
   }
 

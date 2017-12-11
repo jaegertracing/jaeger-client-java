@@ -48,6 +48,12 @@ public class ActiveSpanSourceTraceContextTest {
   }
 
   @Test
+  public void getCurrentSpanNull() throws Exception {
+    Span actual = traceContext.getCurrentSpan();
+    Assert.assertNull(actual);
+  }
+
+  @Test
   public void isEmpty() throws Exception {
     Assert.assertTrue(traceContext.isEmpty());
   }
