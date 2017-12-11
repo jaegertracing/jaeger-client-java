@@ -45,6 +45,7 @@ public class BaggageSetter {
    * on the {@link Span}.
    *
    * @param  span  the span to set the baggage on
+   * @param  key   the baggage key to set
    * @param  value the baggage value to set
    * @return       the SpanContext with the baggage set
    */

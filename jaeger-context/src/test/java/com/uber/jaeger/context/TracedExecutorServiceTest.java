@@ -109,6 +109,7 @@ public class TracedExecutorServiceTest {
   }
 
   @Test
+  @SuppressWarnings("FutureReturnValueIgnored")
   public void testSubmitCallableOfT() {
     tracedExecutorService.submit(wrappedCallable);
 
@@ -119,6 +120,7 @@ public class TracedExecutorServiceTest {
   }
 
   @Test
+  @SuppressWarnings("FutureReturnValueIgnored")
   public void testSubmitRunnable() {
     tracedExecutorService.submit(wrappedRunnable);
 

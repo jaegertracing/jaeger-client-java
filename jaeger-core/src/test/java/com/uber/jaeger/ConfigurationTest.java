@@ -19,6 +19,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import com.uber.jaeger.Configuration.ReporterConfiguration;
 import com.uber.jaeger.Configuration.SamplerConfiguration;
@@ -174,6 +175,7 @@ public class ConfigurationTest {
     System.setProperty(Configuration.JAEGER_AGENT_PORT, "6832");
     try {
       Configuration.SenderConfiguration.fromEnv().getSender();
+      fail("expecting exception");
     } catch (RuntimeException re) {
       // we need to catch it here instead of using @Test(expected = ...) because the SocketException is
       // wrapped into a runtime exception
@@ -186,7 +188,7 @@ public class ConfigurationTest {
     System.setProperty(Configuration.JAEGER_AGENT_HOST, "jaeger-agent");
     System.setProperty(Configuration.JAEGER_AGENT_PORT, "6832");
     assertEquals("jaeger-agent", Configuration.ReporterConfiguration.fromEnv().getAgentHost());
-    assertEquals(new Integer(6832), Configuration.ReporterConfiguration.fromEnv().getAgentPort());
+    assertEquals(Integer.valueOf(6832), Configuration.ReporterConfiguration.fromEnv().getAgentPort());
   }
 
   @Test
@@ -337,7 +339,7 @@ public class ConfigurationTest {
     }
   }
 
-  private class CustomSender extends HttpSender {
+  private static class CustomSender extends HttpSender {
     private String endpoint;
 
     public CustomSender(String endpoint) {
