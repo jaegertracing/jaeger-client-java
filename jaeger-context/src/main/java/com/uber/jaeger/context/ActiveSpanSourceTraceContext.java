@@ -61,6 +61,9 @@ public class ActiveSpanSourceTraceContext implements TraceContext {
   @Override
   public Span pop() {
     ActiveSpan activeSpan = activeSpanSource.activeSpan();
+    if (activeSpan == null) {
+      return null;
+    }
     Span span = getSpan(activeSpan);
     activeSpan.deactivate();
     return span;
