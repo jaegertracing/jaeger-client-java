@@ -138,12 +138,13 @@ public class BaggageSetterTest {
   public void testBaggageNullRemoveValue() {
     when(mgr.getRestriction(SERVICE, KEY)).thenReturn(Restriction.of(true, 5));
     final String value = "value";
-    SpanContext ctx = setter.setBaggage(span, KEY, value);
-    Span child = (Span) tracer.buildSpan("some-operation").asChildOf(ctx).startManual();
-    ctx = setter.setBaggage(child, KEY, null);
+    Span originalSpan = span.setBaggageItem(KEY, value);
+    assertEquals(value, originalSpan.getBaggageItem(KEY));
+    Span child = (Span) tracer.buildSpan("some-operation").asChildOf(originalSpan).startManual();
+    child = child.setBaggageItem(KEY, null);
 
     assertBaggageLogs(child, KEY, null, false, true, false);
-    assertNull(ctx.getBaggageItem(KEY));
+    assertNull(child.getBaggageItem(KEY));
 
     assertEquals(
             2L, metricsReporter.counters.get("jaeger.baggage-update.result=ok").longValue());
