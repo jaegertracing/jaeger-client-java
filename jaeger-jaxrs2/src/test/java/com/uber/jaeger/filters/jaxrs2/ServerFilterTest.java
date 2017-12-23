@@ -21,7 +21,7 @@ import static org.mockito.Mockito.when;
 import com.uber.jaeger.Constants;
 import com.uber.jaeger.Span;
 import com.uber.jaeger.Tracer;
-import com.uber.jaeger.context.ActiveSpanSourceTraceContext;
+import com.uber.jaeger.context.ScopeManagerTraceContext;
 import com.uber.jaeger.context.TraceContext;
 import com.uber.jaeger.propagation.FilterIntegrationTest;
 import com.uber.jaeger.reporters.InMemoryReporter;
@@ -60,8 +60,7 @@ public class ServerFilterTest {
     tracer =
         new com.uber.jaeger.Tracer.Builder("Angry Machine", reporter, new ConstSampler(true))
             .build();
-    traceContext = new ActiveSpanSourceTraceContext(tracer);
-    undertest = new ServerFilter(tracer, traceContext);
+    undertest = new ServerFilter(tracer);
   }
 
   @Test

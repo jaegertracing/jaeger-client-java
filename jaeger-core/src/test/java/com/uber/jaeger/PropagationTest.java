@@ -43,7 +43,7 @@ public class PropagationTest {
     SpanContext spanContext = (SpanContext) tracer.extract(Format.Builtin.TEXT_MAP, carrier);
     assertTrue(spanContext.isDebugIdContainerOnly());
     assertEquals("Coraline", spanContext.getDebugId());
-    Span span = (Span) tracer.buildSpan("span").asChildOf(spanContext).startManual();
+    Span span = (Span) tracer.buildSpan("span").asChildOf(spanContext).start();
     spanContext = (SpanContext) span.context();
     assertTrue(spanContext.isSampled());
     assertTrue(spanContext.isDebug());
@@ -54,7 +54,7 @@ public class PropagationTest {
   public void testActiveSpanPropagation() {
     Tracer tracer =
         new Tracer.Builder("test", new InMemoryReporter(), new ConstSampler(true)).build();
-    try (Scope parent = tracer.buildSpan("parent").startActive()) {
+    try (Scope parent = tracer.buildSpan("parent").startActive(true)) {
       assertEquals(parent, tracer.scopeManager().active());
     }
   }
@@ -64,8 +64,8 @@ public class PropagationTest {
     InMemoryReporter reporter = new InMemoryReporter();
     Tracer tracer =
         new Tracer.Builder("test", reporter, new ConstSampler(true)).build();
-    try (Scope parent = tracer.buildSpan("parent").startActive()) {
-      tracer.buildSpan("child").startActive().close();
+    try (Scope parent = tracer.buildSpan("parent").startActive(true)) {
+      tracer.buildSpan("child").startActive(true).close();
     }
     assertEquals(2, reporter.getSpans().size());
 
@@ -88,7 +88,7 @@ public class PropagationTest {
     InMemoryReporter reporter = new InMemoryReporter();
     Tracer tracer =
         new Tracer.Builder("test", reporter, new ConstSampler(true)).build();
-    tracer.buildSpan("parent").startActive().close();
+    tracer.buildSpan("parent").startActive(true).close();
     assertEquals(1, reporter.getSpans().size());
   }
 
@@ -97,8 +97,12 @@ public class PropagationTest {
     InMemoryReporter reporter = new InMemoryReporter();
     Tracer tracer =
         new Tracer.Builder("test", reporter, new ConstSampler(true)).build();
-    tracer.buildSpan("parent").startActive(false).close();
+    Scope scope = tracer.buildSpan("parent").startActive(false);
+    Span span = (Span) scope.span();
+    scope.close();
     assertTrue(reporter.getSpans().isEmpty());
+    span.finish();
+    assertEquals(1, reporter.getSpans().size());
   }
 
   @Test
@@ -106,8 +110,8 @@ public class PropagationTest {
     InMemoryReporter reporter = new InMemoryReporter();
     Tracer tracer =
         new Tracer.Builder("test", reporter, new ConstSampler(true)).build();
-    try (Scope parent = tracer.buildSpan("parent").startActive()) {
-      tracer.buildSpan("child").ignoreActiveSpan().startActive().close();
+    try (Scope parent = tracer.buildSpan("parent").startActive(true)) {
+      tracer.buildSpan("child").ignoreActiveSpan().startActive(true).close();
     }
     assertEquals(2, reporter.getSpans().size());
 
@@ -126,10 +130,10 @@ public class PropagationTest {
     Tracer tracer =
         new Tracer.Builder("test", reporter, new ConstSampler(true)).build();
 
-    io.opentracing.Span initialSpan = tracer.buildSpan("initial").startManual();
+    io.opentracing.Span initialSpan = tracer.buildSpan("initial").start();
 
-    try (Scope parent = tracer.buildSpan("parent").startActive()) {
-      tracer.buildSpan("child").asChildOf(initialSpan.context()).startActive().close();
+    try (Scope parent = tracer.buildSpan("parent").startActive(true)) {
+      tracer.buildSpan("child").asChildOf(initialSpan.context()).startActive(true).close();
     }
 
     initialSpan.finish();
@@ -156,11 +160,6 @@ public class PropagationTest {
     Tracer tracer =
         new Tracer.Builder("test", new InMemoryReporter(), new ConstSampler(true))
         .withScopeManager(new ScopeManager() {
-
-          @Override
-          public Scope activate(io.opentracing.Span span) {
-            return scope;
-          }
 
           @Override
           public Scope activate(io.opentracing.Span span, boolean finishSpanOnClose) {

@@ -251,8 +251,7 @@ public class Span implements io.opentracing.Span {
         if (logs == null) {
           this.logs = new ArrayList<LogData>();
         }
-        // TODO: Consider removing payload from LogData
-        logs.add(new LogData(timestampMicroseconds, event, null));
+        logs.add(new LogData(timestampMicroseconds, event));
       }
       return this;
     }

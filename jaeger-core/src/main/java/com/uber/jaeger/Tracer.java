@@ -148,6 +148,12 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
   }
 
   @Override
+  public Span activeSpan() {
+    Scope scope = this.scopeManager.active();
+    return scope == null ? null : (Span) scope.span();
+  }
+
+  @Override
   public io.opentracing.Tracer.SpanBuilder buildSpan(String operationName) {
     return new SpanBuilder(operationName);
   }
@@ -363,7 +369,7 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
     }
 
     @Override
-    public io.opentracing.Span startManual() {
+    public io.opentracing.Span start() {
       SpanContext context;
 
       // Check if active span should be established as CHILD_OF relationship
@@ -411,13 +417,8 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
     }
 
     @Override
-    public Scope startActive() {
-      return startActive(true);
-    }
-
-    @Override
     public Scope startActive(boolean finishSpanOnClose) {
-      return scopeManager.activate(startManual(), finishSpanOnClose);
+      return scopeManager.activate(start(), finishSpanOnClose);
     }
 
     @Override
@@ -428,8 +429,8 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
 
     @Override
     @Deprecated
-    public io.opentracing.Span start() {
-      return startManual();
+    public io.opentracing.Span startManual() {
+      return start();
     }
   }
 

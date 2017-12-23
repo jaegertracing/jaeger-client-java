@@ -27,7 +27,7 @@ public class TracingUtils {
 
   public static synchronized void setTracer(io.opentracing.Tracer tracer) {
     TracingUtils.tracer = tracer;
-    TracingUtils.traceContext = new ActiveSpanSourceTraceContext(tracer);
+    TracingUtils.traceContext = new ScopeManagerTraceContext(tracer.scopeManager());
   }
 
   public static synchronized TraceContext getTraceContext() {

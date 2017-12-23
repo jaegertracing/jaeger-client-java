@@ -14,11 +14,15 @@
 
 package com.uber.jaeger.utils;
 
-import io.opentracing.NoopTracerFactory;
+import io.opentracing.noop.NoopTracerFactory;
 import io.opentracing.util.GlobalTracer;
 
 import java.lang.reflect.Field;
 
+/**
+ * @deprecated Use io.opentracing.util.GlobalTracerTestUtil
+ */
+@Deprecated
 public class TestUtils {
   public static void resetGlobalTracer() throws NoSuchFieldException, IllegalAccessException {
     // Reset opentracing's global tracer
