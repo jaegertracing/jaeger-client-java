@@ -14,90 +14,148 @@
 
 package com.uber.jaeger.filters.jaxrs2;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import com.uber.jaeger.Constants;
 import com.uber.jaeger.Span;
+import com.uber.jaeger.SpanContext;
 import com.uber.jaeger.Tracer;
-import com.uber.jaeger.context.ActiveSpanSourceTraceContext;
-import com.uber.jaeger.context.TraceContext;
 import com.uber.jaeger.propagation.FilterIntegrationTest;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
+import com.uber.jaeger.utils.TestUtils;
+import io.opentracing.propagation.Format;
+import io.opentracing.propagation.TextMap;
 import io.opentracing.tag.Tags;
-import java.net.URI;
+import io.opentracing.util.GlobalTracer;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerResponseContext;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MultivaluedHashMap;
-import javax.ws.rs.core.UriInfo;
-import org.junit.Before;
+import javax.ws.rs.core.Response;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.test.JerseyTest;
+import org.junit.After;
+import org.junit.Assert;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Tests that {@link ServerFilter} produces a span and sets tags correctly See also:
- * {@link FilterIntegrationTest} for a complete Client/Server filter integration test
+ * {@link FilterIntegrationTest} for a complete Client/Server filter integration test.
  */
-@RunWith(MockitoJUnitRunner.class)
-public class ServerFilterTest {
-  private Tracer tracer;
+public class ServerFilterTest extends JerseyTest {
   private InMemoryReporter reporter;
-  private ServerFilter undertest;
-  private TraceContext traceContext;
+  private static Tracer tracer;
 
-  @Mock private ContainerRequestContext containerRequestContext;
-  @Mock private ContainerResponseContext containerResponseContext;
-
-  @Before
-  public void setUp() {
+  @Override
+  protected Application configure() {
     reporter = new InMemoryReporter();
-    tracer =
-        new com.uber.jaeger.Tracer.Builder("Angry Machine", reporter, new ConstSampler(true))
+    tracer = new Tracer.Builder("Angry Machine", reporter, new ConstSampler(true))
             .build();
-    traceContext = new ActiveSpanSourceTraceContext(tracer);
-    undertest = new ServerFilter(tracer, traceContext);
+    GlobalTracer.register(tracer);
+
+    ResourceConfig resourceConfig = new ResourceConfig(HelloResource.class, EagleResource.class);
+    ServerFilter filter = new ServerFilter(tracer, TracingUtils.getTraceContext());
+    resourceConfig.register(filter);
+    return resourceConfig;
+  }
+
+  @Override
+  @After
+  public void tearDown() throws Exception {
+    super.tearDown();
+    TestUtils.resetGlobalTracer();
+  }
+
+  @Path("heliosphan")
+  public static class HelloResource {
+    @GET
+    public String getHello() {
+      tracer.buildSpan("nested-span").startActive().close();
+      return "Twinning";
+    }
+  }
+
+  @Path("monsoon")
+  public static class EagleResource {
+    @GET
+    public String getEagle() {
+      return "Thorondor";
+    }
   }
 
   @Test
-  public void filter() throws Exception {
-    String method = "GET";
-    URI uri = new URI("http://localhost/path");
-    when(containerRequestContext.getMethod()).thenReturn(method);
-    UriInfo uriInfo = mock(UriInfo.class);
-    when(uriInfo.getAbsolutePath()).thenReturn(uri);
-    when(uriInfo.getBaseUri()).thenReturn(uri);
-    when(containerRequestContext.getUriInfo()).thenReturn(uriInfo);
-    MultivaluedHashMap<String, String> headers = new MultivaluedHashMap<>();
-    headers.add(Constants.X_UBER_SOURCE, "source");
-    when(containerRequestContext.getHeaders()).thenReturn(headers);
-
-    when(containerResponseContext.getStatus()).thenReturn(200);
-
-    undertest.filter(containerRequestContext);
-    undertest.filter(containerRequestContext, containerResponseContext);
+  public void testOperationName() throws Exception {
+    Response response = target("monsoon").request().get();
+    Assert.assertEquals(200,response.getStatus());
 
     List<Span> spans = reporter.getSpans();
-    assertEquals(1, spans.size());
-    Span span = spans.get(0);
-    Map<String, Object> tags = span.getTags();
+    Assert.assertFalse(spans.isEmpty());
 
-    assertEquals(method, span.getOperationName());
-    assertEquals(Tags.SPAN_KIND_SERVER, tags.get(Tags.SPAN_KIND.getKey()));
-    assertEquals(uri.toString(), tags.get(Tags.HTTP_URL.getKey()));
-    assertEquals("localhost", tags.get(Tags.PEER_HOSTNAME.getKey()));
-
-
-    // Exercise catch blocks on filter methods for code coverage
-    undertest.filter(null);
-
-    // For filter(requestContext, responseContext) we first need to make sure there's something in the traceContext
-    undertest.filter(containerRequestContext);
-    undertest.filter(containerRequestContext, null);
+    Assert.assertEquals("GET", spans.get(0).getOperationName());
   }
+
+  @Test
+  public void testPropagationThroughNestedSpan() throws Exception {
+    Response response = target("heliosphan").request().get();
+    Assert.assertEquals(200,response.getStatus());
+
+    List<Span> spans = reporter.getSpans();
+
+    Assert.assertEquals(2, spans.size());
+
+    Assert.assertEquals(spans.get(0).context().getTraceId(),
+                 spans.get(1).context().getTraceId());
+
+    Assert.assertEquals(spans.get(0).context().getParentId(),
+                 spans.get(1).context().getSpanId());
+  }
+
+  @Test
+  public void testInject() throws Exception {
+    HeaderTextMap headers = new HeaderTextMap();
+    tracer.inject(SpanContext.contextFromString("4:3:2:1"), Format.Builtin.HTTP_HEADERS, headers);
+    Response response = target("monsoon").request().headers(headers.getMap()).get();
+    Assert.assertEquals(200,response.getStatus());
+
+    List<Span> spans = reporter.getSpans();
+    Assert.assertFalse(spans.isEmpty());
+
+    Assert.assertEquals(4, spans.get(0).context().getTraceId());
+  }
+
+  @Test
+  public void testUberHeader() throws Exception {
+    Response response = target("monsoon").request().header(Constants.X_UBER_SOURCE, "origin").get();
+    Assert.assertEquals(200,response.getStatus());
+
+    List<Span> spans = reporter.getSpans();
+    Assert.assertFalse(spans.isEmpty());
+
+    Assert.assertEquals("origin", spans.get(0).getTags().get(Tags.PEER_SERVICE.getKey()));
+  }
+
+  private static class HeaderTextMap implements TextMap {
+
+    private MultivaluedHashMap<String, Object> headers = new MultivaluedHashMap<>();
+
+    @Override
+    public Iterator<Map.Entry<String, String>> iterator() {
+      return null;
+    }
+
+    @Override
+    public void put(String k, String v) {
+      List<Object> valueList = new ArrayList<>();
+      valueList.add(v);
+      headers.put(k, valueList);
+    }
+
+    MultivaluedHashMap<String, Object> getMap() {
+      return headers;
+    }
+  }
+
 }
