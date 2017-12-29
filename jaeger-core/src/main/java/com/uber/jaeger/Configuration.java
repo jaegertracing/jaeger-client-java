@@ -155,9 +155,9 @@ public class Configuration {
   }
 
   /**
-   * The serviceName that the tracer will use
+   * The serviceName that the tracer will use.
    */
-  private final String serviceName;
+  protected final String serviceName;
 
   private final SamplerConfiguration samplerConfig;
 
@@ -168,12 +168,12 @@ public class Configuration {
   /**
    * A interface that wraps an underlying metrics generator in order to report Jaeger's metrics.
    */
-  private StatsFactory statsFactory;
+  protected StatsFactory statsFactory;
 
   /**
    * lazy singleton Tracer initialized in getTracer() method.
    */
-  private Tracer tracer;
+  protected Tracer tracer;
 
   public Configuration(String serviceName) {
     this(serviceName, null, null);
@@ -233,7 +233,7 @@ public class Configuration {
     return builder;
   }
 
-  public synchronized io.opentracing.Tracer getTracer() {
+  public synchronized com.uber.jaeger.Tracer getTracer() {
     if (tracer != null) {
       return tracer;
     }
@@ -750,7 +750,7 @@ public class Configuration {
     return Boolean.valueOf(getProperty(name));
   }
 
-  private static Map<String, String> tracerTagsFromEnv() {
+  protected static Map<String, String> tracerTagsFromEnv() {
     Map<String, String> tracerTagMaps = null;
     String tracerTags = getProperty(JAEGER_TAGS);
     if (tracerTags != null) {
