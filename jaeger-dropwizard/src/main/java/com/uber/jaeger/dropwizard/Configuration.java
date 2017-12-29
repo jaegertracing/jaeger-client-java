@@ -18,8 +18,11 @@ import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.opentracing.NoopTracerFactory;
-import io.opentracing.Tracer;
+import com.uber.jaeger.metrics.Metrics;
+import com.uber.jaeger.reporters.NoopReporter;
+import com.uber.jaeger.reporters.Reporter;
+import com.uber.jaeger.samplers.ConstSampler;
+import com.uber.jaeger.samplers.Sampler;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Configuration extends com.uber.jaeger.Configuration {
@@ -39,9 +42,17 @@ public class Configuration extends com.uber.jaeger.Configuration {
   }
 
   @Override
-  public synchronized Tracer getTracer() {
+  public synchronized com.uber.jaeger.Tracer getTracer() {
     if (disable) {
-      return NoopTracerFactory.create();
+      if (tracer == null) {
+        Metrics metrics = new Metrics(statsFactory);
+        Sampler sampler = new ConstSampler(false);
+        Reporter reporter = new NoopReporter();
+        tracer = new com.uber.jaeger.Tracer.Builder(serviceName, reporter, sampler)
+            .withMetrics(metrics)
+            .withTags(tracerTagsFromEnv())
+            .build();
+      }
     }
     return super.getTracer();
   }
