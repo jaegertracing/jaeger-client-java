@@ -27,11 +27,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
-// TODO re-enable test when https://github.com/uber/tchannel-java/issues/188 is fixed
-@Ignore("need to ignore temporarily until TChannel is upgraded to OT 0.31 API")
 public class EndToEndBehaviorResourceTest {
   private EndToEndBehaviorResource resource;
   private InMemoryReporter reporter;

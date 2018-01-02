@@ -41,6 +41,7 @@ allprojects {
     version = getVersionForBuild()
 
     repositories {
+        mavenLocal()
         mavenCentral()
     }
 }

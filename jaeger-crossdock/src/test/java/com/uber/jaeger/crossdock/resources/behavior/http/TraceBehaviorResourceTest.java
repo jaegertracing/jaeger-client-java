@@ -46,14 +46,11 @@ import org.apache.log4j.BasicConfigurator;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-// TODO re-enable test when https://github.com/uber/tchannel-java/issues/188 is fixed
 @RunWith(Parameterized.class)
-@Ignore("need to ignore temporarily until TChannel is upgraded to OT 0.31 API")
 public class TraceBehaviorResourceTest {
   private static final String SERVICE_NAME = "foo";
 
