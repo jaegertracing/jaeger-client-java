@@ -155,7 +155,7 @@ public class PropagationTest {
   }
 
   @Test
-  public void testCustomActiveSpanSource() {
+  public void testCustomScopeManager() {
     Scope scope = mock(Scope.class);
     Tracer tracer =
         new Tracer.Builder("test", new InMemoryReporter(), new ConstSampler(true))
