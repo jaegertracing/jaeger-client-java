@@ -14,6 +14,8 @@
 
 package com.uber.jaeger.propagation;
 
+import static com.uber.jaeger.Constants.DEBUG_JAEGER_SPAN_BAGGAGE_HEADER;
+
 import com.uber.jaeger.Constants;
 import com.uber.jaeger.SpanContext;
 import io.opentracing.propagation.TextMap;
@@ -64,7 +66,7 @@ public class TextMapCodec implements Codec<TextMap> {
   @Override
   public SpanContext extract(TextMap carrier) {
     SpanContext context = null;
-    Map<String, String> baggage = null;
+    Map<String, String> baggage = new HashMap();
     String debugId = null;
     for (Map.Entry<String, String> entry : carrier) {
       // TODO there should be no lower-case here
@@ -74,20 +76,30 @@ public class TextMapCodec implements Codec<TextMap> {
       } else if (key.equals(Constants.DEBUG_ID_HEADER_KEY)) {
         debugId = decodedValue(entry.getValue());
       } else if (key.startsWith(baggagePrefix)) {
-        if (baggage == null) {
-          baggage = new HashMap<String, String>();
-        }
         baggage.put(keys.unprefixedKey(key, baggagePrefix), decodedValue(entry.getValue()));
+      } else if (key.equals(DEBUG_JAEGER_SPAN_BAGGAGE_HEADER)) {
+        /**
+         * debug jaeger baggage is loaded for a header item that looks like,
+         * <pre>
+         * {@code
+         *    "jaeger-baggage": "k1=v1,k2=v2"
+         * }
+         * </pre>
+         */
+        String decodedDebugBaggageItems = decodedValue(entry.getValue());
+        String[] debugBaggageItems = decodedDebugBaggageItems.split(",");
+        for (String debugBaggageItem: debugBaggageItems) {
+          String[] debugBaggageItemParts = debugBaggageItem.split("=");
+          baggage.put(debugBaggageItemParts[0], debugBaggageItemParts[1]);
+        }
       }
     }
+    // this pattern allows for presence of debug ID to trump everything else
     if (context == null) {
-      if (debugId != null) {
-        return SpanContext.withDebugId(debugId);
+      if (debugId == null) {
+        return null;
       }
-      return null;
-    }
-    if (baggage == null) {
-      return context;
+      context = SpanContext.withDebugId(debugId);
     }
     return context.withBaggage(baggage);
   }

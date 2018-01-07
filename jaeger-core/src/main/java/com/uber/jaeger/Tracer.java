@@ -283,11 +283,11 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
         }
       }
 
-      return new SpanContext(id, id, 0, flags);
+      return new SpanContext(id, id, 0, flags, createChildBaggage(), debugId);
     }
 
     private Map<String, String> createChildBaggage() {
-      Map<String, String> baggage = null;
+      Map<String, String> baggage = new HashMap();
 
       // optimization for 99% use cases, when there is only one parent
       if (references.size() == 1) {
@@ -296,9 +296,6 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
 
       for (Reference reference: references) {
         if (reference.getSpanContext().baggage() != null) {
-          if (baggage == null) {
-            baggage = new HashMap<String, String>();
-          }
           baggage.putAll(reference.getSpanContext().baggage());
         }
       }

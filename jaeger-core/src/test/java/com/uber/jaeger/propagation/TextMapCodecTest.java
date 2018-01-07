@@ -44,4 +44,6 @@ public class TextMapCodecTest {
     assertTrue(str.contains("urlEncoding=false"));
   }
 
+  // FIXME: This test class is extremely incomplete and barely unittests TextMapCodec.
+
 }
