@@ -1,10 +1,10 @@
 Changes by Version
 ==================
 
-0.23.0 (unreleased)
+0.23.0 (2018-01-12)
 -------------------
 
-- Bump OpenTracing version to 0.31.0-RC1 (https://github.com/jaegertracing/jaeger-client-java/pull/246), done on branch `v0.22.0`
+- Upgrade to OpenTracing API v0.31.0 (#313)
 
 
 0.22.0-RC3 (2017-12-08)
