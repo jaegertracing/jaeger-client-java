@@ -30,7 +30,7 @@ import com.uber.jaeger.crossdock.api.TraceResponse;
 import com.uber.jaeger.crossdock.resources.behavior.TraceBehavior;
 import com.uber.jaeger.crossdock.resources.behavior.tchannel.TChannelServer;
 import com.uber.tchannel.api.TChannel.Builder;
-import io.opentracing.NoopTracerFactory;
+import io.opentracing.noop.NoopTracerFactory;
 import io.opentracing.tag.Tags;
 import io.opentracing.util.GlobalTracer;
 import java.lang.reflect.Field;
@@ -99,7 +99,7 @@ public class TraceBehaviorResourceTest {
 
   @Test
   public void testStartTraceHttp() throws Exception {
-    Span span = (Span) server.getTracer().buildSpan("root").startManual();
+    Span span = (Span) server.getTracer().buildSpan("root").start();
     TracingUtils.getTraceContext().push(span);
 
     String expectedTraceId = String.format("%x", span.context().getTraceId());
@@ -124,7 +124,7 @@ public class TraceBehaviorResourceTest {
 
   @Test
   public void testJoinTraceHttp() throws Exception {
-    Span span = (Span) server.getTracer().buildSpan("root").startManual();
+    Span span = (Span) server.getTracer().buildSpan("root").start();
     TracingUtils.getTraceContext().push(span);
 
     String expectedBaggage = "baggage-example";

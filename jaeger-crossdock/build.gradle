@@ -19,7 +19,7 @@ dependencies {
     compile group: 'org.glassfish.jersey.core', name: 'jersey-client', version: jerseyVersion
     compile group: 'org.glassfish.jersey.media', name: 'jersey-media-json-jackson', version: jerseyVersion
     compile group: 'javax.servlet', name: 'servlet-api', version: '2.5'
-    compile group: 'com.uber.tchannel', name: 'tchannel-core', version: '0.7.7'
+    compile group: 'com.uber.tchannel', name: 'tchannel-core', version: '0.7.2'
     compile group: 'org.slf4j', name: 'slf4j-log4j12', version: slf4jVersion
 
     // Testing Frameworks

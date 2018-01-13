@@ -48,7 +48,7 @@ public class JerseyServer {
     // create a resource config that scans for JAX-RS resources and providers
     final ResourceConfig rc =
         new ResourceConfig()
-            .register(new ServerFilter(tracer, traceContext))
+            .register(new ServerFilter(tracer))
             .register(
                 new AbstractBinder() {
                   @Override

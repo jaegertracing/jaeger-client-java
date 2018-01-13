@@ -21,20 +21,17 @@ import lombok.Getter;
 public final class LogData {
   private final long time; // time in microseconds
   private final String message;
-  private final Object payload;
   private final Map<String, ?> fields;
 
-  LogData(long time, String message, Object payload) {
+  LogData(long time, String message) {
     this.time = time;
     this.message = message;
-    this.payload = payload;
     this.fields = null;
   }
 
   LogData(long time, Map<String, ?> fields) {
     this.time = time;
     this.message = null;
-    this.payload = null;
     this.fields = fields;
   }
 }

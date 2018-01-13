@@ -78,9 +78,6 @@ public class JaegerThriftSpanConverter {
           if (logData.getMessage() != null) {
             tags.add(buildTag("event", logData.getMessage()));
           }
-          if (logData.getPayload() != null) {
-            tags.add(buildTag("payload", logData.getPayload()));
-          }
           thriftLog.setFields(tags);
         }
         thriftLogs.add(thriftLog);

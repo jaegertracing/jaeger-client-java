@@ -14,9 +14,10 @@
 
 package com.uber.jaeger.context;
 
-import io.opentracing.ActiveSpanSource;
+import io.opentracing.ScopeManager;
 import io.opentracing.Span;
-import io.opentracing.util.ThreadLocalActiveSpanSource;
+import io.opentracing.util.ThreadLocalScopeManager;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -24,14 +25,14 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class ActiveSpanSourceTraceContextTest {
+public class ScopeManagerTraceContextTest {
 
-  private ActiveSpanSource activeSpanSource = new ThreadLocalActiveSpanSource();
+  private ScopeManager scopeManager = new ThreadLocalScopeManager();
 
   @Mock private Span span;
 
-  private ActiveSpanSourceTraceContext traceContext =
-      new ActiveSpanSourceTraceContext(activeSpanSource);
+  private ScopeManagerTraceContext traceContext =
+      new ScopeManagerTraceContext(scopeManager);
 
   @Test
   public void pushAndPop() throws Exception {

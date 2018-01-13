@@ -22,7 +22,7 @@ import static org.mockito.Mockito.mock;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uber.jaeger.Span;
-import com.uber.jaeger.context.ActiveSpanSourceTraceContext;
+import com.uber.jaeger.context.ScopeManagerTraceContext;
 import com.uber.jaeger.context.TraceContext;
 import com.uber.jaeger.filters.jaxrs2.ClientFilter;
 import com.uber.jaeger.filters.jaxrs2.ServerRequestCarrier;
@@ -66,7 +66,7 @@ public class FilterIntegrationTest {
             .withStatsReporter(metricsReporter)
             .build();
 
-    traceContext = new ActiveSpanSourceTraceContext(tracer);
+    traceContext = new ScopeManagerTraceContext(tracer.scopeManager());
 
     // start the server
     server = new JerseyServer(tracer, traceContext);
