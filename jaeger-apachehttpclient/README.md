@@ -44,7 +44,7 @@ public class CustomRequestInterceptor extends TracingRequestInterceptor {
   }
 
   /**
-   * If `operartion-name` HTTP header is set by the caller, use it as the
+   * If `operation-name` HTTP header is set by the caller, use it as the
    * Span's operation name. Otherwise fall back to default behavior.
    * 
    * @param httpRequest the request for the http operation being executed
