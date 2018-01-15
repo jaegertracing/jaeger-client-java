@@ -14,9 +14,14 @@
 
 package com.uber.jaeger.propagation;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Map;
+import org.hamcrest.collection.IsMapContaining;
 import org.junit.Test;
 
 public class TextMapCodecTest {
@@ -42,6 +47,111 @@ public class TextMapCodecTest {
     assertTrue(str.contains("contextKey=uber-trace-id"));
     assertTrue(str.contains("baggagePrefix=uberctx-"));
     assertTrue(str.contains("urlEncoding=false"));
+  }
+
+  @Test
+  public void testGetDebugHeadersAsBaggageSingleHeader() {
+    TextMapCodec codec = new TextMapCodec(false);
+
+    /* testing key/value with no spaces */
+    String value = "foo=bar";
+    Map<String, String> result = codec.getDebugHeadersAsBaggage(value);
+
+    assertNotNull(result);
+    assertThat(result, IsMapContaining.hasEntry("foo", "bar"));
+    assertThat(result.size(), is(1));
+
+    /* testing value with spaces in it */
+    value = "foo=bar baz ";
+    result = codec.getDebugHeadersAsBaggage(value);
+
+    assertNotNull(result);
+    assertThat(result, IsMapContaining.hasEntry("foo", "bar baz"));
+    assertThat(result.size(), is(1));
+
+    /* testing key with spaces in it */
+    value = "foo fum = bar ";
+    result = codec.getDebugHeadersAsBaggage(value);
+
+    assertNotNull(result);
+    assertThat(result, IsMapContaining.hasEntry("foo fum", "bar"));
+    assertThat(result.size(), is(1));
+
+    /* testing key/value with spaces */
+    value = "foo  fum  =bar baz ";
+    result = codec.getDebugHeadersAsBaggage(value);
+
+    assertNotNull(result);
+    assertThat(result, IsMapContaining.hasEntry("foo  fum", "bar baz"));
+    assertThat(result.size(), is(1));
+  }
+
+  @Test
+  public void testGetDebugHeadersAsBaggageMultipleHeaders() {
+    TextMapCodec codec = new TextMapCodec(false);
+
+    /* testing key/value with no spaces */
+    String value = "foo=bar,fee=baz";
+    Map<String, String> result = codec.getDebugHeadersAsBaggage(value);
+
+    assertNotNull(result);
+    assertThat(result, IsMapContaining.hasEntry("foo", "bar"));
+    assertThat(result, IsMapContaining.hasEntry("fee", "baz"));
+    assertThat(result.size(), is(2));
+
+    value = "foo=bar baz     , fee=     fum";
+    result = codec.getDebugHeadersAsBaggage(value);
+
+    assertNotNull(result);
+    assertThat(result, IsMapContaining.hasEntry("foo", "bar baz"));
+    assertThat(result, IsMapContaining.hasEntry("fee", "fum"));
+    assertThat(result.size(), is(2));
+  }
+
+  @Test
+  public void testGetDebugHeadersAsBaggageMalformedCases() {
+    TextMapCodec codec = new TextMapCodec(false);
+
+    String value = "=";
+    Map<String, String> result = codec.getDebugHeadersAsBaggage(value);
+    assertNull(result);
+
+    value = "1=";
+    result = codec.getDebugHeadersAsBaggage(value);
+    assertNull(result);
+
+    value = "1=, ,";
+    result = codec.getDebugHeadersAsBaggage(value);
+    assertNull(result);
+
+    // trim after split on `,` will cause the first one to not get picked up
+    value = "= , ,";
+    result = codec.getDebugHeadersAsBaggage(value);
+    assertNull(result);
+
+    // multiple = causes length == 2 check to fail
+    value = "====, ,=";
+    result = codec.getDebugHeadersAsBaggage(value);
+    assertNull(result);
+
+    value = "== == , ,=";
+    result = codec.getDebugHeadersAsBaggage(value);
+    assertNull(result);
+
+    // space around last = (on the key side) but nothing on value side will cause length == 1
+    value = "== == , foo, =";
+    result = codec.getDebugHeadersAsBaggage(value);
+    assertNull(result);
+
+    value = ",, ,       fum,,,,";
+    result = codec.getDebugHeadersAsBaggage(value);
+    assertNull(result);
+
+    value = "1=, ,, foo=bar";
+    result = codec.getDebugHeadersAsBaggage(value);
+    assertNotNull(result);
+    assertThat(result, IsMapContaining.hasEntry("foo", "bar"));
+    assertThat(result.size(), is(1));
   }
 
   // FIXME: This test class is extremely incomplete and barely unittests TextMapCodec.

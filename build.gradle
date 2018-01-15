@@ -131,6 +131,7 @@ subprojects {
     }
 
     dependencies {
+        compile group: 'org.jetbrains', name: 'annotations', version: '15.0'
         compileOnly 'org.projectlombok:lombok:1.16.18'
         compileOnly 'org.codehaus.mojo:animal-sniffer-annotations:1.16'
     }
