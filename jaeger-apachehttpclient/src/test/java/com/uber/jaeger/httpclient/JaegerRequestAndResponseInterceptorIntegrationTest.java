@@ -18,11 +18,9 @@ import static org.junit.Assert.assertEquals;
 
 import com.uber.jaeger.Span;
 import com.uber.jaeger.Tracer;
-import com.uber.jaeger.context.TracingUtils;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
 import com.uber.jaeger.samplers.Sampler;
-import java.lang.reflect.Field;
 import java.util.List;
 import org.apache.http.HttpHost;
 import org.apache.http.concurrent.FutureCallback;
@@ -33,7 +31,6 @@ import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.apache.http.impl.nio.client.HttpAsyncClients;
 import org.apache.http.message.BasicHttpRequest;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -66,20 +63,12 @@ public class JaegerRequestAndResponseInterceptorIntegrationTest {
     reporter = new InMemoryReporter();
     Sampler sampler = new ConstSampler(true);
     tracer = new Tracer.Builder("test_service", reporter, sampler).build();
-    TracingUtils.setTracer(tracer);
 
     parentSpan = (Span) tracer.buildSpan("parent_operation").startManual();
     parentSpan.setBaggageItem(BAGGAGE_KEY, BAGGAGE_VALUE);
     parentSpan.finish();
     //Set up a parent span context
-    TracingUtils.getTraceContext().push(parentSpan);
-  }
-
-  @After
-  public void tearDown() throws Exception {
-    Field field = TracingUtils.class.getDeclaredField("tracer");
-    field.setAccessible(true);
-    field.set(null, null);
+    tracer.scopeManager().activate(parentSpan, false);
   }
 
   @Test
@@ -90,7 +79,7 @@ public class JaegerRequestAndResponseInterceptorIntegrationTest {
     client.start();
 
     // Verify that parent span is on top of the stack _before_ request is made
-    assertEquals(parentSpan, TracingUtils.getTraceContext().getCurrentSpan());
+    assertEquals(parentSpan, tracer.activeSpan());
 
     //Make a request to the async client and wait for response
     client
@@ -110,7 +99,7 @@ public class JaegerRequestAndResponseInterceptorIntegrationTest {
         .get();
 
     // Verify that parent span is on top of the stack _after_ request is made
-    assertEquals(parentSpan, TracingUtils.getTraceContext().getCurrentSpan());
+    assertEquals(parentSpan, tracer.activeSpan());
 
     verifyTracing(parentSpan);
   }
