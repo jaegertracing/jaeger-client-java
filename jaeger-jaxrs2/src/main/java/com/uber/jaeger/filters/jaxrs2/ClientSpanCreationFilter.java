@@ -14,7 +14,6 @@
 
 package com.uber.jaeger.filters.jaxrs2;
 
-import com.uber.jaeger.context.TraceContext;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.tag.Tags;

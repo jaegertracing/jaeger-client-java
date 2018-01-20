@@ -17,7 +17,6 @@ package com.uber.jaeger.filters.jaxrs2;
 import com.uber.jaeger.context.TraceContext;
 
 import io.opentracing.Scope;
-import io.opentracing.Span;
 import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
@@ -46,6 +45,7 @@ public class ServerFilter implements ContainerRequestFilter, ContainerResponseFi
    * @param traceContext trace context
    * @deprecated use ServerFilter(Tracer)
    */
+  @Deprecated
   public ServerFilter(Tracer tracer, TraceContext traceContext) {
     this(tracer);
   }

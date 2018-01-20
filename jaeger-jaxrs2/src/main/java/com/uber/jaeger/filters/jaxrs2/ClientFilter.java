@@ -38,6 +38,7 @@ public class ClientFilter implements ClientRequestFilter, ClientResponseFilter {
    * @param traceContext trace context
    * @deprecated use ClientFilter(Tracer)
    */
+  @Deprecated
   public ClientFilter(Tracer tracer, TraceContext traceContext) {
       this(tracer);
   }
