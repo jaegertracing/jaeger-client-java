@@ -43,8 +43,9 @@ public class ServerFilter implements ContainerRequestFilter, ContainerResponseFi
   /**
    * @param tracer tracer
    * @param traceContext trace context
-   * @deprecated use ServerFilter(Tracer)
+   * @deprecated use {@link ServerFilter(Tracer)}
    */
+  @lombok.Generated
   @Deprecated
   public ServerFilter(Tracer tracer, TraceContext traceContext) {
     this(tracer);
