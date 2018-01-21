@@ -38,6 +38,7 @@ public class ClientFilter implements ClientRequestFilter, ClientResponseFilter {
    * @param traceContext trace context
    * @deprecated use {@link #ClientFilter(Tracer)}
    */
+  @lombok.Generated
   @Deprecated
   public ClientFilter(Tracer tracer, TraceContext traceContext) {
       this(tracer);
