@@ -40,7 +40,7 @@ public class ClientSpanInjectionFilter implements ClientRequestFilter, ClientRes
    * @param traceContext trace context
    * @deprecated use {@link ClientSpanInjectionFilter#ClientSpanInjectionFilter(Tracer)}
    */
-  @lombok.Generated
+  @lombok.Generated  // ignore deprecated code in jacoco
   @Deprecated
   public ClientSpanInjectionFilter(Tracer tracer, TraceContext traceContext) {
     this(tracer);
