@@ -39,10 +39,18 @@ public class TracingUtils {
     return com.uber.jaeger.context.TracingUtils.tracedExecutor(wrappedExecutorService);
   }
 
+  /**
+   * @deprecated Use {@link ClientFilter(Tracer)}.
+   */
+  @Deprecated
   public static ClientFilter clientFilter(Tracer tracer) {
     return new ClientFilter(tracer);
   }
 
+  /**
+   * @deprecated Use {@link ServerFilter(Tracer)}.
+   */
+  @Deprecated
   public static ServerFilter serverFilter(Tracer tracer) {
     return new ServerFilter(tracer);
   }
