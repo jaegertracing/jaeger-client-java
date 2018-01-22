@@ -41,7 +41,8 @@ public class TracingUtils {
 
   /**
    * Returns a new client filter with the passed ``io.opentracing.Tracer``.
-   * @param tracer Tracer
+   *
+   * @param tracer tracer
    * @return ClientFilter
    * @deprecated Use {@link ClientFilter#ClientFilter(Tracer)}.
    */

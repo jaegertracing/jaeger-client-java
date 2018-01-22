@@ -47,10 +47,6 @@ allprojects {
     }
 }
 
-jacoco {
-    toolVersion = "0.8.0"
-}
-
 subprojects {
     apply plugin: 'ru.vyarus.animalsniffer'
     apply plugin: 'com.github.hierynomus.license'
