@@ -43,7 +43,7 @@ public class ServerFilter implements ContainerRequestFilter, ContainerResponseFi
   /**
    * @param tracer tracer
    * @param traceContext trace context
-   * @deprecated use {@link ServerFilter(Tracer)}
+   * @deprecated use {@link ServerFilter#ServerFilter(Tracer)}
    */
   @Deprecated
   public ServerFilter(Tracer tracer, TraceContext traceContext) {

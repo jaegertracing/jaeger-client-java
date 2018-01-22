@@ -38,7 +38,7 @@ public class ClientSpanInjectionFilter implements ClientRequestFilter, ClientRes
   /**
    * @param tracer tracer
    * @param traceContext trace context
-   * @deprecated use {@link ClientSpanInjectionFilter(Tracer)}
+   * @deprecated use {@link ClientSpanInjectionFilter#ClientSpanInjectionFilter(Tracer)}
    */
   @Deprecated
   public ClientSpanInjectionFilter(Tracer tracer, TraceContext traceContext) {
