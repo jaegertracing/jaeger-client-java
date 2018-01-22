@@ -60,7 +60,7 @@ public class ClientFilterTest {
     tracer =
         new com.uber.jaeger.Tracer.Builder("Angry Machine", reporter, new ConstSampler(true))
             .build();
-    undertest = new ClientFilter(tracer);
+    undertest = new ClientFilter(tracer, null);
   }
 
   @Test
