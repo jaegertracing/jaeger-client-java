@@ -14,7 +14,7 @@
 
 package com.uber.jaeger.httpclient;
 
-import com.uber.jaeger.context.TracingUtils;
+import io.opentracing.Scope;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
 import java.io.IOException;
@@ -36,10 +36,12 @@ import org.apache.http.protocol.HttpContext;
 public class TracingRequestInterceptor implements HttpRequestInterceptor {
   private final SpanCreationRequestInterceptor spanCreationInterceptor;
   private final SpanInjectionRequestInterceptor spanInjectionInterceptor;
+  private final Tracer tracer;
 
   public TracingRequestInterceptor(Tracer tracer) {
     this.spanCreationInterceptor = new SpanCreationRequestInterceptor(tracer);
     this.spanInjectionInterceptor = new SpanInjectionRequestInterceptor(tracer);
+    this.tracer = tracer;
   }
 
   @Override
@@ -47,7 +49,14 @@ public class TracingRequestInterceptor implements HttpRequestInterceptor {
       throws HttpException, IOException {
     try {
       spanCreationInterceptor.process(httpRequest, httpContext);
-      onSpanStarted(TracingUtils.getTraceContext().getCurrentSpan(), httpRequest, httpContext);
+
+      Scope currentScope = tracer.scopeManager().active();
+      if (currentScope != null) {
+        onSpanStarted(currentScope.span(), httpRequest, httpContext);
+      } else {
+        log.warn("Current scope is null; possibly failed to start client tracing span.");
+      }
+
       spanInjectionInterceptor.process(httpRequest, httpContext);
     } catch (Exception e) {
       log.error("Could not start client tracing span.", e);
