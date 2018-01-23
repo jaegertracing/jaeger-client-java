@@ -37,7 +37,13 @@ public class ClientSpanCreationFilter implements ClientRequestFilter {
 
   @Override
   public void filter(ClientRequestContext clientRequestContext) throws IOException {
+    Span currentActiveSpan = tracer.activeSpan();
+
     Tracer.SpanBuilder clientSpanBuilder = tracer.buildSpan(clientRequestContext.getMethod());
+    if (currentActiveSpan != null) {
+      clientSpanBuilder.asChildOf(currentActiveSpan);
+    }
+
     Span clientSpan = clientSpanBuilder.start();
 
     // we assume there are no more spans created for this RPC request, therefore we do not need
