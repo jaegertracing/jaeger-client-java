@@ -60,6 +60,7 @@ public class ClientFilterTest {
     tracer =
         new com.uber.jaeger.Tracer.Builder("Angry Machine", reporter, new ConstSampler(true))
             .build();
+    // Using deprecated constructor for test coverage
     undertest = new ClientFilter(tracer, null);
   }
 

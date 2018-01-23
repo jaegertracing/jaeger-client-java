@@ -52,6 +52,7 @@ public class ClientSpanInjectionFilterTest {
     when(clientRequestContext.getProperty(CURRENT_SPAN_CONTEXT_KEY)).thenReturn(currentSpan);
 
     // FIXME (debo): remove to use {@link ClientSpanInjectionFilter(Tracer)}
+    // Using deprecated constructor for test coverage
     ClientSpanInjectionFilter filter = new ClientSpanInjectionFilter(tracer, null);
     filter.filter(clientRequestContext, clientResponseContext);
 
