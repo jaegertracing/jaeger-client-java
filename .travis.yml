@@ -37,7 +37,7 @@ before_install:
 - ./travis/prepare-signing.sh $encrypted_677f232983c0_key $encrypted_677f232983c0_iv
 - if [ "$CROSSDOCK" == true ]; then bash ./travis/install-crossdock-deps.sh ; fi
 script:
-- if [ "$TESTS" == true ]; then travis_wait 25 make test ; else echo 'skipping tests'; fi
+- if [ "$TESTS" == true ]; then travis_wait 25 make test-travis ; else echo 'skipping tests'; fi
 - if [ "$COVERAGE" == true ]; then ./gradlew codeCoverageReport ; else echo 'skipping coverage'; fi
 - if [ "$CROSSDOCK" == true ]; then bash ./travis/build-crossdock.sh ; else echo 'skipping crossdock'; fi
 after_success:
