@@ -8,6 +8,10 @@ clean:
 test:
 	./gradlew check
 
+.PHONY: test-travis
+test-travis:
+	./gradlew -is check --info
+
 .PHONY: release
 release: clean
 	./gradlew -i uploadArchives
