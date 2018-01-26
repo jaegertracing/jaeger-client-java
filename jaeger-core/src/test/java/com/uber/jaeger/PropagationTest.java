@@ -22,9 +22,9 @@ import static org.mockito.Mockito.mock;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
 
-import io.opentracing.ActiveSpan;
-import io.opentracing.ActiveSpanSource;
 import io.opentracing.References;
+import io.opentracing.Scope;
+import io.opentracing.ScopeManager;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
 import io.opentracing.propagation.TextMapExtractAdapter;
@@ -43,7 +43,7 @@ public class PropagationTest {
     SpanContext spanContext = (SpanContext) tracer.extract(Format.Builtin.TEXT_MAP, carrier);
     assertTrue(spanContext.isDebugIdContainerOnly());
     assertEquals("Coraline", spanContext.getDebugId());
-    Span span = (Span) tracer.buildSpan("span").asChildOf(spanContext).startManual();
+    Span span = (Span) tracer.buildSpan("span").asChildOf(spanContext).start();
     spanContext = (SpanContext) span.context();
     assertTrue(spanContext.isSampled());
     assertTrue(spanContext.isDebug());
@@ -54,8 +54,8 @@ public class PropagationTest {
   public void testActiveSpanPropagation() {
     Tracer tracer =
         new Tracer.Builder("test", new InMemoryReporter(), new ConstSampler(true)).build();
-    try (ActiveSpan parent = tracer.buildSpan("parent").startActive()) {
-      assertEquals(parent, tracer.activeSpan());
+    try (Scope parent = tracer.buildSpan("parent").startActive(true)) {
+      assertEquals(parent, tracer.scopeManager().active());
     }
   }
 
@@ -64,8 +64,8 @@ public class PropagationTest {
     InMemoryReporter reporter = new InMemoryReporter();
     Tracer tracer =
         new Tracer.Builder("test", reporter, new ConstSampler(true)).build();
-    try (ActiveSpan parent = tracer.buildSpan("parent").startActive()) {
-      tracer.buildSpan("child").startActive().deactivate();
+    try (Scope parent = tracer.buildSpan("parent").startActive(true)) {
+      tracer.buildSpan("child").startActive(true).close();
     }
     assertEquals(2, reporter.getSpans().size());
 
@@ -84,12 +84,34 @@ public class PropagationTest {
   }
 
   @Test
+  public void testActiveSpanAutoFinishOnClose() {
+    InMemoryReporter reporter = new InMemoryReporter();
+    Tracer tracer =
+        new Tracer.Builder("test", reporter, new ConstSampler(true)).build();
+    tracer.buildSpan("parent").startActive(true).close();
+    assertEquals(1, reporter.getSpans().size());
+  }
+
+  @Test
+  public void testActiveSpanNotAutoFinishOnClose() {
+    InMemoryReporter reporter = new InMemoryReporter();
+    Tracer tracer =
+        new Tracer.Builder("test", reporter, new ConstSampler(true)).build();
+    Scope scope = tracer.buildSpan("parent").startActive(false);
+    Span span = (Span) scope.span();
+    scope.close();
+    assertTrue(reporter.getSpans().isEmpty());
+    span.finish();
+    assertEquals(1, reporter.getSpans().size());
+  }
+
+  @Test
   public void testIgnoreActiveSpan() {
     InMemoryReporter reporter = new InMemoryReporter();
     Tracer tracer =
         new Tracer.Builder("test", reporter, new ConstSampler(true)).build();
-    try (ActiveSpan parent = tracer.buildSpan("parent").startActive()) {
-      tracer.buildSpan("child").ignoreActiveSpan().startActive().deactivate();
+    try (Scope parent = tracer.buildSpan("parent").startActive(true)) {
+      tracer.buildSpan("child").ignoreActiveSpan().startActive(true).close();
     }
     assertEquals(2, reporter.getSpans().size());
 
@@ -108,10 +130,10 @@ public class PropagationTest {
     Tracer tracer =
         new Tracer.Builder("test", reporter, new ConstSampler(true)).build();
 
-    io.opentracing.Span initialSpan = tracer.buildSpan("initial").startManual();
+    io.opentracing.Span initialSpan = tracer.buildSpan("initial").start();
 
-    try (ActiveSpan parent = tracer.buildSpan("parent").startActive()) {
-      tracer.buildSpan("child").asChildOf(initialSpan.context()).startActive().deactivate();
+    try (Scope parent = tracer.buildSpan("parent").startActive(true)) {
+      tracer.buildSpan("child").asChildOf(initialSpan.context()).startActive(true).close();
     }
 
     initialSpan.finish();
@@ -133,22 +155,22 @@ public class PropagationTest {
   }
 
   @Test
-  public void testCustomActiveSpanSource() {
-    ActiveSpan activeSpan = mock(ActiveSpan.class);
+  public void testCustomScopeManager() {
+    Scope scope = mock(Scope.class);
     Tracer tracer =
         new Tracer.Builder("test", new InMemoryReporter(), new ConstSampler(true))
-        .withActiveSpanSource(new ActiveSpanSource() {
+        .withScopeManager(new ScopeManager() {
 
           @Override
-          public ActiveSpan activeSpan() {
-            return activeSpan;
+          public Scope activate(io.opentracing.Span span, boolean finishSpanOnClose) {
+            return scope;
           }
 
           @Override
-          public ActiveSpan makeActive(io.opentracing.Span span) {
-            return activeSpan;
+          public Scope active() {
+            return scope;
           }
         }).build();
-    assertEquals(activeSpan, tracer.activeSpan());
+    assertEquals(scope, tracer.scopeManager().active());
   }
 }

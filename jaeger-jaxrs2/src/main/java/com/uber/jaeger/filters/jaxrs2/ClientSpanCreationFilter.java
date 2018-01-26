@@ -31,21 +31,19 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ClientSpanCreationFilter implements ClientRequestFilter {
   private final Tracer tracer;
-  private final TraceContext traceContext;
 
-  public ClientSpanCreationFilter(Tracer tracer, TraceContext traceContext) {
+  public ClientSpanCreationFilter(Tracer tracer) {
     this.tracer = tracer;
-    this.traceContext = traceContext;
   }
 
   @Override
   public void filter(ClientRequestContext clientRequestContext) throws IOException {
     Tracer.SpanBuilder clientSpanBuilder = tracer.buildSpan(clientRequestContext.getMethod());
-    if (!traceContext.isEmpty()) {
-      clientSpanBuilder.asChildOf(traceContext.getCurrentSpan());
-    }
-    Span clientSpan = clientSpanBuilder.startManual();
+    Span clientSpan = clientSpanBuilder.start();
 
+    // we assume there are no more spans created for this RPC request, therefore we do not need
+    // to make the span active in the thread. Instead we store it in the clientRequestContext,
+    // from where the resporse filter can retrieve it and finish the span.
     clientRequestContext.setProperty(Constants.CURRENT_SPAN_CONTEXT_KEY, clientSpan);
 
     Tags.SPAN_KIND.set(clientSpan, Tags.SPAN_KIND_CLIENT);

@@ -40,11 +40,11 @@ public class TracingUtils {
   }
 
   public static ClientFilter clientFilter(Tracer tracer) {
-    return new ClientFilter(tracer, getTraceContext());
+    return new ClientFilter(tracer);
   }
 
   public static ServerFilter serverFilter(Tracer tracer) {
-    return new ServerFilter(tracer, getTraceContext());
+    return new ServerFilter(tracer);
   }
 
   private TracingUtils() {}

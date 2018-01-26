@@ -60,7 +60,7 @@ public class SpanTest {
             .withClock(clock)
             .withBaggageRestrictionManager(new DefaultBaggageRestrictionManager())
             .build();
-    span = (Span) tracer.buildSpan("some-operation").startManual();
+    span = (Span) tracer.buildSpan("some-operation").start();
   }
 
   @Test
@@ -82,7 +82,7 @@ public class SpanTest {
             .withClock(clock)
             .withBaggageRestrictionManager(mgr)
             .build();
-    span = (Span) tracer.buildSpan("some-operation").startManual();
+    span = (Span) tracer.buildSpan("some-operation").start();
 
     final String key = "key";
     final String value = "value";
@@ -145,7 +145,7 @@ public class SpanTest {
     when(clock.currentNanoTicks())
         .thenThrow(new IllegalStateException("currentNanoTicks() called"));
 
-    Span span = (Span) tracer.buildSpan("test-service-name").withStartTimestamp(567).startManual();
+    Span span = (Span) tracer.buildSpan("test-service-name").withStartTimestamp(567).start();
     span.finish(999);
 
     assertEquals(1, reporter.getSpans().size());
@@ -155,7 +155,7 @@ public class SpanTest {
 
   @Test
   public void testMultipleSpanFinishDoesNotCauseMultipleReportCalls() {
-    Span span = (Span) tracer.buildSpan("test-service-name").startManual();
+    Span span = (Span) tracer.buildSpan("test-service-name").start();
     span.finish();
 
     assertEquals(1, reporter.getSpans().size());
@@ -176,7 +176,7 @@ public class SpanTest {
     when(clock.currentNanoTicks())
         .thenThrow(new IllegalStateException("currentNanoTicks() called"));
 
-    Span span = (Span) tracer.buildSpan("test-service-name").startManual();
+    Span span = (Span) tracer.buildSpan("test-service-name").start();
     span.finish();
 
     assertEquals(1, reporter.getSpans().size());
@@ -192,7 +192,7 @@ public class SpanTest {
         .thenThrow(new IllegalStateException("currentTimeMicros() called 2nd time"));
     when(clock.currentNanoTicks()).thenReturn(20000L).thenReturn(30000L);
 
-    Span span = (Span) tracer.buildSpan("test-service-name").startManual();
+    Span span = (Span) tracer.buildSpan("test-service-name").start();
     span.finish();
 
     assertEquals(1, reporter.getSpans().size());
@@ -202,7 +202,7 @@ public class SpanTest {
 
   @Test
   public void testSpanToString() {
-    Span span = (Span) tracer.buildSpan("test-operation").startManual();
+    Span span = (Span) tracer.buildSpan("test-operation").start();
     SpanContext expectedContext = span.context();
     SpanContext actualContext = SpanContext.contextFromString(span.context().contextAsString());
 
@@ -215,7 +215,7 @@ public class SpanTest {
   @Test
   public void testOperationName() {
     String expectedOperation = "leela";
-    Span span = (Span) tracer.buildSpan(expectedOperation).startManual();
+    Span span = (Span) tracer.buildSpan(expectedOperation).start();
     assertEquals(expectedOperation, span.getOperationName());
   }
 
@@ -224,14 +224,12 @@ public class SpanTest {
     long expectedTimestamp = 2222;
     final String expectedLog = "some-log";
     final String expectedEvent = "event";
-    Object expectedPayload = new Object();
     Map<String, String> expectedFields = new HashMap<String, String>() {
       {
         put(expectedEvent, expectedLog);
       }
     };
 
-    span.log(expectedTimestamp, expectedLog, expectedPayload);
     span.log(expectedTimestamp, expectedEvent);
     span.log(expectedTimestamp, expectedFields);
     span.log(expectedTimestamp, (String) null);
@@ -240,20 +238,12 @@ public class SpanTest {
     LogData actualLogData = span.getLogs().get(0);
 
     assertEquals(expectedTimestamp, actualLogData.getTime());
-    assertEquals(expectedLog, actualLogData.getMessage());
-    assertEquals(expectedPayload, actualLogData.getPayload());
+    assertEquals(expectedEvent, actualLogData.getMessage());
 
     actualLogData = span.getLogs().get(1);
 
     assertEquals(expectedTimestamp, actualLogData.getTime());
-    assertEquals(expectedEvent, actualLogData.getMessage());
-    assertNull(actualLogData.getPayload());
-
-    actualLogData = span.getLogs().get(2);
-
-    assertEquals(expectedTimestamp, actualLogData.getTime());
     assertNull(actualLogData.getMessage());
-    assertNull(actualLogData.getPayload());
     assertEquals(expectedFields, actualLogData.getFields());
   }
 
@@ -262,11 +252,9 @@ public class SpanTest {
     final long expectedTimestamp = 2222;
     final String expectedLog = "some-log";
     final String expectedEvent = "expectedEvent";
-    final Object expectedPayload = new Object();
 
     when(clock.currentTimeMicros()).thenReturn(expectedTimestamp);
 
-    span.log(expectedLog, expectedPayload);
     span.log(expectedEvent);
 
     Map<String, String> expectedFields = new HashMap<String, String>() {
@@ -281,26 +269,18 @@ public class SpanTest {
     LogData actualLogData = span.getLogs().get(0);
 
     assertEquals(expectedTimestamp, actualLogData.getTime());
-    assertEquals(expectedLog, actualLogData.getMessage());
-    assertEquals(expectedPayload, actualLogData.getPayload());
+    assertEquals(expectedEvent, actualLogData.getMessage());
 
     actualLogData = span.getLogs().get(1);
 
     assertEquals(expectedTimestamp, actualLogData.getTime());
-    assertEquals(expectedEvent, actualLogData.getMessage());
-    assertNull(actualLogData.getPayload());
-
-    actualLogData = span.getLogs().get(2);
-
-    assertEquals(expectedTimestamp, actualLogData.getTime());
     assertNull(actualLogData.getMessage());
-    assertNull(actualLogData.getPayload());
     assertEquals(expectedFields, actualLogData.getFields());
   }
 
   @Test
   public void testSpanDetectsSamplingPriorityGreaterThanZero() {
-    Span span = (Span) tracer.buildSpan("test-service-operation").startManual();
+    Span span = (Span) tracer.buildSpan("test-service-operation").start();
     Tags.SAMPLING_PRIORITY.set(span, 1);
 
     assertEquals(span.context().getFlags() & SpanContext.flagSampled, SpanContext.flagSampled);
@@ -309,7 +289,7 @@ public class SpanTest {
 
   @Test
   public void testSpanDetectsSamplingPriorityLessThanZero() {
-    Span span = (Span) tracer.buildSpan("test-service-operation").startManual();
+    Span span = (Span) tracer.buildSpan("test-service-operation").start();
 
     assertEquals(span.context().getFlags() & SpanContext.flagSampled, SpanContext.flagSampled);
     Tags.SAMPLING_PRIORITY.set(span, -1);
@@ -318,12 +298,12 @@ public class SpanTest {
 
   @Test
   public void testBaggageOneReference() {
-    io.opentracing.Span parent = tracer.buildSpan("foo").startManual();
+    io.opentracing.Span parent = tracer.buildSpan("foo").start();
     parent.setBaggageItem("foo", "bar");
 
     io.opentracing.Span child = tracer.buildSpan("foo")
         .asChildOf(parent)
-        .startManual();
+        .start();
 
     child.setBaggageItem("a", "a");
 
@@ -334,15 +314,15 @@ public class SpanTest {
 
   @Test
   public void testBaggageMultipleReferences() {
-    io.opentracing.Span parent1 = tracer.buildSpan("foo").startManual();
+    io.opentracing.Span parent1 = tracer.buildSpan("foo").start();
     parent1.setBaggageItem("foo", "bar");
-    io.opentracing.Span parent2 = tracer.buildSpan("foo").startManual();
+    io.opentracing.Span parent2 = tracer.buildSpan("foo").start();
     parent2.setBaggageItem("foo2", "bar");
 
     io.opentracing.Span child = tracer.buildSpan("foo")
         .asChildOf(parent1)
         .addReference(References.FOLLOWS_FROM, parent2.context())
-        .startManual();
+        .start();
 
     child.setBaggageItem("a", "a");
     child.setBaggageItem("foo2", "b");
@@ -356,7 +336,7 @@ public class SpanTest {
 
   @Test
   public void testImmutableBaggage() {
-    io.opentracing.Span span = tracer.buildSpan("foo").startManual();
+    io.opentracing.Span span = tracer.buildSpan("foo").start();
     span.setBaggageItem("foo", "bar");
     {
       Iterator<Entry<String, String>> baggageIter = span.context().baggageItems().iterator();

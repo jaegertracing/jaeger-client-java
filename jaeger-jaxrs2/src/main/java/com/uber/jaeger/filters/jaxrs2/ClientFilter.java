@@ -33,8 +33,17 @@ public class ClientFilter implements ClientRequestFilter, ClientResponseFilter {
   private final ClientSpanCreationFilter spanCreationFilter;
   private final ClientSpanInjectionFilter spanInjectionFilter;
 
+  /**
+   * @param tracer tracer
+   * @param traceContext trace context
+   * @deprecated use ClientFilter(Tracer)
+   */
   public ClientFilter(Tracer tracer, TraceContext traceContext) {
-    this.spanCreationFilter = new ClientSpanCreationFilter(tracer, traceContext);
+      this(tracer);
+  }
+
+  public ClientFilter(Tracer tracer) {
+    this.spanCreationFilter = new ClientSpanCreationFilter(tracer);
     this.spanInjectionFilter = new ClientSpanInjectionFilter(tracer);
   }
 
