@@ -6,11 +6,11 @@ clean:
 
 .PHONY: test
 test:
-	./gradlew -is check
+	./gradlew check
 
 .PHONY: test-travis
 test-travis:
-	./gradlew -is check --info
+	./gradlew -is check
 
 .PHONY: release
 release: clean
