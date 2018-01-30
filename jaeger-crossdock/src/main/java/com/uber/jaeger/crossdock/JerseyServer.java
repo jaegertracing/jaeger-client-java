@@ -25,6 +25,7 @@ import com.uber.jaeger.crossdock.resources.behavior.http.EndToEndBehaviorResourc
 import com.uber.jaeger.crossdock.resources.behavior.http.TraceBehaviorResource;
 import com.uber.jaeger.crossdock.resources.behavior.tchannel.TChannelServer;
 import com.uber.jaeger.crossdock.resources.health.HealthResource;
+import com.uber.jaeger.filters.jaxrs2.ClientFilter;
 import com.uber.jaeger.filters.jaxrs2.TracingUtils;
 import com.uber.jaeger.samplers.ConstSampler;
 import com.uber.jaeger.senders.HttpSender;
@@ -115,14 +116,7 @@ public class JerseyServer {
   private static Client initializeClient(final Configuration config) {
     return ClientBuilder.newClient()
         .register(ExceptionMapper.class)
-        .register(TracingUtils.clientFilter(config.getTracer()))
-        .register(
-            new AbstractBinder() {
-              @Override
-              protected void configure() {
-                bind(traceContext()).to(TraceContext.class);
-              }
-            })
+        .register(new ClientFilter(config.getTracer()))
         .register(JacksonFeature.class);
   }
 

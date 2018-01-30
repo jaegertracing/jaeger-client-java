@@ -14,7 +14,6 @@
 
 package com.uber.jaeger.propagation;
 
-import com.uber.jaeger.context.TraceContext;
 import com.uber.jaeger.filters.jaxrs2.ServerFilter;
 import io.opentracing.Tracer;
 import java.io.IOException;
@@ -29,12 +28,10 @@ public class JerseyServer {
   // Base URI the Grizzly HTTP server will listen on
   public static final String BASE_URI = "http://localhost:8080/";
   private final Tracer tracer;
-  private final TraceContext traceContext;
   private HttpServer server;
 
-  public JerseyServer(Tracer tracer, TraceContext traceContext) throws IOException {
+  public JerseyServer(Tracer tracer) throws IOException {
     this.tracer = tracer;
-    this.traceContext = traceContext;
     server = getServer();
     server.start();
   }
@@ -54,7 +51,6 @@ public class JerseyServer {
                   @Override
                   protected void configure() {
                     bind(tracer).to(Tracer.class);
-                    bind(traceContext).to(TraceContext.class);
                   }
                 })
             .packages(JerseyHandler.class.getPackage().toString())

@@ -39,10 +39,24 @@ public class TracingUtils {
     return com.uber.jaeger.context.TracingUtils.tracedExecutor(wrappedExecutorService);
   }
 
+  /**
+   * Returns a new client filter with the passed ``io.opentracing.Tracer``.
+   *
+   * @param tracer tracer
+   * @return ClientFilter
+   * @deprecated Use {@link ClientFilter#ClientFilter(Tracer)}.
+   */
+  @Deprecated
   public static ClientFilter clientFilter(Tracer tracer) {
     return new ClientFilter(tracer);
   }
 
+  /**
+   * @param tracer tracer
+   * @return ServerFilter
+   * @deprecated Use {@link ServerFilter#ServerFilter(Tracer)}.
+   */
+  @Deprecated
   public static ServerFilter serverFilter(Tracer tracer) {
     return new ServerFilter(tracer);
   }
