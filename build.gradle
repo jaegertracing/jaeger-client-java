@@ -1,4 +1,6 @@
 import java.util.regex.Pattern
+import org.gradle.api.tasks.testing.logging.TestLogEvent
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 
 plugins {
     id "org.jruyi.thrift" version "0.4.0"
@@ -120,15 +122,20 @@ subprojects {
     check.dependsOn tasks.license
 
     apply from: '../gradle/publish.gradle'
-    test {
-    testLogging {
-        events "failed"
-        exceptionFormat "full"
 
-        // remove standard output/error logging from --info builds
-        // by assigning only 'failed' and 'skipped' events
-        info.events = ["failed", "skipped"]
-       }
+    test {
+        testLogging {
+            events TestLogEvent.FAILED, TestLogEvent.SKIPPED
+            exceptionFormat TestExceptionFormat.FULL
+
+            // remove standard output/error logging from --info builds
+            info.events = [
+                TestLogEvent.FAILED,
+                TestLogEvent.PASSED,
+                TestLogEvent.SKIPPED
+            ]
+            info.exceptionFormat TestExceptionFormat.FULL
+        }
     }
 
     dependencies {
