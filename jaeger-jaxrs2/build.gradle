@@ -1,6 +1,7 @@
 description = 'Instrumentation library for jaeger-jaxrs 2.0'
 
 dependencies {
+    compile group: 'javax.annotation', name: 'javax.annotation-api', version: '1.2-b02'
     compile group: 'javax.ws.rs', name: 'javax.ws.rs-api', version: '2.0.1'
     compile project(':jaeger-core')
     // FIXME (debo): remove when deprecated functions are deleted
