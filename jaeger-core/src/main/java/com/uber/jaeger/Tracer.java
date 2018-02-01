@@ -148,9 +148,9 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
   }
 
   @Override
-  public Span activeSpan() {
+  public io.opentracing.Span activeSpan() {
     Scope scope = this.scopeManager.active();
-    return scope == null ? null : (Span) scope.span();
+    return scope == null ? null : scope.span();
   }
 
   @Override

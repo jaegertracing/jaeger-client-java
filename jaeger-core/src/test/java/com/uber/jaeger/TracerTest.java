@@ -35,6 +35,7 @@ import io.opentracing.tag.Tags;
 import java.io.Closeable;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 public class TracerTest {
 
@@ -53,7 +54,7 @@ public class TracerTest {
   @Test
   public void testBuildSpan() {
     String expectedOperation = "fry";
-    Span span = (Span) tracer.buildSpan(expectedOperation).startManual();
+    Span span = (Span) tracer.buildSpan(expectedOperation).start();
 
     assertEquals(expectedOperation, span.getOperationName());
   }
@@ -61,7 +62,7 @@ public class TracerTest {
   @Test
   public void testTracerMetrics() {
     String expectedOperation = "fry";
-    tracer.buildSpan(expectedOperation).startManual();
+    tracer.buildSpan(expectedOperation).start();
     assertEquals(
         1L, metricsReporter.counters.get("jaeger.spans.group=sampling.sampled=y").longValue());
     assertEquals(
@@ -80,7 +81,7 @@ public class TracerTest {
             .withStatsReporter(metricsReporter)
             .registerInjector(Format.Builtin.TEXT_MAP, injector)
             .build();
-    Span span = (Span) tracer.buildSpan("leela").startManual();
+    Span span = (Span) tracer.buildSpan("leela").start();
 
     TextMap carrier = mock(TextMap.class);
     tracer.inject(span.context(), Format.Builtin.TEXT_MAP, carrier);
@@ -122,7 +123,7 @@ public class TracerTest {
         new Tracer.Builder("TracerTestService", new InMemoryReporter(), new ConstSampler(true))
             .withMetrics(metrics)
             .build();
-    Span span = (Span) tracer.buildSpan("some-operation").startManual();
+    Span span = (Span) tracer.buildSpan("some-operation").start();
     final String key = "key";
     tracer.setBaggage(span, key, "value");
 
@@ -156,5 +157,12 @@ public class TracerTest {
     span = (Span)tracer.buildSpan("foo").asChildOf((io.opentracing.SpanContext) null).start();
     span.finish();
     assertTrue(span.getReferences().isEmpty());
+  }
+
+  @Test
+  public void testActiveSpan() {
+    io.opentracing.Span mockSpan = Mockito.mock(io.opentracing.Span.class);
+    tracer.scopeManager().activate(mockSpan, true);
+    assertEquals(mockSpan, tracer.activeSpan());
   }
 }
