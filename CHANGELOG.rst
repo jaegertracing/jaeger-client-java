@@ -4,7 +4,11 @@ Changes by Version
 0.23.1 (unreleased)
 -------------------
 
-- Nothing yet.
+- Remove apache instrumentation dependence on jaeger-context (#320) <Debosmit Ray>
+- Remove JAX-RS2 instrumentation dependence on TracingUtils/jaeger-context (#319) <Debosmit Ray>
+- Fix ClassCastException when a wrapped span impl is activated instead of the Jaeger Span (#327) <Gary Brown>
+- Remove shadow dependency from jaeger-b3 (#309) <Prithvi Raj>
+- Adding annotated filter priorities for Jersey filters (#329) <Debosmit Ray>
 
 
 0.23.0 (2018-01-12)
