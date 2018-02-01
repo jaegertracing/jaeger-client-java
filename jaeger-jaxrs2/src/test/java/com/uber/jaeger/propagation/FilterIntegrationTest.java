@@ -22,7 +22,7 @@ import static org.mockito.Mockito.mock;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uber.jaeger.Span;
-import com.uber.jaeger.context.ActiveSpanSourceTraceContext;
+import com.uber.jaeger.context.ScopeManagerTraceContext;
 import com.uber.jaeger.context.TraceContext;
 import com.uber.jaeger.filters.jaxrs2.ClientFilter;
 import com.uber.jaeger.filters.jaxrs2.ServerRequestCarrier;
@@ -50,7 +50,6 @@ public class FilterIntegrationTest {
   private Tracer tracer;
   private InMemoryReporter reporter;
   private InMemoryStatsReporter metricsReporter;
-  private TraceContext traceContext;
   public static final String BAGGAGE_KEY = "a-big-metal-door";
   private ObjectMapper mapper = new ObjectMapper();
 
@@ -66,15 +65,13 @@ public class FilterIntegrationTest {
             .withStatsReporter(metricsReporter)
             .build();
 
-    traceContext = new ActiveSpanSourceTraceContext(tracer);
-
     // start the server
-    server = new JerseyServer(tracer, traceContext);
+    server = new JerseyServer(tracer);
     server.start();
     // create the client
     client =
         ClientBuilder.newClient()
-            .register(new ClientFilter(tracer, traceContext))
+            .register(new ClientFilter(tracer))
             .register(JacksonFeature.class);
   }
 
@@ -89,7 +86,7 @@ public class FilterIntegrationTest {
 
     Span span = (Span) tracer.buildSpan("root-span").startManual();
     span.setBaggageItem(BAGGAGE_KEY, BAGGAGE_VALUE);
-    traceContext.push(span);
+    tracer.scopeManager().activate(span, false);
 
     Response resp = target.request(MediaType.APPLICATION_JSON_TYPE).get();
 

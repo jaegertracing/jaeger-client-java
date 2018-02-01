@@ -27,7 +27,7 @@ import com.uber.jaeger.samplers.ConstSampler;
 
 import com.uber.jaeger.senders.HttpSender;
 import com.uber.jaeger.senders.Sender;
-import io.opentracing.NoopTracerFactory;
+import io.opentracing.noop.NoopTracerFactory;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
 import io.opentracing.util.GlobalTracer;

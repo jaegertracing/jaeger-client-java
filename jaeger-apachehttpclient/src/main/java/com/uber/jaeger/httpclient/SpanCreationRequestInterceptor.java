@@ -22,8 +22,6 @@
 
 package com.uber.jaeger.httpclient;
 
-import com.uber.jaeger.context.TraceContext;
-import com.uber.jaeger.context.TracingUtils;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.tag.Tags;
@@ -57,14 +55,14 @@ public class SpanCreationRequestInterceptor implements HttpRequestInterceptor {
   public void process(HttpRequest httpRequest, HttpContext httpContext)
       throws HttpException, IOException {
     try {
-      TraceContext parentContext = TracingUtils.getTraceContext();
+      Span currentActiveSpan = tracer.activeSpan();
 
       Tracer.SpanBuilder clientSpanBuilder = tracer.buildSpan(getOperationName(httpRequest));
-      if (!parentContext.isEmpty()) {
-        clientSpanBuilder.asChildOf(parentContext.getCurrentSpan());
+      if (currentActiveSpan != null) {
+        clientSpanBuilder.asChildOf(currentActiveSpan);
       }
 
-      Span clientSpan = clientSpanBuilder.startManual();
+      Span clientSpan = clientSpanBuilder.start();
 
       RequestLine requestLine = httpRequest.getRequestLine();
 

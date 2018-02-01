@@ -1,10 +1,20 @@
 Changes by Version
 ==================
 
-0.23.0 (unreleased)
+0.23.1 (unreleased)
 -------------------
 
-- Bump OpenTracing version to 0.31.0-RC1 (https://github.com/jaegertracing/jaeger-client-java/pull/246), done on branch `v0.22.0`
+- Remove apache instrumentation dependence on jaeger-context (#320) <Debosmit Ray>
+- Remove JAX-RS2 instrumentation dependence on TracingUtils/jaeger-context (#319) <Debosmit Ray>
+- Fix ClassCastException when a wrapped span impl is activated instead of the Jaeger Span (#327) <Gary Brown>
+- Remove shadow dependency from jaeger-b3 (#309) <Prithvi Raj>
+- Adding annotated filter priorities for Jersey filters (#329) <Debosmit Ray>
+
+
+0.23.0 (2018-01-12)
+-------------------
+
+- Upgrade to OpenTracing API v0.31.0 (#313)
 
 
 0.22.0-RC3 (2017-12-08)
