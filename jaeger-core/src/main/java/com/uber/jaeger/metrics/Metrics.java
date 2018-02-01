@@ -167,7 +167,7 @@ public class Metrics {
   public Counter reporterFailure;
 
   @Metric(
-      name = "spans",
+      name = "reporter-spans",
       tags = {@Tag(key = "state", value = "dropped")}
   )
   // Number of spans dropped due to internal queue overflow
