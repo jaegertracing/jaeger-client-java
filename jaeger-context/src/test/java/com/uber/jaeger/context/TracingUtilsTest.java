@@ -15,22 +15,25 @@
 package com.uber.jaeger.context;
 
 import com.uber.jaeger.Configuration;
-import com.uber.jaeger.utils.TestUtils;
 import io.opentracing.Tracer;
+import java.lang.reflect.Field;
 import java.util.concurrent.Executors;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 
+@Deprecated
 public class TracingUtilsTest {
 
   @After
   public void tearDown() throws Exception {
-    TestUtils.resetGlobalTracer();
+    Field field = TracingUtils.class.getDeclaredField("tracer");
+    field.setAccessible(true);
+    field.set(null, null);
   }
 
   @Test(expected = IllegalStateException.class)
-  public void getTraceContextWithoutGlobalTracer() throws Exception {
+  public void getTraceContextWithoutRegisteredTracer() throws Exception {
     TracingUtils.getTraceContext();
   }
 
@@ -38,11 +41,13 @@ public class TracingUtilsTest {
   public void getTraceContext() {
     Tracer tracer = new Configuration("boop").getTracer();
     Assert.assertNotNull(tracer);
+
+    TracingUtils.setTracer(tracer);
     Assert.assertNotNull(TracingUtils.getTraceContext());
   }
 
   @Test(expected = IllegalStateException.class)
-  public void tracedExecutorWithoutGlobalTracer() throws Exception {
+  public void tracedExecutorWithoutRegisteredTracer() throws Exception {
     TracingUtils.tracedExecutor(null);
   }
 
@@ -50,6 +55,7 @@ public class TracingUtilsTest {
   public void tracedExecutor() throws Exception {
     Tracer tracer = new Configuration("boop").getTracer();
     Assert.assertNotNull(tracer);
+    TracingUtils.setTracer(tracer);
     Assert.assertNotNull(TracingUtils.tracedExecutor(Executors.newSingleThreadExecutor()));
   }
 }

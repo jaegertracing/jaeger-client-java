@@ -4,8 +4,8 @@ dependencies {
     compile project(':jaeger-jaxrs2')
 
     compile group: 'io.opentracing', name: 'opentracing-noop', version: opentracingVersion
-    compile group: 'io.dropwizard.metrics', name: 'metrics-core', version: '3.1.0'
-    compile group: 'io.dropwizard', name: 'dropwizard-hibernate', version: '0.9.1'
+    compile group: 'io.dropwizard.metrics', name: 'metrics-core', version: '3.2.5'
+    compile group: 'io.dropwizard', name: 'dropwizard-hibernate', version: '0.9.3'
 
     testCompile project(path: ':jaeger-core', configuration: 'tests')
     testCompile group: 'org.glassfish.jersey.containers', name: 'jersey-container-grizzly2-http', version: jerseyVersion

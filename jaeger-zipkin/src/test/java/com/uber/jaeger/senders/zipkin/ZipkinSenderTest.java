@@ -76,7 +76,7 @@ public class ZipkinSenderTest {
       msg += ".";
     }
 
-    jaegerSpan.log(msg, new Object());
+    jaegerSpan.log(msg);
     try {
       sender.append(jaegerSpan);
       fail("The line above shoud throw");

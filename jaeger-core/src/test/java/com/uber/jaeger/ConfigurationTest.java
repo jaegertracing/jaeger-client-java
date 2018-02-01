@@ -19,14 +19,25 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import com.uber.jaeger.Configuration.ReporterConfiguration;
 import com.uber.jaeger.Configuration.SamplerConfiguration;
 import com.uber.jaeger.samplers.ConstSampler;
 
-import io.opentracing.NoopTracerFactory;
+import com.uber.jaeger.senders.HttpSender;
+import com.uber.jaeger.senders.Sender;
+import io.opentracing.noop.NoopTracerFactory;
+import io.opentracing.propagation.Format;
+import io.opentracing.propagation.TextMap;
 import io.opentracing.util.GlobalTracer;
 import java.lang.reflect.Field;
+import java.net.SocketException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,7 +60,11 @@ public class ConfigurationTest {
     System.clearProperty(Configuration.JAEGER_SAMPLER_MANAGER_HOST_PORT);
     System.clearProperty(Configuration.JAEGER_SERVICE_NAME);
     System.clearProperty(Configuration.JAEGER_TAGS);
-    System.clearProperty(Configuration.JAEGER_DISABLE_GLOBAL_TRACER);
+    System.clearProperty(Configuration.JAEGER_ENDPOINT);
+    System.clearProperty(Configuration.JAEGER_AUTH_TOKEN);
+    System.clearProperty(Configuration.JAEGER_USER);
+    System.clearProperty(Configuration.JAEGER_PASSWORD);
+    System.clearProperty(Configuration.JAEGER_PROPAGATION);
 
     System.clearProperty(TEST_PROPERTY);
 
@@ -63,31 +78,7 @@ public class ConfigurationTest {
   public void testFromEnv() {
     System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
     assertNotNull(Configuration.fromEnv().getTracer());
-    assertTrue(GlobalTracer.isRegistered());
-  }
-
-  @Test (expected = IllegalStateException.class)
-  public void testFromEnvWithoutDisabledTracer() {
-    System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
-    assertNotNull(Configuration.fromEnv().getTracer());
-    assertTrue(GlobalTracer.isRegistered());
-
-    Configuration.fromEnv().getTracer();
-  }
-
-  @Test
-  public void testDisableGlobalTracer() {
-    System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
-    System.setProperty(Configuration.JAEGER_DISABLE_GLOBAL_TRACER, "true");
-    assertNotNull(Configuration.fromEnv().getTracer());
     assertFalse(GlobalTracer.isRegistered());
-  }
-
-  @Test
-  public void testDefaultGlobalTracer() {
-    Configuration config = new Configuration("Test");
-    assertNotNull(config.getTracer());
-    assertTrue(GlobalTracer.isRegistered());
   }
 
   @Test
@@ -171,4 +162,193 @@ public class ConfigurationTest {
     assertEquals("goodbye", tracer.tags().get("testTag1"));
   }
 
+  @Test
+  public void testSenderWithEndpointWithoutAuthData() {
+    System.setProperty(Configuration.JAEGER_ENDPOINT, "https://jaeger-collector:14268/api/traces");
+    Sender sender = Configuration.SenderConfiguration.fromEnv().getSender();
+    assertTrue(sender instanceof HttpSender);
+  }
+
+  @Test
+  public void testSenderWithAgentDataFromEnv() {
+    System.setProperty(Configuration.JAEGER_AGENT_HOST, "jaeger-agent");
+    System.setProperty(Configuration.JAEGER_AGENT_PORT, "6832");
+    try {
+      Configuration.SenderConfiguration.fromEnv().getSender();
+      fail("expecting exception");
+    } catch (RuntimeException re) {
+      // we need to catch it here instead of using @Test(expected = ...) because the SocketException is
+      // wrapped into a runtime exception
+      assertTrue(re.getCause() instanceof SocketException);
+    }
+  }
+
+  @Test
+  public void testSenderBackwardsCompatibilityGettingAgentHostAndPort() {
+    System.setProperty(Configuration.JAEGER_AGENT_HOST, "jaeger-agent");
+    System.setProperty(Configuration.JAEGER_AGENT_PORT, "6832");
+    assertEquals("jaeger-agent", Configuration.ReporterConfiguration.fromEnv().getAgentHost());
+    assertEquals(Integer.valueOf(6832), Configuration.ReporterConfiguration.fromEnv().getAgentPort());
+  }
+
+  @Test
+  public void testNoNullPointerOnNullSender() {
+    Configuration.ReporterConfiguration reporterConfiguration =
+            new Configuration.ReporterConfiguration(null, null, null, null);
+    assertNull(reporterConfiguration.getAgentHost());
+    assertNull(reporterConfiguration.getAgentPort());
+
+    reporterConfiguration = new Configuration.ReporterConfiguration(null);
+    assertNull(reporterConfiguration.getAgentHost());
+    assertNull(reporterConfiguration.getAgentPort());
+
+    reporterConfiguration = new Configuration.ReporterConfiguration();
+    assertNull(reporterConfiguration.getAgentHost());
+    assertNull(reporterConfiguration.getAgentPort());
+  }
+
+  @Test
+  public void testCustomSender() {
+    String endpoint = "https://custom-sender-endpoint:14268/api/traces";
+    System.setProperty(Configuration.JAEGER_ENDPOINT, "https://jaeger-collector:14268/api/traces");
+    CustomSender customSender = new CustomSender(endpoint);
+    Configuration.SenderConfiguration senderConfiguration = new Configuration.SenderConfiguration.Builder()
+            .sender(customSender)
+            .build();
+    assertEquals(endpoint, ((CustomSender)senderConfiguration.getSender()).getEndpoint());
+  }
+
+  @Test
+  public void testSenderWithBasicAuthUsesHttpSender() {
+    Configuration.SenderConfiguration senderConfiguration = new Configuration.SenderConfiguration.Builder()
+            .endpoint("https://jaeger-collector:14268/api/traces")
+            .authUsername("username")
+            .authPassword("password")
+            .build();
+    assertTrue(senderConfiguration.getSender() instanceof HttpSender);
+  }
+
+  @Test
+  public void testSenderWithAuthTokenUsesHttpSender() {
+    Configuration.SenderConfiguration senderConfiguration = new Configuration.SenderConfiguration.Builder()
+            .endpoint("https://jaeger-collector:14268/api/traces")
+            .authToken("authToken")
+            .build();
+    assertTrue(senderConfiguration.getSender() instanceof HttpSender);
+  }
+
+  @Test
+  public void testSenderWithAllPropertiesReturnsHttpSender() {
+    System.setProperty(Configuration.JAEGER_ENDPOINT, "https://jaeger-collector:14268/api/traces");
+    System.setProperty(Configuration.JAEGER_AGENT_HOST, "jaeger-agent");
+    System.setProperty(Configuration.JAEGER_AGENT_PORT, "6832");
+
+    assertTrue(Configuration.SenderConfiguration.fromEnv().getSender() instanceof HttpSender);
+  }
+
+  @Test
+  public void testPropagationB3Only() {
+    System.setProperty(Configuration.JAEGER_PROPAGATION, "b3");
+    System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
+
+    long traceId = 1234;
+    long spanId = 5678;
+
+    TestTextMap textMap = new TestTextMap();
+    SpanContext spanContext = new SpanContext(traceId, spanId, 0, (byte)0);
+
+    io.opentracing.Tracer tracer = Configuration.fromEnv().getTracer();
+    tracer.inject(spanContext, Format.Builtin.TEXT_MAP, textMap);
+
+    assertNotNull(textMap.get("X-B3-TraceId"));
+    assertNotNull(textMap.get("X-B3-SpanId"));
+    assertNull(textMap.get("uber-trace-id"));
+
+    SpanContext extractedContext = (SpanContext)tracer.extract(Format.Builtin.TEXT_MAP, textMap);
+    assertEquals(traceId, extractedContext.getTraceId());
+    assertEquals(spanId, extractedContext.getSpanId());
+  }
+
+  @Test
+  public void testPropagationJaegerAndB3() {
+    System.setProperty(Configuration.JAEGER_PROPAGATION, "jaeger,b3");
+    System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
+
+    long traceId = 1234;
+    long spanId = 5678;
+
+    TestTextMap textMap = new TestTextMap();
+    SpanContext spanContext = new SpanContext(traceId, spanId, 0, (byte)0);
+
+    io.opentracing.Tracer tracer = Configuration.fromEnv().getTracer();
+    tracer.inject(spanContext, Format.Builtin.TEXT_MAP, textMap);
+
+    assertNotNull(textMap.get("uber-trace-id"));
+    assertNotNull(textMap.get("X-B3-TraceId"));
+    assertNotNull(textMap.get("X-B3-SpanId"));
+
+    SpanContext extractedContext = (SpanContext)tracer.extract(Format.Builtin.TEXT_MAP, textMap);
+    assertEquals(traceId, extractedContext.getTraceId());
+    assertEquals(spanId, extractedContext.getSpanId());
+  }
+
+  @Test
+  public void testPropagationDefault() {
+    System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
+
+    TestTextMap textMap = new TestTextMap();
+    SpanContext spanContext = new SpanContext(1234, 5678, 0, (byte)0);
+
+    Configuration.fromEnv().getTracer().inject(spanContext, Format.Builtin.TEXT_MAP, textMap);
+
+    assertNotNull(textMap.get("uber-trace-id"));
+    assertNull(textMap.get("X-B3-TraceId"));
+    assertNull(textMap.get("X-B3-SpanId"));
+  }
+
+  @Test
+  public void testPropagationValidFormat() {
+    System.setProperty(Configuration.JAEGER_PROPAGATION, "jaeger,invalid");
+    System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
+
+    TestTextMap textMap = new TestTextMap();
+    SpanContext spanContext = new SpanContext(1234, 5678, 0, (byte)0);
+
+    Configuration.fromEnv().getTracer().inject(spanContext, Format.Builtin.TEXT_MAP, textMap);
+
+    // Check that jaeger context still available even though invalid format specified
+    assertNotNull(textMap.get("uber-trace-id"));
+  }
+
+  static class TestTextMap implements TextMap {
+
+    private Map<String,String> values = new HashMap<>();
+
+    @Override
+    public Iterator<Entry<String, String>> iterator() {
+      return values.entrySet().iterator();
+    }
+
+    @Override
+    public void put(String key, String value) {
+      values.put(key, value);
+    }
+
+    public String get(String key) {
+      return values.get(key);
+    }
+  }
+
+  private static class CustomSender extends HttpSender {
+    private String endpoint;
+
+    public CustomSender(String endpoint) {
+      super(endpoint);
+      this.endpoint = endpoint;
+    }
+
+    public String getEndpoint() {
+      return endpoint;
+    }
+  }
 }

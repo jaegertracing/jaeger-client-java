@@ -20,6 +20,7 @@ import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
 import io.opentracing.tag.Tags;
 import java.io.IOException;
+import javax.annotation.Priority;
 import javax.ws.rs.ConstrainedTo;
 import javax.ws.rs.RuntimeType;
 import javax.ws.rs.client.ClientRequestContext;
@@ -32,18 +33,27 @@ import lombok.extern.slf4j.Slf4j;
 @Provider
 @ConstrainedTo(RuntimeType.CLIENT)
 @Slf4j
+@Priority(Constants.CLIENT_SPAN_INJECTION_FILTER_PRIORITY)
 public class ClientSpanInjectionFilter implements ClientRequestFilter, ClientResponseFilter {
   private final Tracer tracer;
-  private final TraceContext traceContext;
 
+  /**
+   * @param tracer tracer
+   * @param traceContext trace context
+   * @deprecated use {@link ClientSpanInjectionFilter#ClientSpanInjectionFilter(Tracer)}
+   */
+  @Deprecated
   public ClientSpanInjectionFilter(Tracer tracer, TraceContext traceContext) {
+    this(tracer);
+  }
+
+  public ClientSpanInjectionFilter(Tracer tracer) {
     this.tracer = tracer;
-    this.traceContext = traceContext;
   }
 
   @Override
   public void filter(ClientRequestContext clientRequestContext) throws IOException {
-    Span clientSpan = traceContext.getCurrentSpan();
+    Span clientSpan = (Span) clientRequestContext.getProperty(Constants.CURRENT_SPAN_CONTEXT_KEY);
 
     tracer.inject(
         clientSpan.context(),

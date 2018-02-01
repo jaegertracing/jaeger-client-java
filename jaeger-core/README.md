@@ -43,6 +43,11 @@ Property | Required | Description
 JAEGER_SERVICE_NAME | yes | The service name
 JAEGER_AGENT_HOST | no | The hostname for communicating with agent via UDP
 JAEGER_AGENT_PORT | no | The port for communicating with agent via UDP
+JAEGER_ENDPOINT | no | The traces endpoint, in case the client should connect directly to the Collector, like http://jaeger-collector:14268/api/traces
+JAEGER_AUTH_TOKEN | no | Authentication Token to send as "Bearer" to the endpoint
+JAEGER_USER | no | Username to send as part of "Basic" authentication to the endpoint
+JAEGER_PASSWORD | no | Password to send as part of "Basic" authentication to the endpoint
+JAEGER_PROPAGATION | no | Comma separated list of formats to use for propagating the trace context. Defaults to the standard Jaeger format. Valid values are **jaeger** and **b3**
 JAEGER_REPORTER_LOG_SPANS | no | Whether the reporter should also log the spans
 JAEGER_REPORTER_MAX_QUEUE_SIZE | no | The reporter's maximum queue size
 JAEGER_REPORTER_FLUSH_INTERVAL | no | The reporter's flush interval (ms)
@@ -52,7 +57,16 @@ JAEGER_SAMPLER_MANAGER_HOST_PORT | no | The host name and port when using the re
 JAEGER_TAGS | no | A comma separated list of `name = value` tracer level tags, which get added to all reported spans. The value can also refer to an environment variable using the format `${envVarName:default}`, where the `:default` is optional, and identifies a value to be used if the environment variable cannot be found
 JAEGER_DISABLE_GLOBAL_TRACER | no | If set, disables registering the tracer with io.opentracing.GlobalTracer
 
+Setting `JAEGER_AGENT_HOST`/`JAEGER_AGENT_PORT` will make the client send traces to the agent via `UdpSender`.
+If the `JAEGER_ENDPOINT` environment variable is also set, the traces are sent to the endpoint, effectively making
+the `JAEGER_AGENT_*` vars ineffective.
 
+When the `JAEGER_ENDPOINT` is set, the `HttpSender` is used when submitting traces to a remote
+endpoint, usually served by a Jaeger Collector. If the endpoint is secured, a HTTP Basic Authentication
+can be performed by setting the related environment vars. Similarly, if the endpoint expects an authentication
+token, like a JWT, set the `JAEGER_AUTH_TOKEN` environment variable. If the Basic Authentication environment
+variables *and* the Auth Token environment variable are set, Basic Authentication is used.
+ 
 #### Obtaining Tracer via TracerResolver
 
 Jaeger's Java Client also provides an implementation of the

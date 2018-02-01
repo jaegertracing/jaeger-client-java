@@ -14,26 +14,36 @@
 
 package com.uber.jaeger.context;
 
-import io.opentracing.util.GlobalTracer;
-
 import java.util.concurrent.ExecutorService;
 
+/**
+ * TracingUtils is going to be deprecated. To use its method please provide a tracer via
+ * {@link com.uber.jaeger.context.TracingUtils#setTracer(io.opentracing.Tracer)}.
+ */
+@Deprecated
 public class TracingUtils {
-  private static TraceContext traceContext = new ActiveSpanSourceTraceContext(GlobalTracer.get());
+  private static io.opentracing.Tracer tracer = null;
+  private static TraceContext traceContext;
 
-  public static TraceContext getTraceContext() {
-    assertGlobalTracerRegistered();
+  public static synchronized void setTracer(io.opentracing.Tracer tracer) {
+    TracingUtils.tracer = tracer;
+    TracingUtils.traceContext = new ScopeManagerTraceContext(tracer.scopeManager());
+  }
+
+  public static synchronized TraceContext getTraceContext() {
+    assertTracerRegistered();
     return traceContext;
   }
 
-  public static ExecutorService tracedExecutor(ExecutorService wrappedExecutorService) {
-    assertGlobalTracerRegistered();
+  public static synchronized ExecutorService tracedExecutor(ExecutorService wrappedExecutorService) {
+    assertTracerRegistered();
     return new TracedExecutorService(wrappedExecutorService, traceContext);
   }
 
-  private static void assertGlobalTracerRegistered() {
-    if (!GlobalTracer.isRegistered()) {
-      throw new IllegalStateException("Please register a io.opentracing.util.GlobalTracer.");
+  private static void assertTracerRegistered() {
+    if (tracer == null) {
+      throw new IllegalStateException(
+          "Please set a tracer using `setTracer(..)` before calling any functions in this class.");
     }
   }
 

@@ -15,12 +15,14 @@
 package com.uber.jaeger.filters.jaxrs2;
 
 import com.uber.jaeger.context.TraceContext;
-import io.opentracing.Span;
+
+import io.opentracing.Scope;
 import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
 import io.opentracing.tag.Tags;
 import java.io.IOException;
+import javax.annotation.Priority;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ContainerResponseContext;
@@ -33,16 +35,25 @@ import lombok.extern.slf4j.Slf4j;
 
 @Provider
 @Slf4j
+@Priority(Constants.SERVER_SPAN_CREATION_FILTER_PRIORITY)
 public class ServerFilter implements ContainerRequestFilter, ContainerResponseFilter {
   private final Tracer tracer;
-  private final TraceContext traceContext;
 
   @Context
   protected ResourceInfo resourceInfo;
 
+  /**
+   * @param tracer tracer
+   * @param traceContext trace context
+   * @deprecated use {@link ServerFilter#ServerFilter(Tracer)}
+   */
+  @Deprecated
   public ServerFilter(Tracer tracer, TraceContext traceContext) {
+    this(tracer);
+  }
+
+  public ServerFilter(Tracer tracer) {
     this.tracer = tracer;
-    this.traceContext = traceContext;
   }
 
   @Override
@@ -75,9 +86,7 @@ public class ServerFilter implements ContainerRequestFilter, ContainerResponseFi
       if (spanContext != null) {
         builder = builder.asChildOf(spanContext);
       }
-      Span serverSpan = builder.startManual();
-
-      traceContext.push(serverSpan);
+      builder.startActive(true);
     } catch (Exception e) {
       log.error("Server Filter Request:", e);
     }
@@ -89,18 +98,14 @@ public class ServerFilter implements ContainerRequestFilter, ContainerResponseFi
       ContainerResponseContext containerResponseContext)
       throws IOException {
     try {
-      Span serverSpan;
-      if (traceContext.isEmpty()) {
+      Scope scope = tracer.scopeManager().active();
+      if (scope == null) {
         // hitting this case means previous filter was not called
         return;
       }
-      serverSpan = traceContext.getCurrentSpan();
-
-      Tags.HTTP_STATUS.set(serverSpan, containerResponseContext.getStatus());
-
-      // We are relying on the ActiveSpanSource implementation to `close` the span, and
-      // hence don't need to call `finish`.
-      traceContext.pop();
+      Tags.HTTP_STATUS.set(scope.span(), containerResponseContext.getStatus());
+      // We started the scope with finishOnClose=true, so we don't need to finish the span manually.
+      scope.close();
     } catch (Exception e) {
       log.error("Server Filter Response:", e);
     }

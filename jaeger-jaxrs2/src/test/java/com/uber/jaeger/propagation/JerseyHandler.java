@@ -15,7 +15,6 @@
 package com.uber.jaeger.propagation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.uber.jaeger.context.TraceContext;
 import com.uber.jaeger.filters.jaxrs2.ClientFilter;
 import io.opentracing.Tracer;
 import java.io.IOException;
@@ -33,14 +32,11 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.jackson.JacksonFeature;
 
 @Path("jersey")
 public class JerseyHandler {
   @Inject Tracer tracer;
-
-  @Inject TraceContext traceContext;
 
   private Client client;
   private ObjectMapper mapper = new ObjectMapper();
@@ -49,14 +45,7 @@ public class JerseyHandler {
     if (client == null) {
       client =
           ClientBuilder.newClient()
-              .register(new ClientFilter(tracer, traceContext))
-              .register(
-                  new AbstractBinder() {
-                    @Override
-                    protected void configure() {
-                      bind(traceContext).to(TraceContext.class);
-                    }
-                  })
+              .register(new ClientFilter(tracer))
               .register(JacksonFeature.class);
     }
     return client;
@@ -88,7 +77,7 @@ public class JerseyHandler {
           }
         };
 
-    SpanInfo spanInfo = new SpanInfo((com.uber.jaeger.Span) traceContext.getCurrentSpan());
+    SpanInfo spanInfo = new SpanInfo((com.uber.jaeger.Span) tracer.activeSpan());
     return new CallTreeNode(uriInfo.getPath(), spanInfo, callTreeNodeList);
   }
 
@@ -96,7 +85,7 @@ public class JerseyHandler {
   @Path("hop2")
   @Produces(MediaType.APPLICATION_JSON)
   public CallTreeNode endpointOne(@Context UriInfo uriInfo) throws IOException {
-    SpanInfo spanInfo = new SpanInfo((com.uber.jaeger.Span) traceContext.getCurrentSpan());
+    SpanInfo spanInfo = new SpanInfo((com.uber.jaeger.Span) tracer.activeSpan());
     return new CallTreeNode(uriInfo.getPath(), spanInfo);
   }
 
@@ -105,7 +94,7 @@ public class JerseyHandler {
   @Produces(MediaType.APPLICATION_JSON)
   public CallTreeNode endpointTwo(@Context UriInfo uriInfo) {
     // TODO(oibe) turn this into a tchannel server
-    SpanInfo spanInfo = new SpanInfo((com.uber.jaeger.Span) traceContext.getCurrentSpan());
+    SpanInfo spanInfo = new SpanInfo((com.uber.jaeger.Span) tracer.activeSpan());
     return new CallTreeNode(uriInfo.getPath(), spanInfo);
   }
 

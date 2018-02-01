@@ -2,7 +2,7 @@ apply plugin: 'com.github.johnrengelman.shadow'
 
 
 description = 'A jaeger instrumented java server meant for testing interoperability with different Jaeger clients through the use of crossdock (https://github.com/crossdock/crossdock)'
-ext.jacksonVersion = '2.7.4'
+ext.jacksonVersion = '2.8.10'
 shadowJar.archiveName = 'jaeger-crossdock.jar'
 
 compileJava {
@@ -19,7 +19,7 @@ dependencies {
     compile group: 'org.glassfish.jersey.core', name: 'jersey-client', version: jerseyVersion
     compile group: 'org.glassfish.jersey.media', name: 'jersey-media-json-jackson', version: jerseyVersion
     compile group: 'javax.servlet', name: 'servlet-api', version: '2.5'
-    compile group: 'com.uber.tchannel', name: 'tchannel-core', version: '0.5.0'
+    compile group: 'com.uber.tchannel', name: 'tchannel-core', version: '0.7.2'
     compile group: 'org.slf4j', name: 'slf4j-log4j12', version: slf4jVersion
 
     // Testing Frameworks

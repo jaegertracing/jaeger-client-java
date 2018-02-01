@@ -26,6 +26,7 @@ import com.github.kristofa.brave.http.HttpClientRequestAdapter;
 import com.github.kristofa.brave.http.HttpServerRequest;
 import com.github.kristofa.brave.http.HttpServerRequestAdapter;
 import com.uber.jaeger.SpanContext;
+
 import io.opentracing.propagation.TextMap;
 import java.net.URI;
 import java.util.Iterator;
@@ -49,21 +50,6 @@ public class B3TextMapCodecTest {
     assertEquals(0, context.getParentId()); // parentID==0 means root span
     assertEquals(1, context.getSpanId());
     assertEquals(1, context.getFlags()); // sampled
-  }
-
-  @Test
-  public void downgrades128BitTraceIdToLower64Bits() throws Exception {
-    String hex128Bits = "463ac35c9f6413ad48485a3953bb6124";
-    String lower64Bits = "48485a3953bb6124";
-
-    DelegatingTextMap textMap = new DelegatingTextMap();
-    textMap.put(TRACE_ID_NAME, hex128Bits);
-    textMap.put(SPAN_ID_NAME, lower64Bits);
-
-    SpanContext context = b3Codec.extract(textMap);
-
-    assertEquals(HexCodec.lowerHexToUnsignedLong(lower64Bits), context.getTraceId());
-    assertEquals(HexCodec.lowerHexToUnsignedLong(lower64Bits), context.getSpanId());
   }
 
   @Test

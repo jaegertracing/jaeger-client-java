@@ -20,8 +20,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Span implements io.opentracing.Span {
+  private static final Logger logger = LoggerFactory.getLogger(Span.class);
   private final Tracer tracer;
   private final long startTimeMicroseconds;
   private final long startTimeNanoTicks;
@@ -32,6 +35,7 @@ public class Span implements io.opentracing.Span {
   private final List<Reference> references;
   private SpanContext context;
   private List<LogData> logs;
+  private boolean finished = false; // to prevent the same span from getting reported multiple times
 
   Span(
       Tracer tracer,
@@ -114,7 +118,8 @@ public class Span implements io.opentracing.Span {
 
   @Override
   public Span setBaggageItem(String key, String value) {
-    if (key == null || value == null) {
+    if (key == null || (value == null && context.getBaggageItem(key) == null)) {
+      //Ignore attempts to add new baggage items with null values, they're not accessible anyway
       return this;
     }
     synchronized (this) {
@@ -162,6 +167,12 @@ public class Span implements io.opentracing.Span {
 
   private void finishWithDuration(long durationMicros) {
     synchronized (this) {
+      if (finished) {
+        logger.warn("Span has already been finished; will not be reported again.");
+        return;
+      }
+      finished = true;
+
       this.durationMicroseconds = durationMicros;
     }
 
@@ -228,30 +239,20 @@ public class Span implements io.opentracing.Span {
 
   @Override
   public Span log(String event) {
-    return log(tracer.clock().currentTimeMicros(), event, null);
+    return log(tracer.clock().currentTimeMicros(), event);
   }
 
   @Override
   public Span log(long timestampMicroseconds, String event) {
-    return log(timestampMicroseconds, event, null);
-  }
-
-  @Override
-  public Span log(String message, /* @Nullable */ Object payload) {
-    return log(tracer.clock().currentTimeMicros(), message, payload);
-  }
-
-  @Override
-  public Span log(long timestampMicroseconds, String message, /* @Nullable */ Object payload) {
     synchronized (this) {
-      if (message == null && payload == null) {
+      if (event == null) {
         return this;
       }
       if (context.isSampled()) {
         if (logs == null) {
           this.logs = new ArrayList<LogData>();
         }
-        logs.add(new LogData(timestampMicroseconds, message, payload));
+        logs.add(new LogData(timestampMicroseconds, event));
       }
       return this;
     }

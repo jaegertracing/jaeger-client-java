@@ -29,6 +29,7 @@ env:
   - secure: D+ELI5AuDmE+9lul7t/wDXZPk4dec94B8n0ShSFRSpmiclJiabdwUk8zI74cEWdBoheGeYTkrl1I/5l+XlvLhZYxUS0CWkxtLUcd8n3SE+J+VjiyAbWUBaguMJpKWo/9+W2Jm5v79oY96kEeGvyW0e8PnABdRTnvB7aNz6oRe/EAUQmYHepyzP4s33rgdcN522eu81Z2Cxkcjm1nh+JV1v2Y7iRxXzsoorMLxp1aYO+GV30rHMDb70A1WKW6LImG2JgQnXuYUJCsIDeVpgHTTWqPScGU07HjjGmLHsdZubLp7OFHjlGOlisUNjQ8QZ0EpEYDZTF7VaiXLbypyrVfuYsOrp9utBJRHkHsxyRCfJENzCMWX27tTFjmihxp1H6MHdiWgrklkJXaLSX82T8/j3RYQUA0SCGFHiV5uCIRtVZf5LkUaO86uySymsfCmSA9BdIRET9stra5YNYxuQ8zzY8KGNI+jcjpe0STWUG/ZNGBOHJ7Viw1S4TpXLRz4jbmjC4jJXjjR2Sa0C2NLNOKchO+aOP1a+6+ODuyrjBwDhIohSh39rIYjmt5v14RKj7k/C5Bz5QfXejw8JVp49zLaLF1lksCaP8BVhOu5xOuttgOoXA7LV+tKmyovg1Ka9DXLaQNd5vAfPnqVXaZXKYP8AIJXrCUT/Z280brNZOfLxg=
 before_cache:
 - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+- rm -fr $HOME/.gradle/caches/*/plugin-resolution/
 cache:
   directories:
   - "$HOME/.gradle/caches/"
@@ -37,7 +38,7 @@ before_install:
 - ./travis/prepare-signing.sh $encrypted_677f232983c0_key $encrypted_677f232983c0_iv
 - if [ "$CROSSDOCK" == true ]; then bash ./travis/install-crossdock-deps.sh ; fi
 script:
-- if [ "$TESTS" == true ]; then make test ; else echo 'skipping tests'; fi
+- if [ "$TESTS" == true ]; then make test-travis ; else echo 'skipping tests'; fi
 - if [ "$COVERAGE" == true ]; then ./gradlew codeCoverageReport ; else echo 'skipping coverage'; fi
 - if [ "$CROSSDOCK" == true ]; then bash ./travis/build-crossdock.sh ; else echo 'skipping crossdock'; fi
 after_success:

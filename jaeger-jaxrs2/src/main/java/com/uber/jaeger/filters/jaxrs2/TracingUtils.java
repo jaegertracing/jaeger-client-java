@@ -18,7 +18,17 @@ import com.uber.jaeger.context.TraceContext;
 import io.opentracing.Tracer;
 import java.util.concurrent.ExecutorService;
 
+/**
+ * TracingUtils is going to be deprecated. To use its method please provide a tracer via
+ * {@link com.uber.jaeger.filters.jaxrs2.TracingUtils#setTracer(io.opentracing.Tracer)}.
+ */
+@Deprecated
 public class TracingUtils {
+
+  public static void setTracer(io.opentracing.Tracer tracer) {
+    com.uber.jaeger.context.TracingUtils.setTracer(tracer);
+  }
+
   @Deprecated
   public static TraceContext getTraceContext() {
     return com.uber.jaeger.context.TracingUtils.getTraceContext();
@@ -29,12 +39,26 @@ public class TracingUtils {
     return com.uber.jaeger.context.TracingUtils.tracedExecutor(wrappedExecutorService);
   }
 
+  /**
+   * Returns a new client filter with the passed ``io.opentracing.Tracer``.
+   *
+   * @param tracer tracer
+   * @return ClientFilter
+   * @deprecated Use {@link ClientFilter#ClientFilter(Tracer)}.
+   */
+  @Deprecated
   public static ClientFilter clientFilter(Tracer tracer) {
-    return new ClientFilter(tracer, getTraceContext());
+    return new ClientFilter(tracer);
   }
 
+  /**
+   * @param tracer tracer
+   * @return ServerFilter
+   * @deprecated Use {@link ServerFilter#ServerFilter(Tracer)}.
+   */
+  @Deprecated
   public static ServerFilter serverFilter(Tracer tracer) {
-    return new ServerFilter(tracer, getTraceContext());
+    return new ServerFilter(tracer);
   }
 
   private TracingUtils() {}

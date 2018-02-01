@@ -21,8 +21,6 @@ import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.when;
 
 import com.uber.jaeger.Span;
-import com.uber.jaeger.context.ActiveSpanSourceTraceContext;
-import com.uber.jaeger.context.TraceContext;
 import com.uber.jaeger.propagation.FilterIntegrationTest;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
@@ -33,7 +31,6 @@ import java.util.List;
 import java.util.Map;
 import javax.ws.rs.client.ClientRequestContext;
 import javax.ws.rs.client.ClientResponseContext;
-import javax.ws.rs.core.MultivaluedHashMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,14 +40,13 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 /**
- * Tests that {@link ClientFilter} produces a span and sets tags correctly See also:
+ * Tests that {@link ClientFilter} produces a span and sets tags correctly. See also:
  * {@link FilterIntegrationTest} for a complete Client/Server filter integration test
  */
 @RunWith(MockitoJUnitRunner.class)
 public class ClientFilterTest {
 
   private Tracer tracer;
-  private TraceContext traceContext;
   private InMemoryReporter reporter;
   private ClientFilter undertest;
 
@@ -64,8 +60,8 @@ public class ClientFilterTest {
     tracer =
         new com.uber.jaeger.Tracer.Builder("Angry Machine", reporter, new ConstSampler(true))
             .build();
-    traceContext = new ActiveSpanSourceTraceContext(tracer);
-    undertest = new ClientFilter(tracer, traceContext);
+    // Using deprecated constructor for test coverage
+    undertest = new ClientFilter(tracer, null);
   }
 
   @Test
@@ -73,7 +69,6 @@ public class ClientFilterTest {
     String method = "GET";
     when(clientRequestContext.getMethod()).thenReturn(method);
     when(clientRequestContext.getUri()).thenReturn(new URI("http://localhost/path"));
-    when(clientRequestContext.getHeaders()).thenReturn(new MultivaluedHashMap<String, Object>());
 
     when(clientResponseContext.getStatus()).thenReturn(200);
 

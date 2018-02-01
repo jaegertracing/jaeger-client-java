@@ -1,13 +1,19 @@
 -include jaeger-crossdock/rules.mk
 
+GRADLE=GRADLE_OPTS=-Xmx1g ./gradlew
+
 .PHONY: clean
 clean:
-	./gradlew clean
+	$(GRADLE) clean
 
 .PHONY: test
 test:
-	./gradlew check
+	$(GRADLE) check
+
+.PHONY: test-travis
+test-travis:
+	$(GRADLE) -is check
 
 .PHONY: release
 release: clean
-	./gradlew uploadArchives
+	$(GRADLE) -i uploadArchives

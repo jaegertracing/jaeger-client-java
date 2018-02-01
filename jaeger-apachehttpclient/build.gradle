@@ -2,15 +2,20 @@ description = 'Instrumentation library for apache http client'
 
 dependencies {
     compile project(':jaeger-core')
-    compile project(':jaeger-context')
-    compile group: 'org.apache.httpcomponents', name: 'httpcore', version: '4.4.7'
+    compile group: 'org.apache.httpcomponents', name: 'httpcore', version: '4.4.8'
     compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.3'
     compile group: 'org.apache.httpcomponents', name: 'httpasyncclient', version: '4.1.3'
 
     testCompile project(path: ':jaeger-core', configuration: 'tests')
     testCompile group: 'org.mock-server', name: 'mockserver-netty', version: '3.11'
     testCompile group: 'junit', name: 'junit', version: junitVersion
-    testCompile group: 'org.mockito', name: 'mockito-core', version: mockitoVersion
+
+    // Mockito 2.12 -> 2.8 due to PowerMock/Mockito dependency issues
+    testCompile group: 'org.mockito', name: 'mockito-core', version: '2.8.0'
+    testCompile group: 'org.powermock', name: 'powermock-api-mockito2', version: '1.7.0RC2'
+    testCompile group: 'org.powermock', name: 'powermock-module-junit4', version: powermockitoVersion
+    testCompile group: 'org.powermock', name: 'powermock-core', version: powermockitoVersion
+    testCompile group: 'org.powermock', name: 'powermock-module-junit4-rule', version: powermockitoVersion
 
     signature 'org.codehaus.mojo.signature:java16:1.1@signature'
 }

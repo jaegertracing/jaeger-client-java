@@ -14,20 +14,14 @@
 
 package com.uber.jaeger.httpclient;
 
-import com.uber.jaeger.context.TraceContext;
-import com.uber.jaeger.context.TracingUtils;
+import io.opentracing.Scope;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
-import io.opentracing.propagation.Format;
-import io.opentracing.tag.Tags;
 import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpException;
-import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
-import org.apache.http.RequestLine;
-import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.protocol.HttpContext;
 
 /**
@@ -40,23 +34,30 @@ import org.apache.http.protocol.HttpContext;
  */
 @Slf4j
 public class TracingRequestInterceptor implements HttpRequestInterceptor {
-  private final Tracer tracer;
   private final SpanCreationRequestInterceptor spanCreationInterceptor;
   private final SpanInjectionRequestInterceptor spanInjectionInterceptor;
+  private final Tracer tracer;
 
   public TracingRequestInterceptor(Tracer tracer) {
-    this.tracer = tracer;
     this.spanCreationInterceptor = new SpanCreationRequestInterceptor(tracer);
     this.spanInjectionInterceptor = new SpanInjectionRequestInterceptor(tracer);
+    this.tracer = tracer;
   }
 
   @Override
   public void process(HttpRequest httpRequest, HttpContext httpContext)
       throws HttpException, IOException {
     try {
-      this.spanCreationInterceptor.process(httpRequest, httpContext);
-      onSpanStarted(TracingUtils.getTraceContext().getCurrentSpan(), httpRequest, httpContext);
-      this.spanInjectionInterceptor.process(httpRequest, httpContext);
+      spanCreationInterceptor.process(httpRequest, httpContext);
+
+      Scope currentScope = tracer.scopeManager().active();
+      if (currentScope != null) {
+        onSpanStarted(currentScope.span(), httpRequest, httpContext);
+      } else {
+        log.warn("Current scope is null; possibly failed to start client tracing span.");
+      }
+
+      spanInjectionInterceptor.process(httpRequest, httpContext);
     } catch (Exception e) {
       log.error("Could not start client tracing span.", e);
     }

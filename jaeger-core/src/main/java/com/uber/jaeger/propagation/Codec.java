@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Uber Technologies, Inc
+ * Copyright (c) 2017, The Jaeger Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -12,26 +12,7 @@
  * the License.
  */
 
-package com.uber.jaeger;
+package com.uber.jaeger.propagation;
 
-import java.util.Map;
-import lombok.Getter;
-
-@Getter
-public final class LogData {
-  private final long time; // time in microseconds
-  private final String message;
-  private final Map<String, ?> fields;
-
-  LogData(long time, String message) {
-    this.time = time;
-    this.message = message;
-    this.fields = null;
-  }
-
-  LogData(long time, Map<String, ?> fields) {
-    this.time = time;
-    this.message = null;
-    this.fields = fields;
-  }
+public interface Codec<T> extends Injector<T>, Extractor<T> {
 }
