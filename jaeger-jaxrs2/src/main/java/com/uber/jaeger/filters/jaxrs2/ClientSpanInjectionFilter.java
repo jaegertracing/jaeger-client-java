@@ -20,6 +20,7 @@ import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
 import io.opentracing.tag.Tags;
 import java.io.IOException;
+import javax.annotation.Priority;
 import javax.ws.rs.ConstrainedTo;
 import javax.ws.rs.RuntimeType;
 import javax.ws.rs.client.ClientRequestContext;
@@ -32,6 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 @Provider
 @ConstrainedTo(RuntimeType.CLIENT)
 @Slf4j
+@Priority(Constants.CLIENT_SPAN_INJECTION_FILTER_PRIORITY)
 public class ClientSpanInjectionFilter implements ClientRequestFilter, ClientResponseFilter {
   private final Tracer tracer;
 

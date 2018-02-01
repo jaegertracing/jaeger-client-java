@@ -14,6 +14,15 @@
 
 package com.uber.jaeger.filters.jaxrs2;
 
+import javax.ws.rs.Priorities;
+
 public interface Constants {
+  /* Jersey context property tag for current active span */
   String CURRENT_SPAN_CONTEXT_KEY = "io.opentracing.Span";
+
+  /* Jersey Filter Priorites */
+  int CLIENT_SPAN_CREATION_FILTER_PRIORITY = 1;
+  int CLIENT_SPAN_INJECTION_FILTER_PRIORITY = Priorities.USER + 2000;
+
+  int SERVER_SPAN_CREATION_FILTER_PRIORITY = 1;
 }

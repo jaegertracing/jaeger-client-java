@@ -22,6 +22,7 @@ import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
 import io.opentracing.tag.Tags;
 import java.io.IOException;
+import javax.annotation.Priority;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ContainerResponseContext;
@@ -34,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Provider
 @Slf4j
+@Priority(Constants.SERVER_SPAN_CREATION_FILTER_PRIORITY)
 public class ServerFilter implements ContainerRequestFilter, ContainerResponseFilter {
   private final Tracer tracer;
 
