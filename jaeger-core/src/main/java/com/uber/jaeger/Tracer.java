@@ -158,6 +158,14 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
     return new SpanBuilder(operationName);
   }
 
+  /**
+   * For systems that are currently migrating to Jaeger and which are generating their own <b>unique</b> identifier,
+   * this method can be used to help ease the transition.
+   */
+  public io.opentracing.Tracer.SpanBuilder buildSpan(String operationName, long id) {
+    return new SpanBuilder(operationName, id);
+  }
+
   @Override
   public <T> void inject(io.opentracing.SpanContext spanContext, Format<T> format, T carrier) {
     Injector<T> injector = registry.getInjector(format);
@@ -198,8 +206,16 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
     private final Map<String, Object> tags = new HashMap<String, Object>();
     private boolean ignoreActiveSpan = false;
 
-    SpanBuilder(String operationName) {
+    //The unique id for the span
+    private final long id;
+
+    SpanBuilder(String operationName, long id) {
       this.operationName = operationName;
+      this.id = id;
+    }
+
+    SpanBuilder(String operationName) {
+      this(operationName, Utils.uniqueId());
     }
 
     @Override
@@ -264,8 +280,6 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
     }
 
     private SpanContext createNewContext(String debugId) {
-      long id = Utils.uniqueId();
-
       byte flags = 0;
       if (debugId != null) {
         flags = (byte) (flags | SpanContext.flagSampled | SpanContext.flagDebug);
@@ -324,7 +338,7 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
 
       return new SpanContext(
           preferredReference.getTraceId(),
-          Utils.uniqueId(),
+          this.id,
           preferredReference.getSpanId(),
           // should we do OR across passed references?
           preferredReference.getFlags(),
