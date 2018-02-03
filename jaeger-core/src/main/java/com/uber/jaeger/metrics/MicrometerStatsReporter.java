@@ -19,6 +19,8 @@ import static io.micrometer.core.instrument.Metrics.gauge;
 import static io.micrometer.core.instrument.Metrics.timer;
 
 import io.micrometer.core.instrument.ImmutableTag;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Tag;
 
 import java.util.ArrayList;
@@ -27,6 +29,10 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class MicrometerStatsReporter implements StatsReporter {
+
+  MeterRegistry registry() {
+    return Metrics.globalRegistry;
+  }
 
   @Override
   public void incCounter(String name, long delta, Map<String, String> tags) {
