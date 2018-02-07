@@ -18,8 +18,6 @@ For production usage, it is recommended to use `com.uber.jaeger.Configuration` w
 
 ```java
 Configuration config = new Configuration("myServiceName", null, null);
-config.setStatsFactory(...); // optional if you want to get metrics about tracer behavior
-
 Tracer tracer = config.getTracer();
 ```
 
@@ -76,6 +74,20 @@ environment approach described above.
 
 More information about using the `TracerResolver` can be found [here](../jaeger-tracerresolver/README.md).
 
+#### Reporting internal metrics via Micrometer
+
+The Jaeger Java Client collects internal metrics and is able to report them via [Micrometer](http://micrometer.io).
+To accomplish that, include the artifact `com.uber.jaeger:jaeger-micrometer` as a dependency to your project and use
+`MicrometerStatsFactory` like this:
+
+```java
+MicrometerStatsFactory statsFactory = new MicrometerStatsFactory();
+Configuration configuration = Configuration.fromEnv();
+Tracer tracer = configuration
+  .getTracerBuilder()
+  .withMetrics(new Metrics(statsFactory))
+  .build();
+```
 
 ### Development
 

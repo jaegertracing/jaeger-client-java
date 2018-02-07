@@ -73,7 +73,7 @@ public class BaggageSetterTest {
     assertNull(ctx.getBaggageItem(KEY));
 
     assertEquals(
-        1L, metricsReporter.counters.get("jaeger.baggage-update.result=err").longValue());
+        1L, metricsReporter.counters.get("jaeger:baggage_updates.result=err").longValue());
   }
 
   @Test
@@ -87,9 +87,9 @@ public class BaggageSetterTest {
     assertEquals(expected, ctx.getBaggageItem(KEY));
 
     assertEquals(
-        1L, metricsReporter.counters.get("jaeger.baggage-truncate").longValue());
+        1L, metricsReporter.counters.get("jaeger:baggage_truncations").longValue());
     assertEquals(
-        1L, metricsReporter.counters.get("jaeger.baggage-update.result=ok").longValue());
+        1L, metricsReporter.counters.get("jaeger:baggage_updates.result=ok").longValue());
   }
 
   @Test
@@ -104,7 +104,7 @@ public class BaggageSetterTest {
     assertEquals(value, ctx.getBaggageItem(KEY));
 
     assertEquals(
-        2L, metricsReporter.counters.get("jaeger.baggage-update.result=ok").longValue());
+        2L, metricsReporter.counters.get("jaeger:baggage_updates.result=ok").longValue());
   }
 
   @Test
@@ -147,7 +147,7 @@ public class BaggageSetterTest {
     assertNull(child.getBaggageItem(KEY));
 
     assertEquals(
-            2L, metricsReporter.counters.get("jaeger.baggage-update.result=ok").longValue());
+            2L, metricsReporter.counters.get("jaeger:baggage_updates.result=ok").longValue());
   }
 
   private void assertBaggageLogs(
