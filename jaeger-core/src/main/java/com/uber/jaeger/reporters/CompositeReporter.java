@@ -16,6 +16,7 @@ package com.uber.jaeger.reporters;
 
 import com.uber.jaeger.Span;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import lombok.ToString;
 
@@ -42,5 +43,13 @@ public class CompositeReporter implements Reporter {
     for (Reporter reporter : this.reporters) {
       reporter.close();
     }
+  }
+
+  /**
+   * The reporters being used
+   * @return the list of reporters backing this composite reporter
+   */
+  public List<Reporter> getReporters() {
+    return Collections.unmodifiableList(reporters);
   }
 }

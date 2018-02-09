@@ -66,7 +66,66 @@ endpoint, usually served by a Jaeger Collector. If the endpoint is secured, a HT
 can be performed by setting the related environment vars. Similarly, if the endpoint expects an authentication
 token, like a JWT, set the `JAEGER_AUTH_TOKEN` environment variable. If the Basic Authentication environment
 variables *and* the Auth Token environment variable are set, Basic Authentication is used.
- 
+
+#### Configuration via builder
+
+A new builder API is available for configuration of most aspects of a tracer. A builder can be obtained via
+`Configuration.builder(serviceName)` or via `Configuration.builderFromEnv()`, in case you want to start based on values
+present as environment variables.
+
+Most of the options available via env vars are also available with simple methods on the builder.
+
+Here's an example of how to set the collector endpoint using the previous API:
+
+```java
+Configuration.SenderConfiguration senderConfiguration = new Configuration.SenderConfiguration.Builder()
+  .endpoint("https://jaeger-collector:14268/api/traces")
+  .build();
+
+ReporterConfiguration reporterConfiguration = new ReporterConfiguration(senderConfiguration.getSender());
+Configuration configuration = new Configuration("service-name", SamplerConfiguration.fromEnv(), reporterConfiguration);
+io.opentracing.Tracer tracer = configuration.getTracer();
+```
+
+With the new builder, the same can be accomplished with a code like this:
+
+```java
+String endpoint = "https://jaeger-collector-custom:14268/api/traces";
+Configuration configuration = Configuration
+  .builder("the-service")
+  .withReporterConfiguration(
+    ReporterConfiguration.builder()
+      .withSenderConfiguration(
+        SenderConfiguration.builder()
+          .endpoint(endpoint)
+          .build()
+      )
+    .build()
+  )
+.build();
+io.opentracing.Tracer tracer = configuration.getTracer();
+```
+
+The above will create a `ReporterConfiguration` and `SenderConfiguration` with sensible defaults, overriding only the
+collector endpoint property.
+
+As a general rule, when two conflicting sources of information are used, the last one takes precedence:
+
+```java
+Configuration configuration = Configuration
+    .builder("the-service")
+    .withReporterConfiguration(
+        ReporterConfiguration.builder()
+            .withSpanLogging(true)
+            .withSpanLogging(false)
+            .build()
+    )
+    .build();
+Tracer tracer = (Tracer) configuration.getTracer();
+```
+
+On the example above, span logging is disabled, as the second call to `withSpanLogging()` overrides the first.
+
 #### Obtaining Tracer via TracerResolver
 
 Jaeger's Java Client also provides an implementation of the

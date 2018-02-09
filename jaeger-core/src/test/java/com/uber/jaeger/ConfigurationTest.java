@@ -16,17 +16,32 @@ package com.uber.jaeger;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
+import com.uber.jaeger.Configuration.CodecConfiguration;
 import com.uber.jaeger.Configuration.ReporterConfiguration;
 import com.uber.jaeger.Configuration.SamplerConfiguration;
+import com.uber.jaeger.Configuration.SenderConfiguration;
+import com.uber.jaeger.exceptions.SenderException;
+import com.uber.jaeger.metrics.StatsFactory;
+import com.uber.jaeger.reporters.CompositeReporter;
+import com.uber.jaeger.reporters.LoggingReporter;
+import com.uber.jaeger.reporters.RemoteReporter;
 import com.uber.jaeger.samplers.ConstSampler;
-
+import com.uber.jaeger.samplers.HttpSamplingManager;
+import com.uber.jaeger.samplers.RemoteControlledSampler;
 import com.uber.jaeger.senders.HttpSender;
 import com.uber.jaeger.senders.Sender;
+import com.uber.jaeger.senders.UdpSender;
 import io.opentracing.noop.NoopTracerFactory;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
@@ -37,7 +52,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -318,6 +332,553 @@ public class ConfigurationTest {
 
     // Check that jaeger context still available even though invalid format specified
     assertNotNull(textMap.get("uber-trace-id"));
+  }
+
+  @Test
+  public void testEnsureCachedTracerInstance() {
+    Configuration configuration = new Configuration("the-service");
+    io.opentracing.Tracer tracer = configuration.getTracer();
+    assertEquals("Same instance of the tracer was expected", tracer, configuration.getTracer());
+  }
+
+  @Test
+  public void testEnsureNewTracerInstance() {
+    Configuration configuration = new Configuration("the-service");
+    io.opentracing.Tracer tracer = configuration.getTracerBuilder().build();
+    assertNotEquals("Different instance of the tracer was expected", tracer, configuration.getTracerBuilder().build());
+  }
+
+  @Test
+  public void testCloseWhenNoTracerWasBuilt() {
+    // this is a noop, but we ensure there's no NPE going on
+    new Configuration("the-service").closeTracer();
+  }
+
+  @Test
+  public void testClose() throws SenderException {
+    Sender sender = mock(Sender.class);
+    ReporterConfiguration reporterConfiguration = new ReporterConfiguration(sender);
+
+    Configuration configuration = Configuration
+        .builder("a-name")
+        .withReporterConfiguration(reporterConfiguration)
+        .build();
+
+    configuration.getTracer();
+    configuration.closeTracer();
+
+    verify(sender, times(1)).close();
+  }
+
+  @Test
+  public void testServiceName() {
+    Configuration configuration = Configuration.builder("the-service").build();
+    io.opentracing.Tracer tracer = configuration.getTracer();
+    assertEquals("the-service", configuration.getServiceName());
+    assertEquals("the-service", ((Tracer) tracer).getServiceName());
+  }
+
+  @Test
+  public void testServiceNameOnConstructor() {
+    Configuration configuration = new Configuration("the-service");
+    assertEquals("Expected a different service name", "the-service", configuration.getServiceName());
+
+    Tracer tracer = (Tracer) configuration.getTracer();
+    assertEquals("Expected a different service name", "the-service", tracer.getServiceName());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testNoServiceNameFails() {
+    Configuration.builder(null).build().getTracer();
+  }
+
+  @Test
+  public void testOverrideServiceName() {
+    Configuration configuration = Configuration
+        .builder("the-service")
+        .withServiceName("another-service")
+        .build();
+    assertEquals("Expected a different service name", "another-service", configuration.getServiceName());
+
+    Tracer tracer = (Tracer) configuration.getTracer();
+    assertEquals("Should have overridden the service name", "another-service", tracer.getServiceName());
+  }
+
+  @Test
+  public void testBuilderFromEnv() {
+    System.setProperty(Configuration.JAEGER_SERVICE_NAME, "the-service");
+    Tracer tracer = (Tracer) Configuration
+        .builderFromEnv()
+        .build()
+        .getTracer();
+    assertEquals("Expected a different value for the max queue size", "the-service", tracer.getServiceName());
+    System.clearProperty(Configuration.JAEGER_SERVICE_NAME);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testBuilderFromEnvWithoutServiceName() {
+    System.clearProperty(Configuration.JAEGER_SERVICE_NAME);
+    Configuration.builderFromEnv().build().getTracer();
+  }
+
+  @Test
+  public void testWithStatsFactory() {
+    StatsFactory statsFactory = mock(StatsFactory.class);
+
+    Configuration configuration = Configuration
+        .builder("the-service")
+        .withStatsFactory(statsFactory)
+        .build();
+    assertEquals("Expected to have used our stats factory", statsFactory, configuration.getStatsFactory());
+
+    configuration.getTracer();
+    verify(statsFactory, atLeastOnce()).createCounter(any(String.class), any(Map.class));
+  }
+
+  @Test
+  public void testAliasedMethodForStatsFactory() {
+    StatsFactory statsFactory = mock(StatsFactory.class);
+
+    Configuration configuration = Configuration.builder("the-service").build();
+    configuration.setStatsFactor(statsFactory);
+    assertEquals("Expected to have used our stats factory", statsFactory, configuration.getStatsFactory());
+
+    configuration.getTracer();
+    verify(statsFactory, atLeastOnce()).createCounter(any(String.class), any(Map.class));
+  }
+
+  @Test
+  public void testWithCodecConfiguration() {
+    Configuration.CodecConfiguration codecConfiguration = mock(Configuration.CodecConfiguration.class);
+
+    Configuration configuration = Configuration
+        .builder("the-service")
+        .withCodecConfiguration(codecConfiguration)
+        .build();
+    assertEquals("Expected to have used our custom codec configuration",
+        codecConfiguration,
+        configuration.getCodecConfig()
+    );
+
+    configuration.getTracer();
+    verify(codecConfiguration, times(1)).apply(any());
+  }
+
+  /**
+   * @see #testPropagationValidFormat()
+   */
+  @Test
+  public void testPropagationViaBuilder() {
+    TestTextMap textMap = new TestTextMap();
+    SpanContext spanContext = new SpanContext(1234, 5678, 0, (byte)0);
+
+    Configuration
+        .builder("the-service")
+        .withCodecConfiguration(
+            CodecConfiguration.withPropagations(Configuration.Propagation.JAEGER, Configuration.Propagation.B3)
+        )
+        .build()
+        .getTracer().inject(spanContext, Format.Builtin.TEXT_MAP, textMap);
+
+    // Check that jaeger context still available even though invalid format specified
+    assertNotNull(textMap.get("uber-trace-id"));
+  }
+
+  @Test
+  public void testCustomReporterConfiguration() {
+    ReporterConfiguration reporterConfiguration = mock(ReporterConfiguration.class);
+
+    Configuration configuration = Configuration.builder("the-service")
+        .withReporterConfiguration(reporterConfiguration)
+        .build();
+
+    // ideally, we would have checked if it was actually used when building the tracer, but the methods that
+    // are called are private...
+    assertEquals("Should have used the same reporter configuration we specified",
+        reporterConfiguration,
+        configuration.getReporterConfig()
+    );
+  }
+
+  @Test
+  public void testWithSender() throws SenderException {
+    Sender sender = mock(Sender.class);
+    Configuration configuration = Configuration
+        .builder("the-service")
+        .withReporterConfiguration(new ReporterConfiguration(sender))
+        .build();
+
+    configuration.getTracer();
+    configuration.closeTracer();
+
+    verify(sender, times(1)).close();
+  }
+
+  @Test
+  public void testWithSpanLogging() {
+    Configuration configuration = Configuration
+        .builder("the-service")
+        .withReporterConfiguration(
+            ReporterConfiguration.builder()
+                .withSpanLogging(true)
+                .build()
+        )
+        .build();
+    Tracer tracer = (Tracer) configuration.getTracer();
+
+    assertTrue("Expected the reporter config to have set the logging to true",
+        configuration.getReporterConfig().getLogSpans()
+    );
+    assertTrue("Expected the reporter to be composite", tracer.getReporter() instanceof CompositeReporter);
+
+    CompositeReporter compositeReporter = (CompositeReporter) tracer.getReporter();
+    assertTrue("Expected to have LoggingReporter as part of the CompositeReporter",
+        compositeReporter.getReporters().stream().anyMatch(r -> r instanceof LoggingReporter)
+    );
+  }
+
+  @Test
+  public void testWithoutSpanLogging() {
+    Configuration configuration = Configuration
+        .builder("the-service")
+        .withReporterConfiguration(
+            ReporterConfiguration.builder()
+                .withSpanLogging(false)
+                .build()
+        )
+        .build();
+    Tracer tracer = (Tracer) configuration.getTracer();
+
+    assertFalse("Expected the reporter config to have set the logging to false",
+        configuration.getReporterConfig().getLogSpans()
+    );
+    assertFalse("Expected the reporter to be composite", tracer.getReporter() instanceof CompositeReporter);
+  }
+
+  @Test
+  public void testWithMaxQueueSize() {
+    Configuration configuration = Configuration
+        .builder("the-service")
+        .withReporterConfiguration(
+            ReporterConfiguration.builder()
+                .withMaxQueueSize(42)
+                .build()
+        )
+        .build();
+    Tracer tracer = (Tracer) configuration.getTracer();
+
+    RemoteReporter reporter = (RemoteReporter) tracer.getReporter();
+    assertEquals("Expected a different value for the max queue size", 42, reporter.getMaxQueueSize());
+
+    assertEquals(
+        "Expected a different value for the max queue size",
+        42,
+        (long) configuration.getReporterConfig().getMaxQueueSize()
+    );
+  }
+
+  @Test
+  public void testWithFlushInterval() {
+    Configuration configuration = Configuration
+        .builder("the-service")
+        .withReporterConfiguration(
+            ReporterConfiguration.builder()
+                .withFlushInterval(42)
+                .build()
+        )
+        .build();
+
+    assertEquals(
+        "Expected a different value for the flush interval",
+        42,
+        (long) configuration.getReporterConfig().getFlushIntervalMs()
+    );
+  }
+
+  @Test
+  public void testWithSamplerConfiguration() {
+    SamplerConfiguration samplerConfiguration = mock(SamplerConfiguration.class);
+    Configuration
+        .builder("the-service")
+        .withSamplerConfiguration(samplerConfiguration)
+        .build()
+        .getTracer();
+    verify(samplerConfiguration, times(1)).getType();
+  }
+
+  @Test
+  public void testWithSamplerType() {
+    Configuration configuration = Configuration.builder("the-service")
+        .withSamplerConfiguration(
+            SamplerConfiguration.builder()
+                .withType(ConstSampler.TYPE)
+                .build()
+        )
+        .build();
+    assertEquals("Expected the type to be ConstSampler.TYPE",
+        ConstSampler.TYPE,
+        configuration.getSamplerConfig().getType()
+    );
+
+    assertTrue("Expected the sampler to be a ConstSampler",
+        configuration.getTracerBuilder().getSampler() instanceof ConstSampler
+    );
+  }
+
+  @Test
+  public void testWithSamplerParam() {
+    Configuration configuration = Configuration.builder("the-service")
+        .withSamplerConfiguration(
+            SamplerConfiguration.builder()
+                .withParam(1)
+                .build()
+        )
+        .build();
+    assertEquals("Expected the type to be ConstSampler.TYPE",
+        1,
+        configuration.getSamplerConfig().getParam()
+    );
+
+    assertTrue("Expected to have used the default sampler",
+        configuration.getTracerBuilder().getSampler() instanceof RemoteControlledSampler
+    );
+  }
+
+  @Test
+  public void testWithManagerHostPort() {
+    Configuration configuration = Configuration.builder("the-service")
+        .withSamplerConfiguration(
+            SamplerConfiguration.builder()
+                .withManagerHostPort("localhost:5779")
+                .build()
+        )
+        .build();
+
+    assertEquals("Expected the have the host:port as localhost:5779",
+        "localhost:5779",
+        configuration.getSamplerConfig().getManagerHostPort()
+    );
+
+    assertTrue("Expected the sampler to be a remote sampler",
+        configuration.getTracerBuilder().getSampler() instanceof RemoteControlledSampler
+    );
+
+    RemoteControlledSampler sampler = (RemoteControlledSampler) configuration.getTracerBuilder().getSampler();
+
+    assertTrue("Expected the sampling manager to be a http sampling manager",
+        sampler.getManager() instanceof HttpSamplingManager
+    );
+    HttpSamplingManager manager = (HttpSamplingManager) sampler.getManager();
+    assertEquals("Expected to have localhost:5779 as hostPort", "localhost:5779", manager.getHostPort());
+  }
+
+  @Test
+  public void testWithSampler() {
+    ConstSampler constSampler = new ConstSampler(true);
+
+    Configuration configuration = Configuration.builder("the-service")
+        .withSamplerConfiguration(
+            SamplerConfiguration.builder()
+                .withSampler(constSampler)
+                .build()
+        )
+        .build();
+
+    assertEquals("Expected to have used the sampler we specified",
+        constSampler,
+        configuration.getTracerBuilder().getSampler()
+    );
+  }
+
+  @Test
+  public void testWithSamplerPrecedence() {
+    ConstSampler constSampler = new ConstSampler(true);
+
+    Configuration configuration = Configuration.builder("the-service")
+        .withSamplerConfiguration(
+            SamplerConfiguration.builder()
+                .withSampler(constSampler)
+                .withManagerHostPort("localhost:5779")
+                .build()
+        )
+        .build();
+
+    assertTrue("Expected the sampler to be a remote sampler",
+        configuration.getTracerBuilder().getSampler() instanceof RemoteControlledSampler
+    );
+
+    RemoteControlledSampler sampler = (RemoteControlledSampler) configuration.getTracerBuilder().getSampler();
+
+    assertTrue("Expected the sampling manager to be a http sampling manager",
+        sampler.getManager() instanceof HttpSamplingManager
+    );
+    HttpSamplingManager manager = (HttpSamplingManager) sampler.getManager();
+    assertEquals("Expected to have localhost:5779 as hostPort", "localhost:5779", manager.getHostPort());
+
+    configuration = Configuration.builder("the-service")
+        .withSamplerConfiguration(
+            SamplerConfiguration.builder()
+                .withManagerHostPort("localhost:5779")
+                .withSampler(constSampler)
+                .build()
+        )
+        .build();
+
+    assertEquals("Expected to have used the sampler we specified",
+        constSampler,
+        configuration.getTracerBuilder().getSampler()
+    );
+  }
+
+  @Test
+  public void testWithCollectorEndpoint() {
+    String endpoint = "https://jaeger-collector-custom:14268/api/traces";
+    Configuration configuration = Configuration
+        .builder("the-service")
+        .withReporterConfiguration(
+            ReporterConfiguration.builder()
+                .withSenderConfiguration(
+                    SenderConfiguration.builder()
+                        .endpoint(endpoint)
+                        .build()
+                )
+                .build()
+        )
+        .build();
+
+    // it's hard to check if it's actually the one being used, as it's not stored anywhere other than the final target
+    // transport object, like OkHttp or Thrift
+    assertEquals("Expected to have set the collector endpoint on the sender",
+        endpoint,
+        configuration.getReporterConfig().getSenderConfiguration().getEndpoint()
+    );
+
+  }
+
+  @Test
+  public void testWithAuthUserAndPasswordWithoutEndpoint() {
+    // username/password is ignored if no endpoint is specified
+    Configuration configuration = Configuration
+        .builder("the-service")
+        .withReporterConfiguration(
+            ReporterConfiguration.builder()
+                .withSenderConfiguration(
+                    SenderConfiguration.builder()
+                        .authUsername("jdoe")
+                        .authPassword("pass")
+                        .build()
+                )
+                .build()
+        )
+        .build();
+
+    assertTrue("Expected the reporter to be a remote reporter",
+        configuration.getTracerBuilder().getReporter() instanceof RemoteReporter
+    );
+
+    RemoteReporter reporter = (RemoteReporter) configuration.getTracerBuilder().getReporter();
+    assertTrue("Expected the sender to be a UdpSender",
+        reporter.getSender() instanceof UdpSender
+    );
+  }
+
+  @Test
+  public void testWithAuthUserAndPasswordWithEndpoint() {
+    Configuration configuration = Configuration
+        .builder("the-service")
+        .withReporterConfiguration(
+            ReporterConfiguration.builder()
+                .withSenderConfiguration(
+                    SenderConfiguration.builder()
+                        .authUsername("jdoe")
+                        .authPassword("pass")
+                        .endpoint("https://jaeger-collector:14268/api/traces")
+                        .build()
+                )
+                .build()
+        )
+        .build();
+
+    assertTrue("Expected the reporter to be a remote reporter",
+        configuration.getTracerBuilder().getReporter() instanceof RemoteReporter
+    );
+
+    RemoteReporter reporter = (RemoteReporter) configuration.getTracerBuilder().getReporter();
+    assertTrue("Expected the sender to be a HttpSender",
+        reporter.getSender() instanceof HttpSender
+    );
+  }
+
+  @Test
+  public void testWithAuthToken() {
+    String pass = "the-token";
+
+    Configuration configuration = Configuration
+        .builder("the-service")
+        .withReporterConfiguration(
+            ReporterConfiguration.builder()
+                .withSenderConfiguration(
+                    SenderConfiguration.builder()
+                        .authToken(pass)
+                        .build()
+                )
+                .build()
+        )
+        .build();
+
+    assertEquals("Expected to have set the auth token",
+        pass,
+        configuration.getReporterConfig().getSenderConfiguration().getAuthToken()
+    );
+  }
+
+  @Test
+  public void testWithAgentHostAndPort() {
+    Configuration configuration = Configuration
+        .builder("the-service")
+        .withReporterConfiguration(
+            ReporterConfiguration.builder()
+                .withSenderConfiguration(
+                    SenderConfiguration.builder()
+                        .agentHost("host")
+                        .agentPort(42)
+                        .build()
+                )
+                .build()
+        )
+        .build();
+
+    assertEquals("Expected to have set the hostname for the agent",
+        "host",
+        configuration.getReporterConfig().getSenderConfiguration().getAgentHost()
+    );
+
+    assertEquals("Expected to have set the port for the agent",
+        42,
+        (long) configuration.getReporterConfig().getSenderConfiguration().getAgentPort()
+    );
+  }
+
+  @Test
+  public void testLastTakesPrecedence() {
+    Configuration.SenderConfiguration senderConfiguration = mock(Configuration.SenderConfiguration.class);
+
+    Configuration
+        .builder("the-service")
+        .withReporterConfiguration(
+            ReporterConfiguration.builder()
+                .withMaxQueueSize(1)
+                .withSenderConfiguration(SenderConfiguration.builder().build())
+                .withSenderConfiguration(senderConfiguration)
+                .build()
+        )
+        .build()
+        .getTracer()
+        .buildSpan("my-span")
+        .start()
+        .finish();
+
+    verify(senderConfiguration, times(1)).getSender();
   }
 
   static class TestTextMap implements TextMap {
