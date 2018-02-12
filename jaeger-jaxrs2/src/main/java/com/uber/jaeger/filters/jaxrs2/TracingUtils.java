@@ -14,7 +14,6 @@
 
 package com.uber.jaeger.filters.jaxrs2;
 
-import com.uber.jaeger.context.TraceContext;
 import io.opentracing.Tracer;
 import java.util.concurrent.ExecutorService;
 
@@ -29,11 +28,9 @@ public class TracingUtils {
     com.uber.jaeger.context.TracingUtils.setTracer(tracer);
   }
 
-  @Deprecated
-  public static TraceContext getTraceContext() {
-    return com.uber.jaeger.context.TracingUtils.getTraceContext();
-  }
-
+  /**
+   * @deprecated Use {@link com.uber.jaeger.context.TracedExecutorService(ExecutorService, Tracer)}
+   */
   @Deprecated
   public static ExecutorService tracedExecutor(ExecutorService wrappedExecutorService) {
     return com.uber.jaeger.context.TracingUtils.tracedExecutor(wrappedExecutorService);

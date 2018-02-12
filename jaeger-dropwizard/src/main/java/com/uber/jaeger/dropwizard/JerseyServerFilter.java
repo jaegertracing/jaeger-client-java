@@ -15,7 +15,6 @@
 package com.uber.jaeger.dropwizard;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.uber.jaeger.context.TraceContext;
 import com.uber.jaeger.filters.jaxrs2.ServerFilter;
 import io.opentracing.Tracer;
 import java.lang.reflect.Field;
@@ -50,8 +49,8 @@ public class JerseyServerFilter extends ServerFilter {
   private Map<CacheKey, String> methodToPathCache = new ConcurrentHashMap<CacheKey, String>();
   private Field normalizedTemplate;
 
-  public JerseyServerFilter(Tracer tracer, TraceContext traceContext) {
-    super(tracer, traceContext);
+  public JerseyServerFilter(Tracer tracer) {
+    super(tracer);
 
     try {
       normalizedTemplate = UriTemplate.class.getDeclaredField("normalizedTemplate");

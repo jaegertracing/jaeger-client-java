@@ -33,20 +33,6 @@ public class TracingUtilsTest {
   }
 
   @Test(expected = IllegalStateException.class)
-  public void getTraceContextWithoutRegisteredTracer() throws Exception {
-    TracingUtils.getTraceContext();
-  }
-
-  @Test
-  public void getTraceContext() {
-    Tracer tracer = new Configuration("boop").getTracer();
-    Assert.assertNotNull(tracer);
-
-    TracingUtils.setTracer(tracer);
-    Assert.assertNotNull(TracingUtils.getTraceContext());
-  }
-
-  @Test(expected = IllegalStateException.class)
   public void tracedExecutorWithoutRegisteredTracer() throws Exception {
     TracingUtils.tracedExecutor(null);
   }

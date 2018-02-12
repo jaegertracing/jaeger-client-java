@@ -17,7 +17,6 @@ package com.uber.jaeger.crossdock;
 import com.uber.jaeger.Configuration;
 import com.uber.jaeger.Configuration.ReporterConfiguration;
 import com.uber.jaeger.Configuration.SamplerConfiguration;
-import com.uber.jaeger.context.TraceContext;
 import com.uber.jaeger.crossdock.resources.behavior.EndToEndBehavior;
 import com.uber.jaeger.crossdock.resources.behavior.ExceptionMapper;
 import com.uber.jaeger.crossdock.resources.behavior.TraceBehavior;
@@ -26,7 +25,7 @@ import com.uber.jaeger.crossdock.resources.behavior.http.TraceBehaviorResource;
 import com.uber.jaeger.crossdock.resources.behavior.tchannel.TChannelServer;
 import com.uber.jaeger.crossdock.resources.health.HealthResource;
 import com.uber.jaeger.filters.jaxrs2.ClientFilter;
-import com.uber.jaeger.filters.jaxrs2.TracingUtils;
+import com.uber.jaeger.filters.jaxrs2.ServerFilter;
 import com.uber.jaeger.samplers.ConstSampler;
 import com.uber.jaeger.senders.HttpSender;
 import com.uber.jaeger.senders.Sender;
@@ -61,16 +60,12 @@ public class JerseyServer {
 
   private final Configuration config;
 
-  public JerseyServer(String hostPort, String serviceName, List<Object> resources) {
+  public JerseyServer(String hostPort, Configuration config, List<Object> resources) {
+    this.config = config;
+
     final String samplingType = ConstSampler.TYPE;
     final Number samplingParam = 0;
     final boolean logging = true;
-
-    config =
-        new Configuration(
-            serviceName,
-            new SamplerConfiguration(samplingType, samplingParam),
-            new ReporterConfiguration(logging, null, null, null, null));
 
     // create a resource config that scans for JAX-RS resources and providers
     final ResourceConfig rc = new ResourceConfig();
@@ -78,10 +73,7 @@ public class JerseyServer {
     resources.forEach(rc::register);
 
     // register a tracer with TracingUtils before proceeding
-    io.opentracing.Tracer tracer = config.getTracer();
-    TracingUtils.setTracer(tracer);
-
-    rc.register(TracingUtils.serverFilter(tracer))
+    rc.register(new ServerFilter(config.getTracer()))
         .register(LoggingFilter.class)
         .register(ExceptionMapper.class)
         .register(JacksonFeature.class)
@@ -108,11 +100,6 @@ public class JerseyServer {
     server.addListener(networkListener);
   }
 
-
-  private static TraceContext traceContext() {
-    return com.uber.jaeger.context.TracingUtils.getTraceContext();
-  }
-
   private static Client initializeClient(final Configuration config) {
     return ClientBuilder.newClient()
         .register(ExceptionMapper.class)
@@ -133,8 +120,18 @@ public class JerseyServer {
 
     String serviceName = serviceNameFromEnv();
 
-    JerseyServer server = new JerseyServer("0.0.0.0:8081", serviceName,
-        Arrays.asList(new TraceBehaviorResource(),
+    String samplingType = ConstSampler.TYPE;
+    Number samplingParam = 0;
+
+    Configuration config = new Configuration(
+        serviceName,
+        new SamplerConfiguration(samplingType, samplingParam),
+        new ReporterConfiguration(true, null, null, null, null));
+
+    Tracer tracer = config.getTracer();
+
+    JerseyServer server = new JerseyServer("0.0.0.0:8081", config,
+        Arrays.asList(new TraceBehaviorResource(tracer),
             new EndToEndBehaviorResource(new EndToEndBehavior(getEvn(SAMPLING_HOST_PORT, "jaeger-agent:5778"),
                 "crossdock-" + serviceName,
                 senderFromEnv(getEvn(COLLECTOR_HOST_PORT, "jaeger-collector:14268"),
@@ -144,7 +141,7 @@ public class JerseyServer {
     server.addNetworkListener(new NetworkListener("health", "0.0.0.0", 8080));
     Builder tchannelBuilder = new Builder(serviceName);
     tchannelBuilder.setServerPort(8082);
-    new TChannelServer(tchannelBuilder, new TraceBehavior(), server.getTracer()).start();
+    new TChannelServer(tchannelBuilder, new TraceBehavior(tracer), tracer).start();
   }
 
   private static String getEvn(String envName, String defaultValue) {

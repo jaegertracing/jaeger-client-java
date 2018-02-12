@@ -17,7 +17,6 @@ package com.uber.jaeger.crossdock.resources.behavior;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uber.jaeger.Span;
 import com.uber.jaeger.SpanContext;
-import com.uber.jaeger.context.TracingUtils;
 import com.uber.jaeger.crossdock.Constants;
 import com.uber.jaeger.crossdock.JerseyServer;
 import com.uber.jaeger.crossdock.api.Downstream;
@@ -30,6 +29,7 @@ import com.uber.tchannel.api.SubChannel;
 import com.uber.tchannel.api.TFuture;
 import com.uber.tchannel.messages.ThriftRequest;
 import com.uber.tchannel.messages.ThriftResponse;
+import io.opentracing.Tracer;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -41,6 +41,11 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class TraceBehavior {
   private static final ObjectMapper mapper = new ObjectMapper();
+  private final Tracer tracer;
+
+  public TraceBehavior(Tracer tracer) {
+    this.tracer = tracer;
+  }
 
   public TraceResponse prepareResponse(Downstream downstream) throws Exception {
     TraceResponse response = new TraceResponse(observeSpan());
@@ -118,12 +123,7 @@ public class TraceBehavior {
   }
 
   private ObservedSpan observeSpan() {
-    com.uber.jaeger.context.TraceContext traceContext = TracingUtils.getTraceContext();
-    if (traceContext.isEmpty()) {
-      log.error("No span found");
-      return new ObservedSpan("no span found", false, "no span found");
-    }
-    Span span = (Span) traceContext.getCurrentSpan();
+    Span span = (Span) tracer.activeSpan();
     if (span == null) {
       log.error("No span found");
       return new ObservedSpan("no span found", false, "no span found");

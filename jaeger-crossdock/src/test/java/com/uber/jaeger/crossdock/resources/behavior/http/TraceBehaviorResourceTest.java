@@ -18,8 +18,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
+import com.uber.jaeger.Configuration;
+import com.uber.jaeger.Configuration.ReporterConfiguration;
+import com.uber.jaeger.Configuration.SamplerConfiguration;
 import com.uber.jaeger.Span;
-import com.uber.jaeger.context.TracingUtils;
 import com.uber.jaeger.crossdock.Constants;
 import com.uber.jaeger.crossdock.JerseyServer;
 import com.uber.jaeger.crossdock.api.Downstream;
@@ -29,7 +31,9 @@ import com.uber.jaeger.crossdock.api.StartTraceRequest;
 import com.uber.jaeger.crossdock.api.TraceResponse;
 import com.uber.jaeger.crossdock.resources.behavior.TraceBehavior;
 import com.uber.jaeger.crossdock.resources.behavior.tchannel.TChannelServer;
+import com.uber.jaeger.samplers.ConstSampler;
 import com.uber.tchannel.api.TChannel.Builder;
+import io.opentracing.Tracer;
 import io.opentracing.noop.NoopTracerFactory;
 import io.opentracing.tag.Tags;
 import io.opentracing.util.GlobalTracer;
@@ -82,10 +86,21 @@ public class TraceBehaviorResourceTest {
 
   @Before
   public void setUp() throws Exception {
-    server = new JerseyServer("127.0.0.1:0", SERVICE_NAME, Collections.singletonList(new TraceBehaviorResource()));
+    Configuration config = getJaegerConfiguration();
+    Tracer tracer = config.getTracer();
+    server = new JerseyServer("127.0.0.1:0", config, Collections.singletonList(new TraceBehaviorResource(tracer)));
     port = String.valueOf(server.getNetworkListeners().get(0).getPort());
     hostPort = String.format("127.0.0.1:%s", port);
-    behavior = new TraceBehavior();
+    behavior = new TraceBehavior(tracer);
+  }
+
+  private Configuration getJaegerConfiguration() {
+    String samplingType = ConstSampler.TYPE;
+    Number samplingParam = 0;
+    return new Configuration(
+        SERVICE_NAME,
+        new SamplerConfiguration(samplingType, samplingParam),
+        new ReporterConfiguration(true, null, null, null, null));
   }
 
   @After
@@ -99,8 +114,10 @@ public class TraceBehaviorResourceTest {
 
   @Test
   public void testStartTraceHttp() throws Exception {
-    Span span = (Span) server.getTracer().buildSpan("root").start();
-    TracingUtils.getTraceContext().push(span);
+    Tracer tracer = server.getTracer();
+    Span span = (Span) tracer.buildSpan("root").start();
+
+    tracer.scopeManager().activate(span, false);
 
     String expectedTraceId = String.format("%x", span.context().getTraceId());
     String expectedBaggage = "baggage-example";
@@ -124,8 +141,10 @@ public class TraceBehaviorResourceTest {
 
   @Test
   public void testJoinTraceHttp() throws Exception {
-    Span span = (Span) server.getTracer().buildSpan("root").start();
-    TracingUtils.getTraceContext().push(span);
+    Tracer tracer = server.getTracer();
+    Span span = (Span) tracer.buildSpan("root").start();
+
+    tracer.scopeManager().activate(span, false);
 
     String expectedBaggage = "baggage-example";
     span.setBaggageItem(Constants.BAGGAGE_KEY, expectedBaggage);
@@ -161,8 +180,10 @@ public class TraceBehaviorResourceTest {
     TChannelServer tchannel = new TChannelServer(tchannelBuilder, behavior, server.getTracer());
     tchannel.start();
 
-    Span span = (Span) server.getTracer().buildSpan("root").startManual();
-    TracingUtils.getTraceContext().push(span);
+    Tracer tracer = server.getTracer();
+    Span span = (Span) tracer.buildSpan("root").start();
+
+    tracer.scopeManager().activate(span, false);
 
     String expectedBaggage = "baggage-example";
     span.setBaggageItem(Constants.BAGGAGE_KEY, expectedBaggage);
