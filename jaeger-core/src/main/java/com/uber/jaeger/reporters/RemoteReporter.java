@@ -93,13 +93,13 @@ public class RemoteReporter implements Reporter {
       boolean added = commandQueue
           .offer(new CloseCommand(), closeEnqueueTimeout, TimeUnit.MILLISECONDS);
       if (added) {
-        queueProcessorThread.join();
+        queueProcessorThread.join(10000);
       } else {
         log.warn("Unable to cleanly close RemoteReporter, command queue is full - probably the"
             + " sender is stuck");
       }
     } catch (InterruptedException e) {
-      return;
+      log.error("Interrupted", e);
     } finally {
       try {
         int n = sender.close();
