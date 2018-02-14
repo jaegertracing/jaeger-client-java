@@ -25,18 +25,22 @@ import static org.junit.Assert.assertTrue;
 
 import com.uber.jaeger.Span;
 import com.uber.jaeger.Tracer;
+import com.uber.jaeger.exceptions.SenderException;
 import com.uber.jaeger.metrics.InMemoryStatsReporter;
 import com.uber.jaeger.metrics.Metrics;
 import com.uber.jaeger.metrics.StatsFactoryImpl;
 import com.uber.jaeger.samplers.ConstSampler;
+import com.uber.jaeger.senders.Sender;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class RemoteReporterTest {
@@ -173,6 +177,7 @@ public class RemoteReporterTest {
   }
 
   @Test
+  @Ignore("See https://github.com/jaegertracing/jaeger-client-java/issues/340")
   public void testCloseWhenQueueFull() {
     int closeTimeoutMillis = 5;
     reporter = new RemoteReporter(sender, Integer.MAX_VALUE, maxQueueSize, closeTimeoutMillis, metrics);
@@ -228,6 +233,29 @@ public class RemoteReporterTest {
     remoteReporter.flush();
 
     assertTrue(metricsReporter.gauges.get("jaeger.reporter-queue") > 0);
+  }
+
+  @Test
+  public void testFlushIsCalledOnSender() throws InterruptedException {
+    CountDownLatch latch = new CountDownLatch(1);
+
+    Sender sender = new InMemorySender() {
+      @Override
+      public int flush() throws SenderException {
+        latch.countDown();
+        return super.flush();
+      }
+    };
+
+    reporter = new RemoteReporter(sender, flushInterval, maxQueueSize, metrics);
+    tracer =
+          new Tracer.Builder("test-remote-reporter", reporter, new ConstSampler(true))
+                .withStatsReporter(metricsReporter)
+                .build();
+
+    tracer.buildSpan("mySpan").start().finish();
+    latch.await(1, TimeUnit.SECONDS);
+    assertEquals("Should have called the custom sender flush", 0, latch.getCount());
   }
 
   private Span newSpan() {
