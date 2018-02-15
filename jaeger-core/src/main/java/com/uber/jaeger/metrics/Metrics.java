@@ -18,7 +18,9 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.SortedMap;
 import java.util.SortedSet;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 public class Metrics {
@@ -78,12 +80,12 @@ public class Metrics {
     StringBuilder sb = new StringBuilder();
     sb.append(name);
 
-    SortedSet<String> sortedKeys = new TreeSet<String>(tags.keySet());
-    for (String key : sortedKeys) {
+    SortedMap<String, String> sortedTags = new TreeMap<String, String>(tags);
+    for (Map.Entry<String, String> entry: sortedTags.entrySet()) {
       sb.append(".");
-      sb.append(key);
+      sb.append(entry.getKey());
       sb.append("=");
-      sb.append(tags.get(key));
+      sb.append(entry.getValue());
     }
     return sb.toString();
   }
