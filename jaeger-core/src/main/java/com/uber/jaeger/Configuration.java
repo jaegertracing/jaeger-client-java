@@ -40,6 +40,7 @@ import io.opentracing.propagation.TextMap;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -256,11 +257,153 @@ public class Configuration {
    */
   @Deprecated
   public void setStatsFactor(StatsFactory statsFactory) {
-    this.statsFactory = statsFactory;
+    setStatsFactory(statsFactory);
   }
 
   public void setStatsFactory(StatsFactory statsFactory) {
     this.statsFactory = statsFactory;
+  }
+
+  public String getServiceName() {
+    return serviceName;
+  }
+
+  public SamplerConfiguration getSamplerConfig() {
+    return samplerConfig;
+  }
+
+  public ReporterConfiguration getReporterConfig() {
+    return reporterConfig;
+  }
+
+  public CodecConfiguration getCodecConfig() {
+    return codecConfig;
+  }
+
+  public StatsFactory getStatsFactory() {
+    return statsFactory;
+  }
+
+  /**
+   * Starts a new builder with the given service name.
+   *
+   * @param serviceName the service name
+   * @return a properly started builder
+   */
+  public static Builder builder(String serviceName) {
+    return new Builder(serviceName);
+  }
+
+  /**
+   * Gathers the configuration options from environment variables, based on {@link Configuration#fromEnv()}, meaning
+   * that it requires the service name to be set as an environment variable
+   *
+   * @see Configuration#fromEnv()
+   * @return a new builder's instance
+   */
+  public static Builder builderFromEnv() {
+    Configuration configuration = Configuration.fromEnv();
+
+    return new Builder(configuration.serviceName)
+        .withSamplerConfiguration(configuration.samplerConfig)
+        .withReporterConfiguration(configuration.reporterConfig)
+        .withCodecConfiguration(configuration.codecConfig)
+        .withStatsFactory(configuration.statsFactory);
+  }
+
+  /**
+   * Allows the construction of a {@link Configuration} object using the builder pattern
+   */
+  public static class Builder {
+    private String serviceName;
+    private SamplerConfiguration samplerConfiguration;
+    private ReporterConfiguration reporterConfiguration;
+    private CodecConfiguration codecConfiguration;
+    private StatsFactory statsFactory;
+
+    /**
+     * Creates a new builder with the given name. Null values are allowed and will usually be the case when the service
+     * name comes from an env var.
+     *
+     * @param serviceName the service name
+     */
+    public Builder(String serviceName) {
+      this.serviceName = serviceName;
+    }
+
+    /**
+     * Sets the service name to use, overriding the one specified on the constructor
+     * @param serviceName the service name
+     * @return the same builder's instance
+     */
+    public Builder withServiceName(String serviceName) {
+      this.serviceName = serviceName;
+      return this;
+    }
+
+    /**
+     * Sets the {@link SamplerConfiguration} to use. If the sampler type or parameter have been set already, they
+     * will be overridden by the given SamplerConfiguration.
+     *
+     * @see SamplerConfiguration
+     * @param samplerConfiguration the SamplerConfiguration to use
+     * @return the same builder's instance
+     */
+    public Builder withSamplerConfiguration(SamplerConfiguration samplerConfiguration) {
+      this.samplerConfiguration = samplerConfiguration;
+      return this;
+    }
+
+    /**
+     * Sets the {@link ReporterConfiguration} to use
+     * @see ReporterConfiguration
+     * @param reporterConfiguration the ReporterConfiguration to use
+     * @return the same builder's instance
+     */
+    public Builder withReporterConfiguration(ReporterConfiguration reporterConfiguration) {
+      this.reporterConfiguration = reporterConfiguration;
+      return this;
+    }
+
+    /**
+     * Sets the {@link CodecConfiguration} to use
+     * @see CodecConfiguration
+     * @param codecConfiguration the CodecConfiguration to use
+     * @return the same builder's instance
+     */
+    public Builder withCodecConfiguration(CodecConfiguration codecConfiguration) {
+      this.codecConfiguration = codecConfiguration;
+      return this;
+    }
+
+    /**
+     * Sets the {@link StatsFactory} to use.
+     *
+     * @see StatsFactory
+     * @param statsFactory the StatsFactory to use
+     * @return the same builder's instance
+     */
+    public Builder withStatsFactory(StatsFactory statsFactory) {
+      this.statsFactory = statsFactory;
+      return this;
+    }
+
+    /**
+     * Constructs a new {@link Configuration object} based on the information provided to the builder
+     * @return a ready to use Configuration instance
+     */
+    public Configuration build() {
+      Configuration configuration = new Configuration(serviceName,
+            samplerConfiguration,
+            reporterConfiguration,
+            codecConfiguration
+      );
+      if (null != statsFactory) {
+        configuration.setStatsFactory(statsFactory);
+      }
+
+      return configuration;
+    }
   }
 
   /**
@@ -287,18 +430,27 @@ public class Configuration {
      */
     private final String managerHostPort;
 
+    /**
+     * A sampler to be used, instead of determining the sampler via the {@link #type}
+     */
+    private final Sampler sampler;
+
     public SamplerConfiguration(String type, Number param) {
       this(type, param, null);
     }
 
-    public SamplerConfiguration() {
-      this(null, null, null);
-    }
-
     public SamplerConfiguration(String type, Number param, String managerHostPort) {
+      this.sampler = null;
       this.type = type;
       this.param = param;
       this.managerHostPort = managerHostPort;
+    }
+
+    public SamplerConfiguration(Sampler sampler) {
+      this.sampler = sampler;
+      this.type = null;
+      this.param = null;
+      this.managerHostPort = null;
     }
 
     public static SamplerConfiguration fromEnv() {
@@ -310,6 +462,10 @@ public class Configuration {
 
 
     private Sampler createSampler(String serviceName, Metrics metrics) {
+      if (this.sampler != null) {
+        return this.sampler;
+      }
+
       String samplerType = stringOrDefault(this.getType(), RemoteControlledSampler.TYPE);
       Number samplerParam = numberOrDefault(this.getParam(), DEFAULT_SAMPLING_PROBABILITY);
       String hostPort = stringOrDefault(this.getManagerHostPort(), defaultManagerHostPort);
@@ -348,6 +504,64 @@ public class Configuration {
     public String getManagerHostPort() {
       return managerHostPort;
     }
+
+    public static Builder builder() {
+      return new Builder();
+    }
+
+    public static class Builder {
+      private String type;
+      private Number param;
+      private String managerHostPort;
+      private Sampler sampler;
+
+      public Builder builder() {
+        return new Builder();
+      }
+
+      /**
+       * Set the sampler type
+       *
+       * @see ConstSampler#TYPE
+       * @see ProbabilisticSampler#TYPE
+       * @see RateLimitingSampler#TYPE
+       * @see RemoteControlledSampler#TYPE
+       * @param type the sampler type
+       * @return this builder
+       */
+      public Builder withType(String type) {
+        this.type = type;
+        this.sampler = null;
+        return this;
+      }
+
+      public Builder withParam(Number param) {
+        this.param = param;
+        this.sampler = null;
+        return this;
+      }
+
+      public Builder withManagerHostPort(String managerHostPort) {
+        this.managerHostPort = managerHostPort;
+        this.sampler = null;
+        return this;
+      }
+
+      public Builder withSampler(Sampler sampler) {
+        this.managerHostPort = null;
+        this.type = null;
+        this.param = null;
+        this.sampler = sampler;
+        return this;
+      }
+
+      public SamplerConfiguration build() {
+        if (null != this.sampler) {
+          return new SamplerConfiguration(this.sampler);
+        }
+        return new SamplerConfiguration(type, param, managerHostPort);
+      }
+    }
   }
 
   /**
@@ -360,30 +574,81 @@ public class Configuration {
       this.codecs = codecs;
     }
 
+    /**
+     * Creates a CodecConfiguration with codecs obtained from the formats specified via the env var
+     * {@link #JAEGER_PROPAGATION}.
+     *
+     * @see #fromPropagationString(String)
+     * @return a properly configured {@link CodecConfiguration}
+     */
     public static CodecConfiguration fromEnv() {
-      Map<Format<?>, List<Codec<TextMap>>> codecs = new HashMap<Format<?>, List<Codec<TextMap>>>();
       String propagation = getProperty(JAEGER_PROPAGATION);
-      if (propagation != null) {
-        for (String format : Arrays.asList(propagation.split(","))) {
+      return fromPropagationString(propagation);
+    }
+
+    /**
+     * A comma-separated list of propagation formats, to be parsed based on the enum {@link Propagation}. Invalid values
+     * are ignored and null values are acceptable, therefore, it is possible that a CodecConfiguration is returned
+     * without codecs.
+     *
+     * @see #withPropagations(List)
+     * @return a properly configured {@link CodecConfiguration}
+     */
+    public static CodecConfiguration fromPropagationString(String propagationString) {
+      List<Propagation> propagations = null;
+      if (propagationString != null) {
+        propagations = new ArrayList<Propagation>(2);
+        for (String format : propagationString.split(",")) {
           try {
-            switch (Configuration.Propagation.valueOf(format.toUpperCase())) {
-              case JAEGER:
-                addCodec(codecs, Format.Builtin.HTTP_HEADERS, new TextMapCodec(true));
-                addCodec(codecs, Format.Builtin.TEXT_MAP, new TextMapCodec(false));
-                break;
-              case B3:
-                addCodec(codecs, Format.Builtin.HTTP_HEADERS, new B3TextMapCodec());
-                addCodec(codecs, Format.Builtin.TEXT_MAP, new B3TextMapCodec());
-                break;
-              default:
-                log.error("Unhandled propagation format '" + format + "'");
-                break;
-            }
+            propagations.add(Propagation.valueOf(format.toUpperCase()));
           } catch (IllegalArgumentException iae) {
             log.error("Unknown propagation format '" + format + "'");
           }
         }
       }
+      return withPropagations(propagations);
+    }
+
+    /**
+     * Wrapper around the {@link List} variant of the same-named method.
+     *
+     * @see #withPropagations(List)
+     * @param propagationList the list of {@link Propagation}
+     * @return a properly configured {@link CodecConfiguration}
+     */
+    public static CodecConfiguration withPropagations(Propagation... propagationList) {
+      return withPropagations(Arrays.asList(propagationList));
+    }
+
+    /**
+     * Creates a new {@link CodecConfiguration} based on the given list of {@link Propagation}. The input list might
+     * be null or empty, on which case the {@link CodecConfiguration} will contain an empty map of codecs.
+     *
+     * @param propagationList the list of {@link Propagation}
+     * @return a properly configured {@link CodecConfiguration}
+     */
+    public static CodecConfiguration withPropagations(List<Propagation> propagationList) {
+      Map<Format<?>, List<Codec<TextMap>>> codecs = new HashMap<Format<?>, List<Codec<TextMap>>>();
+      if (null == propagationList) {
+        return new CodecConfiguration(codecs);
+      }
+
+      for (Propagation propagation : propagationList) {
+        switch (propagation) {
+          case JAEGER:
+            addCodec(codecs, Format.Builtin.HTTP_HEADERS, new TextMapCodec(true));
+            addCodec(codecs, Format.Builtin.TEXT_MAP, new TextMapCodec(false));
+            break;
+          case B3:
+            addCodec(codecs, Format.Builtin.HTTP_HEADERS, new B3TextMapCodec());
+            addCodec(codecs, Format.Builtin.TEXT_MAP, new B3TextMapCodec());
+            break;
+          default:
+            log.error("Unhandled propagation format '" + propagation + "'");
+            break;
+        }
+      }
+
       return new CodecConfiguration(codecs);
     }
 
@@ -424,14 +689,30 @@ public class Configuration {
 
     private SenderConfiguration senderConfiguration;
 
+    /**
+     * Creates a new, empty ReporterConfiguration.
+     */
     public ReporterConfiguration() {
-      this(null, null, null, null, null);
+      this(null);
     }
 
+    @Deprecated
     public ReporterConfiguration(Sender sender) {
       this.senderConfiguration = new Configuration.SenderConfiguration.Builder().sender(sender).build();
     }
 
+    /**
+     * Creates a new ReporterConfiguration based on the given information. This constructor is deprecated, as it
+     * contains sender-specific information.
+     *
+     * @see ReporterConfiguration#ReporterConfiguration(Boolean, Integer, Integer, SenderConfiguration)
+     * @param logSpans        whether to additionally log spans via a logger
+     * @param agentHost       the hostname to reach the agent
+     * @param agentPort       the port to reach the agent
+     * @param flushIntervalMs the interval, in milliseconds, to flush the reporter
+     * @param maxQueueSize    the maximum queue size to hold on the reporter
+     */
+    @Deprecated
     public ReporterConfiguration(
         Boolean logSpans,
         String agentHost,
@@ -447,6 +728,14 @@ public class Configuration {
               .build();
     }
 
+    /**
+     * Creates a new ReporterConfiguration based on the given information.
+     *
+     * @param logSpans            whether to additionally log spans via a logger
+     * @param flushIntervalMs     the interval, in milliseconds, to flush the reporter
+     * @param maxQueueSize        the maximum queue size to hold on the reporter
+     * @param senderConfiguration the sender configuration
+     */
     public ReporterConfiguration(
         Boolean logSpans,
         Integer flushIntervalMs,
@@ -485,6 +774,11 @@ public class Configuration {
       return logSpans;
     }
 
+    /**
+     * @see SenderConfiguration#agentHost
+     * @return the agent host
+     */
+    @Deprecated
     public String getAgentHost() {
       if (null == this.senderConfiguration) {
         return null;
@@ -493,6 +787,11 @@ public class Configuration {
       return this.senderConfiguration.agentHost;
     }
 
+    /**
+     * @see SenderConfiguration#agentPort
+     * @return the agent port
+     */
+    @Deprecated
     public Integer getAgentPort() {
       if (null == this.senderConfiguration) {
         return null;
@@ -507,6 +806,50 @@ public class Configuration {
 
     public Integer getMaxQueueSize() {
       return maxQueueSize;
+    }
+
+    public SenderConfiguration getSenderConfiguration() {
+      return senderConfiguration;
+    }
+
+    public static Builder builder() {
+      return new Builder();
+    }
+
+    public static class Builder {
+      private Boolean logSpans;
+      private Integer flushInterval;
+      private Integer maxQueueSize;
+      private SenderConfiguration senderConfiguration;
+
+      public Builder withSpanLogging(Boolean logSpans) {
+        this.logSpans = logSpans;
+        return this;
+      }
+
+      public Builder withFlushInterval(Integer flushInterval) {
+        this.flushInterval = flushInterval;
+        return this;
+      }
+
+      public Builder withMaxQueueSize(Integer maxQueueSize) {
+        this.maxQueueSize = maxQueueSize;
+        return this;
+      }
+
+      public Builder withSenderConfiguration(SenderConfiguration senderConfiguration) {
+        this.senderConfiguration = senderConfiguration;
+        return this;
+      }
+
+      public ReporterConfiguration build() {
+        if (null == senderConfiguration) {
+          senderConfiguration = new SenderConfiguration();
+        }
+
+        return new ReporterConfiguration(logSpans, flushInterval, maxQueueSize, senderConfiguration);
+      }
+
     }
   }
 
@@ -653,6 +996,10 @@ public class Configuration {
           );
         }
       };
+    }
+
+    public static Builder builder() {
+      return new Builder();
     }
 
     public static class Builder {

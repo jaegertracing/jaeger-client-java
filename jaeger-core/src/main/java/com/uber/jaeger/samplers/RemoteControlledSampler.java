@@ -168,4 +168,12 @@ public class RemoteControlledSampler implements Sampler {
       pollTimer.cancel();
     }
   }
+
+  public SamplingManager getManager() {
+    return manager;
+  }
+
+  public Sampler getSampler() {
+    return sampler;
+  }
 }

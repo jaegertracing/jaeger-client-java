@@ -532,6 +532,14 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
       return new Tracer(this.serviceName, reporter, sampler, registry, clock, metrics, tags,
           zipkinSharedRpcSpan, scopeManager, baggageRestrictionManager);
     }
+
+    public Sampler getSampler() {
+      return sampler;
+    }
+
+    public Reporter getReporter() {
+      return reporter;
+    }
   }
 
   private static class PropagationRegistry {

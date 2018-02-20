@@ -60,4 +60,8 @@ public class HttpSamplingManager implements SamplingManager {
 
     return parseJson(jsonString);
   }
+
+  public String getHostPort() {
+    return hostPort;
+  }
 }
