@@ -21,7 +21,9 @@ import java.io.IOException;
 import java.util.List;
 
 import lombok.ToString;
+import okhttp3.Credentials;
 import okhttp3.HttpUrl;
+import okhttp3.Interceptor;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -33,7 +35,6 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 
 @ToString(exclude = {"httpClient", "serializer", "requestBuilder"})
 public class HttpSender extends ThriftSender {
-
   private static final String HTTP_COLLECTOR_JAEGER_THRIFT_FORMAT_PARAM = "format=jaeger.thrift";
   private static final int ONE_MB_IN_BYTES = 1048576;
   private static final MediaType MEDIA_TYPE_THRIFT = MediaType.parse("application/x-thrift");
@@ -49,36 +50,53 @@ public class HttpSender extends ThriftSender {
    * Use {@link HttpSender#HttpSender(java.lang.String, int, okhttp3.OkHttpClient)} to adjust parameters.
    */
   public HttpSender(String endpoint) {
-    this(endpoint, ONE_MB_IN_BYTES);
+    this(new Builder(endpoint));
   }
 
   /**
    * @param endpoint Jaeger REST endpoint consuming jaeger.thrift, e.g
    * http://localhost:14268/api/traces
-   * @param maxPayloadBytes max bytes to serialize as payload
+   * @param maxPacketSize max bytes to serialize as payload, if 0 it will use
+   *   {@value com.uber.jaeger.reporters.protocols.ThriftUdpTransport#MAX_PACKET_SIZE}
+   *
+   * @deprecated use {@link HttpSender.Builder} with fluent API
    */
-  public HttpSender(String endpoint, int maxPayloadBytes) {
-    this(endpoint, maxPayloadBytes, new OkHttpClient());
+  @Deprecated
+  public HttpSender(String endpoint, int maxPacketSize) {
+    this(new Builder(endpoint).withMaxPacketSize(maxPacketSize));
   }
 
+  /**
+   * @deprecated use {@link HttpSender.Builder} with fluent API
+   */
+  @Deprecated
   public HttpSender(String endpoint, OkHttpClient client) {
-    this(endpoint, ONE_MB_IN_BYTES, client);
+    this(new Builder(endpoint).withClient(client));
   }
 
   /**
    * @param endpoint Jaeger REST endpoint consuming jaeger.thrift, e.g
    * http://localhost:14268/api/traces
-   * @param maxPayloadBytes max bytes to serialize as payload
+   * @param maxPacketSize max bytes to serialize as payload, if 0 it will use
+   *   {@value com.uber.jaeger.reporters.protocols.ThriftUdpTransport#MAX_PACKET_SIZE}
    * @param client a client used to make http requests
+   * @deprecated use {@link HttpSender.Builder} with fluent API
    */
-  public HttpSender(String endpoint, int maxPayloadBytes, OkHttpClient client) {
-    super(new TBinaryProtocol.Factory(), maxPayloadBytes);
+  @Deprecated
+  public HttpSender(String endpoint, int maxPacketSize, OkHttpClient client) {
+    this(new Builder(endpoint)
+        .withClient(client)
+        .withMaxPacketSize(maxPacketSize));
+  }
+
+  private HttpSender(Builder builder) {
+    super(new TBinaryProtocol.Factory(), builder.maxPacketSize);
     HttpUrl collectorUrl = HttpUrl
-        .parse(String.format("%s?%s", endpoint, HTTP_COLLECTOR_JAEGER_THRIFT_FORMAT_PARAM));
+        .parse(String.format("%s?%s", builder.endpoint, HTTP_COLLECTOR_JAEGER_THRIFT_FORMAT_PARAM));
     if (collectorUrl == null) {
       throw new IllegalArgumentException("Could not parse url.");
     }
-    this.httpClient = client;
+    this.httpClient = builder.clientBuilder.build();
     this.requestBuilder = new Request.Builder().url(collectorUrl);
     this.serializer = new TSerializer(protocolFactory);
   }
@@ -108,6 +126,58 @@ public class HttpSender extends ThriftSender {
       String exceptionMessage = String.format("Could not send %d spans, response %d: %s",
           spans.size(), response.code(), responseBody);
       throw new TException(exceptionMessage);
+    }
+  }
+
+  public static class Builder {
+    private final String endpoint;
+    private int maxPacketSize = ONE_MB_IN_BYTES;
+    private Interceptor authInterceptor;
+    private OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder();
+
+    public Builder(String endpoint) {
+      this.endpoint = endpoint;
+    }
+
+    private Builder withClient(OkHttpClient client) {
+      this.clientBuilder = client.newBuilder();
+      return this;
+    }
+
+    private Builder withMaxPacketSize(int maxPacketSizeBytes) {
+      this.maxPacketSize = maxPacketSizeBytes;
+      return this;
+    }
+
+    public Builder withAuth(String username, String password) {
+      this.authInterceptor = getAuthInterceptor(Credentials.basic(username, password));
+      return this;
+    }
+
+    public Builder withAuth(String authToken) {
+      this.authInterceptor = getAuthInterceptor("Bearer " + authToken);
+      return this;
+    }
+
+    public HttpSender build() {
+      if (authInterceptor != null) {
+        clientBuilder.addInterceptor(authInterceptor);
+      }
+      return new HttpSender(this);
+    }
+
+    private Interceptor getAuthInterceptor(final String headerValue) {
+      return new Interceptor() {
+        @Override
+        public Response intercept(Chain chain) throws IOException {
+          return chain.proceed(
+              chain.request()
+                  .newBuilder()
+                  .addHeader("Authorization", headerValue)
+                  .build()
+          );
+        }
+      };
     }
   }
 }

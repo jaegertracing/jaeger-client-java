@@ -17,7 +17,10 @@ package com.uber.jaeger.reporters;
 import com.uber.jaeger.Span;
 import com.uber.jaeger.exceptions.SenderException;
 import com.uber.jaeger.metrics.Metrics;
+import com.uber.jaeger.metrics.NullStatsReporter;
+import com.uber.jaeger.metrics.StatsFactoryImpl;
 import com.uber.jaeger.senders.Sender;
+import com.uber.jaeger.senders.UdpSender;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -32,20 +35,25 @@ import lombok.extern.slf4j.Slf4j;
 @ToString(exclude = {"commandQueue", "flushTimer", "queueProcessorThread", "metrics"})
 @Slf4j
 public class RemoteReporter implements Reporter {
+  public static final int DEFAULT_FLUSH_INTERVAL_MS = 1000;
+  public static final int DEFAULT_MAX_QUEUE_SIZE = 100;
+
   private static final int DEFAULT_CLOSE_ENQUEUE_TIMEOUT_MILLIS = 1000;
   private final BlockingQueue<Command> commandQueue;
   private final Timer flushTimer;
   private final Thread queueProcessorThread;
   private final QueueProcessor queueProcessor;
   private final Sender sender;
-  private final int maxQueueSize;
   private final int closeEnqueueTimeout;
   private final Metrics metrics;
 
-  /*
+  /**
    * RemoteReporter takes a Sender object, and sends spans for a specific protocol, and transport.
    * At this point in time the protocol (thrift) is tightly-coupled to  Reporter, but in the future it may not be.
-   * */
+   *
+   * @deprecated use {@link RemoteReporter.Builder} with fluent API
+   **/
+  @Deprecated
   public RemoteReporter(Sender sender, int flushInterval, int maxQueueSize, Metrics metrics) {
     this(sender, flushInterval, maxQueueSize, DEFAULT_CLOSE_ENQUEUE_TIMEOUT_MILLIS, metrics);
   }
@@ -53,7 +61,6 @@ public class RemoteReporter implements Reporter {
   RemoteReporter(Sender sender, int flushInterval, int maxQueueSize, int closeEnqueueTimeout,
       Metrics metrics) {
     this.sender = sender;
-    this.maxQueueSize = maxQueueSize;
     this.metrics = metrics;
     this.closeEnqueueTimeout = closeEnqueueTimeout;
     commandQueue = new ArrayBlockingQueue<Command>(maxQueueSize);
@@ -185,6 +192,43 @@ public class RemoteReporter implements Reporter {
 
     public void close() {
       open = false;
+    }
+  }
+
+  public static class Builder {
+    private Sender sender;
+    private int flushInterval = DEFAULT_FLUSH_INTERVAL_MS;
+    private int maxQueueSize = DEFAULT_MAX_QUEUE_SIZE;
+    private Metrics metrics;
+
+    public Builder withFlushInterval(int flushInterval) {
+      this.flushInterval = flushInterval;
+      return this;
+    }
+
+    public Builder withMaxQueueSize(int maxQueueSize) {
+      this.maxQueueSize = maxQueueSize;
+      return this;
+    }
+
+    public Builder withMetrics(Metrics metrics) {
+      this.metrics = metrics;
+      return this;
+    }
+
+    public Builder withSender(Sender sender) {
+      this.sender = sender;
+      return this;
+    }
+
+    public RemoteReporter build() {
+      if (sender == null) {
+        sender = new UdpSender();
+      }
+      if (metrics == null) {
+        metrics = new Metrics(new StatsFactoryImpl(new NullStatsReporter()));
+      }
+      return new RemoteReporter(sender, flushInterval, maxQueueSize, DEFAULT_CLOSE_ENQUEUE_TIMEOUT_MILLIS, metrics);
     }
   }
 }

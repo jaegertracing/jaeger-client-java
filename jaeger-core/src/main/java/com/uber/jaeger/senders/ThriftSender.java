@@ -40,6 +40,10 @@ public abstract class ThriftSender implements Sender {
   protected final TProtocolFactory protocolFactory;
   private final int maxSpanBytes;
 
+  /**
+   * @param protocolFactory protocol factory
+   * @param maxPacketSize if 0 it will use default value {@value ThriftUdpTransport#MAX_PACKET_SIZE}
+   */
   public ThriftSender(TProtocolFactory protocolFactory, int maxPacketSize) {
     this.protocolFactory = protocolFactory;
 

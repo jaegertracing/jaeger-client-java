@@ -14,10 +14,23 @@ This module provides core tracing functionality for custom instrumentation.
 
 ### Production
 
-For production usage, it is recommended to use `com.uber.jaeger.Configuration` with default parameters:
+Tracer can be created via `com.uber.jaeger.Tracer.Builder` or `com.uber.jaeger.Configuration`.
+For production it is recommended to use both classes with default values.
+
+`Tracer.Builder` example:
 
 ```java
-Configuration config = new Configuration("myServiceName", null, null);
+Tracer tracer = new Tracer.Builder("myServiceName")
+  .build()
+```
+
+`Configuration` holds only primitive values and it is designed to be used with configuration
+files or when configuration is provided in environmental variables.
+
+```java
+Configuration config = new Configuration("myServiceName")
+  .withReporter(...); // optional if you want to get metrics about tracer behavior
+
 Tracer tracer = config.getTracer();
 ```
 

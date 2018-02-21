@@ -25,7 +25,9 @@ import com.uber.jaeger.metrics.StatsReporter;
 import com.uber.jaeger.propagation.Extractor;
 import com.uber.jaeger.propagation.Injector;
 import com.uber.jaeger.propagation.TextMapCodec;
+import com.uber.jaeger.reporters.RemoteReporter;
 import com.uber.jaeger.reporters.Reporter;
+import com.uber.jaeger.samplers.RemoteControlledSampler;
 import com.uber.jaeger.samplers.Sampler;
 import com.uber.jaeger.samplers.SamplingStatus;
 import com.uber.jaeger.utils.Clock;
@@ -440,11 +442,11 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
    * Builds Jaeger Tracer with options.
    */
   public static final class Builder {
-    private final Sampler sampler;
-    private final Reporter reporter;
+    private Sampler sampler;
+    private Reporter reporter;
     private final PropagationRegistry registry = new PropagationRegistry();
     private Metrics metrics = new Metrics(new StatsFactoryImpl(new NullStatsReporter()));
-    private String serviceName;
+    private final String serviceName;
     private Clock clock = new SystemClock();
     private Map<String, Object> tags = new HashMap<String, Object>();
     private boolean zipkinSharedRpcSpan;
@@ -452,14 +454,8 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
     private BaggageRestrictionManager baggageRestrictionManager = new DefaultBaggageRestrictionManager();
     private boolean expandExceptionLogs;
 
-    public Builder(String serviceName, Reporter reporter, Sampler sampler) {
-      if (serviceName == null || serviceName.trim().length() == 0) {
-        throw new IllegalArgumentException("serviceName must not be null or empty");
-      }
-      this.serviceName = serviceName;
-      this.reporter = reporter;
-      this.sampler = sampler;
-
+    public Builder(String serviceName) {
+      this.serviceName = checkValidServiceName(serviceName);
       TextMapCodec textMapCodec = new TextMapCodec(false);
       this.registerInjector(Format.Builtin.TEXT_MAP, textMapCodec);
       this.registerExtractor(Format.Builtin.TEXT_MAP, textMapCodec);
@@ -467,6 +463,32 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
       this.registerInjector(Format.Builtin.HTTP_HEADERS, httpCodec);
       this.registerExtractor(Format.Builtin.HTTP_HEADERS, httpCodec);
       // TODO binary codec not implemented
+    }
+
+    /**
+     * Use {@link #Builder(String)} and fluent API {@link #withReporter(Reporter)}, {@link #withSampler(Sampler)}
+     */
+    @Deprecated
+    public Builder(String serviceName, Reporter reporter, Sampler sampler) {
+      this(serviceName);
+      this.reporter = reporter;
+      this.sampler = sampler;
+    }
+
+    /**
+     * @param reporter reporter.
+     */
+    public Builder withReporter(Reporter reporter) {
+      this.reporter = reporter;
+      return this;
+    }
+
+    /**
+     * @param sampler sampler.
+     */
+    public Builder withSampler(Sampler sampler) {
+      this.sampler = sampler;
+      return this;
     }
 
     public <T> Builder registerInjector(Format<T> format, Injector<T> injector) {
@@ -537,8 +559,25 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
     }
 
     public Tracer build() {
-      return new Tracer(this.serviceName, reporter, sampler, registry, clock, metrics, tags,
+      if (reporter == null) {
+        reporter = new RemoteReporter.Builder()
+            .withMetrics(metrics)
+            .build();
+      }
+      if (sampler == null) {
+        sampler = new RemoteControlledSampler.Builder(serviceName)
+            .withMetrics(metrics)
+            .build();
+      }
+      return new Tracer(serviceName, reporter, sampler, registry, clock, metrics, tags,
           zipkinSharedRpcSpan, scopeManager, baggageRestrictionManager, expandExceptionLogs);
+    }
+
+    public static String checkValidServiceName(String serviceName) {
+      if (serviceName == null || serviceName.trim().length() == 0) {
+        throw new IllegalArgumentException("Service name must not be null or empty");
+      }
+      return serviceName;
     }
   }
 

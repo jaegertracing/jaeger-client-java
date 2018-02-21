@@ -29,9 +29,16 @@ import lombok.ToString;
 
 @ToString
 public class HttpSamplingManager implements SamplingManager {
-  private static final String DEFAULT_HOST_PORT = "localhost:5778";
+  public static final String DEFAULT_HOST_PORT = "localhost:5778";
   private final Gson gson = new Gson();
   private final String hostPort;
+
+  /**
+   * This constructor expects running sampling manager on {@link #DEFAULT_HOST_PORT}.
+   */
+  public HttpSamplingManager() {
+    this(DEFAULT_HOST_PORT);
+  }
 
   public HttpSamplingManager(String hostPort) {
     this.hostPort = hostPort != null ? hostPort : DEFAULT_HOST_PORT;
