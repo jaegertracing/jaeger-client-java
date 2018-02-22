@@ -14,6 +14,9 @@
 
 package com.uber.jaeger.propagation;
 
+import static com.uber.jaeger.Constants.MANUAL_BAGGAGE_HEADER_KEY;
+
+import com.google.common.annotations.VisibleForTesting;
 import com.uber.jaeger.Constants;
 import com.uber.jaeger.SpanContext;
 import io.opentracing.propagation.TextMap;
@@ -23,6 +26,9 @@ import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Pattern;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class TextMapCodec implements Codec<TextMap> {
   /**
@@ -43,6 +49,10 @@ public class TextMapCodec implements Codec<TextMap> {
 
   private final boolean urlEncoding;
 
+  private static final Pattern commaPattern = Pattern.compile(",");
+
+  private static final Pattern equalsPattern = Pattern.compile("=");
+
   public TextMapCodec(boolean urlEncoding) {
     this(builder().withUrlEncoding(urlEncoding));
   }
@@ -61,16 +71,33 @@ public class TextMapCodec implements Codec<TextMap> {
     }
   }
 
+  /**
+   * Populates SpanContext based on the header values available in the carrier.
+   *
+   * Rules followed are:
+   * 1. When trace ID is present
+   *    - baggage from uberctx- is respected
+   *    - baggage from jaeger-baggage is not respected
+   * 2. When trace ID is not present
+   *    - baggage from uberctx- is not respected
+   *    - baggage from jaeger-baggage is respected
+   * 3. When neither trace ID, nor debug ID is present, null is returned.
+   * 4. Debug ID is always respected regardless of other data
+   *
+   * @param carrier The iterable to parse the headers out of
+   * @return SpanContext populated with information from headers, based on aforementioned rules.
+   */
   @Override
   public SpanContext extract(TextMap carrier) {
-    SpanContext context = null;
     Map<String, String> baggage = null;
-    String debugId = null;
+    Map<String, String> debugBaggage = null;
+    @Nullable String debugId = null;
+    @Nullable String traceId = null;
     for (Map.Entry<String, String> entry : carrier) {
       // TODO there should be no lower-case here
       String key = entry.getKey().toLowerCase(Locale.ROOT);
       if (key.equals(contextKey)) {
-        context = SpanContext.contextFromString(decodedValue(entry.getValue()));
+        traceId = decodedValue(entry.getValue());
       } else if (key.equals(Constants.DEBUG_ID_HEADER_KEY)) {
         debugId = decodedValue(entry.getValue());
       } else if (key.startsWith(baggagePrefix)) {
@@ -78,22 +105,68 @@ public class TextMapCodec implements Codec<TextMap> {
           baggage = new HashMap<String, String>();
         }
         baggage.put(keys.unprefixedKey(key, baggagePrefix), decodedValue(entry.getValue()));
+      } else if (key.equals(MANUAL_BAGGAGE_HEADER_KEY)) {
+        String decodedDebugBaggageItems = decodedValue(entry.getValue());
+        debugBaggage = getDebugHeadersAsBaggage(decodedDebugBaggageItems);
       }
     }
-    if (context == null) {
-      if (debugId != null) {
-        return SpanContext.withDebugId(debugId);
-      }
+
+    @NotNull SpanContext context;
+    if (debugId == null && traceId == null) {
       return null;
+    } else if (debugId != null) {
+      // Debug ID is always respected regardless of other data
+      baggage = debugBaggage;
+      context = SpanContext.withDebugId(debugId);
+    } else {
+      // debug ID == null + trace ID != null
+      context = SpanContext.contextFromString(traceId);
     }
+
+    // there is a chance that baggage variable is uninitialized
+    // if there is no `uberctx-` or debug baggage.
     if (baggage == null) {
       return context;
     }
+
     return context.withBaggage(baggage);
   }
 
+  /**
+   * Transform string like "k1=v1,k2=v2" into a map like {k1: v1, k2: v2}.
+   *
+   * All items that do not confirm to the aforementioned rule will not be included. In case where
+   * there is no baggage in the passed string, a null value will be returned.
+   *
+   * @param decodedDebugBaggageItems Contents of debug baggage values in the form "k1=v1,k2=v2"
+   * @return Map of debug headers
+   */
+  @VisibleForTesting protected @Nullable Map<String, String> getDebugHeadersAsBaggage(
+      @NotNull String decodedDebugBaggageItems
+  ) {
+    // strip spaces from both ends to not cause cases like ",,,= " to get picked up
+    decodedDebugBaggageItems = decodedDebugBaggageItems.trim();
+
+    Map<String, String> debugBaggage = null;
+    String[] debugBaggageItems = commaPattern.split(decodedDebugBaggageItems);
+    for (String debugBaggageItem: debugBaggageItems) {
+      String[] debugBaggageItemParts = equalsPattern.split(debugBaggageItem.trim());
+      // ensure degree of validation in debug baggage contents
+      // expect contents to be of form x=y
+      if (debugBaggageItemParts.length != 2) {
+        continue;
+      }
+
+      if (debugBaggage == null) {
+        debugBaggage = new HashMap<String, String>();
+      }
+      debugBaggage.put(debugBaggageItemParts[0].trim(), debugBaggageItemParts[1].trim());
+    }
+    return debugBaggage;
+  }
+
   @Override
-  public String toString() {
+  public @NotNull String toString() {
     StringBuilder buffer = new StringBuilder();
     buffer
         .append("TextMapCodec{")
@@ -121,7 +194,7 @@ public class TextMapCodec implements Codec<TextMap> {
     }
   }
 
-  private String decodedValue(String value) {
+  private @NotNull String decodedValue(@NotNull String value) {
     if (!urlEncoding) {
       return value;
     }

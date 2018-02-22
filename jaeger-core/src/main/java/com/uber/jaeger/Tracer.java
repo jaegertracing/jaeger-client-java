@@ -31,14 +31,12 @@ import com.uber.jaeger.samplers.SamplingStatus;
 import com.uber.jaeger.utils.Clock;
 import com.uber.jaeger.utils.SystemClock;
 import com.uber.jaeger.utils.Utils;
-
 import io.opentracing.References;
 import io.opentracing.Scope;
 import io.opentracing.ScopeManager;
 import io.opentracing.propagation.Format;
 import io.opentracing.tag.Tags;
 import io.opentracing.util.ThreadLocalScopeManager;
-
 import java.io.Closeable;
 import java.io.InputStream;
 import java.net.Inet4Address;
@@ -283,22 +281,18 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
         }
       }
 
-      return new SpanContext(id, id, 0, flags);
+      return new SpanContext(id, id, 0, flags, createChildBaggage(), debugId);
     }
 
     private Map<String, String> createChildBaggage() {
-      Map<String, String> baggage = null;
-
       // optimization for 99% use cases, when there is only one parent
       if (references.size() == 1) {
         return references.get(0).getSpanContext().baggage();
       }
 
+      Map<String, String> baggage = new HashMap<String, String>();
       for (Reference reference: references) {
         if (reference.getSpanContext().baggage() != null) {
-          if (baggage == null) {
-            baggage = new HashMap<String, String>();
-          }
           baggage.putAll(reference.getSpanContext().baggage());
         }
       }

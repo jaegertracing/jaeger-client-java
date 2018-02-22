@@ -36,6 +36,20 @@ public class Constants {
   public static final String DEBUG_ID_HEADER_KEY = "jaeger-debug-id";
 
   /**
+   * An external process can inject baggage by setting the special HTTP Header jaeger-baggage
+   * on a request. This is expected to be used by external processes to inject span baggage into
+   * span context in cases where it is not created by a Jaeger-instrumented client/server.
+   *
+   * Debug jaeger baggage is loaded for a header item that looks like,
+   * <pre>
+   * {@code
+   *    "jaeger-baggage": "k1=v1,k2=v2"
+   * }
+   * </pre>
+   */
+  public static final String MANUAL_BAGGAGE_HEADER_KEY = "jaeger-baggage";
+
+  /**
    * The name of the tag used to report client version.
    */
   public static final String JAEGER_CLIENT_VERSION_TAG_KEY = "jaeger.version";
