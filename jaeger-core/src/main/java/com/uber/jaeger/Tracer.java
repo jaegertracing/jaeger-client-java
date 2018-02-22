@@ -69,6 +69,7 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
   private final boolean zipkinSharedRpcSpan;
   private final ScopeManager scopeManager;
   private final BaggageSetter baggageSetter;
+  private final boolean expandExceptionLogs;
 
   private Tracer(
       String serviceName,
@@ -80,7 +81,8 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
       Map<String, Object> tags,
       boolean zipkinSharedRpcSpan,
       ScopeManager scopeManager,
-      BaggageRestrictionManager baggageRestrictionManager) {
+      BaggageRestrictionManager baggageRestrictionManager,
+      boolean expandExceptionLogs) {
     this.serviceName = serviceName;
     this.reporter = reporter;
     this.sampler = sampler;
@@ -90,6 +92,7 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
     this.zipkinSharedRpcSpan = zipkinSharedRpcSpan;
     this.scopeManager = scopeManager;
     this.baggageSetter = new BaggageSetter(baggageRestrictionManager, metrics);
+    this.expandExceptionLogs = expandExceptionLogs;
 
     this.version = loadVersion();
 
@@ -447,6 +450,7 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
     private boolean zipkinSharedRpcSpan;
     private ScopeManager scopeManager = new ThreadLocalScopeManager();
     private BaggageRestrictionManager baggageRestrictionManager = new DefaultBaggageRestrictionManager();
+    private boolean expandExceptionLogs;
 
     public Builder(String serviceName, Reporter reporter, Sampler sampler) {
       if (serviceName == null || serviceName.trim().length() == 0) {
@@ -495,6 +499,11 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
       return this;
     }
 
+    public Builder withExpandExceptionLogs() {
+      this.expandExceptionLogs = true;
+      return this;
+    }
+
     public Builder withMetrics(Metrics metrics) {
       this.metrics = metrics;
       return this;
@@ -529,7 +538,7 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
 
     public Tracer build() {
       return new Tracer(this.serviceName, reporter, sampler, registry, clock, metrics, tags,
-          zipkinSharedRpcSpan, scopeManager, baggageRestrictionManager);
+          zipkinSharedRpcSpan, scopeManager, baggageRestrictionManager, expandExceptionLogs);
     }
   }
 
@@ -587,5 +596,9 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
 
   SpanContext setBaggage(Span span, String key, String value) {
     return baggageSetter.setBaggage(span, key, value);
+  }
+
+  boolean isExpandExceptionLogs() {
+    return this.expandExceptionLogs;
   }
 }
