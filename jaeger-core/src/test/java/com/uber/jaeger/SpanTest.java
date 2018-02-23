@@ -24,9 +24,8 @@ import static org.mockito.Mockito.when;
 import com.uber.jaeger.baggage.BaggageRestrictionManager;
 import com.uber.jaeger.baggage.DefaultBaggageRestrictionManager;
 import com.uber.jaeger.baggage.Restriction;
-import com.uber.jaeger.metrics.InMemoryStatsReporter;
+import com.uber.jaeger.metrics.InMemoryMetricsFactory;
 import com.uber.jaeger.metrics.Metrics;
-import com.uber.jaeger.metrics.StatsFactoryImpl;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
 import com.uber.jaeger.utils.Clock;
@@ -51,18 +50,18 @@ public class SpanTest {
   private InMemoryReporter reporter;
   private Tracer tracer;
   private Span span;
-  private InMemoryStatsReporter metricsReporter;
+  private InMemoryMetricsFactory metricsFactory;
   private Metrics metrics;
 
   @Before
-  public void setUp() throws Exception {
-    metricsReporter = new InMemoryStatsReporter();
+  public void setUp() {
+    metricsFactory = new InMemoryMetricsFactory();
     reporter = new InMemoryReporter();
     clock = mock(Clock.class);
-    metrics = new Metrics(new StatsFactoryImpl(metricsReporter));
+    metrics = new Metrics(metricsFactory);
     tracer =
         new Tracer.Builder("SamplerTest", reporter, new ConstSampler(true))
-            .withStatsReporter(metricsReporter)
+            .withMetrics(metrics)
             .withClock(clock)
             .withBaggageRestrictionManager(new DefaultBaggageRestrictionManager())
             .withExpandExceptionLogs()
@@ -72,10 +71,8 @@ public class SpanTest {
 
   @Test
   public void testSpanMetrics() {
-    assertEquals(
-        1L, metricsReporter.counters.get("jaeger:started_spans.sampled=y").longValue());
-    assertEquals(
-        1L, metricsReporter.counters.get("jaeger:traces.sampled=y.state=started").longValue());
+    assertEquals(1, metricsFactory.getCounter("jaeger:started_spans", "sampled=y"));
+    assertEquals(1, metricsFactory.getCounter("jaeger:traces", "sampled=y,state=started"));
   }
 
   @Test

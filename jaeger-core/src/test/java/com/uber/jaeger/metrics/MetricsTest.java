@@ -16,61 +16,38 @@ package com.uber.jaeger.metrics;
 
 import static org.junit.Assert.assertEquals;
 
-import org.junit.After;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 
 public class MetricsTest {
-  InMemoryStatsReporter metricsReporter;
+  InMemoryMetricsFactory metricsFactory;
   Metrics metrics;
 
   @Before
-  public void setUp() throws Exception {
-    metricsReporter = new InMemoryStatsReporter();
-    metrics = new Metrics(new StatsFactoryImpl(metricsReporter));
-  }
-
-  @After
-  public void tearDown() {
-    metricsReporter.reset();
+  public void setUp() {
+    metricsFactory = new InMemoryMetricsFactory();
+    metrics = new Metrics(metricsFactory);
   }
 
   @Test
-  public void testCounterWithoutExplicitTags() throws Exception {
+  public void testCounterWithoutExplicitTags() {
     metrics.tracesJoinedSampled.inc(1);
-
-    Object[] metricNames = metricsReporter.counters.keySet().toArray();
-    String metricName = (String) metricNames[0];
-    long expectedAmount = metricsReporter.counters.get(metricName);
-
-    assertEquals(metricNames.length, 1);
-    assertEquals(expectedAmount, 1);
-    assertEquals("jaeger:traces.sampled=y.state=joined", metricName);
-  }
-
-  @Test
-  public void testCounterWithExplicitTags() throws Exception {
-    metrics.tracesJoinedSampled.inc(1);
-
-    Object[] metricNames = metricsReporter.counters.keySet().toArray();
-    String metricName = (String) metricNames[0];
-    long expectedAmount = metricsReporter.counters.get(metricName);
-
-    assertEquals(metricNames.length, 1);
-    assertEquals(expectedAmount, 1);
-    assertEquals("jaeger:traces.sampled=y.state=joined", metricName);
+    assertEquals(1, metricsFactory.getCounter("jaeger:traces", "sampled=y,state=joined"));
   }
 
   @Test
   public void testGaugeWithoutExplicitTags() {
     metrics.reporterQueueLength.update(1);
+    assertEquals(1, metricsFactory.getGauge("jaeger:reporter_queue_length", ""));
+  }
 
-    Object[] metricNames = metricsReporter.gauges.keySet().toArray();
-    String metricName = (String) metricNames[0];
-    long expectedAmount = metricsReporter.gauges.get(metricName);
-
-    assertEquals(metricNames.length, 1);
-    assertEquals(1L, expectedAmount, 0.00001);
-    assertEquals("jaeger:reporter_queue_length", metricName);
+  @Test
+  public void testAddTagsToMetricName() {
+    Map<String, String> tags = new HashMap<>();
+    tags.put("foo", "bar");
+    assertEquals("thecounter.foo=bar", Metrics.addTagsToMetricName("thecounter", tags));
+    assertEquals("jaeger:thecounter.foo=bar", Metrics.addTagsToMetricName("jaeger:thecounter", tags));
   }
 }

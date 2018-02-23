@@ -91,15 +91,15 @@ More information about using the `TracerResolver` can be found [here](../jaeger-
 
 The Jaeger Java Client collects internal metrics and is able to report them via [Micrometer](http://micrometer.io).
 To accomplish that, include the artifact `com.uber.jaeger:jaeger-micrometer` as a dependency to your project and use
-`MicrometerStatsFactory` like this:
+`MicrometerMetricsFactory` like this:
 
 ```java
-MicrometerStatsFactory statsFactory = new MicrometerStatsFactory();
-Configuration configuration = Configuration.fromEnv();
+MicrometerMetricsFactory metricsReporter = new MicrometerMetricsFactory();
+Configuration configuration = new Configuration("myServiceName");
 Tracer tracer = configuration
-  .getTracerBuilder()
-  .withMetrics(new Metrics(statsFactory))
-  .build();
+    .getTracerBuilder()
+    .withMetrics(new com.uber.jaeger.metrics.Metrics(metricsReporter))
+    .build();
 ```
 
 ### Development

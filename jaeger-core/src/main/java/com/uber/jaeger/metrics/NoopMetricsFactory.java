@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Uber Technologies, Inc
+ * Copyright (c) 2017, The Jaeger Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -17,24 +17,14 @@ package com.uber.jaeger.metrics;
 import java.util.Map;
 
 /**
- * A {@link StatsFactory} backed by a {@link StatsReporter}.
- * 
- * @deprecated Use {@link MetricsFactory} instead
+ * A metrics factory that implements NOOP counters, timers and gauges.
  */
-@Deprecated
-public class StatsFactoryImpl implements StatsFactory {
-  private final StatsReporter reporter;
-
-  public StatsFactoryImpl(StatsReporter reporter) {
-    this.reporter = reporter;
-  }
-
+public class NoopMetricsFactory implements MetricsFactory {
   @Override
-  public Counter createCounter(final String name, final Map<String, String> tags) {
+  public Counter createCounter(String name, Map<String, String> tags) {
     return new Counter() {
       @Override
       public void inc(long delta) {
-        reporter.incCounter(name, delta, tags);
       }
     };
   }
@@ -44,7 +34,6 @@ public class StatsFactoryImpl implements StatsFactory {
     return new Timer() {
       @Override
       public void durationMicros(long time) {
-        reporter.recordTimer(name, time, tags);
       }
     };
   }
@@ -52,10 +41,8 @@ public class StatsFactoryImpl implements StatsFactory {
   @Override
   public Gauge createGauge(final String name, final Map<String, String> tags) {
     return new Gauge() {
-
       @Override
       public void update(long amount) {
-        reporter.updateGauge(name, amount, tags);
       }
     };
   }

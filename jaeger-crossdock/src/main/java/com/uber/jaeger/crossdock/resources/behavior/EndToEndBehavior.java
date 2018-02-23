@@ -16,9 +16,7 @@ package com.uber.jaeger.crossdock.resources.behavior;
 
 import com.uber.jaeger.crossdock.api.CreateTracesRequest;
 import com.uber.jaeger.metrics.Metrics;
-import com.uber.jaeger.metrics.NullStatsReporter;
-import com.uber.jaeger.metrics.StatsFactory;
-import com.uber.jaeger.metrics.StatsFactoryImpl;
+import com.uber.jaeger.metrics.NoopMetricsFactory;
 import com.uber.jaeger.reporters.RemoteReporter;
 import com.uber.jaeger.reporters.Reporter;
 import com.uber.jaeger.samplers.ConstSampler;
@@ -41,8 +39,7 @@ public class EndToEndBehavior {
   }
 
   public EndToEndBehavior(String samplingHostPort, String serviceName, Sender sender) {
-    StatsFactory statsFactory = new StatsFactoryImpl(new NullStatsReporter());
-    Metrics metrics = new Metrics(statsFactory);
+    Metrics metrics = new Metrics(new NoopMetricsFactory());
     Reporter reporter = new RemoteReporter(sender, 1000, 100, metrics);
 
     ConstSampler constSampler = new ConstSampler(true);

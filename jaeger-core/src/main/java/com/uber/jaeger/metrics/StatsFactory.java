@@ -14,12 +14,11 @@
 
 package com.uber.jaeger.metrics;
 
-import java.util.Map;
-
-public interface StatsFactory {
-  Counter createCounter(String name, Map<String, String> tags);
-
-  Timer createTimer(String name, Map<String, String> tags);
-
-  Gauge createGauge(String name, Map<String, String> tags);
+/**
+ * @deprecated Use {@link MetricsFactory} instead. At the moment of the deprecation, all methods from this interface
+ * were moved to the new interface and this interface was made to extend the new one. This allows current
+ * implementations of this interface to seamlessly move to the new interface.
+ */
+@Deprecated
+public interface StatsFactory extends MetricsFactory {
 }

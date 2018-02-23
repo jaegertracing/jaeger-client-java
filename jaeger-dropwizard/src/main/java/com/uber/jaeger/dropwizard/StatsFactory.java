@@ -17,10 +17,11 @@ package com.uber.jaeger.dropwizard;
 import com.codahale.metrics.MetricRegistry;
 import com.uber.jaeger.metrics.Counter;
 import com.uber.jaeger.metrics.Gauge;
+import com.uber.jaeger.metrics.MetricsFactory;
 import com.uber.jaeger.metrics.Timer;
 import java.util.Map;
 
-public class StatsFactory implements com.uber.jaeger.metrics.StatsFactory {
+public class StatsFactory implements MetricsFactory {
   private final MetricRegistry registry;
 
   public StatsFactory(MetricRegistry registry) {
