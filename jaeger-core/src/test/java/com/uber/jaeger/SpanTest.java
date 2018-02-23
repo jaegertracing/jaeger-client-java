@@ -66,11 +66,9 @@ public class SpanTest {
   @Test
   public void testSpanMetrics() {
     assertEquals(
-        1L, metricsReporter.counters.get("jaeger.spans.group=sampling.sampled=y").longValue());
+        1L, metricsReporter.counters.get("jaeger:started_spans.sampled=y").longValue());
     assertEquals(
-        1L, metricsReporter.counters.get("jaeger.spans.group=lifecycle.state=started").longValue());
-    assertEquals(
-        1L, metricsReporter.counters.get("jaeger.traces.sampled=y.state=started").longValue());
+        1L, metricsReporter.counters.get("jaeger:traces.sampled=y.state=started").longValue());
   }
 
   @Test

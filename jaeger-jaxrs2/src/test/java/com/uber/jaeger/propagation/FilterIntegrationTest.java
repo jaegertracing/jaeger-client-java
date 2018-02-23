@@ -101,14 +101,14 @@ public class FilterIntegrationTest {
     assertTrue(callTree.validateTraceIds(traceId, isSampled));
 
     assertEquals(
-        3L, metricsReporter.counters.get("jaeger.traces.sampled=y.state=joined").longValue());
+        3L, metricsReporter.counters.get("jaeger:traces.sampled=y.state=joined").longValue());
     assertEquals(
         6L,
-        metricsReporter.counters.get("jaeger.spans.group=lifecycle.state=finished").longValue());
+        metricsReporter.counters.get("jaeger:finished_spans").longValue());
     assertEquals(
-        1L, metricsReporter.counters.get("jaeger.traces.sampled=y.state=started").longValue());
+        1L, metricsReporter.counters.get("jaeger:traces.sampled=y.state=started").longValue());
     assertEquals(
-        7L, metricsReporter.counters.get("jaeger.spans.group=lifecycle.state=started").longValue());
+        7L, metricsReporter.counters.get("jaeger:started_spans.sampled=y").longValue());
   }
 
   /*

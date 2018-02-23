@@ -69,7 +69,7 @@ public class RemoteBaggageRestrictionManagerTest {
     assertEquals(Restriction.of(true, MAX_VALUE_LENGTH), undertest.getRestriction(SERVICE_NAME, BAGGAGE_KEY));
     assertFalse(undertest.getRestriction(SERVICE_NAME, "bad-key").isKeyAllowed());
     assertTrue(
-        metricsReporter.counters.get("jaeger.baggage-restrictions-update.result=ok") > 0L);
+        metricsReporter.counters.get("jaeger:baggage_restrictions_updates.result=ok") > 0L);
   }
 
   @Test
@@ -84,7 +84,7 @@ public class RemoteBaggageRestrictionManagerTest {
     assertFalse(undertest.isReady());
     // If baggage restriction update fails, all baggage should still be allowed.
     assertTrue(undertest.getRestriction(SERVICE_NAME, BAGGAGE_KEY).isKeyAllowed());
-    assertTrue(metricsReporter.counters.get("jaeger.baggage-restrictions-update.result=err") > 0L);
+    assertTrue(metricsReporter.counters.get("jaeger:baggage_restrictions_updates.result=err") > 0L);
   }
 
   @Test

@@ -408,11 +408,10 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
               tags,
               references);
       if (context.isSampled()) {
-        metrics.spansSampled.inc(1);
+        metrics.spansStartedSampled.inc(1);
       } else {
-        metrics.spansNotSampled.inc(1);
+        metrics.spansStartedNotSampled.inc(1);
       }
-      metrics.spansStarted.inc(1);
       return span;
     }
 

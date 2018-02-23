@@ -45,7 +45,7 @@ public class MetricsTest {
 
     assertEquals(metricNames.length, 1);
     assertEquals(expectedAmount, 1);
-    assertEquals("jaeger.traces.sampled=y.state=joined", metricName);
+    assertEquals("jaeger:traces.sampled=y.state=joined", metricName);
   }
 
   @Test
@@ -58,7 +58,7 @@ public class MetricsTest {
 
     assertEquals(metricNames.length, 1);
     assertEquals(expectedAmount, 1);
-    assertEquals("jaeger.traces.sampled=y.state=joined", metricName);
+    assertEquals("jaeger:traces.sampled=y.state=joined", metricName);
   }
 
   @Test
@@ -71,6 +71,6 @@ public class MetricsTest {
 
     assertEquals(metricNames.length, 1);
     assertEquals(1L, expectedAmount, 0.00001);
-    assertEquals("jaeger.reporter-queue", metricName);
+    assertEquals("jaeger:reporter_queue_length", metricName);
   }
 }

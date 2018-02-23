@@ -94,14 +94,11 @@ public class RemoteReporterTest {
     assertEquals(numberOfSpans, sender.getFlushed().size());
 
     assertEquals(
-        100L, metricsReporter.counters.get("jaeger.spans.group=sampling.sampled=y").longValue());
+        100L, metricsReporter.counters.get("jaeger:started_spans.sampled=y").longValue());
     assertEquals(
-        100L,
-        metricsReporter.counters.get("jaeger.spans.group=lifecycle.state=started").longValue());
+        100L, metricsReporter.counters.get("jaeger:reporter_spans.result=ok").longValue());
     assertEquals(
-        100L, metricsReporter.counters.get("jaeger.reporter-spans.state=success").longValue());
-    assertEquals(
-        100L, metricsReporter.counters.get("jaeger.traces.sampled=y.state=started").longValue());
+        100L, metricsReporter.counters.get("jaeger:traces.sampled=y.state=started").longValue());
   }
 
   @Test
@@ -172,7 +169,7 @@ public class RemoteReporterTest {
     reporter.report(newSpan());
 
     // Then: one or both spans should be dropped
-    Long droppedCount = metricsReporter.counters.get("jaeger.spans.state=dropped");
+    Long droppedCount = metricsReporter.counters.get("jaeger:reporter_spans.result=dropped");
     assertThat(droppedCount, anyOf(equalTo(1L), equalTo(2L)));
   }
 
@@ -227,12 +224,12 @@ public class RemoteReporterTest {
       reporter.report(newSpan());
     }
 
-    assertNull(metricsReporter.gauges.get("jaeger.reporter-queue"));
+    assertNull(metricsReporter.gauges.get("jaeger:reporter_queue_length"));
 
     RemoteReporter remoteReporter = (RemoteReporter) reporter;
     remoteReporter.flush();
 
-    assertTrue(metricsReporter.gauges.get("jaeger.reporter-queue") > 0);
+    assertTrue(metricsReporter.gauges.get("jaeger:reporter_queue_length") > 0);
   }
 
   @Test

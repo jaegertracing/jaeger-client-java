@@ -16,6 +16,7 @@ package com.uber.jaeger;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
@@ -64,11 +65,11 @@ public class TracerTest {
     String expectedOperation = "fry";
     tracer.buildSpan(expectedOperation).start();
     assertEquals(
-        1L, metricsReporter.counters.get("jaeger.spans.group=sampling.sampled=y").longValue());
+        1L, metricsReporter.counters.get("jaeger:started_spans.sampled=y").longValue());
+    assertNull(metricsReporter.counters.get("jaeger:started_spans.sampled=n"));
     assertEquals(
-        1L, metricsReporter.counters.get("jaeger.spans.group=lifecycle.state=started").longValue());
-    assertEquals(
-        1L, metricsReporter.counters.get("jaeger.traces.sampled=y.state=started").longValue());
+        1L, metricsReporter.counters.get("jaeger:traces.sampled=y.state=started").longValue());
+    assertNull(metricsReporter.counters.get("jaeger:traces.sampled=n.state=started"));
   }
 
   @Test
@@ -128,7 +129,7 @@ public class TracerTest {
     tracer.setBaggage(span, key, "value");
 
     assertEquals(
-        1L, metricsReporter.counters.get("jaeger.baggage-update.result=ok").longValue());
+        1L, metricsReporter.counters.get("jaeger:baggage_updates.result=ok").longValue());
   }
 
   @Test
@@ -164,5 +165,20 @@ public class TracerTest {
     io.opentracing.Span mockSpan = Mockito.mock(io.opentracing.Span.class);
     tracer.scopeManager().activate(mockSpan, true);
     assertEquals(mockSpan, tracer.activeSpan());
+  }
+
+  @Test
+  public void testSpanContextNotSampled() {
+    String expectedOperation = "fry";
+    Span first = (Span) tracer.buildSpan(expectedOperation).start();
+    tracer.buildSpan(expectedOperation).asChildOf(first.context().withFlags((byte) 0)).start();
+
+    assertEquals(
+        1L, metricsReporter.counters.get("jaeger:started_spans.sampled=y").longValue());
+    assertEquals(
+        1L, metricsReporter.counters.get("jaeger:started_spans.sampled=n").longValue());
+    assertEquals(
+        1L, metricsReporter.counters.get("jaeger:traces.sampled=y.state=started").longValue());
+    assertNull(metricsReporter.counters.get("jaeger:traces.sampled=n.state=started"));
   }
 }
