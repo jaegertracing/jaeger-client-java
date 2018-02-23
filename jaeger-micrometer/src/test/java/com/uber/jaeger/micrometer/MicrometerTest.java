@@ -40,7 +40,7 @@ public class MicrometerTest {
     registry = io.micrometer.core.instrument.Metrics.globalRegistry;
     prometheusRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
     io.micrometer.core.instrument.Metrics.addRegistry(prometheusRegistry);
-    metrics = new Metrics(new MicrometerStatsFactory());
+    metrics = new Metrics(new MicrometerMetricsFactory());
   }
 
   @After
@@ -79,7 +79,7 @@ public class MicrometerTest {
     // we have no timers on the Metrics class yet, so, we simulate one
     Map<String, String> tags = new HashMap<>(1);
     tags.put("akey", "avalue");
-    Timer timer = new MicrometerStatsFactory().createTimer("jaeger:timed_operation", tags);
+    Timer timer = new MicrometerMetricsFactory().createTimer("jaeger:timed_operation", tags);
     timer.durationMicros(100);
 
     assertThat(registry.get("jaeger:timed_operation").timer().totalTime(TimeUnit.MICROSECONDS), IsEqual.equalTo(100d));

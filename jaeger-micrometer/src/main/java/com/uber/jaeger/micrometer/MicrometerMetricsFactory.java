@@ -20,7 +20,7 @@ import static io.micrometer.core.instrument.Metrics.timer;
 
 import com.uber.jaeger.metrics.Counter;
 import com.uber.jaeger.metrics.Gauge;
-import com.uber.jaeger.metrics.StatsFactory;
+import com.uber.jaeger.metrics.MetricsFactory;
 import com.uber.jaeger.metrics.Timer;
 import io.micrometer.core.instrument.ImmutableTag;
 import io.micrometer.core.instrument.Tag;
@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-public class MicrometerStatsFactory implements StatsFactory {
+public class MicrometerMetricsFactory implements MetricsFactory {
   @Override
   public Counter createCounter(final String name, final Map<String, String> tags) {
     return new Counter() {

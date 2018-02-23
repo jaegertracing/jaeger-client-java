@@ -19,12 +19,22 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.SortedMap;
-import java.util.SortedSet;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 public class Metrics {
+  /**
+   * @deprecated Use {@link #Metrics(MetricsFactory)} instead
+   */
+  @Deprecated
   public Metrics(StatsFactory factory) {
+    createMetrics(factory);
+  }
+
+  public Metrics(MetricsFactory factory) {
+    createMetrics(factory);
+  }
+
+  private void createMetrics(MetricsFactory factory) {
     for (Field field : Metrics.class.getDeclaredFields()) {
       if (!Counter.class.isAssignableFrom(field.getType())
           && !Timer.class.isAssignableFrom(field.getType())
@@ -90,6 +100,10 @@ public class Metrics {
     return sb.toString();
   }
 
+  /**
+   * @deprecated Use {@link MetricsFactory} and {@link Metrics#Metrics(MetricsFactory)} instead
+   */
+  @Deprecated
   public static Metrics fromStatsReporter(StatsReporter reporter) {
     return new Metrics(new StatsFactoryImpl(reporter));
   }

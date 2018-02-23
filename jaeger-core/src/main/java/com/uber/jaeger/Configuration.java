@@ -15,9 +15,9 @@
 package com.uber.jaeger;
 
 import com.uber.jaeger.metrics.Metrics;
-import com.uber.jaeger.metrics.NullStatsReporter;
+import com.uber.jaeger.metrics.MetricsFactory;
+import com.uber.jaeger.metrics.NoopMetricsFactory;
 import com.uber.jaeger.metrics.StatsFactory;
-import com.uber.jaeger.metrics.StatsFactoryImpl;
 import com.uber.jaeger.propagation.B3TextMapCodec;
 import com.uber.jaeger.propagation.Codec;
 import com.uber.jaeger.propagation.CompositeCodec;
@@ -165,7 +165,7 @@ public class Configuration {
   private SamplerConfiguration samplerConfig;
   private ReporterConfiguration reporterConfig;
   private CodecConfiguration codecConfig;
-  private StatsFactory statsFactory;
+  private MetricsFactory metricsFactory;
   private Map<String, String> tracerTags;
 
   /**
@@ -201,6 +201,7 @@ public class Configuration {
     this.samplerConfig = samplerConfig;
     this.reporterConfig = reporterConfig;
     this.codecConfig = codecConfig;
+    this.metricsFactory = new NoopMetricsFactory();
   }
 
   /**
@@ -224,10 +225,10 @@ public class Configuration {
     if (codecConfig == null) {
       codecConfig = new CodecConfiguration(Collections.<Format<?>, List<Codec<TextMap>>>emptyMap());
     }
-    if (statsFactory == null) {
-      statsFactory = new StatsFactoryImpl(new NullStatsReporter());
+    if (metricsFactory == null) {
+      metricsFactory = new NoopMetricsFactory();
     }
-    Metrics metrics = new Metrics(statsFactory);
+    Metrics metrics = new Metrics(metricsFactory);
     Reporter reporter = reporterConfig.getReporter(metrics);
     Sampler sampler = samplerConfig.createSampler(serviceName, metrics);
     Tracer.Builder builder = new Tracer.Builder(serviceName)
@@ -257,16 +258,30 @@ public class Configuration {
   }
 
   /**
-   * @param statsFactory the factory
-   * @deprecated Use {@link #setStatsFactory(StatsFactory)} instead
+   * @see #withMetricsFactory(MetricsFactory)
+   * @param statsFactory the StatsFactory to use on the Tracer to be built
+   * @deprecated Use {@link #withMetricsFactory(MetricsFactory)} instead
    */
   @Deprecated
   public void setStatsFactor(StatsFactory statsFactory) {
-    this.statsFactory = statsFactory;
+    this.metricsFactory = statsFactory;
   }
 
+  /**
+   * @see #withMetricsFactory(MetricsFactory)
+   * @param statsFactory the StatsFactory to use on the Tracer to be built
+   * @deprecated Use {@link #withMetricsFactory(MetricsFactory)} instead
+   */
+  @Deprecated
   public void setStatsFactory(StatsFactory statsFactory) {
-    this.statsFactory = statsFactory;
+    this.metricsFactory = statsFactory;
+  }
+
+  /**
+   * @param metricsFactory the MetricsFactory to use on the Tracer to be built
+   */
+  public void withMetricsFactory(MetricsFactory metricsFactory) {
+    this.metricsFactory = metricsFactory;
   }
 
   public Configuration withReporter(ReporterConfiguration reporterConfig) {

@@ -16,6 +16,10 @@ package com.uber.jaeger.metrics;
 
 import java.util.Map;
 
+/**
+ * @deprecated Use {@link MetricsFactory} instead
+ */
+@Deprecated
 public interface StatsReporter {
 
   void incCounter(String name, long delta, Map<String, String> tags);

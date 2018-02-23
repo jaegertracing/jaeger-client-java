@@ -16,6 +16,12 @@ package com.uber.jaeger.metrics;
 
 import java.util.Map;
 
+/**
+ * A stats reporter that is NOOP.
+ *
+ * @deprecated Use {@link NoopMetricsFactory} instead
+ */
+@Deprecated
 public class NullStatsReporter implements StatsReporter {
   @Override
   public void incCounter(String name, long delta, Map<String, String> tags) {}

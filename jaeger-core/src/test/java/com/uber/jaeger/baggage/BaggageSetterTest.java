@@ -23,15 +23,12 @@ import com.uber.jaeger.LogData;
 import com.uber.jaeger.Span;
 import com.uber.jaeger.SpanContext;
 import com.uber.jaeger.Tracer;
-import com.uber.jaeger.metrics.InMemoryStatsReporter;
+import com.uber.jaeger.metrics.InMemoryMetricsFactory;
 import com.uber.jaeger.metrics.Metrics;
-import com.uber.jaeger.metrics.StatsFactoryImpl;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
-
 import java.util.List;
 import java.util.Map;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -40,7 +37,7 @@ public class BaggageSetterTest {
   private InMemoryReporter reporter;
   private Tracer tracer;
   private Span span;
-  private InMemoryStatsReporter metricsReporter;
+  private InMemoryMetricsFactory metricsFactory;
   private Metrics metrics;
   private BaggageRestrictionManager mgr;
   private BaggageSetter setter;
@@ -50,14 +47,14 @@ public class BaggageSetterTest {
 
   @Before
   public void setUp() throws Exception {
-    metricsReporter = new InMemoryStatsReporter();
+    metricsFactory = new InMemoryMetricsFactory();
     reporter = new InMemoryReporter();
-    metrics = new Metrics(new StatsFactoryImpl(metricsReporter));
+    metrics = new Metrics(metricsFactory);
     mgr = mock(DefaultBaggageRestrictionManager.class);
     setter = new BaggageSetter(mgr, metrics);
     tracer =
         new Tracer.Builder(SERVICE, reporter, new ConstSampler(true))
-            .withStatsReporter(metricsReporter)
+            .withMetrics(metrics)
             .build();
     span = (Span) tracer.buildSpan("some-operation").startManual();
   }
@@ -72,8 +69,7 @@ public class BaggageSetterTest {
     assertBaggageLogs(span, KEY, value, false, false, true);
     assertNull(ctx.getBaggageItem(KEY));
 
-    assertEquals(
-        1L, metricsReporter.counters.get("jaeger:baggage_updates.result=err").longValue());
+    assertEquals(1, metricsFactory.getCounter("jaeger:baggage_updates", "result=err"));
   }
 
   @Test
@@ -86,10 +82,8 @@ public class BaggageSetterTest {
     assertBaggageLogs(span, KEY, expected, true, false, false);
     assertEquals(expected, ctx.getBaggageItem(KEY));
 
-    assertEquals(
-        1L, metricsReporter.counters.get("jaeger:baggage_truncations").longValue());
-    assertEquals(
-        1L, metricsReporter.counters.get("jaeger:baggage_updates.result=ok").longValue());
+    assertEquals(1, metricsFactory.getCounter("jaeger:baggage_truncations", ""));
+    assertEquals(1, metricsFactory.getCounter("jaeger:baggage_updates", "result=ok"));
   }
 
   @Test
@@ -103,15 +97,14 @@ public class BaggageSetterTest {
     assertBaggageLogs(child, KEY, value, false, true, false);
     assertEquals(value, ctx.getBaggageItem(KEY));
 
-    assertEquals(
-        2L, metricsReporter.counters.get("jaeger:baggage_updates.result=ok").longValue());
+    assertEquals(2, metricsFactory.getCounter("jaeger:baggage_updates", "result=ok"));
   }
 
   @Test
   public void testUnsampledSpan() {
     tracer =
         new Tracer.Builder("SamplerTest", reporter, new ConstSampler(false))
-            .withStatsReporter(metricsReporter)
+            .withMetrics(metrics)
             .build();
     span = (Span) tracer.buildSpan("some-operation").startManual();
 
@@ -146,8 +139,7 @@ public class BaggageSetterTest {
     assertBaggageLogs(child, KEY, null, false, true, false);
     assertNull(child.getBaggageItem(KEY));
 
-    assertEquals(
-            2L, metricsReporter.counters.get("jaeger:baggage_updates.result=ok").longValue());
+    assertEquals(2, metricsFactory.getCounter("jaeger:baggage_updates", "result=ok"));
   }
 
   private void assertBaggageLogs(

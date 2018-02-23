@@ -17,6 +17,10 @@ package com.uber.jaeger.metrics;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * @deprecated Use {@link InMemoryMetricsFactory} instead
+ */
+@Deprecated
 public class InMemoryStatsReporter implements StatsReporter {
   public Map<String, Long> counters = new HashMap<String, Long>();
   public Map<String, Long> gauges = new HashMap<String, Long>();
