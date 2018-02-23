@@ -232,11 +232,7 @@ public class Span implements io.opentracing.Span {
       }
       if (context.isSampled()) {
         if (tracer.isExpandExceptionLogs()) {
-          Map<String, Object> errorFields = exceptionLogs(fields);
-          if (!errorFields.isEmpty()) {
-            errorFields.putAll(fields);
-            fields = errorFields;
-          }
+          fields = addExceptionLogs(fields);
         }
         if (logs == null) {
           this.logs = new ArrayList<LogData>();
@@ -274,13 +270,13 @@ public class Span implements io.opentracing.Span {
    * @param fields map containing exception logs which are not present in fields
    * @return logged fields
    */
-  private static Map<String, Object> exceptionLogs(Map<String, ?> fields) {
+  private static Map<String, ?> addExceptionLogs(Map<String, ?> fields) {
     Object ex = fields.get(Fields.ERROR_OBJECT);
     if (!(ex instanceof Throwable)) {
-      return Collections.emptyMap();
+      return fields;
     }
 
-    Map<String, Object> errorFields = new HashMap<String, Object>(3);
+    Map<String, Object> errorFields = new HashMap<String, Object>(fields);
     Throwable loggedException = (Throwable) ex;
 
     if (fields.get(Fields.ERROR_KIND) == null) {
