@@ -19,10 +19,8 @@ import static org.junit.Assert.assertTrue;
 
 import com.uber.jaeger.Span;
 import com.uber.jaeger.Tracer;
-import com.uber.jaeger.context.TracingUtils;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
-import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -33,7 +31,6 @@ import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Response;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
-import org.junit.After;
 import org.junit.Test;
 
 public class JerseyServerFilterTest extends JerseyTest {
@@ -48,21 +45,9 @@ public class JerseyServerFilterTest extends JerseyTest {
 
     ResourceConfig resourceConfig = new ResourceConfig(HelloResource.class,
                                                        StormlordResource.class);
-    TracingUtils.setTracer(tracer);
-    undertest = new JerseyServerFilter(tracer, TracingUtils.getTraceContext());
+    undertest = new JerseyServerFilter(tracer);
     resourceConfig.register(undertest);
     return resourceConfig;
-  }
-
-  @Override
-  @After
-  public void tearDown() throws Exception {
-    super.tearDown();
-
-    // clean up tracing utils tracer instance
-    Field field = TracingUtils.class.getDeclaredField("tracer");
-    field.setAccessible(true);
-    field.set(null, null);
   }
 
   @Path("hello")

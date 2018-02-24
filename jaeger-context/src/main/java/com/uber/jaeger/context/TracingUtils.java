@@ -14,6 +14,7 @@
 
 package com.uber.jaeger.context;
 
+import io.opentracing.Tracer;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -23,21 +24,25 @@ import java.util.concurrent.ExecutorService;
 @Deprecated
 public class TracingUtils {
   private static io.opentracing.Tracer tracer = null;
-  private static TraceContext traceContext;
 
   public static synchronized void setTracer(io.opentracing.Tracer tracer) {
     TracingUtils.tracer = tracer;
-    TracingUtils.traceContext = new ScopeManagerTraceContext(tracer.scopeManager());
   }
 
-  public static synchronized TraceContext getTraceContext() {
-    assertTracerRegistered();
-    return traceContext;
-  }
-
+  /**
+   * @deprecated Use {@link TracingUtils#tracedExecutor(ExecutorService, Tracer)}
+   */
+  @Deprecated
   public static synchronized ExecutorService tracedExecutor(ExecutorService wrappedExecutorService) {
     assertTracerRegistered();
-    return new TracedExecutorService(wrappedExecutorService, traceContext);
+    return TracingUtils.tracedExecutor(wrappedExecutorService, tracer);
+  }
+
+  public static synchronized ExecutorService tracedExecutor(
+      ExecutorService wrappedExecutorService,
+      Tracer tracer
+  ) {
+    return new TracedExecutorService(wrappedExecutorService, tracer);
   }
 
   private static void assertTracerRegistered() {

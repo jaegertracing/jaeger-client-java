@@ -14,6 +14,7 @@
 
 package com.uber.jaeger.context;
 
+import io.opentracing.Tracer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -25,11 +26,11 @@ import java.util.concurrent.TimeoutException;
 
 public class TracedExecutorService implements ExecutorService {
   private final ExecutorService delegate;
-  private final TraceContext traceContext;
+  private final Tracer tracer;
 
-  public TracedExecutorService(ExecutorService delegate, TraceContext traceContext) {
+  public TracedExecutorService(ExecutorService delegate, Tracer tracer) {
     this.delegate = delegate;
-    this.traceContext = traceContext;
+    this.tracer = tracer;
   }
 
   @Override
@@ -59,17 +60,17 @@ public class TracedExecutorService implements ExecutorService {
 
   @Override
   public <T> Future<T> submit(java.util.concurrent.Callable<T> task) {
-    return delegate.submit(new Callable<T>(task, traceContext));
+    return delegate.submit(new Callable<T>(task, tracer));
   }
 
   @Override
   public <T> Future<T> submit(java.lang.Runnable task, T result) {
-    return delegate.submit(new Runnable(task, traceContext), result);
+    return delegate.submit(new Runnable(task, tracer), result);
   }
 
   @Override
   public Future<?> submit(java.lang.Runnable task) {
-    return delegate.submit(new Runnable(task, traceContext));
+    return delegate.submit(new Runnable(task, tracer));
   }
 
   @Override
@@ -100,7 +101,7 @@ public class TracedExecutorService implements ExecutorService {
 
   @Override
   public void execute(final java.lang.Runnable command) {
-    delegate.execute(new Runnable(command, traceContext));
+    delegate.execute(new Runnable(command, tracer));
   }
 
   private <T> Collection<? extends java.util.concurrent.Callable<T>> wrapJaegerCallableCollection(
@@ -108,7 +109,7 @@ public class TracedExecutorService implements ExecutorService {
     Collection<java.util.concurrent.Callable<T>> collection =
         new ArrayList<java.util.concurrent.Callable<T>>(originalCollection.size());
     for (java.util.concurrent.Callable<T> c : originalCollection) {
-      collection.add(new Callable<T>(c, traceContext));
+      collection.add(new Callable<T>(c, tracer));
     }
     return collection;
   }

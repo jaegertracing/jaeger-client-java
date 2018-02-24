@@ -14,11 +14,11 @@
 
 package com.uber.jaeger.crossdock.resources.behavior.tchannel;
 
-import com.uber.jaeger.context.TracingUtils;
 import com.uber.jaeger.crossdock.resources.behavior.TraceBehavior;
 import com.uber.tchannel.api.TChannel;
 import com.uber.tchannel.tracing.TracingContext;
 import io.netty.channel.ChannelFuture;
+import io.opentracing.Scope;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
 import java.util.EmptyStackException;
@@ -31,7 +31,7 @@ public class TChannelServer {
     server =
         tchannelBuilder
             .setTracer(tracer)
-            .setTracingContext(new TracingContextAdapter())
+            .setTracingContext(new TracingContextAdapter(tracer))
             .build();
 
     server
@@ -57,24 +57,34 @@ public class TChannelServer {
   }
 
   private static class TracingContextAdapter implements TracingContext {
+
+    private Tracer tracer;
+
+    public TracingContextAdapter(Tracer tracer) {
+      this.tracer = tracer;
+    }
+
     @Override
     public void pushSpan(Span span) {
-      TracingUtils.getTraceContext().push(span);
+      tracer.scopeManager().activate(span,false);
     }
 
     @Override
     public boolean hasSpan() {
-      return !TracingUtils.getTraceContext().isEmpty();
+      return tracer.activeSpan() != null;
     }
 
     @Override
     public Span currentSpan() throws EmptyStackException {
-      return TracingUtils.getTraceContext().getCurrentSpan();
+      return tracer.activeSpan();
     }
 
     @Override
     public Span popSpan() throws EmptyStackException {
-      return TracingUtils.getTraceContext().pop();
+      Scope scope = tracer.scopeManager().active();
+      Span span = scope.span();
+      scope.close();
+      return span;
     }
 
     @Override

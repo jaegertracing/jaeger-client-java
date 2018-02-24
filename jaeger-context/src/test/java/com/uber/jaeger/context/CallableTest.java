@@ -19,7 +19,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import io.opentracing.Scope;
+import io.opentracing.ScopeManager;
 import io.opentracing.Span;
+import io.opentracing.Tracer;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,46 +31,56 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CallableTest {
+
   @Mock
-  TraceContext traceContext;
+  Scope scope;
+
+  @Mock
+  ScopeManager scopeManager;
+
   @Mock
   Span span;
+
+  @Mock
+  Tracer tracer;
+
   @Mock
   Callable<Span> wrappedCallable;
 
   @Before
   public void setUp() throws Exception {
-    when(traceContext.getCurrentSpan()).thenReturn(span);
-    when(traceContext.pop()).thenReturn(span);
-    when(traceContext.isEmpty()).thenReturn(false);
+    when(tracer.activeSpan()).thenReturn(span);
+    when(tracer.scopeManager()).thenReturn(scopeManager);
+    when(scopeManager.active()).thenReturn(scope);
   }
 
   @Test
   public void testInstrumentedCallable() throws Exception {
     when(wrappedCallable.call()).thenReturn(span);
 
-    Callable<Span> jaegerCallable = new Callable<>(wrappedCallable, traceContext);
+    Callable<Span> jaegerCallable = new Callable<>(wrappedCallable, tracer);
 
     jaegerCallable.call();
 
-    verify(traceContext, times(1)).isEmpty();
-    verify(traceContext, times(1)).push(span);
-    verify(traceContext, times(1)).getCurrentSpan();
-    verify(traceContext, times(1)).pop();
+    verify(tracer, times(1)).activeSpan();
+    verify(scopeManager, times(1)).activate(span, false);
+    verify(scopeManager, times(1)).active();
+    verify(scope, times(1)).close();
     verify(wrappedCallable, times(1)).call();
-    verifyNoMoreInteractions(traceContext, wrappedCallable);
+    verify(tracer, times(2)).scopeManager();
+    verifyNoMoreInteractions(tracer, wrappedCallable);
   }
 
   @Test
   public void testInstrumentedCallableNoCurrentSpan() throws Exception {
-    when(traceContext.isEmpty()).thenReturn(true);
+    when(tracer.activeSpan()).thenReturn(null);
 
-    Callable<Span> jaegerCallable = new Callable<>(wrappedCallable, traceContext);
+    Callable<Span> jaegerCallable = new Callable<>(wrappedCallable, tracer);
 
     jaegerCallable.call();
 
-    verify(traceContext, times(1)).isEmpty();
+    verify(tracer, times(1)).activeSpan();
     verify(wrappedCallable, times(1)).call();
-    verifyNoMoreInteractions(traceContext, wrappedCallable);
+    verifyNoMoreInteractions(tracer, wrappedCallable);
   }
 }

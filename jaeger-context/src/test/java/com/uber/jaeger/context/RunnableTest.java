@@ -20,49 +20,60 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import io.opentracing.Scope;
+import io.opentracing.ScopeManager;
 import io.opentracing.Span;
+import io.opentracing.Tracer;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 public class RunnableTest {
-  TraceContext traceContext;
+
+  Scope scope;
+  ScopeManager scopeManager;
   Span span;
+  Tracer tracer;
 
   @Before
   public void setUp() {
-    span = mock(Span.class);
-    traceContext = mock(TraceContext.class);
-    when(traceContext.getCurrentSpan()).thenReturn(span);
-    when(traceContext.pop()).thenReturn(span);
-    when(traceContext.isEmpty()).thenReturn(false);
+    tracer = Mockito.mock(Tracer.class);
+    scope = Mockito.mock(Scope.class);
+    scopeManager = Mockito.mock(ScopeManager.class);
+    span = Mockito.mock(Span.class);
+    when(tracer.activeSpan()).thenReturn(span);
+    when(tracer.scopeManager()).thenReturn(scopeManager);
+    when(scopeManager.active()).thenReturn(scope);
+    when(scope.span()).thenReturn(span);
   }
 
   @Test
   public void testIntrumentedRunnable() {
     Runnable wrappedRunnable = mock(Runnable.class);
-    Runnable runnable = new Runnable(wrappedRunnable, traceContext);
+    Runnable runnable = new Runnable(wrappedRunnable, tracer);
 
     runnable.run();
 
-    verify(traceContext, times(1)).push(span);
-    verify(traceContext, times(1)).pop();
-    verify(traceContext, times(1)).getCurrentSpan();
-    verify(traceContext, times(1)).isEmpty();
+    verify(tracer, times(1)).activeSpan();
+    verify(scopeManager, times(1)).activate(span, false);
+    verify(scopeManager, times(1)).active();
+    verify(scope, times(1)).close();
     verify(wrappedRunnable, times(1)).run();
-    verifyNoMoreInteractions(traceContext, wrappedRunnable);
+    verify(tracer, times(2)).scopeManager();
+    verifyNoMoreInteractions(tracer, wrappedRunnable);
   }
 
   @Test
   public void testIntrumentedRunnableNoCurrentSpan() {
-    when(traceContext.isEmpty()).thenReturn(true);
+    when(tracer.activeSpan()).thenReturn(null);
 
     Runnable wrappedRunnable = mock(Runnable.class);
-    Runnable runnable = new Runnable(wrappedRunnable, traceContext);
+    Runnable runnable = new Runnable(wrappedRunnable, tracer);
 
     runnable.run();
 
-    verify(traceContext, times(1)).isEmpty();
+    verify(tracer, times(1)).activeSpan();
     verify(wrappedRunnable, times(1)).run();
-    verifyNoMoreInteractions(traceContext, wrappedRunnable);
+    verifyNoMoreInteractions(tracer, wrappedRunnable);
   }
 }

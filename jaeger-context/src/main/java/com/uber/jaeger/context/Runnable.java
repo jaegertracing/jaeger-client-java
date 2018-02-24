@@ -15,34 +15,31 @@
 package com.uber.jaeger.context;
 
 import io.opentracing.Span;
+import io.opentracing.Tracer;
 
 @SuppressWarnings("JavaLangClash") // this class will be deprecated in the future
 public class Runnable implements java.lang.Runnable {
   private final java.lang.Runnable wrappedRunnable;
-  private final TraceContext traceContext;
+  private final Tracer tracer;
   private final Span currentSpan;
 
-  public Runnable(java.lang.Runnable wrappedRunnable, TraceContext traceContext) {
+  public Runnable(java.lang.Runnable wrappedRunnable, Tracer tracer) {
     this.wrappedRunnable = wrappedRunnable;
-    this.traceContext = traceContext;
-    if (!traceContext.isEmpty()) {
-      this.currentSpan = traceContext.getCurrentSpan();
-    } else {
-      this.currentSpan = null;
-    }
+    this.tracer = tracer;
+    this.currentSpan = tracer.activeSpan();
   }
 
   @Override
   public void run() {
     if (currentSpan != null) {
-      traceContext.push(currentSpan);
+      tracer.scopeManager().activate(currentSpan,false);
     }
 
     try {
       wrappedRunnable.run();
     } finally {
       if (currentSpan != null) {
-        traceContext.pop();
+        tracer.scopeManager().active().close();
       }
     }
   }

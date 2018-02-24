@@ -14,7 +14,7 @@
 
 package com.uber.jaeger.dropwizard;
 
-import com.uber.jaeger.filters.jaxrs2.TracingUtils;
+import com.uber.jaeger.filters.jaxrs2.ClientFilter;
 import io.opentracing.Tracer;
 import javax.ws.rs.core.Feature;
 import javax.ws.rs.core.FeatureContext;
@@ -35,11 +35,12 @@ public class JaegerFeature implements Feature {
     switch (featureContext.getConfiguration().getRuntimeType()) {
       case SERVER:
         featureContext.register(
-            new JerseyServerFilter(tracer, com.uber.jaeger.context.TracingUtils.getTraceContext()));
+            new JerseyServerFilter(tracer));
         break;
       case CLIENT:
       default:
-        featureContext.register(TracingUtils.clientFilter(tracer));
+        featureContext.register(
+            new ClientFilter(tracer));
         break;
     }
 

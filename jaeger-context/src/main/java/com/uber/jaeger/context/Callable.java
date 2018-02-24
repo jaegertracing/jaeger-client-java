@@ -15,33 +15,30 @@
 package com.uber.jaeger.context;
 
 import io.opentracing.Span;
+import io.opentracing.Tracer;
 
 public class Callable<T> implements java.util.concurrent.Callable<T> {
   private final java.util.concurrent.Callable<T> wrappedCallable;
-  private final TraceContext traceContext;
+  private final Tracer tracer;
   private final Span currentSpan;
 
-  public Callable(java.util.concurrent.Callable<T> wrappedCallable, TraceContext traceContext) {
+  public Callable(java.util.concurrent.Callable<T> wrappedCallable, Tracer tracer) {
     this.wrappedCallable = wrappedCallable;
-    this.traceContext = traceContext;
-    if (!traceContext.isEmpty()) {
-      this.currentSpan = traceContext.getCurrentSpan();
-    } else {
-      this.currentSpan = null;
-    }
+    this.tracer = tracer;
+    this.currentSpan = tracer.activeSpan();
   }
 
   @Override
   public T call() throws Exception {
     if (currentSpan != null) {
-      traceContext.push(currentSpan);
+      tracer.scopeManager().activate(currentSpan,false);
     }
 
     try {
       return wrappedCallable.call();
     } finally {
       if (currentSpan != null) {
-        traceContext.pop();
+        tracer.scopeManager().active().close();
       }
     }
   }

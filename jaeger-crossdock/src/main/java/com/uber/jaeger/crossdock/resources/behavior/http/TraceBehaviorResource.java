@@ -16,12 +16,12 @@ package com.uber.jaeger.crossdock.resources.behavior.http;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uber.jaeger.Span;
-import com.uber.jaeger.context.TracingUtils;
 import com.uber.jaeger.crossdock.Constants;
 import com.uber.jaeger.crossdock.api.JoinTraceRequest;
 import com.uber.jaeger.crossdock.api.StartTraceRequest;
 import com.uber.jaeger.crossdock.api.TraceResponse;
 import com.uber.jaeger.crossdock.resources.behavior.TraceBehavior;
+import io.opentracing.Tracer;
 import io.opentracing.tag.Tags;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -37,9 +37,11 @@ import lombok.extern.slf4j.Slf4j;
 public class TraceBehaviorResource {
   private final ObjectMapper mapper = new ObjectMapper();
   private final TraceBehavior behavior;
+  private final Tracer tracer;
 
-  public TraceBehaviorResource() {
-    this.behavior = new TraceBehavior();
+  public TraceBehaviorResource(Tracer tracer) {
+    this.behavior = new TraceBehavior(tracer);
+    this.tracer = tracer;
   }
 
   @POST
@@ -49,7 +51,7 @@ public class TraceBehaviorResource {
   public TraceResponse startTrace(StartTraceRequest startRequest) throws Exception {
     log.info("http:start_trace request: {}", mapper.writeValueAsString(startRequest));
     // TODO should be starting new root span
-    Span span = (Span) TracingUtils.getTraceContext().getCurrentSpan();
+    Span span = (Span) tracer.activeSpan();
     String baggage = startRequest.getBaggage();
     span.setBaggageItem(Constants.BAGGAGE_KEY, baggage);
     if (startRequest.isSampled()) {
