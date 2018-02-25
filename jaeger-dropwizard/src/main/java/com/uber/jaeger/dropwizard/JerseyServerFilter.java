@@ -50,8 +50,17 @@ public class JerseyServerFilter extends ServerFilter {
   private Map<CacheKey, String> methodToPathCache = new ConcurrentHashMap<CacheKey, String>();
   private Field normalizedTemplate;
 
+  /**
+   *
+   * @deprecated Use {@link JerseyServerFilter#JerseyServerFilter(Tracer)}
+   */
+  @Deprecated
   public JerseyServerFilter(Tracer tracer, TraceContext traceContext) {
-    super(tracer, traceContext);
+    this(tracer);
+  }
+
+  public JerseyServerFilter(Tracer tracer) {
+    super(tracer);
 
     try {
       normalizedTemplate = UriTemplate.class.getDeclaredField("normalizedTemplate");
