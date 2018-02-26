@@ -54,7 +54,6 @@ import lombok.extern.slf4j.Slf4j;
  * of the client from configuration files.
  */
 @Slf4j
-@Getter
 public class Configuration {
   /**
    * @deprecated use {@link ProbabilisticSampler#DEFAULT_SAMPLING_PROBABILITY} instead
@@ -288,6 +287,18 @@ public class Configuration {
   public Configuration withTracerTags(Map<String, String> tracerTags) {
     this.tracerTags = tracerTags;
     return this;
+  }
+
+  public ReporterConfiguration getReporter() {
+    return reporterConfig;
+  }
+
+  public SamplerConfiguration getSampler() {
+    return samplerConfig;
+  }
+
+  public Map<String, String> getTracerTags() {
+    return tracerTags;
   }
 
   /**
