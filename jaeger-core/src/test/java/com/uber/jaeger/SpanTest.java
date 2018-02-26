@@ -405,4 +405,14 @@ public class SpanTest {
     assertEquals(1, logData.get(0).getFields().size());
     assertEquals(ex, logData.get(0).getFields().get(Fields.ERROR_OBJECT));
   }
+
+  @Test
+  public void testSpanNotSampled() {
+    Tracer tracer = new Tracer.Builder("fo", reporter, new ConstSampler(false))
+        .build();
+    tracer.buildSpan("foo")
+        .start()
+        .finish();
+    assertEquals(0, reporter.getSpans().size());
+  }
 }
