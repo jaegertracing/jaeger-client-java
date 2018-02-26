@@ -14,7 +14,10 @@
 
 package com.uber.jaeger;
 
+import io.opentracing.log.Fields;
 import io.opentracing.tag.Tags;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -228,6 +231,9 @@ public class Span implements io.opentracing.Span {
         return this;
       }
       if (context.isSampled()) {
+        if (tracer.isExpandExceptionLogs()) {
+          fields = addExceptionLogs(fields);
+        }
         if (logs == null) {
           this.logs = new ArrayList<LogData>();
         }
@@ -256,5 +262,37 @@ public class Span implements io.opentracing.Span {
       }
       return this;
     }
+  }
+
+  /**
+   * Creates logs related to logged exception
+   *
+   * @param fields map containing exception logs which are not present in fields
+   * @return logged fields
+   */
+  private static Map<String, ?> addExceptionLogs(Map<String, ?> fields) {
+    Object ex = fields.get(Fields.ERROR_OBJECT);
+    if (!(ex instanceof Throwable)) {
+      return fields;
+    }
+
+    Map<String, Object> errorFields = new HashMap<String, Object>(fields);
+    Throwable loggedException = (Throwable) ex;
+
+    if (fields.get(Fields.ERROR_KIND) == null) {
+      errorFields.put(Fields.ERROR_KIND, loggedException.getClass().getName());
+    }
+    if (fields.get(Fields.MESSAGE) == null) {
+      String message = loggedException.getMessage();
+      if (message != null) {
+        errorFields.put(Fields.MESSAGE, message);
+      }
+    }
+    if (fields.get(Fields.STACK) == null) {
+      StringWriter sw = new StringWriter();
+      loggedException.printStackTrace(new PrintWriter(sw));
+      errorFields.put(Fields.STACK, sw.toString());
+    }
+    return errorFields;
   }
 }

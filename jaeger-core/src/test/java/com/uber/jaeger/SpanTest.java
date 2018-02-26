@@ -31,9 +31,15 @@ import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
 import com.uber.jaeger.utils.Clock;
 import io.opentracing.References;
+import io.opentracing.log.Fields;
 import io.opentracing.tag.Tags;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.lang.reflect.Field;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import org.junit.Before;
@@ -59,6 +65,7 @@ public class SpanTest {
             .withStatsReporter(metricsReporter)
             .withClock(clock)
             .withBaggageRestrictionManager(new DefaultBaggageRestrictionManager())
+            .withExpandExceptionLogs()
             .build();
     span = (Span) tracer.buildSpan("some-operation").start();
   }
@@ -345,5 +352,92 @@ public class SpanTest {
     Iterator<Entry<String, String>> baggageIter = span.context().baggageItems().iterator();
     baggageIter.next();
     assertFalse(baggageIter.hasNext());
+  }
+
+  @Test
+  public void testExpandExceptionLogs() {
+    RuntimeException ex = new RuntimeException(new NullPointerException("npe"));
+    Map<String, Object> logs = new HashMap<>();
+    logs.put(Fields.ERROR_OBJECT, ex);
+    Span span = (Span)tracer.buildSpan("foo").start();
+    span.log(logs);
+
+    List<LogData> logData = span.getLogs();
+    assertEquals(1, logData.size());
+    assertEquals(4, logData.get(0).getFields().size());
+
+    assertEquals(ex, logData.get(0).getFields().get(Fields.ERROR_OBJECT));
+    assertEquals(ex.getMessage(), logData.get(0).getFields().get(Fields.MESSAGE));
+    assertEquals(ex.getClass().getName(), logData.get(0).getFields().get(Fields.ERROR_KIND));
+    StringWriter sw = new StringWriter();
+    ex.printStackTrace(new PrintWriter(sw));
+    assertEquals(sw.toString(), logData.get(0).getFields().get(Fields.STACK));
+  }
+
+  @Test
+  public void testExpandExceptionLogsExpanded() {
+    RuntimeException ex = new RuntimeException(new NullPointerException("npe"));
+    Map<String, Object> logs = new HashMap<>();
+    logs.put(Fields.ERROR_OBJECT, ex);
+    logs.put(Fields.MESSAGE, ex.getMessage());
+    logs.put(Fields.ERROR_KIND, ex.getClass().getName());
+    StringWriter sw = new StringWriter();
+    ex.printStackTrace(new PrintWriter(sw));
+    logs.put(Fields.STACK, sw.toString());
+    Span span = (Span)tracer.buildSpan("foo").start();
+    span.log(logs);
+
+    List<LogData> logData = span.getLogs();
+    assertEquals(1, logData.size());
+    assertEquals(4, logData.get(0).getFields().size());
+
+    assertEquals(ex, logData.get(0).getFields().get(Fields.ERROR_OBJECT));
+    assertEquals(ex.getMessage(), logData.get(0).getFields().get(Fields.MESSAGE));
+    assertEquals(ex.getClass().getName(), logData.get(0).getFields().get(Fields.ERROR_KIND));
+    assertEquals(sw.toString(), logData.get(0).getFields().get(Fields.STACK));
+  }
+
+  @Test
+  public void testExpandExceptionLogsLoggedNoException() {
+    Span span = (Span)tracer.buildSpan("foo").start();
+
+    Object object = new Object();
+    Map<String, Object> logs = new HashMap<>();
+    logs.put(Fields.ERROR_OBJECT, object);
+    span.log(logs);
+
+    List<LogData> logData = span.getLogs();
+    assertEquals(1, logData.size());
+    assertEquals(1, logData.get(0).getFields().size());
+    assertEquals(object, logData.get(0).getFields().get(Fields.ERROR_OBJECT));
+  }
+
+  @Test
+  public void testNoExpandExceptionLogs() {
+    Tracer tracer = new Tracer.Builder("fo", reporter, new ConstSampler(true))
+        .build();
+
+    Span span = (Span)tracer.buildSpan("foo").start();
+
+    RuntimeException ex = new RuntimeException();
+    Map<String, Object> logs = new HashMap<>();
+    logs.put(Fields.ERROR_OBJECT, ex);
+    span.log(logs);
+
+    List<LogData> logData = span.getLogs();
+    assertEquals(1, logData.size());
+    assertEquals(1, logData.get(0).getFields().size());
+    assertEquals(ex, logData.get(0).getFields().get(Fields.ERROR_OBJECT));
+  }
+
+  @Test
+  public void testSpanNotSampled() {
+    Tracer tracer = new Tracer.Builder("fo", reporter, new ConstSampler(false))
+        .build();
+    io.opentracing.Span foo = tracer.buildSpan("foo")
+        .start();
+    foo.log(Collections.emptyMap())
+        .finish();
+    assertEquals(0, reporter.getSpans().size());
   }
 }
