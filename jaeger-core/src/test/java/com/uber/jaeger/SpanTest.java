@@ -35,6 +35,7 @@ import io.opentracing.log.Fields;
 import io.opentracing.tag.Tags;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -410,8 +411,9 @@ public class SpanTest {
   public void testSpanNotSampled() {
     Tracer tracer = new Tracer.Builder("fo", reporter, new ConstSampler(false))
         .build();
-    tracer.buildSpan("foo")
-        .start()
+    io.opentracing.Span foo = tracer.buildSpan("foo")
+        .start();
+    foo.log(Collections.emptyMap())
         .finish();
     assertEquals(0, reporter.getSpans().size());
   }
