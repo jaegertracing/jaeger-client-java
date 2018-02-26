@@ -35,6 +35,7 @@ import io.opentracing.log.Fields;
 import io.opentracing.tag.Tags;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -371,6 +372,30 @@ public class SpanTest {
     assertEquals(ex.getClass().getName(), logData.get(0).getFields().get(Fields.ERROR_KIND));
     StringWriter sw = new StringWriter();
     ex.printStackTrace(new PrintWriter(sw));
+    assertEquals(sw.toString(), logData.get(0).getFields().get(Fields.STACK));
+  }
+
+  @Test
+  public void testExpandExceptionLogsExpanded() {
+    Span span = (Span)tracer.buildSpan("foo").start();
+
+    RuntimeException ex = new RuntimeException(new NullPointerException("npe"));
+    Map<String, Object> logs = new HashMap<>();
+    logs.put(Fields.ERROR_OBJECT, ex);
+    logs.put(Fields.MESSAGE, ex.getMessage());
+    logs.put(Fields.ERROR_KIND, ex.getClass().getName());
+    StringWriter sw = new StringWriter();
+    ex.printStackTrace(new PrintWriter(sw));
+    logs.put(Fields.STACK, sw.toString());
+    span.log(logs);
+
+    List<LogData> logData = span.getLogs();
+    assertEquals(1, logData.size());
+    assertEquals(4, logData.get(0).getFields().size());
+
+    assertEquals(ex, logData.get(0).getFields().get(Fields.ERROR_OBJECT));
+    assertEquals(ex.getMessage(), logData.get(0).getFields().get(Fields.MESSAGE));
+    assertEquals(ex.getClass().getName(), logData.get(0).getFields().get(Fields.ERROR_KIND));
     assertEquals(sw.toString(), logData.get(0).getFields().get(Fields.STACK));
   }
 
