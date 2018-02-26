@@ -58,7 +58,12 @@ public class RemoteReporterTest {
     metrics = new Metrics(new StatsFactoryImpl(metricsReporter));
 
     sender = new InMemorySender();
-    reporter = new RemoteReporter(sender, flushInterval, maxQueueSize, metrics);
+    reporter = new RemoteReporter.Builder()
+        .withSender(sender)
+        .withFlushInterval(flushInterval)
+        .withMaxQueueSize(maxQueueSize)
+        .withMetrics(metrics)
+        .build();
     tracer =
         new Tracer.Builder("test-remote-reporter", reporter, new ConstSampler(true))
             .withStatsReporter(metricsReporter)

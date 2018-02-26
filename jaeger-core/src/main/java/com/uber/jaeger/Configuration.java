@@ -37,7 +37,6 @@ import com.uber.jaeger.senders.Sender;
 import com.uber.jaeger.senders.UdpSender;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
-import java.io.IOException;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Arrays;
@@ -48,14 +47,19 @@ import java.util.List;
 import java.util.Map;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.Credentials;
-import okhttp3.Interceptor;
-import okhttp3.OkHttpClient;
-import okhttp3.Response;
 
+/**
+ * This class is designed to provide {@link Tracer} or {@link Tracer.Builder} when Jaeger client
+ * configuration is provided in environmental or property variables. It also simplifies creation
+ * of the client from configuration files.
+ */
 @Slf4j
 public class Configuration {
-  public static final double DEFAULT_SAMPLING_PROBABILITY = 0.001;
+  /**
+   * @deprecated use {@link ProbabilisticSampler#DEFAULT_SAMPLING_PROBABILITY} instead
+   */
+  @Deprecated
+  public static final double DEFAULT_SAMPLING_PROBABILITY = ProbabilisticSampler.DEFAULT_SAMPLING_PROBABILITY;
 
   /**
    * Prefix for all properties used to configure the Jaeger tracer.
@@ -158,17 +162,11 @@ public class Configuration {
    * The serviceName that the tracer will use
    */
   private final String serviceName;
-
-  private final SamplerConfiguration samplerConfig;
-
-  private final ReporterConfiguration reporterConfig;
-
-  private final CodecConfiguration codecConfig;
-
-  /**
-   * A interface that wraps an underlying metrics generator in order to report Jaeger's metrics.
-   */
+  private SamplerConfiguration samplerConfig;
+  private ReporterConfiguration reporterConfig;
+  private CodecConfiguration codecConfig;
   private StatsFactory statsFactory;
+  private Map<String, String> tracerTags;
 
   /**
    * lazy singleton Tracer initialized in getTracer() method.
@@ -176,9 +174,13 @@ public class Configuration {
   private Tracer tracer;
 
   public Configuration(String serviceName) {
-    this(serviceName, null, null);
+    this.serviceName = Tracer.Builder.checkValidServiceName(serviceName);
   }
 
+  /**
+   * @deprecated use {@link #Configuration(String)} and fluent API
+   */
+  @Deprecated
   public Configuration(
       String serviceName,
       SamplerConfiguration samplerConfig,
@@ -186,49 +188,53 @@ public class Configuration {
     this(serviceName, samplerConfig, reporterConfig, null);
   }
 
+  /**
+   * @deprecated use {@link #Configuration(String)} and fluent API
+   */
+  @Deprecated
   private Configuration(
       String serviceName,
       SamplerConfiguration samplerConfig,
       ReporterConfiguration reporterConfig,
       CodecConfiguration codecConfig) {
-    if (serviceName == null || serviceName.isEmpty()) {
-      throw new IllegalArgumentException("Must provide a service name for Jaeger Configuration");
-    }
-
-    this.serviceName = serviceName;
-
-    if (samplerConfig == null) {
-      samplerConfig = new SamplerConfiguration(null, null, null);
-    }
+    this(serviceName);
     this.samplerConfig = samplerConfig;
-
-    if (reporterConfig == null) {
-      reporterConfig = new ReporterConfiguration(null, null, null, null, null);
-    }
     this.reporterConfig = reporterConfig;
-
-    if (codecConfig == null) {
-      codecConfig = new CodecConfiguration(Collections.<Format<?>, List<Codec<TextMap>>>emptyMap());
-    }
     this.codecConfig = codecConfig;
-
-    statsFactory = new StatsFactoryImpl(new NullStatsReporter());
   }
 
+  /**
+   * @return Configuration object from environmental variables
+   */
   public static Configuration fromEnv() {
-    return new Configuration(
-        getProperty(JAEGER_SERVICE_NAME),
-        SamplerConfiguration.fromEnv(),
-        ReporterConfiguration.fromEnv(),
-        CodecConfiguration.fromEnv());
+    return new Configuration(getProperty(JAEGER_SERVICE_NAME))
+        .withTracerTags(tracerTagsFromEnv())
+        .withReporter(ReporterConfiguration.fromEnv())
+        .withSampler(SamplerConfiguration.fromEnv())
+        .withCodec(CodecConfiguration.fromEnv());
   }
 
   public Tracer.Builder getTracerBuilder() {
+    if (reporterConfig == null) {
+      reporterConfig = new ReporterConfiguration();
+    }
+    if (samplerConfig == null) {
+      samplerConfig = new SamplerConfiguration();
+    }
+    if (codecConfig == null) {
+      codecConfig = new CodecConfiguration(Collections.<Format<?>, List<Codec<TextMap>>>emptyMap());
+    }
+    if (statsFactory == null) {
+      statsFactory = new StatsFactoryImpl(new NullStatsReporter());
+    }
     Metrics metrics = new Metrics(statsFactory);
     Reporter reporter = reporterConfig.getReporter(metrics);
     Sampler sampler = samplerConfig.createSampler(serviceName, metrics);
-    Tracer.Builder builder = new Tracer.Builder(serviceName,
-        reporter, sampler).withMetrics(metrics).withTags(tracerTagsFromEnv());
+    Tracer.Builder builder = new Tracer.Builder(serviceName)
+        .withSampler(sampler)
+        .withReporter(reporter)
+        .withMetrics(metrics)
+        .withTags(tracerTags);
     codecConfig.apply(builder);
     return builder;
   }
@@ -263,38 +269,76 @@ public class Configuration {
     this.statsFactory = statsFactory;
   }
 
+  public Configuration withReporter(ReporterConfiguration reporterConfig) {
+    this.reporterConfig = reporterConfig;
+    return this;
+  }
+
+  public Configuration withSampler(SamplerConfiguration samplerConfig) {
+    this.samplerConfig = samplerConfig;
+    return this;
+  }
+
+  public Configuration withCodec(CodecConfiguration codecConfig) {
+    this.codecConfig = codecConfig;
+    return this;
+  }
+
+  public Configuration withTracerTags(Map<String, String> tracerTags) {
+    if (tracerTags != null) {
+      this.tracerTags = new HashMap<String, String>(tracerTags);
+    }
+    return this;
+  }
+
+  public ReporterConfiguration getReporter() {
+    return reporterConfig;
+  }
+
+  public SamplerConfiguration getSampler() {
+    return samplerConfig;
+  }
+
+  public Map<String, String> getTracerTags() {
+    return tracerTags == null ? null : Collections.unmodifiableMap(tracerTags);
+  }
+
   /**
    * SamplerConfiguration allows to configure which sampler the tracer will use.
    */
   public static class SamplerConfiguration {
-
-    private static final String defaultManagerHostPort = "localhost:5778";
-
     /**
      * The type of sampler to use in the tracer. Optional. Valid values: remote (default),
      * ratelimiting, probabilistic, const.
      */
-    private final String type;
+    private String type;
 
     /**
      * The integer or floating point value that makes sense for the correct samplerType. Optional.
      */
-    private final Number param;
+    private Number param;
 
     /**
      * HTTP host:port of the sampling manager that can provide sampling strategy to this service.
      * Optional.
      */
-    private final String managerHostPort;
+    private String managerHostPort;
 
+    public SamplerConfiguration() {
+    }
+
+    /**
+     * @deprecated use {@link #SamplerConfiguration()} and fluent API
+     */
+    @Deprecated
     public SamplerConfiguration(String type, Number param) {
       this(type, param, null);
     }
 
-    public SamplerConfiguration() {
-      this(null, null, null);
-    }
-
+    /**
+     * @deprecated use {@link #SamplerConfiguration()} and fluent API
+     */
+    @Deprecated
     public SamplerConfiguration(String type, Number param, String managerHostPort) {
       this.type = type;
       this.param = param;
@@ -302,17 +346,17 @@ public class Configuration {
     }
 
     public static SamplerConfiguration fromEnv() {
-      return new SamplerConfiguration(
-          getProperty(JAEGER_SAMPLER_TYPE),
-          getPropertyAsNum(JAEGER_SAMPLER_PARAM),
-          getProperty(JAEGER_SAMPLER_MANAGER_HOST_PORT));
+      return new SamplerConfiguration()
+          .withType(getProperty(JAEGER_SAMPLER_TYPE))
+          .withParam(getPropertyAsNum(JAEGER_SAMPLER_PARAM))
+          .withManagerHostPort(getProperty(JAEGER_SAMPLER_MANAGER_HOST_PORT));
     }
 
-
-    private Sampler createSampler(String serviceName, Metrics metrics) {
+    // for tests
+    Sampler createSampler(String serviceName, Metrics metrics) {
       String samplerType = stringOrDefault(this.getType(), RemoteControlledSampler.TYPE);
-      Number samplerParam = numberOrDefault(this.getParam(), DEFAULT_SAMPLING_PROBABILITY);
-      String hostPort = stringOrDefault(this.getManagerHostPort(), defaultManagerHostPort);
+      Number samplerParam = numberOrDefault(this.getParam(), ProbabilisticSampler.DEFAULT_SAMPLING_PROBABILITY);
+      String hostPort = stringOrDefault(this.getManagerHostPort(), HttpSamplingManager.DEFAULT_HOST_PORT);
 
       if (samplerType.equals(ConstSampler.TYPE)) {
         return new ConstSampler(samplerParam.intValue() != 0);
@@ -327,11 +371,11 @@ public class Configuration {
       }
 
       if (samplerType.equals(RemoteControlledSampler.TYPE)) {
-        Sampler initialSampler = new ProbabilisticSampler(samplerParam.doubleValue());
-
-        HttpSamplingManager manager = new HttpSamplingManager(hostPort);
-
-        return new RemoteControlledSampler(serviceName, manager, initialSampler, metrics);
+        return new RemoteControlledSampler.Builder(serviceName)
+            .withSamplingManager(new HttpSamplingManager(hostPort))
+            .withInitialSampler(new ProbabilisticSampler(samplerParam.doubleValue()))
+            .withMetrics(metrics)
+            .build();
       }
 
       throw new IllegalStateException(String.format("Invalid sampling strategy %s", samplerType));
@@ -347,6 +391,21 @@ public class Configuration {
 
     public String getManagerHostPort() {
       return managerHostPort;
+    }
+
+    public SamplerConfiguration withType(String type) {
+      this.type = type;
+      return this;
+    }
+
+    public SamplerConfiguration withParam(Number param) {
+      this.param = param;
+      return this;
+    }
+
+    public SamplerConfiguration withManagerHostPort(String managerHostPort) {
+      this.managerHostPort = managerHostPort;
+      return this;
     }
   }
 
@@ -415,23 +474,28 @@ public class Configuration {
   }
 
   public static class ReporterConfiguration {
-    private static final int DEFAULT_FLUSH_INTERVAL_MS = 1000;
-    private static final int DEFAULT_MAX_QUEUE_SIZE = 100;
-
     private Boolean logSpans;
     private Integer flushIntervalMs;
     private Integer maxQueueSize;
-
-    private SenderConfiguration senderConfiguration;
+    private SenderConfiguration senderConfiguration = new SenderConfiguration();
 
     public ReporterConfiguration() {
-      this(null, null, null, null, null);
     }
 
+    /**
+     * @deprecated use {@link Tracer.Builder} instead or {@link Configuration#getTracerBuilder()}
+     */
+    @Deprecated
     public ReporterConfiguration(Sender sender) {
-      this.senderConfiguration = new Configuration.SenderConfiguration.Builder().sender(sender).build();
+      this.senderConfiguration = new Configuration.SenderConfiguration.Builder()
+          .sender(sender)
+          .build();
     }
 
+    /**
+     * @deprecated use {@link #ReporterConfiguration()} and fluent API
+     */
+    @Deprecated
     public ReporterConfiguration(
         Boolean logSpans,
         String agentHost,
@@ -441,12 +505,14 @@ public class Configuration {
       this.logSpans = logSpans;
       this.flushIntervalMs = flushIntervalMs;
       this.maxQueueSize = maxQueueSize;
-      this.senderConfiguration = new Configuration.SenderConfiguration.Builder()
-              .agentHost(agentHost)
-              .agentPort(agentPort)
-              .build();
+      this.senderConfiguration.withAgentHost(agentHost)
+          .withAgentPort(agentPort);
     }
 
+    /**
+     * @deprecated use {@link #ReporterConfiguration()} and fluent API
+     */
+    @Deprecated
     public ReporterConfiguration(
         Boolean logSpans,
         Integer flushIntervalMs,
@@ -459,20 +525,40 @@ public class Configuration {
     }
 
     public static ReporterConfiguration fromEnv() {
-      return new ReporterConfiguration(
-          getPropertyAsBool(JAEGER_REPORTER_LOG_SPANS),
-          getPropertyAsInt(JAEGER_REPORTER_FLUSH_INTERVAL),
-          getPropertyAsInt(JAEGER_REPORTER_MAX_QUEUE_SIZE),
-          SenderConfiguration.fromEnv());
+      return new ReporterConfiguration()
+          .withLogSpans(getPropertyAsBool(JAEGER_REPORTER_LOG_SPANS))
+          .withFlushInterval(getPropertyAsInt(JAEGER_REPORTER_FLUSH_INTERVAL))
+          .withMaxQueueSize(getPropertyAsInt(JAEGER_REPORTER_MAX_QUEUE_SIZE))
+          .withSender(SenderConfiguration.fromEnv());
+    }
+
+    public ReporterConfiguration withLogSpans(Boolean logSpans) {
+      this.logSpans = logSpans;
+      return this;
+    }
+
+    public ReporterConfiguration withFlushInterval(Integer flushIntervalMs) {
+      this.flushIntervalMs = flushIntervalMs;
+      return this;
+    }
+
+    public ReporterConfiguration withMaxQueueSize(Integer maxQueueSize) {
+      this.maxQueueSize = maxQueueSize;
+      return this;
+    }
+
+    public ReporterConfiguration withSender(SenderConfiguration senderConfiguration) {
+      this.senderConfiguration = senderConfiguration;
+      return this;
     }
 
     private Reporter getReporter(Metrics metrics) {
-      Reporter reporter =
-          new RemoteReporter(
-              this.senderConfiguration.getSender(),
-              numberOrDefault(this.flushIntervalMs, DEFAULT_FLUSH_INTERVAL_MS).intValue(),
-              numberOrDefault(this.maxQueueSize, DEFAULT_MAX_QUEUE_SIZE).intValue(),
-              metrics);
+      Reporter reporter = new RemoteReporter.Builder()
+          .withMetrics(metrics)
+          .withSender(senderConfiguration.sender)
+          .withFlushInterval(numberOrDefault(this.flushIntervalMs, RemoteReporter.DEFAULT_FLUSH_INTERVAL_MS).intValue())
+          .withMaxQueueSize(numberOrDefault(this.maxQueueSize, RemoteReporter.DEFAULT_MAX_QUEUE_SIZE).intValue())
+          .build();
 
       if (Boolean.TRUE.equals(this.logSpans)) {
         Reporter loggingReporter = new LoggingReporter();
@@ -485,6 +571,10 @@ public class Configuration {
       return logSpans;
     }
 
+    /**
+     * @deprecated use {@link #getSenderConfiguration()}
+     */
+    @Deprecated
     public String getAgentHost() {
       if (null == this.senderConfiguration) {
         return null;
@@ -493,6 +583,10 @@ public class Configuration {
       return this.senderConfiguration.agentHost;
     }
 
+    /**
+     * @deprecated use {@link #getSenderConfiguration()}
+     */
+    @Deprecated
     public Integer getAgentPort() {
       if (null == this.senderConfiguration) {
         return null;
@@ -507,6 +601,10 @@ public class Configuration {
 
     public Integer getMaxQueueSize() {
       return maxQueueSize;
+    }
+
+    public SenderConfiguration getSenderConfiguration() {
+      return senderConfiguration;
     }
   }
 
@@ -551,10 +649,7 @@ public class Configuration {
      */
     private String authPassword;
 
-    /**
-     * New instances of this class are provided via the Builder
-     */
-    private SenderConfiguration() {
+    public SenderConfiguration() {
     }
 
     private SenderConfiguration(SenderConfiguration.Builder builder) {
@@ -567,6 +662,36 @@ public class Configuration {
       this.authPassword = builder.authPassword;
     }
 
+    public SenderConfiguration withAgentHost(String agentHost) {
+      this.agentHost = agentHost;
+      return this;
+    }
+
+    public SenderConfiguration withAgentPort(Integer agentPort) {
+      this.agentPort = agentPort;
+      return this;
+    }
+
+    public SenderConfiguration withEndpoint(String endpoint) {
+      this.endpoint = endpoint;
+      return this;
+    }
+
+    public SenderConfiguration withAuthToken(String authToken) {
+      this.authToken = authToken;
+      return this;
+    }
+
+    public SenderConfiguration withAuthUsername(String username) {
+      this.authUsername = username;
+      return this;
+    }
+
+    public SenderConfiguration withAuthPassword(String password) {
+      this.authPassword = password;
+      return this;
+    }
+
     /**
      * Returns a sender if one was given when creating the configuration, or attempts to create a sender based on the
      * configuration's state.
@@ -574,33 +699,23 @@ public class Configuration {
      */
     public Sender getSender() {
       // if we have a sender, that's the one we return
-      if (null != this.sender) {
-        return this.sender;
+      if (null != sender) {
+        return sender;
       }
 
       if (null != endpoint && !endpoint.isEmpty()) {
-        log.debug("The endpoint is set. Attempting to configure HttpSender for it.");
-        Interceptor authInterceptor = null;
-
+        HttpSender.Builder httpSenderBuilder = new HttpSender.Builder(endpoint);
         if (null != authUsername && !authUsername.isEmpty()
                 && null != authPassword && !authPassword.isEmpty()) {
           log.debug("Using HTTP Basic authentication with data from the environment variables.");
-          authInterceptor = getAddBasicAuthInterceptor(authUsername, authPassword);
+          httpSenderBuilder.withAuth(authUsername, authPassword);
         } else if (null != authToken && !authToken.isEmpty()) {
           log.debug("Auth Token environment variable found.");
-          authInterceptor = getAddTokenInterceptor(authToken);
-        }
-
-        // at this point, the authInterceptor can still be null
-        OkHttpClient.Builder builder = new OkHttpClient.Builder();
-
-        if (null != authInterceptor) {
-          log.debug("All requests to the endpoint will have an Authentication header set.");
-          builder.addInterceptor(authInterceptor);
+          httpSenderBuilder.withAuth(authToken);
         }
 
         log.debug("Using the HTTP Sender to send spans directly to the endpoint.");
-        return new HttpSender(endpoint, builder.build());
+        return httpSenderBuilder.build();
       }
 
       log.debug("Using the UDP Sender to send spans to the agent.");
@@ -623,38 +738,19 @@ public class Configuration {
       String authUsername = getProperty(JAEGER_USER);
       String authPassword = getProperty(JAEGER_PASSWORD);
 
-      return new Configuration.SenderConfiguration.Builder()
-              .agentHost(agentHost)
-              .agentPort(agentPort)
-              .endpoint(collectorEndpoint)
-              .authToken(authToken)
-              .authUsername(authUsername)
-              .authPassword(authPassword)
-              .build();
+      return new SenderConfiguration()
+              .withAgentHost(agentHost)
+              .withAgentPort(agentPort)
+              .withEndpoint(collectorEndpoint)
+              .withAuthToken(authToken)
+              .withAuthUsername(authUsername)
+              .withAuthPassword(authPassword);
     }
 
-    private Interceptor getAddTokenInterceptor(final String authToken) {
-      return getAuthInterceptor("Bearer " + authToken);
-    }
-
-    private Interceptor getAddBasicAuthInterceptor(final String username, final String password) {
-      return getAuthInterceptor(Credentials.basic(username, password));
-    }
-
-    private Interceptor getAuthInterceptor(final String headerValue) {
-      return new Interceptor() {
-        @Override
-        public Response intercept(Chain chain) throws IOException {
-          return chain.proceed(
-                  chain.request()
-                          .newBuilder()
-                          .addHeader("Authorization", headerValue)
-                          .build()
-          );
-        }
-      };
-    }
-
+    /**
+     * @deprecated use {@link SenderConfiguration} directly
+     */
+    @Deprecated
     public static class Builder {
       private Sender sender;
       private String agentHost = null;
@@ -664,41 +760,73 @@ public class Configuration {
       private String authUsername = null;
       private String authPassword = null;
 
+      /**
+       * @deprecated use {@link Configuration#getTracerBuilder()} or {@link Tracer.Builder} directly
+       */
+      @Deprecated
       public Builder sender(Sender sender) {
         this.sender = sender;
         return this;
       }
 
+      /**
+       * @deprecated use {@link SenderConfiguration} directly
+       */
+      @Deprecated
       public Builder agentHost(String agentHost) {
         this.agentHost = agentHost;
         return this;
       }
 
+      /**
+       * @deprecated use {@link SenderConfiguration} directly
+       */
+      @Deprecated
       public Builder agentPort(Integer agentPort) {
         this.agentPort = agentPort;
         return this;
       }
 
+      /**
+       * @deprecated use {@link SenderConfiguration} directly
+       */
+      @Deprecated
       public Builder endpoint(String endpoint) {
         this.endpoint = endpoint;
         return this;
       }
 
+      /**
+       * @deprecated use {@link SenderConfiguration} directly
+       */
+      @Deprecated
       public Builder authToken(String authToken) {
         this.authToken = authToken;
         return this;
       }
 
+      /**
+       * @deprecated use {@link SenderConfiguration} directly
+       */
+      @Deprecated
       public Builder authUsername(String authUsername) {
         this.authUsername = authUsername;
         return this;
       }
 
+      /**
+       * @deprecated use {@link SenderConfiguration} directly
+       */
+      @Deprecated
       public Builder authPassword(String authPassword) {
         this.authPassword = authPassword;
         return this;
       }
 
+      /**
+       * @deprecated use {@link SenderConfiguration} directly
+       */
+      @Deprecated
       public Configuration.SenderConfiguration build() {
         return new Configuration.SenderConfiguration(this);
       }

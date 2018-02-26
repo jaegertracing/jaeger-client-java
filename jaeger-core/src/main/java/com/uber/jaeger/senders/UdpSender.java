@@ -32,6 +32,19 @@ public class UdpSender extends ThriftSender {
   private Agent.Client agentClient;
   private ThriftUdpTransport udpTransport;
 
+  /**
+   * This constructor expects Jaeger running running on {@value #DEFAULT_AGENT_UDP_HOST}
+   * and port {@value #DEFAULT_AGENT_UDP_COMPACT_PORT}
+   */
+  public UdpSender() {
+    this(DEFAULT_AGENT_UDP_HOST, DEFAULT_AGENT_UDP_COMPACT_PORT, 0);
+  }
+
+  /**
+   * @param host host
+   * @param port port
+   * @param maxPacketSize if 0 it will use {@value ThriftUdpTransport#MAX_PACKET_SIZE}
+   */
   public UdpSender(String host, int port, int maxPacketSize) {
     super(new TCompactProtocol.Factory(), maxPacketSize);
 

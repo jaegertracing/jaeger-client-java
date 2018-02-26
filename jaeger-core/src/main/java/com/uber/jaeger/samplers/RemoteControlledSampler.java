@@ -16,6 +16,8 @@ package com.uber.jaeger.samplers;
 
 import com.uber.jaeger.exceptions.SamplingStrategyErrorException;
 import com.uber.jaeger.metrics.Metrics;
+import com.uber.jaeger.metrics.NullStatsReporter;
+import com.uber.jaeger.metrics.StatsFactoryImpl;
 import com.uber.jaeger.samplers.http.OperationSamplingParameters;
 import com.uber.jaeger.samplers.http.ProbabilisticSamplingStrategy;
 import com.uber.jaeger.samplers.http.RateLimitingSamplingStrategy;
@@ -41,26 +43,43 @@ public class RemoteControlledSampler implements Sampler {
   private final Timer pollTimer;
   private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
   private final Metrics metrics;
-  private final int pollingIntervalMs;
   @Getter(AccessLevel.PACKAGE)
   private Sampler sampler;
 
+  /**
+   * @deprecated use {@link Builder} instead
+   */
+  @Deprecated
   public RemoteControlledSampler(
       String serviceName, SamplingManager manager, Sampler initial, Metrics metrics) {
-    this(serviceName, manager, initial, metrics, DEFAULT_POLLING_INTERVAL_MS);
+    this(new Builder(serviceName)
+        .withSamplingManager(manager)
+        .withInitialSampler(initial)
+        .withMetrics(metrics));
   }
 
+  /**
+   * @deprecated use {@link Builder} instead
+   */
+  @Deprecated
   public RemoteControlledSampler(
       String serviceName, SamplingManager manager, Sampler initial, Metrics metrics, int pollingIntervalMs) {
-    this.pollingIntervalMs = pollingIntervalMs;
-    this.serviceName = serviceName;
-    this.manager = manager;
-    this.metrics = metrics;
+    this(new Builder(serviceName)
+        .withSamplingManager(manager)
+        .withInitialSampler(initial)
+        .withMetrics(metrics)
+        .withPollingInterval(pollingIntervalMs));
+  }
 
-    if (initial != null) {
-      this.sampler = initial;
+  private RemoteControlledSampler(Builder builder) {
+    this.serviceName = builder.serviceName;
+    this.manager = builder.samplingManager;
+    this.metrics = builder.metrics;
+
+    if (builder.initialSampler != null) {
+      this.sampler = builder.initialSampler;
     } else {
-      this.sampler = new ProbabilisticSampler(0.001);
+      this.sampler = new ProbabilisticSampler(ProbabilisticSampler.DEFAULT_SAMPLING_PROBABILITY);
     }
 
     pollTimer = new Timer(true); // true makes this a daemon thread
@@ -72,7 +91,8 @@ public class RemoteControlledSampler implements Sampler {
           }
         },
         0,
-        pollingIntervalMs);
+        builder.poolingIntervalMs);
+    return;
   }
 
   public ReentrantReadWriteLock getLock() {
@@ -166,6 +186,51 @@ public class RemoteControlledSampler implements Sampler {
   public void close() {
     synchronized (this) {
       pollTimer.cancel();
+    }
+  }
+
+  public static class Builder {
+    private final String serviceName;
+    private SamplingManager samplingManager;
+    private Sampler initialSampler;
+    private Metrics metrics;
+    private int poolingIntervalMs = DEFAULT_POLLING_INTERVAL_MS;
+
+    public Builder(String serviceName) {
+      this.serviceName = serviceName;
+    }
+
+    public Builder withSamplingManager(SamplingManager samplingManager) {
+      this.samplingManager = samplingManager;
+      return this;
+    }
+
+    public Builder withInitialSampler(Sampler initialSampler) {
+      this.initialSampler = initialSampler;
+      return this;
+    }
+
+    public Builder withMetrics(Metrics metrics) {
+      this.metrics = metrics;
+      return this;
+    }
+
+    public Builder withPollingInterval(int pollingIntervalMs) {
+      this.poolingIntervalMs = pollingIntervalMs;
+      return this;
+    }
+
+    public RemoteControlledSampler build() {
+      if (samplingManager == null) {
+        samplingManager = new HttpSamplingManager();
+      }
+      if (initialSampler == null) {
+        initialSampler = new ProbabilisticSampler(0.001);
+      }
+      if (metrics == null) {
+        metrics = new Metrics(new StatsFactoryImpl(new NullStatsReporter()));
+      }
+      return new RemoteControlledSampler(this);
     }
   }
 }

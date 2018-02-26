@@ -24,6 +24,7 @@ import lombok.ToString;
 @SuppressWarnings("EqualsHashCode")
 @ToString
 public class ProbabilisticSampler implements Sampler {
+  public static final double DEFAULT_SAMPLING_PROBABILITY = 0.001;
   public static final String TYPE = "probabilistic";
 
   private final long positiveSamplingBoundary;

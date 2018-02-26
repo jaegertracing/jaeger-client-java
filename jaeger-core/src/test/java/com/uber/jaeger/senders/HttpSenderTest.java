@@ -32,6 +32,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Response;
 
+import okhttp3.OkHttpClient;
 import org.apache.thrift.TException;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
@@ -57,13 +58,17 @@ public class HttpSenderTest extends JerseyTest {
 
   @Override
   protected Application configure() {
-    return new ResourceConfig(TraceAccepter.class);
+    return new ResourceConfig().register(new TraceAccepter());
   }
 
   @Test
   public void sendHappy() throws Exception {
-    HttpSender sender = new HttpSender(target("/api/traces").getUri().toString());
-    sender.send(new Process("robotrock"), generateSpans());
+    new HttpSender(target("/api/traces").getUri().toString())
+        .send(new Process("robotrock"), generateSpans());
+    new HttpSender(target("/api/traces").getUri().toString(), 6500)
+        .send(new Process("name"), generateSpans());
+    new HttpSender(target("/api/traces").getUri().toString(), 6500, new OkHttpClient())
+        .send(new Process("name"), generateSpans());
   }
 
   @Test(expected = TException.class)
