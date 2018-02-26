@@ -356,11 +356,10 @@ public class SpanTest {
 
   @Test
   public void testExpandExceptionLogs() {
-    Span span = (Span)tracer.buildSpan("foo").start();
-
     RuntimeException ex = new RuntimeException(new NullPointerException("npe"));
     Map<String, Object> logs = new HashMap<>();
     logs.put(Fields.ERROR_OBJECT, ex);
+    Span span = (Span)tracer.buildSpan("foo").start();
     span.log(logs);
 
     List<LogData> logData = span.getLogs();
@@ -377,8 +376,6 @@ public class SpanTest {
 
   @Test
   public void testExpandExceptionLogsExpanded() {
-    Span span = (Span)tracer.buildSpan("foo").start();
-
     RuntimeException ex = new RuntimeException(new NullPointerException("npe"));
     Map<String, Object> logs = new HashMap<>();
     logs.put(Fields.ERROR_OBJECT, ex);
@@ -387,6 +384,7 @@ public class SpanTest {
     StringWriter sw = new StringWriter();
     ex.printStackTrace(new PrintWriter(sw));
     logs.put(Fields.STACK, sw.toString());
+    Span span = (Span)tracer.buildSpan("foo").start();
     span.log(logs);
 
     List<LogData> logData = span.getLogs();
