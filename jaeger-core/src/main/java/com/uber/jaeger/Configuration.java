@@ -259,7 +259,7 @@ public class Configuration {
 
   /**
    * @param statsFactory the factory
-   * deprecated Use {@link #setStatsFactory(StatsFactory)} instead
+   * @deprecated Use {@link #setStatsFactory(StatsFactory)} instead
    */
   @Deprecated
   public void setStatsFactor(StatsFactory statsFactory) {
