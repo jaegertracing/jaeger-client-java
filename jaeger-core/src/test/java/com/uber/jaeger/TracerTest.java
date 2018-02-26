@@ -47,7 +47,9 @@ public class TracerTest {
   public void setUp() throws Exception {
     metricsReporter = new InMemoryStatsReporter();
     tracer =
-        new Tracer.Builder("TracerTestService", new InMemoryReporter(), new ConstSampler(true))
+        new Tracer.Builder("TracerTestService")
+            .withReporter(new InMemoryReporter())
+            .withSampler(new ConstSampler(true))
             .withStatsReporter(metricsReporter)
             .build();
   }
