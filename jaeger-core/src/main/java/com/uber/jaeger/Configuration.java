@@ -285,7 +285,9 @@ public class Configuration {
   }
 
   public Configuration withTracerTags(Map<String, String> tracerTags) {
-    this.tracerTags = tracerTags;
+    if (tracerTags != null) {
+      this.tracerTags = new HashMap<String, String>(tracerTags);
+    }
     return this;
   }
 
@@ -298,7 +300,7 @@ public class Configuration {
   }
 
   public Map<String, String> getTracerTags() {
-    return tracerTags;
+    return tracerTags == null ? null : Collections.unmodifiableMap(tracerTags);
   }
 
   /**
