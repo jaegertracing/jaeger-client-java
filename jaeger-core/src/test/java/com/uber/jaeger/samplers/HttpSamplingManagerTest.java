@@ -26,6 +26,7 @@ import com.uber.jaeger.samplers.http.ProbabilisticSamplingStrategy;
 import com.uber.jaeger.samplers.http.RateLimitingSamplingStrategy;
 import com.uber.jaeger.samplers.http.SamplingStrategyResponse;
 import java.io.File;
+import java.net.ConnectException;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -48,7 +49,7 @@ public class HttpSamplingManagerTest extends JerseyTest {
 
   @BeforeClass
   public static void beforeClass() {
-    Properties originalProps = new Properties(System.getProperties());
+    originalProps = new Properties(System.getProperties());
     if (System.getProperty(TestProperties.CONTAINER_PORT) == null) {
       System.setProperty(TestProperties.CONTAINER_PORT, "0");
     }
@@ -116,6 +117,12 @@ public class HttpSamplingManagerTest extends JerseyTest {
     assertEquals(
         new PerOperationSamplingParameters("PUT:/pacifique", new ProbabilisticSamplingStrategy(0.8258308134813166)),
         actualPerOperationStrategies.get(1));
+  }
+
+  @Test(expected = SamplingStrategyErrorException.class)
+  public void testDefaultConstructor() {
+    HttpSamplingManager httpSamplingManager = new HttpSamplingManager();
+    httpSamplingManager.getSamplingStrategy("name");
   }
 
   private String readFixture(String fixtureName) throws Exception {
