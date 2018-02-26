@@ -22,11 +22,13 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
+import com.uber.jaeger.Tracer.Builder;
 import com.uber.jaeger.metrics.InMemoryStatsReporter;
 import com.uber.jaeger.metrics.Metrics;
 import com.uber.jaeger.metrics.StatsFactoryImpl;
 import com.uber.jaeger.propagation.Injector;
 import com.uber.jaeger.reporters.InMemoryReporter;
+import com.uber.jaeger.reporters.RemoteReporter;
 import com.uber.jaeger.reporters.Reporter;
 import com.uber.jaeger.samplers.ConstSampler;
 import com.uber.jaeger.samplers.Sampler;
@@ -52,6 +54,14 @@ public class TracerTest {
             .withSampler(new ConstSampler(true))
             .withStatsReporter(metricsReporter)
             .build();
+  }
+
+  @Test
+  public void testDefaultConstructor() {
+    Tracer tracer = new Builder("name").build();
+    assertTrue(tracer.getReporter() instanceof RemoteReporter);
+    // no exception
+    tracer.buildSpan("foo").start().finish();
   }
 
   @Test
