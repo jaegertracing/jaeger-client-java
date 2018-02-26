@@ -22,6 +22,8 @@ import static com.uber.jaeger.propagation.B3TextMapCodec.SAMPLED_NAME;
 import static com.uber.jaeger.propagation.B3TextMapCodec.SPAN_ID_NAME;
 import static com.uber.jaeger.propagation.B3TextMapCodec.TRACE_ID_NAME;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.uber.jaeger.SpanContext;
@@ -59,8 +61,9 @@ public class B3TextMapCodecTest {
 
     SpanContext context = b3Codec.extract(textMap);
 
-    assertEquals(HexCodec.lowerHexToUnsignedLong(lower64Bits), context.getTraceId());
-    assertEquals(HexCodec.lowerHexToUnsignedLong(lower64Bits), context.getSpanId());
+    assertNotNull(HexCodec.lowerHexToUnsignedLong(lower64Bits));
+    assertEquals(HexCodec.lowerHexToUnsignedLong(lower64Bits).longValue(), context.getTraceId());
+    assertEquals(HexCodec.lowerHexToUnsignedLong(lower64Bits).longValue(), context.getSpanId());
     assertEquals(0, context.getParentId());
     assertEquals(SAMPLED_FLAG | DEBUG_FLAG, context.getFlags());
   }
