@@ -23,8 +23,14 @@ import static org.junit.Assert.fail;
 
 import com.uber.jaeger.Configuration.ReporterConfiguration;
 import com.uber.jaeger.Configuration.SamplerConfiguration;
+import com.uber.jaeger.metrics.Metrics;
+import com.uber.jaeger.metrics.NullStatsReporter;
+import com.uber.jaeger.metrics.StatsFactoryImpl;
 import com.uber.jaeger.samplers.ConstSampler;
 
+import com.uber.jaeger.samplers.ProbabilisticSampler;
+import com.uber.jaeger.samplers.RateLimitingSampler;
+import com.uber.jaeger.samplers.Sampler;
 import com.uber.jaeger.senders.HttpSender;
 import com.uber.jaeger.senders.Sender;
 import io.opentracing.noop.NoopTracerFactory;
@@ -318,6 +324,55 @@ public class ConfigurationTest {
 
     // Check that jaeger context still available even though invalid format specified
     assertNotNull(textMap.get("uber-trace-id"));
+  }
+
+  @Test(expected = RuntimeException.class)
+  public void testNoServiceName() {
+    new Configuration(null);
+  }
+
+  @Test
+  public void testDefaultTracer() {
+    Configuration configuration = new Configuration("name");
+    assertNotNull(configuration.getTracer());
+    assertNotNull(configuration.getTracer());
+    configuration.closeTracer();
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void testUnknownSampler() {
+    SamplerConfiguration samplerConfiguration = new SamplerConfiguration();
+    samplerConfiguration.withType("unknown");
+    new Configuration("name")
+        .withSampler(samplerConfiguration)
+        .getTracer();
+  }
+
+  @Test
+  public void testConstSampler() {
+    SamplerConfiguration samplerConfiguration = new SamplerConfiguration()
+        .withType(ConstSampler.TYPE);
+    Sampler sampler = samplerConfiguration.createSampler("name",
+        new Metrics(new StatsFactoryImpl(new NullStatsReporter())));
+    assertTrue(sampler instanceof ConstSampler);
+  }
+
+  @Test
+  public void testProbabilisticSampler() {
+    SamplerConfiguration samplerConfiguration = new SamplerConfiguration()
+        .withType(ProbabilisticSampler.TYPE);
+    Sampler sampler = samplerConfiguration.createSampler("name",
+        new Metrics(new StatsFactoryImpl(new NullStatsReporter())));
+    assertTrue(sampler instanceof ProbabilisticSampler);
+  }
+
+  @Test
+  public void testRateLimitingSampler() {
+    SamplerConfiguration samplerConfiguration = new SamplerConfiguration()
+        .withType(RateLimitingSampler.TYPE);
+    Sampler sampler = samplerConfiguration.createSampler("name",
+        new Metrics(new StatsFactoryImpl(new NullStatsReporter())));
+    assertTrue(sampler instanceof RateLimitingSampler);
   }
 
   static class TestTextMap implements TextMap {

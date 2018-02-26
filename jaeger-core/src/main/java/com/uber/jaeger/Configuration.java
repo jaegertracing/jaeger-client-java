@@ -339,7 +339,8 @@ public class Configuration {
           .withManagerHostPort(getProperty(JAEGER_SAMPLER_MANAGER_HOST_PORT));
     }
 
-    private Sampler createSampler(String serviceName, Metrics metrics) {
+    // for tests
+    Sampler createSampler(String serviceName, Metrics metrics) {
       String samplerType = stringOrDefault(this.getType(), RemoteControlledSampler.TYPE);
       Number samplerParam = numberOrDefault(this.getParam(), ProbabilisticSampler.DEFAULT_SAMPLING_PROBABILITY);
       String hostPort = stringOrDefault(this.getManagerHostPort(), HttpSamplingManager.DEFAULT_HOST_PORT);
