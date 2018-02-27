@@ -14,6 +14,9 @@
 
 package com.uber.jaeger.propagation;
 
+import static com.uber.jaeger.propagation.B3TextMapCodec.PARENT_SPAN_ID_NAME;
+import static com.uber.jaeger.propagation.B3TextMapCodec.SPAN_ID_NAME;
+import static com.uber.jaeger.propagation.B3TextMapCodec.TRACE_ID_NAME;
 import static org.junit.Assert.assertNull;
 
 import com.tngtech.java.junit.dataprovider.DataProvider;
@@ -21,7 +24,6 @@ import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import com.uber.jaeger.SpanContext;
 import io.opentracing.propagation.TextMap;
-import java.util.Arrays;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -31,36 +33,37 @@ public class B3TextMapCodecResiliencyTest {
   private B3TextMapCodec sut = new B3TextMapCodec();
 
   @DataProvider
-  public static Object[] maliciousInputs() {
-    return new Object[] {
-        "abcbdabcbdabcbdabcbdabcbdabcbdabcbdabcbdabcbdabcbdabcbd",
-        "",
-        "ABCDEF",
+  public static Object[][] maliciousInputs() {
+    return new Object[][]{
+        {TRACE_ID_NAME, "abcbdabcbdabcbdabcbdabcbdabcbdabcbdabcbdabcbdabcbdabcbd"},
+        {TRACE_ID_NAME, ""},
+        {TRACE_ID_NAME, "ABCDEF"},
+        {SPAN_ID_NAME, "abcbdabcbdabcbdabcbdabcbdabcbdabcbdabcbdabcbdabcbdabcbd"},
+        {SPAN_ID_NAME, ""},
+        {SPAN_ID_NAME, "ABCDEF"},
+        {PARENT_SPAN_ID_NAME, "abcbdabcbdabcbdabcbdabcbdabcbdabcbdabcbdabcbdabcbdabcbd"},
+        {PARENT_SPAN_ID_NAME, ""},
+        {PARENT_SPAN_ID_NAME, "ABCDEF"}
     };
   }
 
   @Test
   @UseDataProvider("maliciousInputs")
-  public void shouldFallbackWhenMaliciousInput(String maliciousInput) {
-    String validInput = "ffffffffffffffffffffffffffffffff";
+  public void shouldFallbackWhenMaliciousInput(String headerName, String maliciousInput) {
+    TextMap maliciousCarrier = validHeaders();
+    maliciousCarrier.put(headerName, maliciousInput);
+    //when
+    SpanContext extract = sut.extract(maliciousCarrier);
+    //then
+    assertNull(extract);
+  }
+
+  private TextMap validHeaders() {
     TextMap maliciousCarrier = new B3TextMapCodecTest.DelegatingTextMap();
-    maliciousCarrier.put(B3TextMapCodec.TRACE_ID_NAME, validInput);
-    maliciousCarrier.put(B3TextMapCodec.SPAN_ID_NAME, validInput);
-    maliciousCarrier.put(B3TextMapCodec.PARENT_SPAN_ID_NAME, validInput);
-
-    // everything is valid, except for one of the headers at a time:
-    for (String header : Arrays.asList(
-        B3TextMapCodec.TRACE_ID_NAME,
-        B3TextMapCodec.SPAN_ID_NAME,
-        B3TextMapCodec.PARENT_SPAN_ID_NAME)) {
-      maliciousCarrier.put(header, maliciousInput);
-      //when
-      SpanContext extract = sut.extract(maliciousCarrier);
-
-      //then
-      assertNull(extract);
-
-      maliciousCarrier.put(header, validInput);
-    }
+    String validInput = "ffffffffffffffffffffffffffffffff";
+    maliciousCarrier.put(TRACE_ID_NAME, validInput);
+    maliciousCarrier.put(SPAN_ID_NAME, validInput);
+    maliciousCarrier.put(PARENT_SPAN_ID_NAME, validInput);
+    return maliciousCarrier;
   }
 }
