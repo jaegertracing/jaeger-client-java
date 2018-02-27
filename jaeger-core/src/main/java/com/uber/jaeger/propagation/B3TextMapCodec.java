@@ -16,9 +16,8 @@ package com.uber.jaeger.propagation;
 
 import com.uber.jaeger.SpanContext;
 import io.opentracing.propagation.TextMap;
-import lombok.extern.slf4j.Slf4j;
-
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * This format is compatible with other Zipkin based trace libraries such as Brave, Wingtips, zipkin-js, etc.
