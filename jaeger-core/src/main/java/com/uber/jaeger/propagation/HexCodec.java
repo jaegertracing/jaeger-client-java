@@ -20,11 +20,13 @@ final class HexCodec {
   /**
    * Parses a 1 to 32 character lower-hex string with no prefix into an unsigned long, tossing any
    * bits higher than 64.
+   *
+   * @return a 64 bit long, meaning that negative values are the overflow of Java's 32 bit long
    */
-  static long lowerHexToUnsignedLong(String lowerHex) {
+  static Long lowerHexToUnsignedLong(String lowerHex) {
     int length = lowerHex.length();
     if (length < 1 || length > 32) {
-      throw isntLowerHexLong(lowerHex);
+      return null;
     }
 
     // trim off any high bits
@@ -36,8 +38,10 @@ final class HexCodec {
   /**
    * Parses a 16 character lower-hex string with no prefix into an unsigned long, starting at the
    * spe index.
+   *
+   * @return a 64 bit long, meaning that negative values are the overflow of Java's 32 bit long
    */
-  static long lowerHexToUnsignedLong(String lowerHex, int index) {
+  static Long lowerHexToUnsignedLong(String lowerHex, int index) {
     long result = 0;
     for (int endIndex = Math.min(index + 16, lowerHex.length()); index < endIndex; index++) {
       char c = lowerHex.charAt(index);
@@ -47,15 +51,10 @@ final class HexCodec {
       } else if (c >= 'a' && c <= 'f') {
         result |= c - 'a' + 10;
       } else {
-        throw isntLowerHexLong(lowerHex);
+        return null;
       }
     }
     return result;
-  }
-
-  static NumberFormatException isntLowerHexLong(String lowerHex) {
-    throw new NumberFormatException(
-        lowerHex + " should be a 1 to 32 character lower-hex string with no prefix");
   }
 
   /**

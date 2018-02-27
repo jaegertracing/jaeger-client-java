@@ -62,7 +62,7 @@ public class B3TextMapCodec implements Codec<TextMap> {
   public SpanContext extract(TextMap carrier) {
     Long traceId = null;
     Long spanId = null;
-    long parentId = 0L; // Conventionally, parent id == 0 means the root span
+    Long parentId = 0L; // Conventionally, parent id == 0 means the root span
     byte flags = 0;
     for (Map.Entry<String, String> entry : carrier) {
       if (entry.getKey().equalsIgnoreCase(SAMPLED_NAME)) {
@@ -83,7 +83,7 @@ public class B3TextMapCodec implements Codec<TextMap> {
       }
     }
 
-    if (traceId != null && spanId != null) {
+    if (null != traceId && null != parentId && null != spanId) {
       return new SpanContext(traceId, spanId, parentId, flags);
     }
     return null;
