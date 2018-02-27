@@ -66,4 +66,21 @@ public class B3TextMapCodecResiliencyTest {
     maliciousCarrier.put(PARENT_SPAN_ID_NAME, validInput);
     return maliciousCarrier;
   }
+
+  @Test
+  public void shouldFallbackWhenExtractingFromFaultyTextMap() {
+    TextMap faultyTextMap = new FaultyTextMap();
+    //when
+    SpanContext extract = sut.extract(faultyTextMap);
+    //then
+    assertNull(extract);
+  }
+
+  @Test
+  public void shouldFallbackWhenInjectingIntoFaultyTextMap() {
+    TextMap faultyTextMap = new FaultyTextMap();
+    SpanContext spanContext = SpanContext.contextFromString("a:b:c:1");
+    //expect to pass
+    sut.inject(spanContext, faultyTextMap);
+  }
 }
