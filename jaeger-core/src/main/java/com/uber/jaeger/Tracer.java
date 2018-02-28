@@ -23,6 +23,8 @@ import com.uber.jaeger.metrics.MetricsFactory;
 import com.uber.jaeger.metrics.NoopMetricsFactory;
 import com.uber.jaeger.metrics.StatsFactoryImpl;
 import com.uber.jaeger.metrics.StatsReporter;
+import com.uber.jaeger.propagation.ExceptionCatchingExtractorDecorator;
+import com.uber.jaeger.propagation.ExceptionCatchingInjectorDecorator;
 import com.uber.jaeger.propagation.Extractor;
 import com.uber.jaeger.propagation.Injector;
 import com.uber.jaeger.propagation.TextMapCodec;
@@ -600,12 +602,12 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
 
     @SuppressWarnings("unchecked")
     <T> Injector<T> getInjector(Format<T> format) {
-      return (Injector<T>) injectors.get(format);
+      return new ExceptionCatchingInjectorDecorator<T>((Injector<T>) injectors.get(format));
     }
 
     @SuppressWarnings("unchecked")
     <T> Extractor<T> getExtractor(Format<T> format) {
-      return (Extractor<T>) extractors.get(format);
+      return new ExceptionCatchingExtractorDecorator<T>((Extractor<T>) extractors.get(format));
     }
 
     public <T> void register(Format<T> format, Injector<T> injector) {
