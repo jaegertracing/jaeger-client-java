@@ -23,6 +23,7 @@ Click through for more detailed docs on specific modules.
  * [jaeger-apachehttpclient](./jaeger-apachehttpclient): instrumentation for apache http clients
  * [jaeger-jaxrs2](./jaeger-jaxrs2): instrumentation for JAXRS2 filters
  * [jaeger-zipkin](./jaeger-zipkin): compatibility layer for using Jaeger tracer as Zipkin-compatible implementation
+ * [jaeger-micrometer](./jaeger-micrometer): a metrics provider, to report internal Jaeger metrics to third-party backends, such as Prometheus
 
 ## Importing Dependencies
 All artifacts are published to Maven Central. 
