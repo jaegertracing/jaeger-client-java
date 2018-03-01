@@ -23,8 +23,6 @@ import com.uber.jaeger.metrics.MetricsFactory;
 import com.uber.jaeger.metrics.NoopMetricsFactory;
 import com.uber.jaeger.metrics.StatsFactoryImpl;
 import com.uber.jaeger.metrics.StatsReporter;
-import com.uber.jaeger.propagation.ExceptionCatchingExtractorDecorator;
-import com.uber.jaeger.propagation.ExceptionCatchingInjectorDecorator;
 import com.uber.jaeger.propagation.Extractor;
 import com.uber.jaeger.propagation.Injector;
 import com.uber.jaeger.propagation.TextMapCodec;
@@ -593,29 +591,6 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
         throw new IllegalArgumentException("Service name must not be null or empty");
       }
       return serviceName;
-    }
-  }
-
-  private static class PropagationRegistry {
-    private final Map<Format<?>, Injector<?>> injectors = new HashMap<Format<?>, Injector<?>>();
-    private final Map<Format<?>, Extractor<?>> extractors = new HashMap<Format<?>, Extractor<?>>();
-
-    @SuppressWarnings("unchecked")
-    <T> Injector<T> getInjector(Format<T> format) {
-      return new ExceptionCatchingInjectorDecorator<T>((Injector<T>) injectors.get(format));
-    }
-
-    @SuppressWarnings("unchecked")
-    <T> Extractor<T> getExtractor(Format<T> format) {
-      return new ExceptionCatchingExtractorDecorator<T>((Extractor<T>) extractors.get(format));
-    }
-
-    public <T> void register(Format<T> format, Injector<T> injector) {
-      injectors.put(format, injector);
-    }
-
-    public <T> void register(Format<T> format, Extractor<T> extractor) {
-      extractors.put(format, extractor);
     }
   }
 
