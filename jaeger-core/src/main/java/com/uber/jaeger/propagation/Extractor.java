@@ -18,24 +18,25 @@ import com.uber.jaeger.SpanContext;
 
 /**
  * <p>You should implement this class if you want to add possibility to extract information about
- * SpanContext that is provided in your custom format from carrier. Otherwise you should probably
- * use built-in {@link TextMapCodec} or {@link B3TextMapCodec}</p>
+ * SpanContext that is provided in your custom format. Otherwise you should probably use built-in
+ * {@link TextMapCodec} or {@link B3TextMapCodec}</p>
  *
  * @see B3TextMapCodec
  * @see TextMapCodec
+ * @see Codec
  */
 public interface Extractor<T> {
 
   /**
    * <p>Called when {@link io.opentracing.Tracer#extract(io.opentracing.propagation.Format, Object)
-   * Tracer.extract()} is used. It should handle the logic behind extracting propagation-scheme
+   * Tracer.extract(...)} is used. It should handle the logic behind extracting propagation-scheme
    * specific information from carrier (e.g. http request headers, amqp message headers, etc.).</p>
    *
-   * <p>This method must not modify input carrier</p>
+   * <p>This method must not modify the carrier</p>
    *
    * <p>All exceptions thrown from this method will be caught and logged on {@code WARN} level so
-   * that business code execution isn't affected. If possible, catch specific exceptions in your
-   * implementation and log more meaningful information.</p>
+   * that business code execution isn't affected. If possible, catch implementation specific
+   * exceptions and log more meaningful information.</p>
    *
    * @param carrier input that you extract Span information from, usually {@link
    * io.opentracing.propagation.TextMap}.
