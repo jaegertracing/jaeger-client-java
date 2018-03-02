@@ -14,25 +14,25 @@ class PropagationRegistry {
 
   @SuppressWarnings("unchecked")
   <T> Injector<T> getInjector(Format<T> format) {
-    return new ExceptionCatchingInjectorDecorator<T>((Injector<T>) injectors.get(format));
+    return (Injector<T>) injectors.get(format);
   }
 
   @SuppressWarnings("unchecked")
   <T> Extractor<T> getExtractor(Format<T> format) {
-    return new ExceptionCatchingExtractorDecorator<T>((Extractor<T>) extractors.get(format));
+    return (Extractor<T>) extractors.get(format);
   }
 
   public <T> void register(Format<T> format, Injector<T> injector) {
-    injectors.put(format, injector);
+    injectors.put(format, new ExceptionCatchingInjectorDecorator<T>(injector));
   }
 
   public <T> void register(Format<T> format, Extractor<T> extractor) {
-    extractors.put(format, extractor);
+    extractors.put(format, new ExceptionCatchingExtractorDecorator<T>(extractor));
   }
 
   @RequiredArgsConstructor
   @Slf4j
-  public static class ExceptionCatchingExtractorDecorator<T> implements Extractor<T> {
+  private static class ExceptionCatchingExtractorDecorator<T> implements Extractor<T> {
 
     private final Extractor<T> decorated;
 
@@ -49,7 +49,7 @@ class PropagationRegistry {
 
   @RequiredArgsConstructor
   @Slf4j
-  public static class ExceptionCatchingInjectorDecorator<T> implements Injector<T> {
+  private static class ExceptionCatchingInjectorDecorator<T> implements Injector<T> {
 
     private final Injector<T> decorated;
 
