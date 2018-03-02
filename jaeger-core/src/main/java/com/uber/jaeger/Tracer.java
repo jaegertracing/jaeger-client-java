@@ -594,29 +594,6 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
     }
   }
 
-  private static class PropagationRegistry {
-    private final Map<Format<?>, Injector<?>> injectors = new HashMap<Format<?>, Injector<?>>();
-    private final Map<Format<?>, Extractor<?>> extractors = new HashMap<Format<?>, Extractor<?>>();
-
-    @SuppressWarnings("unchecked")
-    <T> Injector<T> getInjector(Format<T> format) {
-      return (Injector<T>) injectors.get(format);
-    }
-
-    @SuppressWarnings("unchecked")
-    <T> Extractor<T> getExtractor(Format<T> format) {
-      return (Extractor<T>) extractors.get(format);
-    }
-
-    public <T> void register(Format<T> format, Injector<T> injector) {
-      injectors.put(format, injector);
-    }
-
-    public <T> void register(Format<T> format, Extractor<T> extractor) {
-      extractors.put(format, extractor);
-    }
-  }
-
   private static String loadVersion() {
     String version;
     try {

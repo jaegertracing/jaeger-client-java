@@ -15,7 +15,33 @@
 package com.uber.jaeger.propagation;
 
 import com.uber.jaeger.SpanContext;
+import io.opentracing.propagation.Format;
 
+/**
+ * <p>You should implement this class if you want to add possibility to inject information about
+ * SpanContext that is passed between services in your custom propagation scheme. Otherwise you
+ * should probably use built-in {@link TextMapCodec} or {@link B3TextMapCodec}</p>
+ *
+ * @see TextMapCodec
+ * @see B3TextMapCodec
+ * @see Codec
+ */
 public interface Injector<T> {
+
+  /**
+   * <p>Called when {@link io.opentracing.Tracer#inject(io.opentracing.SpanContext, Format, Object)
+   * Tracer.inject(...)} is used. It should handle the logic behind injecting propagation scheme
+   * specific information into the carrier (e.g. http request headers, amqp message headers,
+   * etc.).</p>
+   *
+   * <p>All exceptions thrown from this method will be caught and logged on {@code ERROR} level so
+   * that business code execution isn't affected. If possible, catch implementation specific
+   * exceptions and log more meaningful information.</p>
+   *
+   * @param spanContext span context that should be used to pass trace information with the carrier
+   * @param carrier holder of data that is used to pass tracing information between processes
+   * @see B3TextMapCodec
+   * @see TextMapCodec
+   */
   void inject(SpanContext spanContext, T carrier);
 }
