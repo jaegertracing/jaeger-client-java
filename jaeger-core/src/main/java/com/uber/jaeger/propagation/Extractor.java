@@ -18,8 +18,8 @@ import com.uber.jaeger.SpanContext;
 
 /**
  * <p>You should implement this class if you want to add possibility to extract information about
- * SpanContext that is provided in your custom format. Otherwise you should probably use built-in
- * {@link TextMapCodec} or {@link B3TextMapCodec}</p>
+ * SpanContext that is provided in your custom propagation scheme. Otherwise you should probably use
+ * built-in {@link TextMapCodec} or {@link B3TextMapCodec}</p>
  *
  * @see B3TextMapCodec
  * @see TextMapCodec
