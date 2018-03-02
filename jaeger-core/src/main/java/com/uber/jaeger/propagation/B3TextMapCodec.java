@@ -17,6 +17,7 @@ package com.uber.jaeger.propagation;
 import com.uber.jaeger.SpanContext;
 import io.opentracing.propagation.TextMap;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * This format is compatible with other Zipkin based trace libraries such as Brave, Wingtips, zipkin-js, etc.
@@ -35,6 +36,7 @@ import java.util.Map;
  * <p>
  * See <a href="http://zipkin.io/pages/instrumenting.html">Instrumenting a Library</a>
  */
+@Slf4j
 public class B3TextMapCodec implements Codec<TextMap> {
   protected static final String TRACE_ID_NAME = "X-B3-TraceId";
   protected static final String SPAN_ID_NAME = "X-B3-SpanId";
@@ -47,44 +49,52 @@ public class B3TextMapCodec implements Codec<TextMap> {
 
   @Override
   public void inject(SpanContext spanContext, TextMap carrier) {
-    carrier.put(TRACE_ID_NAME, HexCodec.toLowerHex(spanContext.getTraceId()));
-    if (spanContext.getParentId() != 0L) { // Conventionally, parent id == 0 means the root span
-      carrier.put(PARENT_SPAN_ID_NAME, HexCodec.toLowerHex(spanContext.getParentId()));
-    }
-    carrier.put(SPAN_ID_NAME, HexCodec.toLowerHex(spanContext.getSpanId()));
-    carrier.put(SAMPLED_NAME, spanContext.isSampled() ? "1" : "0");
-    if (spanContext.isDebug()) {
-      carrier.put(FLAGS_NAME, "1");
+    try {
+      carrier.put(TRACE_ID_NAME, HexCodec.toLowerHex(spanContext.getTraceId()));
+      if (spanContext.getParentId() != 0L) { // Conventionally, parent id == 0 means the root span
+        carrier.put(PARENT_SPAN_ID_NAME, HexCodec.toLowerHex(spanContext.getParentId()));
+      }
+      carrier.put(SPAN_ID_NAME, HexCodec.toLowerHex(spanContext.getSpanId()));
+      carrier.put(SAMPLED_NAME, spanContext.isSampled() ? "1" : "0");
+      if (spanContext.isDebug()) {
+        carrier.put(FLAGS_NAME, "1");
+      }
+    } catch (RuntimeException ex) {
+      log.error("Error when injecting SpanContext into carrier. Handling gracefully.", ex);
     }
   }
 
   @Override
   public SpanContext extract(TextMap carrier) {
-    Long traceId = null;
-    Long spanId = null;
-    Long parentId = 0L; // Conventionally, parent id == 0 means the root span
-    byte flags = 0;
-    for (Map.Entry<String, String> entry : carrier) {
-      if (entry.getKey().equalsIgnoreCase(SAMPLED_NAME)) {
-        String value = entry.getValue();
-        if ("1".equals(value) || "true".equalsIgnoreCase(value)) {
-          flags |= SAMPLED_FLAG;
-        }
-      } else if (entry.getKey().equalsIgnoreCase(TRACE_ID_NAME)) {
-        traceId = HexCodec.lowerHexToUnsignedLong(entry.getValue());
-      } else if (entry.getKey().equalsIgnoreCase(PARENT_SPAN_ID_NAME)) {
-        parentId = HexCodec.lowerHexToUnsignedLong(entry.getValue());
-      } else if (entry.getKey().equalsIgnoreCase(SPAN_ID_NAME)) {
-        spanId = HexCodec.lowerHexToUnsignedLong(entry.getValue());
-      } else if (entry.getKey().equalsIgnoreCase(FLAGS_NAME)) {
-        if (entry.getValue().equals("1")) {
-          flags |= DEBUG_FLAG;
+    try {
+      Long traceId = null;
+      Long spanId = null;
+      Long parentId = 0L; // Conventionally, parent id == 0 means the root span
+      byte flags = 0;
+      for (Map.Entry<String, String> entry : carrier) {
+        if (entry.getKey().equalsIgnoreCase(SAMPLED_NAME)) {
+          String value = entry.getValue();
+          if ("1".equals(value) || "true".equalsIgnoreCase(value)) {
+            flags |= SAMPLED_FLAG;
+          }
+        } else if (entry.getKey().equalsIgnoreCase(TRACE_ID_NAME)) {
+          traceId = HexCodec.lowerHexToUnsignedLong(entry.getValue());
+        } else if (entry.getKey().equalsIgnoreCase(PARENT_SPAN_ID_NAME)) {
+          parentId = HexCodec.lowerHexToUnsignedLong(entry.getValue());
+        } else if (entry.getKey().equalsIgnoreCase(SPAN_ID_NAME)) {
+          spanId = HexCodec.lowerHexToUnsignedLong(entry.getValue());
+        } else if (entry.getKey().equalsIgnoreCase(FLAGS_NAME)) {
+          if (entry.getValue().equals("1")) {
+            flags |= DEBUG_FLAG;
+          }
         }
       }
-    }
 
-    if (null != traceId && null != parentId && null != spanId) {
-      return new SpanContext(traceId, spanId, parentId, flags);
+      if (null != traceId && null != parentId && null != spanId) {
+        return new SpanContext(traceId, spanId, parentId, flags);
+      }
+    } catch (RuntimeException ex) {
+      log.warn("Error when extracting SpanContext from carrier. Handling gracefully.", ex);
     }
     return null;
   }
