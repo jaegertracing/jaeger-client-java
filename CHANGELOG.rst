@@ -1,10 +1,18 @@
 Changes by Version
 ==================
 
-0.24.1 (unreleased)
+0.25.0 (2018-03-07)
 -------------------
 
-- Nothing yet.
+- Consolidate codec exception handling and logs exceptions (#362) <Tomasz Adamski>
+- Deprecated StatsReporter (#349) <Juraci Paixão Kröhling>
+- Ignores B3 headers if invalid values are provided (#355) <Juraci Paixão Kröhling>
+- Refactor public constructor API (#346) <Pavol Loffay>
+- Expand exception logs (#168) <Pavol Loffay>
+- Deprecate JerseyServerFilter#JerseyServerFilter(Tracer, TraceContext) (#352) <Debosmit Ray>
+- Micrometer support (#335) <Juraci Paixão Kröhling>
+- Metrics are now consistent with Go (#335) <Juraci Paixão Kröhling>
+- Updated Trace Resolver (#347) <Gary Brown>
 
 
 0.24.0 (2018-01-31)
@@ -34,7 +42,7 @@ Changes by Version
 
 
 0.22.0-RC2 (2017-10-26)
--------------------
+-----------------------
 
 - Break apart functionality of TracingRequestInterceptor (https://github.com/jaegertracing/jaeger-client-java/pull/248)
 - Split out the jaxrs2 filters (https://github.com/jaegertracing/jaeger-client-java/pull/273)
