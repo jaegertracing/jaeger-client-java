@@ -11,7 +11,8 @@ The release process consists of these steps:
      the staging repository closed, and the artifacts on the way to Maven Central (it takes 20min+ to get there).
      In case of failures it is safe to retry by restarting the CROSSDOCK step of the build. If it keeps
      failing, sometimes it may be necessary to close the staging repository manually.
-  1. Once the artifacsts are available on Maven
+  1. Create a release on GitHub for the new tag. Use the changes from the `CHANGELOG` as the description.
+  1. Once the artifacts are available on Maven
      * bump the version in `build.gradle` to `major.minor.(patch+1)-SNAPSHOT`
      * add a new section to the CHANGELOG with that version as `(unreleased)` and a bullet point `- Nothing yet`
      * commit with the comment "Back to development" (for example, https://github.com/jaegertracing/jaeger-client-java/commit/da9726d3ba7309947882e3c621516c70b4bc83dc)
@@ -39,7 +40,7 @@ While the Travis build is ready for that, releasing locally requires the followi
     * you can also use Web UI and upload plain test key that you can obtain via
       * `gpg --armor --export {your email used for the keys}`
 
-## Closing Staging Repository Manually1
+## Closing Staging Repository Manually
 
  * https://oss.sonatype.org/, log in, go to Staging Repositories
  * In the top-right corner search box type `uber`, and find your uploaded repository
