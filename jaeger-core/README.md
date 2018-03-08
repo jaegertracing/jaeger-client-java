@@ -111,7 +111,10 @@ spans in memory:
 ```java
 Reporter reporter = new InMemoryReporter();
 Sampler sampler = new ConstSampler(true);
-Tracer tracer = new Tracer.Builder(serviceName, reporter, sampler).build();
+Tracer tracer = new Tracer.Builder(serviceName)
+    .withReporter(reporter)
+    .withSampler(sampler)
+    .build();
 ```
 
 See also: [opentracing-java](https://github.com/opentracing/opentracing-java)
