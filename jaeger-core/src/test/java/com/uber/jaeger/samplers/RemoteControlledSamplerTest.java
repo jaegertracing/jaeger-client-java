@@ -17,7 +17,7 @@ package com.uber.jaeger.samplers;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -102,15 +102,21 @@ public class RemoteControlledSamplerTest {
   @Test
   public void testUpdatePerOperationSamplerUpdatesExistingPerOperationSampler() throws Exception {
     PerOperationSampler perOperationSampler = mock(PerOperationSampler.class);
-    OperationSamplingParameters parameters = mock(OperationSamplingParameters.class);
-    when(samplingManager.getSamplingStrategy(SERVICE_NAME)).thenReturn(
-        new SamplingStrategyResponse(null, null, parameters));
-    undertest = new RemoteControlledSampler(SERVICE_NAME, samplingManager, perOperationSampler, metrics);
+    OperationSamplingParameters initialParams = mock(OperationSamplingParameters.class);
+    OperationSamplingParameters subsequentPrams = mock(OperationSamplingParameters.class);
+    SamplingManager samplingManager = mock(SamplingManager.class);
+
+    when(samplingManager.getSamplingStrategy(SERVICE_NAME))
+        .thenReturn(new SamplingStrategyResponse(null, null, initialParams))
+        .thenReturn(new SamplingStrategyResponse(null, null, subsequentPrams));
+
+    undertest = new RemoteControlledSampler(SERVICE_NAME,
+        samplingManager, perOperationSampler, metrics);
+    // Initial update is called by pollTimer when sampler is created.
+    verify(perOperationSampler, timeout(1000)).update(initialParams);
 
     undertest.updateSampler();
-    Thread.sleep(20);
-    //updateSampler is hit once automatically because of the pollTimer
-    verify(perOperationSampler, times(2)).update(parameters);
+    verify(perOperationSampler).update(subsequentPrams);
   }
 
   @Test
