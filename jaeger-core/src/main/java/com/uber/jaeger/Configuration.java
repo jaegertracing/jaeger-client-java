@@ -570,7 +570,7 @@ public class Configuration {
     private Reporter getReporter(Metrics metrics) {
       Reporter reporter = new RemoteReporter.Builder()
           .withMetrics(metrics)
-          .withSender(senderConfiguration.sender)
+          .withSender(senderConfiguration.getSender())
           .withFlushInterval(numberOrDefault(this.flushIntervalMs, RemoteReporter.DEFAULT_FLUSH_INTERVAL_MS).intValue())
           .withMaxQueueSize(numberOrDefault(this.maxQueueSize, RemoteReporter.DEFAULT_MAX_QUEUE_SIZE).intValue())
           .build();
