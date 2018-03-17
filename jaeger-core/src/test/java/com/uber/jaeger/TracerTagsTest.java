@@ -18,6 +18,9 @@ import static org.junit.Assert.assertEquals;
 
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.samplers.ConstSampler;
+import com.uber.jaeger.utils.Utils;
+import java.net.Inet4Address;
+import java.net.InetAddress;
 import org.junit.Test;
 
 public class TracerTagsTest {
@@ -37,5 +40,53 @@ public class TracerTagsTest {
     assertEquals(true, span.getTags().containsKey("sampler.type"));
     assertEquals(true, span.getTags().containsKey("sampler.param"));
     assertEquals(false, span.getTags().containsKey("tracer.tag.str"));
+  }
+
+  @Test
+  public void testDefaultHostTags() throws Exception {
+    InMemoryReporter spanReporter = new InMemoryReporter();
+    Tracer tracer = new Tracer.Builder("x")
+        .withReporter(spanReporter)
+        .build();
+    assertEquals(tracer.getHostName(), tracer.tags().get(Constants.TRACER_HOSTNAME_TAG_KEY));
+    assertEquals(InetAddress.getLocalHost().getHostAddress(), tracer.tags().get(Constants.TRACER_IP_TAG_KEY));
+    assertEquals(Utils.ipToInt(Inet4Address.getLocalHost().getHostAddress()), tracer.getIpv4());
+  }
+
+  @Test
+  public void testDeclaredHostTags() throws Exception {
+    InMemoryReporter spanReporter = new InMemoryReporter();
+    String hostname = "myhost";
+    String ip = "1.1.1.1";
+    Tracer tracer = new Tracer.Builder("x")
+        .withReporter(spanReporter)
+        .withTag(Constants.TRACER_HOSTNAME_TAG_KEY, hostname)
+        .withTag(Constants.TRACER_IP_TAG_KEY, ip)
+        .build();
+    assertEquals(hostname, tracer.tags().get(Constants.TRACER_HOSTNAME_TAG_KEY));
+    assertEquals(ip, tracer.tags().get(Constants.TRACER_IP_TAG_KEY));
+    assertEquals(Utils.ipToInt(ip), tracer.getIpv4());
+  }
+
+  @Test
+  public void testEmptyDeclaredIpTag() throws Exception {
+    InMemoryReporter spanReporter = new InMemoryReporter();
+    String ip = "";
+    Tracer tracer = new Tracer.Builder("x")
+            .withReporter(spanReporter)
+            .withTag(Constants.TRACER_IP_TAG_KEY, ip)
+            .build();
+    assertEquals(0, tracer.getIpv4());
+  }
+
+  @Test
+  public void testShortDeclaredIpTag() throws Exception {
+    InMemoryReporter spanReporter = new InMemoryReporter();
+    String ip = ":19";
+    Tracer tracer = new Tracer.Builder("x")
+            .withReporter(spanReporter)
+            .withTag(Constants.TRACER_IP_TAG_KEY, ip)
+            .build();
+    assertEquals(0, tracer.getIpv4());
   }
 }

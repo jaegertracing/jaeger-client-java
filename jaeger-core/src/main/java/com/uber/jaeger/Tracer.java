@@ -17,6 +17,8 @@ package com.uber.jaeger;
 import com.uber.jaeger.baggage.BaggageRestrictionManager;
 import com.uber.jaeger.baggage.BaggageSetter;
 import com.uber.jaeger.baggage.DefaultBaggageRestrictionManager;
+import com.uber.jaeger.exceptions.EmptyIpException;
+import com.uber.jaeger.exceptions.NotFourOctetsException;
 import com.uber.jaeger.exceptions.UnsupportedFormatException;
 import com.uber.jaeger.metrics.Metrics;
 import com.uber.jaeger.metrics.MetricsFactory;
@@ -98,16 +100,29 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
     this.version = loadVersion();
 
     tags.put(Constants.JAEGER_CLIENT_VERSION_TAG_KEY, this.version);
-    String hostname = getHostName();
-    if (hostname != null) {
-      tags.put(Constants.TRACER_HOSTNAME_TAG_KEY, hostname);
+    if (tags.get(Constants.TRACER_HOSTNAME_TAG_KEY) == null) {
+      String hostname = getHostName();
+      if (hostname != null) {
+        tags.put(Constants.TRACER_HOSTNAME_TAG_KEY, hostname);
+      }
     }
-    int ipv4 ;
-    try {
-      tags.put(Constants.TRACER_IP_TAG_KEY, InetAddress.getLocalHost().getHostAddress());
-      ipv4 = Utils.ipToInt(Inet4Address.getLocalHost().getHostAddress());
-    } catch (UnknownHostException e) {
-      ipv4 = 0;
+    int ipv4;
+    Object ipTag = tags.get(Constants.TRACER_IP_TAG_KEY);
+    if (ipTag == null) {
+      try {
+        tags.put(Constants.TRACER_IP_TAG_KEY, InetAddress.getLocalHost().getHostAddress());
+        ipv4 = Utils.ipToInt(Inet4Address.getLocalHost().getHostAddress());
+      } catch (UnknownHostException e) {
+        ipv4 = 0;
+      }
+    } else {
+      try {
+        ipv4 = Utils.ipToInt(ipTag.toString());
+      } catch (EmptyIpException e) {
+        ipv4 = 0;
+      } catch (NotFourOctetsException e) {
+        ipv4 = 0;
+      }
     }
     this.ipv4 = ipv4;
     this.tags = Collections.unmodifiableMap(tags);
