@@ -1,10 +1,11 @@
 Changes by Version
 ==================
 
-0.25.1 (unreleased)
+0.26.0 (2018-03-19)
 -------------------
-
-- Nothing yet.
+- Avoid host lookups if trace tags have already been provided (#371) <Christopher Hunt>
+- Update the ReporterConfig to set Sender Correctly (#370) <Nate Hart>
+- Fix for issue 366, fix deprecated code in example (#367) <Kevin Earls>
 
 0.25.0 (2018-03-07)
 -------------------
