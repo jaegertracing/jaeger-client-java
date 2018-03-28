@@ -33,7 +33,6 @@ import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Response;
 
 import okhttp3.OkHttpClient;
-import org.apache.thrift.TException;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.junit.Before;
@@ -71,7 +70,7 @@ public class HttpSenderTest extends JerseyTest {
         .send(new Process("name"), generateSpans());
   }
 
-  @Test(expected = TException.class)
+  @Test(expected = Exception.class)
   public void sendServerError() throws Exception {
     HttpSender sender = new HttpSender(target("/api/tracesErr").getUri().toString());
     sender.send(new Process("robotrock"), generateSpans());
@@ -82,7 +81,7 @@ public class HttpSenderTest extends JerseyTest {
     new HttpSender("misconfiguredUrl");
   }
 
-  @Test(expected = TException.class)
+  @Test(expected = Exception.class)
   public void serverDoesntExist() throws Exception {
     HttpSender sender = new HttpSender("http://some-server/api/traces");
     sender.send(new Process("robotrock"), generateSpans());
@@ -125,7 +124,7 @@ public class HttpSenderTest extends JerseyTest {
     try {
       sender.send(new Process("robotrock"), generateSpans());
       fail("expecting exception");
-    } catch (TException te) {
+    } catch (Exception te) {
       assertTrue(te.getMessage().contains("response 401"));
     }
   }

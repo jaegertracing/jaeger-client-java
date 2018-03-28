@@ -29,16 +29,12 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import org.apache.thrift.TException;
-import org.apache.thrift.TSerializer;
-import org.apache.thrift.protocol.TBinaryProtocol;
 
-@ToString(exclude = {"httpClient", "serializer", "requestBuilder"})
+@ToString(exclude = {"httpClient", "requestBuilder"})
 public class HttpSender extends ThriftSender {
   private static final String HTTP_COLLECTOR_JAEGER_THRIFT_FORMAT_PARAM = "format=jaeger.thrift";
   private static final int ONE_MB_IN_BYTES = 1048576;
   private static final MediaType MEDIA_TYPE_THRIFT = MediaType.parse("application/x-thrift");
-  private final TSerializer serializer;
   private final OkHttpClient httpClient;
   private final Request.Builder requestBuilder;
 
@@ -57,7 +53,7 @@ public class HttpSender extends ThriftSender {
    * @param endpoint Jaeger REST endpoint consuming jaeger.thrift, e.g
    * http://localhost:14268/api/traces
    * @param maxPacketSize max bytes to serialize as payload, if 0 it will use
-   *   {@value com.uber.jaeger.reporters.protocols.ThriftUdpTransport#MAX_PACKET_SIZE}
+   *   {@value com.uber.jaeger.thrift.reporters.protocols.ThriftUdpTransport#MAX_PACKET_SIZE}
    *
    * @deprecated use {@link HttpSender.Builder} with fluent API
    */
@@ -78,7 +74,7 @@ public class HttpSender extends ThriftSender {
    * @param endpoint Jaeger REST endpoint consuming jaeger.thrift, e.g
    * http://localhost:14268/api/traces
    * @param maxPacketSize max bytes to serialize as payload, if 0 it will use
-   *   {@value com.uber.jaeger.reporters.protocols.ThriftUdpTransport#MAX_PACKET_SIZE}
+   *   {@value com.uber.jaeger.thrift.reporters.protocols.ThriftUdpTransport#MAX_PACKET_SIZE}
    * @param client a client used to make http requests
    * @deprecated use {@link HttpSender.Builder} with fluent API
    */
@@ -90,7 +86,7 @@ public class HttpSender extends ThriftSender {
   }
 
   private HttpSender(Builder builder) {
-    super(new TBinaryProtocol.Factory(), builder.maxPacketSize);
+    super(ProtocolType.Binary, builder.maxPacketSize);
     HttpUrl collectorUrl = HttpUrl
         .parse(String.format("%s?%s", builder.endpoint, HTTP_COLLECTOR_JAEGER_THRIFT_FORMAT_PARAM));
     if (collectorUrl == null) {
@@ -98,13 +94,12 @@ public class HttpSender extends ThriftSender {
     }
     this.httpClient = builder.clientBuilder.build();
     this.requestBuilder = new Request.Builder().url(collectorUrl);
-    this.serializer = new TSerializer(protocolFactory);
   }
 
   @Override
-  public void send(Process process, List<Span> spans) throws TException {
+  public void send(Process process, List<Span> spans) throws Exception {
     Batch batch = new Batch(process, spans);
-    byte[] bytes = serializer.serialize(batch);
+    byte[] bytes = serialize(batch);
 
     RequestBody body = RequestBody.create(MEDIA_TYPE_THRIFT, bytes);
     Request request = requestBuilder.post(body).build();
@@ -112,7 +107,7 @@ public class HttpSender extends ThriftSender {
     try {
       response = httpClient.newCall(request).execute();
     } catch (IOException e) {
-      throw new TException(String.format("Could not send %d spans", spans.size()), e);
+      throw new Exception(String.format("Could not send %d spans", spans.size()), e);
     }
 
     if (!response.isSuccessful()) {
@@ -125,7 +120,7 @@ public class HttpSender extends ThriftSender {
 
       String exceptionMessage = String.format("Could not send %d spans, response %d: %s",
           spans.size(), response.code(), responseBody);
-      throw new TException(exceptionMessage);
+      throw new Exception(exceptionMessage);
     }
   }
 

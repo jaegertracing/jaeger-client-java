@@ -8,6 +8,8 @@ description = 'Generated thrift code'
 dependencies {
     compile group: 'org.apache.thrift', name: 'libthrift', version: apacheThriftVersion
 
+    testCompile group: 'junit', name: 'junit', version: junitVersion
+
     signature 'org.codehaus.mojo.signature:java16:1.1@signature'
 }
 
@@ -41,8 +43,18 @@ shadowJar {
     classifier 'thrift92'
 }
 
+task testJar(type: Jar, dependsOn: testClasses) {
+    baseName = "test-${project.archivesBaseName}"
+    from sourceSets.test.output
+}
+
+configurations {
+    tests
+}
+
 artifacts {
     archives(shadowJar.archivePath) {
         builtBy shadowJar
     }
+    tests testJar
 }

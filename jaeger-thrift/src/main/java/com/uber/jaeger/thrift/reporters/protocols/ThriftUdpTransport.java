@@ -12,7 +12,7 @@
  * the License.
  */
 
-package com.uber.jaeger.reporters.protocols;
+package com.uber.jaeger.thrift.reporters.protocols;
 
 import java.io.Closeable;
 import java.io.IOException;
