@@ -1,6 +1,10 @@
 Changes by Version
 ==================
 
+0.26.1 (unreleased)
+-------------------
+- Nothing yet.
+
 0.26.0 (2018-03-19)
 -------------------
 - Avoid host lookups if trace tags have already been provided (#371) <Christopher Hunt>
