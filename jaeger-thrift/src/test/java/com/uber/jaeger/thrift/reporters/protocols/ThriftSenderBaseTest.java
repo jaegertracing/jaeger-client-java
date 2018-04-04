@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018, Uber Technologies, Inc
+ * Copyright (c) 2016-2018, The Jaeger Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -34,7 +34,7 @@ public class ThriftSenderBaseTest {
     int a = calculateBatchOverheadDifference(1);
     int b = calculateBatchOverheadDifference(2);
 
-    // This value has been empirically observed to be 56.
+    // This value has been empirically observed and defined in ThriftSenderBase.EMIT_BATCH_OVERHEAD.
     // If this test breaks it means we have changed our protocol, or
     // the protocol information has changed (likely due to a new version of thrift).
     assertEquals(a, b);

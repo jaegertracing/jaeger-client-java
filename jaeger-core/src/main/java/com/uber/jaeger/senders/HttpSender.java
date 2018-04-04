@@ -14,6 +14,7 @@
 
 package com.uber.jaeger.senders;
 
+import com.uber.jaeger.exceptions.SenderException;
 import com.uber.jaeger.thriftjava.Batch;
 import com.uber.jaeger.thriftjava.Process;
 import com.uber.jaeger.thriftjava.Span;
@@ -97,9 +98,14 @@ public class HttpSender extends ThriftSender {
   }
 
   @Override
-  public void send(Process process, List<Span> spans) throws Exception {
+  public void send(Process process, List<Span> spans) throws SenderException {
     Batch batch = new Batch(process, spans);
-    byte[] bytes = serialize(batch);
+    byte[] bytes = null;
+    try {
+      bytes = serialize(batch);
+    } catch (Exception e) {
+      throw new SenderException(String.format("Failed to serialize %d spans", spans.size()), e, spans.size());
+    }
 
     RequestBody body = RequestBody.create(MEDIA_TYPE_THRIFT, bytes);
     Request request = requestBuilder.post(body).build();
@@ -107,7 +113,7 @@ public class HttpSender extends ThriftSender {
     try {
       response = httpClient.newCall(request).execute();
     } catch (IOException e) {
-      throw new Exception(String.format("Could not send %d spans", spans.size()), e);
+      throw new SenderException(String.format("Could not send %d spans", spans.size()), e, spans.size());
     }
 
     if (!response.isSuccessful()) {
@@ -120,7 +126,7 @@ public class HttpSender extends ThriftSender {
 
       String exceptionMessage = String.format("Could not send %d spans, response %d: %s",
           spans.size(), response.code(), responseBody);
-      throw new Exception(exceptionMessage);
+      throw new SenderException(exceptionMessage, null, spans.size());
     }
   }
 

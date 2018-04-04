@@ -90,7 +90,7 @@ public abstract class ThriftSender extends ThriftSenderBase implements Sender {
     return n;
   }
 
-  public abstract void send(Process process, List<com.uber.jaeger.thriftjava.Span> spans) throws Exception;
+  public abstract void send(Process process, List<com.uber.jaeger.thriftjava.Span> spans) throws SenderException;
 
   @Override
   public int flush() throws SenderException {
@@ -101,7 +101,7 @@ public abstract class ThriftSender extends ThriftSenderBase implements Sender {
     int n = spanBuffer.size();
     try {
       send(process, spanBuffer);
-    } catch (Exception e) {
+    } catch (SenderException e) {
       throw new SenderException("Failed to flush spans.", e, n);
     } finally {
       spanBuffer.clear();

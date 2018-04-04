@@ -59,8 +59,12 @@ public class UdpSender extends ThriftSender {
   }
 
   @Override
-  public void send(Process process, List<com.uber.jaeger.thriftjava.Span> spans) throws Exception {
-    agentClient.emitBatch(new Batch(process, spans));
+  public void send(Process process, List<com.uber.jaeger.thriftjava.Span> spans) throws SenderException {
+    try {
+      agentClient.emitBatch(new Batch(process, spans));
+    } catch (Exception e) {
+      throw new SenderException(String.format("Could not send %d spans", spans.size()), e, 1);
+    }
   }
 
   @Override
