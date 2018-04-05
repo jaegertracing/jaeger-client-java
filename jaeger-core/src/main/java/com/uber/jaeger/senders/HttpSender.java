@@ -139,12 +139,12 @@ public class HttpSender extends ThriftSender {
       this.endpoint = endpoint;
     }
 
-    private Builder withClient(OkHttpClient client) {
+    public Builder withClient(OkHttpClient client) {
       this.clientBuilder = client.newBuilder();
       return this;
     }
 
-    private Builder withMaxPacketSize(int maxPacketSizeBytes) {
+    public Builder withMaxPacketSize(int maxPacketSizeBytes) {
       this.maxPacketSize = maxPacketSizeBytes;
       return this;
     }
