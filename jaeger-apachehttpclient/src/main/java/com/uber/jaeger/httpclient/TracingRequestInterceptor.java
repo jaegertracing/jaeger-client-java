@@ -53,7 +53,7 @@ public class TracingRequestInterceptor implements HttpRequestInterceptor {
       if (clientSpan != null) {
         onSpanStarted(clientSpan, httpRequest, httpContext);
       } else {
-        log.warn("Current client span is null; SpanCreationRequestInterceptor possibly failed to start client tracing span.");
+        log.warn("Current client span not found in http context.");
       }
 
       spanInjectionInterceptor.process(httpRequest, httpContext);
