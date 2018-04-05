@@ -63,7 +63,7 @@ public class UdpSender extends ThriftSender {
     try {
       agentClient.emitBatch(new Batch(process, spans));
     } catch (Exception e) {
-      throw new SenderException(String.format("Could not send %d spans", spans.size()), e, 1);
+      throw new SenderException(String.format("Could not send %d spans", spans.size()), e, spans.size());
     }
   }
 
