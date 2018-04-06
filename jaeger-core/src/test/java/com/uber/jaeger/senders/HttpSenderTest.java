@@ -18,6 +18,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.uber.jaeger.Configuration;
+import com.uber.jaeger.exceptions.SenderException;
 import com.uber.jaeger.thriftjava.Process;
 import com.uber.jaeger.thriftjava.Span;
 
@@ -85,6 +86,12 @@ public class HttpSenderTest extends JerseyTest {
   public void serverDoesntExist() throws Exception {
     HttpSender sender = new HttpSender("http://some-server/api/traces");
     sender.send(new Process("robotrock"), generateSpans());
+  }
+
+  @Test(expected = SenderException.class)
+  public void senderFail() throws Exception {
+    HttpSender sender = new HttpSender("http://some-server/api/traces");
+    sender.send(null, generateSpans());
   }
 
   @Test

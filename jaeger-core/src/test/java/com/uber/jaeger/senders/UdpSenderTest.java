@@ -30,6 +30,7 @@ import com.uber.jaeger.thrift.reporters.protocols.TestTServer;
 import com.uber.jaeger.thriftjava.Batch;
 import com.uber.jaeger.thriftjava.Process;
 
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
@@ -155,6 +156,11 @@ public class UdpSenderTest {
     assertEquals("jaeger.version", batch.getProcess().getTags().get(1).getKey());
     assertEquals("bar", batch.getProcess().getTags().get(2).getVStr());
     assertEquals("ip", batch.getProcess().getTags().get(3).getKey());
+  }
+
+  @Test(expected = SenderException.class)
+  public void senderFail() throws Exception {
+    sender.send(null, Collections.emptyList());
   }
 
 }
