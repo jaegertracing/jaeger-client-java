@@ -46,23 +46,14 @@ public abstract class ThriftSender extends ThriftSenderBase implements Sender {
   @Override
   public int append(Span span) throws SenderException {
     if (process == null) {
-      try {
-        process = new Process(span.getTracer().getServiceName());
-        process.setTags(JaegerThriftSpanConverter.buildTags(span.getTracer().tags()));
-        processBytesSize = getSize(process);
-        byteBufferSize += processBytesSize;
-      } catch (Exception e) {
-        throw new SenderException("ThriftSender failed writing Process to memory buffer.", e, 1);
-      }
+      process = new Process(span.getTracer().getServiceName());
+      process.setTags(JaegerThriftSpanConverter.buildTags(span.getTracer().tags()));
+      processBytesSize = calculateProcessSize(process);
+      byteBufferSize += processBytesSize;
     }
 
     com.uber.jaeger.thriftjava.Span thriftSpan = JaegerThriftSpanConverter.convertSpan(span);
-    int spanSize = 0;
-    try {
-      spanSize = getSize(thriftSpan);
-    } catch (Exception e) {
-      throw new SenderException("ThriftSender failed writing Span to memory buffer.", e, 1);
-    }
+    int spanSize = calculateSpanSize(thriftSpan);
     if (spanSize > getMaxSpanBytes()) {
       throw new SenderException(String.format("ThriftSender received a span that was too large, size = %d, max = %d",
           spanSize, getMaxSpanBytes()), null, 1);
@@ -88,6 +79,22 @@ public abstract class ThriftSender extends ThriftSenderBase implements Sender {
     spanBuffer.add(thriftSpan);
     byteBufferSize = processBytesSize + spanSize;
     return n;
+  }
+
+  protected int calculateProcessSize(Process proc) throws SenderException {
+    try {
+      return getSize(proc);
+    } catch (Exception e) {
+      throw new SenderException("ThriftSender failed writing Process to memory buffer.", e, 1);
+    }
+  }
+
+  protected int calculateSpanSize(com.uber.jaeger.thriftjava.Span span) throws SenderException {
+    try {
+      return getSize(span);
+    } catch (Exception e) {
+      throw new SenderException("ThriftSender failed writing Span to memory buffer.", e, 1);
+    }
   }
 
   public abstract void send(Process process, List<com.uber.jaeger.thriftjava.Span> spans) throws SenderException;

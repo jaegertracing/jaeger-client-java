@@ -30,7 +30,7 @@ import org.apache.thrift.transport.AutoExpandingBufferWriteTransport;
 @Slf4j
 public abstract class ThriftSenderBase {
 
-  protected enum ProtocolType {
+  public enum ProtocolType {
     Binary,
     Compact
   }
