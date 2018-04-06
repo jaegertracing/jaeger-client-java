@@ -16,13 +16,11 @@ package com.uber.jaeger.senders;
 
 import com.uber.jaeger.agent.thrift.Agent;
 import com.uber.jaeger.exceptions.SenderException;
-import com.uber.jaeger.reporters.protocols.ThriftUdpTransport;
+import com.uber.jaeger.thrift.reporters.protocols.ThriftUdpTransport;
 import com.uber.jaeger.thriftjava.Batch;
 import com.uber.jaeger.thriftjava.Process;
 import java.util.List;
 import lombok.ToString;
-import org.apache.thrift.TException;
-import org.apache.thrift.protocol.TCompactProtocol;
 
 @ToString(exclude = {"agentClient"})
 public class UdpSender extends ThriftSender {
@@ -46,7 +44,7 @@ public class UdpSender extends ThriftSender {
    * @param maxPacketSize if 0 it will use {@value ThriftUdpTransport#MAX_PACKET_SIZE}
    */
   public UdpSender(String host, int port, int maxPacketSize) {
-    super(new TCompactProtocol.Factory(), maxPacketSize);
+    super(ProtocolType.Compact, maxPacketSize);
 
     if (host == null || host.length() == 0) {
       host = DEFAULT_AGENT_UDP_HOST;
@@ -61,8 +59,12 @@ public class UdpSender extends ThriftSender {
   }
 
   @Override
-  public void send(Process process, List<com.uber.jaeger.thriftjava.Span> spans) throws TException {
-    agentClient.emitBatch(new Batch(process, spans));
+  public void send(Process process, List<com.uber.jaeger.thriftjava.Span> spans) throws SenderException {
+    try {
+      agentClient.emitBatch(new Batch(process, spans));
+    } catch (Exception e) {
+      throw new SenderException(String.format("Could not send %d spans", spans.size()), e, spans.size());
+    }
   }
 
   @Override

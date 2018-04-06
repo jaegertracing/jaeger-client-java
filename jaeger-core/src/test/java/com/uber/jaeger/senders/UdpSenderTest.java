@@ -20,23 +20,19 @@ import static org.junit.Assert.assertTrue;
 
 import com.uber.jaeger.Span;
 import com.uber.jaeger.Tracer;
-import com.uber.jaeger.agent.thrift.Agent;
 import com.uber.jaeger.exceptions.SenderException;
 import com.uber.jaeger.metrics.InMemoryStatsReporter;
 import com.uber.jaeger.reporters.InMemoryReporter;
 import com.uber.jaeger.reporters.Reporter;
 import com.uber.jaeger.reporters.protocols.JaegerThriftSpanConverter;
-import com.uber.jaeger.reporters.protocols.TestTServer;
 import com.uber.jaeger.samplers.ConstSampler;
+import com.uber.jaeger.thrift.reporters.protocols.TestTServer;
 import com.uber.jaeger.thriftjava.Batch;
 import com.uber.jaeger.thriftjava.Process;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.thrift.protocol.TCompactProtocol;
-import org.apache.thrift.transport.AutoExpandingBufferWriteTransport;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -114,14 +110,8 @@ public class UdpSenderTest {
     Process process = new Process(tracer.getServiceName())
         .setTags(JaegerThriftSpanConverter.buildTags(tracer.tags()));
 
-    AutoExpandingBufferWriteTransport memoryTransport =
-        new AutoExpandingBufferWriteTransport(maxPacketSize, 2);
-
-    process.write(new TCompactProtocol(memoryTransport));
-    int processSize = memoryTransport.getPos();
-    memoryTransport.reset();
-    span.write(new TCompactProtocol((memoryTransport)));
-    int spanSize = memoryTransport.getPos();
+    int processSize = sender.getSize(process);
+    int spanSize = sender.getSize(span);
 
     // create a sender thats a multiple of the span size (accounting for span overhead)
     // this allows us to test the boundary conditions of writing spans.
@@ -168,38 +158,9 @@ public class UdpSenderTest {
     assertEquals("ip", batch.getProcess().getTags().get(3).getKey());
   }
 
-  @Test
-  public void testEmitBatchOverhead() throws Exception {
-    int a = calculateBatchOverheadDifference(1);
-    int b = calculateBatchOverheadDifference(2);
-
-    // This value has been empirically observed to be 56.
-    // If this test breaks it means we have changed our protocol, or
-    // the protocol information has changed (likely due to a new version of thrift).
-    assertEquals(a, b);
-    assertEquals(b, UdpSender.EMIT_BATCH_OVERHEAD);
+  @Test(expected = SenderException.class)
+  public void senderFail() throws Exception {
+    sender.send(null, Collections.emptyList());
   }
 
-  private int calculateBatchOverheadDifference(int numberOfSpans) throws Exception {
-    AutoExpandingBufferWriteTransport memoryTransport =
-        new AutoExpandingBufferWriteTransport(maxPacketSize, 2);
-    Agent.Client memoryClient = new Agent.Client(new TCompactProtocol((memoryTransport)));
-    Span jaegerSpan = (Span) tracer.buildSpan("raza").startManual();
-    com.uber.jaeger.thriftjava.Span span = JaegerThriftSpanConverter.convertSpan(jaegerSpan);
-    List<com.uber.jaeger.thriftjava.Span> spans = new ArrayList<>();
-    for (int i = 0; i < numberOfSpans; i++) {
-      spans.add(span);
-    }
-
-    memoryClient.emitBatch(new Batch(new Process(SERVICE_NAME), spans));
-    int emitBatchOverheadMultipleSpans = memoryTransport.getPos();
-
-    memoryTransport.reset();
-    for (int j = 0; j < numberOfSpans; j++) {
-      span.write(new TCompactProtocol(memoryTransport));
-    }
-    int writeBatchOverheadMultipleSpans = memoryTransport.getPos();
-
-    return emitBatchOverheadMultipleSpans - writeBatchOverheadMultipleSpans;
-  }
 }

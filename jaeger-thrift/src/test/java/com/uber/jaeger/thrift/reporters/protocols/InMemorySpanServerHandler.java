@@ -12,7 +12,7 @@
  * the License.
  */
 
-package com.uber.jaeger.reporters.protocols;
+package com.uber.jaeger.thrift.reporters.protocols;
 
 import com.twitter.zipkin.thriftjava.Span;
 import com.uber.jaeger.agent.thrift.Agent;

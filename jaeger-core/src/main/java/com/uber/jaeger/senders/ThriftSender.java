@@ -17,67 +17,52 @@ package com.uber.jaeger.senders;
 import com.uber.jaeger.Span;
 import com.uber.jaeger.exceptions.SenderException;
 import com.uber.jaeger.reporters.protocols.JaegerThriftSpanConverter;
-import com.uber.jaeger.reporters.protocols.ThriftUdpTransport;
+import com.uber.jaeger.thrift.reporters.protocols.ThriftUdpTransport;
+import com.uber.jaeger.thrift.senders.ThriftSenderBase;
 import com.uber.jaeger.thriftjava.Process;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.ToString;
-import org.apache.thrift.TBase;
-import org.apache.thrift.TException;
-import org.apache.thrift.protocol.TProtocolFactory;
-import org.apache.thrift.transport.AutoExpandingBufferWriteTransport;
 
-@ToString(exclude = {"spanBuffer", "memoryTransport"})
-public abstract class ThriftSender implements Sender {
-  static final int EMIT_BATCH_OVERHEAD = 33;
+import lombok.ToString;
+
+@ToString(exclude = {"spanBuffer"})
+public abstract class ThriftSender extends ThriftSenderBase implements Sender {
 
   private Process process;
   private int processBytesSize;
   private List<com.uber.jaeger.thriftjava.Span> spanBuffer;
   private int byteBufferSize;
-  private AutoExpandingBufferWriteTransport memoryTransport;
-
-  protected final TProtocolFactory protocolFactory;
-  private final int maxSpanBytes;
 
   /**
-   * @param protocolFactory protocol factory
+   * @param protocolType protocol type (compact or binary)
    * @param maxPacketSize if 0 it will use default value {@value ThriftUdpTransport#MAX_PACKET_SIZE}
    */
-  public ThriftSender(TProtocolFactory protocolFactory, int maxPacketSize) {
-    this.protocolFactory = protocolFactory;
+  public ThriftSender(ProtocolType protocolType, int maxPacketSize) {
+    super(protocolType, maxPacketSize);
 
-    if (maxPacketSize == 0) {
-      maxPacketSize = ThriftUdpTransport.MAX_PACKET_SIZE;
-    }
-
-    memoryTransport = new AutoExpandingBufferWriteTransport(maxPacketSize, 2);
-    maxSpanBytes = maxPacketSize - EMIT_BATCH_OVERHEAD;
     spanBuffer = new ArrayList<com.uber.jaeger.thriftjava.Span>();
   }
-
-  public abstract void send(Process process, List<com.uber.jaeger.thriftjava.Span> spans) throws TException;
 
   @Override
   public int append(Span span) throws SenderException {
     if (process == null) {
       process = new Process(span.getTracer().getServiceName());
       process.setTags(JaegerThriftSpanConverter.buildTags(span.getTracer().tags()));
-      processBytesSize = getSizeOfSerializedThrift(process);
+      processBytesSize = calculateProcessSize(process);
       byteBufferSize += processBytesSize;
     }
 
     com.uber.jaeger.thriftjava.Span thriftSpan = JaegerThriftSpanConverter.convertSpan(span);
-    int spanSize = getSizeOfSerializedThrift(thriftSpan);
-    if (spanSize > maxSpanBytes) {
+    int spanSize = calculateSpanSize(thriftSpan);
+    if (spanSize > getMaxSpanBytes()) {
       throw new SenderException(String.format("ThriftSender received a span that was too large, size = %d, max = %d",
-          spanSize, maxSpanBytes), null, 1);
+          spanSize, getMaxSpanBytes()), null, 1);
     }
 
     byteBufferSize += spanSize;
-    if (byteBufferSize <= maxSpanBytes) {
+    if (byteBufferSize <= getMaxSpanBytes()) {
       spanBuffer.add(thriftSpan);
-      if (byteBufferSize < maxSpanBytes) {
+      if (byteBufferSize < getMaxSpanBytes()) {
         return 0;
       }
       return flush();
@@ -96,6 +81,24 @@ public abstract class ThriftSender implements Sender {
     return n;
   }
 
+  protected int calculateProcessSize(Process proc) throws SenderException {
+    try {
+      return getSize(proc);
+    } catch (Exception e) {
+      throw new SenderException("ThriftSender failed writing Process to memory buffer.", e, 1);
+    }
+  }
+
+  protected int calculateSpanSize(com.uber.jaeger.thriftjava.Span span) throws SenderException {
+    try {
+      return getSize(span);
+    } catch (Exception e) {
+      throw new SenderException("ThriftSender failed writing Span to memory buffer.", e, 1);
+    }
+  }
+
+  public abstract void send(Process process, List<com.uber.jaeger.thriftjava.Span> spans) throws SenderException;
+
   @Override
   public int flush() throws SenderException {
     if (spanBuffer.isEmpty()) {
@@ -105,7 +108,7 @@ public abstract class ThriftSender implements Sender {
     int n = spanBuffer.size();
     try {
       send(process, spanBuffer);
-    } catch (TException e) {
+    } catch (SenderException e) {
       throw new SenderException("Failed to flush spans.", e, n);
     } finally {
       spanBuffer.clear();
@@ -119,13 +122,4 @@ public abstract class ThriftSender implements Sender {
     return flush();
   }
 
-  int getSizeOfSerializedThrift(TBase thriftBase) throws SenderException {
-    memoryTransport.reset();
-    try {
-      thriftBase.write(protocolFactory.getProtocol(memoryTransport));
-    } catch (TException e) {
-      throw new SenderException("ThriftSender failed writing to memory buffer.", e, 1);
-    }
-    return memoryTransport.getPos();
-  }
 }

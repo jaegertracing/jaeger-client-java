@@ -12,13 +12,15 @@
  * the License.
  */
 
-package com.uber.jaeger.reporters.protocols;
+package com.uber.jaeger.thrift.reporters.protocols;
 
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
+
+import com.uber.jaeger.thrift.reporters.protocols.ThriftUdpTransport;
 
 public class ThriftUdpServerTransport extends TServerTransport {
   private ThriftUdpTransport transport;
