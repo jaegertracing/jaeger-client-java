@@ -11,11 +11,14 @@ compileJava {
 }
 
 dependencies {
-    compile project(':jaeger-jaxrs2')
+    compile project(':jaeger-core')
 
+    compile group: 'io.opentracing.contrib', name: 'opentracing-jaxrs2', version: '0.1.4'
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
     compile group: 'org.glassfish.jersey.containers', name: 'jersey-container-grizzly2-http', version: jerseyVersion
     compile group: 'org.glassfish.jersey.containers', name: 'jersey-container-servlet', version: jerseyVersion
+    compile group: 'org.glassfish.grizzly', name: 'grizzly-http-servlet', version: '2.3.23'
+    compile group: 'javax.servlet', name: 'javax.servlet-api', version: '4.0.0'
     compile group: 'org.glassfish.jersey.core', name: 'jersey-client', version: jerseyVersion
     compile group: 'org.glassfish.jersey.media', name: 'jersey-media-json-jackson', version: jerseyVersion
     compile group: 'javax.servlet', name: 'servlet-api', version: '2.5'
@@ -30,7 +33,7 @@ dependencies {
 
 jar {
     manifest {
-        attributes 'Main-Class': 'com.uber.jaeger.crossdock.JerseyServer'
+        attributes 'Main-Class': 'io.jaegertracing.crossdock.JerseyServer'
     }
 }
 

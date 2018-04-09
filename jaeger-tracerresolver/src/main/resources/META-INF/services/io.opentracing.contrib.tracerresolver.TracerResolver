@@ -1,1 +1,1 @@
-com.uber.jaeger.tracerresolver.JaegerTracerResolver
+io.jaegertracing.tracerresolver.JaegerTracerResolver

@@ -4,7 +4,7 @@ This module provides core tracing functionality for custom instrumentation.
 ## Maven coordinates
 ```xml
 <dependency>
-    <groupId>com.uber.jaeger</groupId>
+    <groupId>io.jaegertracing</groupId>
     <artifactId>jaeger-core</artifactId>
     <version>$jaegerVersion</version>
 </dependency>
@@ -14,7 +14,7 @@ This module provides core tracing functionality for custom instrumentation.
 
 ### Production
 
-Tracer can be created via `com.uber.jaeger.Tracer.Builder` or `com.uber.jaeger.Configuration`.
+Tracer can be created via `io.jaegertracing.Tracer.Builder` or `io.jaegertracing.Configuration`.
 For production it is recommended to use both classes with default values.
 
 `Tracer.Builder` example:
@@ -39,7 +39,7 @@ The `config` objects lazily builds and configures Jaeger Tracer. Multiple calls 
 
 #### Configuration via Environment
 
-It is also possible to obtain a `com.uber.jaeger.Configuration` object configured using properties specified
+It is also possible to obtain a `io.jaegertracing.Configuration` object configured using properties specified
 as environment variables or system properties. A value specified as a system property will override a value
 specified as an environment variable for the same property name.
 
@@ -89,7 +89,7 @@ More information about using the `TracerResolver` can be found [here](../jaeger-
 #### Reporting internal metrics via Micrometer
 
 The Jaeger Java Client collects internal metrics and is able to report them via [Micrometer](http://micrometer.io).
-To accomplish that, include the artifact `com.uber.jaeger:jaeger-micrometer` as a dependency to your project and use
+To accomplish that, include the artifact `io.jaegertracing:jaeger-micrometer` as a dependency to your project and use
 `MicrometerMetricsFactory` like this:
 
 ```java
@@ -97,7 +97,7 @@ MicrometerMetricsFactory metricsReporter = new MicrometerMetricsFactory();
 Configuration configuration = new Configuration("myServiceName");
 Tracer tracer = configuration
     .getTracerBuilder()
-    .withMetrics(new com.uber.jaeger.metrics.Metrics(metricsReporter))
+    .withMetrics(new io.jaegertracing.metrics.Metrics(metricsReporter))
     .build();
 ```
 
