@@ -7,7 +7,7 @@ This module provides a Jaeger implementation for the [TracerResolver](https://gi
 ## Maven Dependency
 ```xml
 <dependency>
-    <groupId>com.uber.jaeger</groupId>
+    <groupId>io.jaegertracing</groupId>
     <artifactId>jaeger-tracerresolver</artifactId>
     <version>$jaegerVersion</version>
 </dependency>
