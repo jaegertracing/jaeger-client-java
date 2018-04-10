@@ -17,7 +17,7 @@ package io.jaegertracing.senders;
 import io.jaegertracing.Span;
 import io.jaegertracing.exceptions.SenderException;
 import io.jaegertracing.reporters.protocols.JaegerThriftSpanConverter;
-import io.jaegertracing.reporters.protocols.ThriftUdpTransport;
+import io.jaegertracing.thrift.reporters.protocols.ThriftUdpTransport;
 import io.jaegertracing.thrift.senders.ThriftSenderBase;
 import io.jaegertracing.thriftjava.Process;
 import java.util.ArrayList;

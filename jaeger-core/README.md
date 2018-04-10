@@ -36,6 +36,20 @@ Tracer tracer = config.getTracer();
 
 The `config` objects lazily builds and configures Jaeger Tracer. Multiple calls to `getTracer()` return the same instance.
 
+##### B3 propagation
+Jaeger tracer can also work in the environment where B3 propagation is used. This is mostly related 
+to systems instrumented with Zipkin. Once you register `B3TextMapCodec`, Jaeger can join traces 
+started by other Zipkin instrumented applications. This includes reading headers 
+like "X-B3-TraceId".
+
+Example configuration:
+```java
+b3Codec = new B3TextMapCodec();
+tracer = new Tracer.Builder(serviceName)
+                   .registerInjector(Format.Builtin.HTTP_HEADERS, b3Codec)
+                   .registerExtractor(Format.Builtin.HTTP_HEADERS, b3Codec)
+                   ...
+```
 
 #### Configuration via Environment
 
