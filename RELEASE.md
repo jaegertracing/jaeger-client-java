@@ -27,7 +27,7 @@ While the Travis build is ready for that, releasing locally requires the followi
  * generate keys: `gpg --gen-key`
  * see installed keys with `gpg --list-keys` or `gpg --list-secret-keys`
  * create an account with Sonatype, get repo permissions (e.g. https://issues.sonatype.org/browse/OSSRH-23572)
- * create `$HOME/.gradle/gradle.properties` file
+ * create `$HOME/.gradle/gradle.properties` file or add parameters directly as it is shown at the last step.
 ```
     signing.keyId={key ID from gpg --list-secret-keys}
     signing.password={password you used to encrypt keys via gpg --gen-key}
@@ -40,11 +40,8 @@ While the Travis build is ready for that, releasing locally requires the followi
     * `gpg --keyserver http://keyserver.ubuntu.com:11371 --send-keys {pub key ID}`
     * you can also use Web UI and upload plain test key that you can obtain via
       * `gpg --armor --export {your email used for the keys}`
-
-Run the following command to upload to Nexus. Note that it might be necessary to close and release via Nexus UI.
-```bash
-./gradlew upload -Psigning.keyId=<id> -Psigning.password=<pass> -Psigning.secretKeyRingFile=<home/user>/.gnupg/secring.gpg -PossrhUsername=<name> -PossrhPassword=<pas>
-```
+ * Run gradle upload to Nexus. Note that it might be necessary to close and release via Nexus UI.
+    * `./gradlew upload -Psigning.keyId=<key ID from gpg --list-secret-keys> -Psigning.password=<password you used to encrypt keys via gpg --gen-key> -Psigning.secretKeyRingFile=<home/user>/.gnupg/secring.gpg -PossrhUsername=<name> -PossrhPassword=<pas>`
 
 ## Closing Staging Repository Manually
 
