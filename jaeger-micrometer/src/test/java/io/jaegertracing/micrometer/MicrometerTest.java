@@ -191,7 +191,7 @@ public class MicrometerTest {
       Span span = tracer.buildSpan("metricstest")
               .withTag("foo", "bar" + i)
               .start();
-
+      // Only finish every 3rd span so jaeger:started_spans and finished_spans counts are different
       if (i % 3 == 0) {
         span.finish();
       }
