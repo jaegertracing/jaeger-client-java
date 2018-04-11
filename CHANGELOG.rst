@@ -1,9 +1,11 @@
 Changes by Version
 ==================
 
-0.26.1 (unreleased)
+0.27.0
 -------------------
-- Nothing yet.
+- Change groupid to io.jaegertracing and remove instrumentations (#375). Sources with com.uber.jaeger have been moved to https://github.com/jaegertracing/legacy-client-java <Pavol Loffay>
+- Make some methods in HttpSender.Builder public (#376) <Pavol Loffay>
+- Avoid direct access to apache thrift from jaeger-core via transitive dependency through jaeger-thrift (#374) <Gary Brown>
 
 0.26.0 (2018-03-19)
 -------------------
