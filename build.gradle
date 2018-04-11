@@ -15,7 +15,7 @@ plugins {
     id 'com.github.ben-manes.versions' version '0.17.0'
 }
 
-ext.developmentVersion = '0.26.1-SNAPSHOT'
+ext.developmentVersion = '0.27.0-RC1'
 
 ext.opentracingVersion = '0.31.0'
 ext.guavaVersion = '18.0'
