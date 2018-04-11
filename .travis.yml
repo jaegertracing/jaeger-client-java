@@ -34,7 +34,7 @@ before_install:
 stages:
   - test
   - name: deploy
-    if: $TRAVIS_PULL_REQUEST == false
+    if: env(TRAVIS_PULL_REQUEST) = false
 
 jobs:
   include:
@@ -43,7 +43,7 @@ jobs:
       script: make test-travis && ./gradlew codeCoverageReport && bash <(curl -s https://codecov.io/bash)
 
     - env: [ NAME=crossdock ]
-      script: make crossdock-fresh
+      script: ./travis/install-crossdock-deps.sh && make crossdock-fresh
 
     - stage: deploy
       env: [ NAME=deploy-to-maven ]
