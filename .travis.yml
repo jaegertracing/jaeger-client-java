@@ -47,7 +47,6 @@ jobs:
 
     - stage: deploy
       env: [ NAME=deploy-to-maven ]
-    # TODO id pull request
       script: ./gradlew upload
 
     - env: [ NAME=deploy-to-dockerhub ]
