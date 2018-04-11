@@ -210,10 +210,18 @@ public class RemoteReporterTest {
   @Test
   public void testFlushUpdatesQueueLength() throws Exception {
     int neverFlushInterval = Integer.MAX_VALUE;
-    reporter = new RemoteReporter(sender, neverFlushInterval, maxQueueSize, metrics);
-    tracer = new Tracer.Builder("test-remote-reporter", reporter, new ConstSampler(true))
-        .withMetrics(metrics)
-        .build();
+    reporter = new RemoteReporter.Builder()
+            .withSender(sender)
+            .withFlushInterval(neverFlushInterval)
+            .withMaxQueueSize(maxQueueSize)
+            .withMetrics(metrics)
+            .build();
+
+    tracer = new Tracer.Builder("test-remote-reporter")
+            .withReporter(reporter)
+            .withSampler(new ConstSampler(true))
+            .withMetrics(metrics)
+            .build();
 
     // change sender to blocking mode
     sender.permitAppend(0);
@@ -242,14 +250,21 @@ public class RemoteReporterTest {
       }
     };
 
-    reporter = new RemoteReporter(sender, flushInterval, maxQueueSize, metrics);
-    tracer =
-          new Tracer.Builder("test-remote-reporter", reporter, new ConstSampler(true))
-                .withMetrics(metrics)
-                .build();
+    reporter = new RemoteReporter.Builder()
+            .withSender(sender)
+            .withFlushInterval(flushInterval)
+            .withMaxQueueSize(maxQueueSize)
+            .withMetrics(metrics)
+            .build();
+
+    tracer = new Tracer.Builder("test-remote-reporter")
+            .withReporter(reporter)
+            .withSampler(new ConstSampler(true))
+            .withMetrics(metrics)
+            .build();
 
     tracer.buildSpan("mySpan").start().finish();
-    latch.await(1, TimeUnit.SECONDS);
+    latch.await(2, TimeUnit.SECONDS);
     assertEquals("Should have called the custom sender flush", 0, latch.getCount());
   }
 
