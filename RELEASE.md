@@ -41,6 +41,7 @@ While the Travis build is ready for that, releasing locally requires the followi
     * you can also use Web UI and upload plain test key that you can obtain via
       * `gpg --armor --export {your email used for the keys}`
 
+Run the following command to upload to Nexus. Note that it might be necessary to close and release via Nexus UI.
 ```bash
 ./gradlew upload -Psigning.keyId=<id> -Psigning.password=<pass> -Psigning.secretKeyRingFile=<home/user>/.gnupg/secring.gpg -PossrhUsername=<name> -PossrhPassword=<pas>
 ```
