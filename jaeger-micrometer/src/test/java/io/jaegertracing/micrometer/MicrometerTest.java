@@ -14,26 +14,61 @@
 
 package io.jaegertracing.micrometer;
 
+import static java.util.stream.Collectors.counting;
+import static java.util.stream.Collectors.groupingBy;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
+import io.jaegertracing.Configuration;
+import io.jaegertracing.Tracer;
 import io.jaegertracing.metrics.Metrics;
 import io.jaegertracing.metrics.Timer;
+import io.jaegertracing.samplers.ConstSampler;
+import io.jaegertracing.samplers.Sampler;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
+import io.opentracing.Span;
+
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
 import org.hamcrest.core.IsEqual;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)  //We need testExposedMetrics to run before testTimer
 public class MicrometerTest {
   PrometheusMeterRegistry prometheusRegistry;
   Metrics metrics;
   MeterRegistry registry;
+  private static Map<String, Long> expectedMetricCounts = new HashMap<>();
+  private final double assertDelta = 0.00001;
+
+  @BeforeClass
+  public static void initial() {
+    expectedMetricCounts.put("jaeger:sampler_updates", 2L);
+    expectedMetricCounts.put("jaeger:finished_spans", 1L);
+    expectedMetricCounts.put("jaeger:baggage_restrictions_updates", 2L);
+    expectedMetricCounts.put("jaeger:started_spans", 2L);
+    expectedMetricCounts.put("jaeger:baggage_updates", 2L);
+    expectedMetricCounts.put("jaeger:sampler_queries", 2L);
+    expectedMetricCounts.put("jaeger:baggage_truncations", 1L);
+    expectedMetricCounts.put("jaeger:reporter_spans", 3L);
+    expectedMetricCounts.put("jaeger:traces", 4L);
+    expectedMetricCounts.put("jaeger:span_context_decoding_errors", 1L);
+    expectedMetricCounts.put("jaeger:reporter_queue_length", 1L);
+  }
+
 
   @Before
   public void setUp() {
@@ -85,4 +120,83 @@ public class MicrometerTest {
     assertThat(registry.get("jaeger:timed_operation").timer().totalTime(TimeUnit.MICROSECONDS), IsEqual.equalTo(100d));
     assertTrue(prometheusRegistry.scrape().contains("jaeger:timed_operation_seconds"));
   }
+
+
+  @Test
+  public void testExposedMetrics() {
+    Configuration configuration = new Configuration("exposedmetrics");
+    final Tracer tracer = configuration
+            .getTracerBuilder()
+            .withMetrics(metrics)
+            .build();
+
+    // This is a gauge, so it needs to be non-zero to come back from prometheus
+    metrics.reporterQueueLength.update(1);
+
+    List<Meter> meters = new ArrayList<>(prometheusRegistry.getMeters());
+    Map<String, Long> metricCounts = meters
+            .stream()
+            .collect(groupingBy(m -> m.getId().getName(), counting()));
+
+    assertEquals("Wrong number of metrics collected", expectedMetricCounts.size(), metricCounts.keySet().size());
+
+    for (String name : metricCounts.keySet()) {
+      assertTrue("Unexpected metric " +  name, expectedMetricCounts.containsKey(name));
+    }
+
+    for (String metricName : expectedMetricCounts.keySet()) {
+      assertTrue("Did not find metric " + metricName, metricCounts.containsKey(metricName));
+      assertEquals("Wrong count for " +  metricName, expectedMetricCounts.get(metricName),
+              metricCounts.get(metricName));
+    }
+
+    tracer.close();
+  }
+
+  @Test
+  public void validateMetricCounts() throws InterruptedException {
+    Sampler constantSampler = new ConstSampler(true);
+    Configuration configuration = new Configuration("validateMetricCounts");
+    Tracer tracer = configuration
+            .getTracerBuilder()
+            .withSampler(constantSampler)
+            .withMetrics(metrics)
+            .build();
+
+    createSomeSpans(tracer);
+    tracer.close();
+
+    double finishedSpans = registry.get("jaeger:finished_spans")
+            .counter()
+            .count();
+
+    double startedSpans = registry.get("jaeger:started_spans")
+            .tag("sampled", "y")
+            .counter()
+            .count();
+
+    double traces = registry.get("jaeger:traces")
+            .tag("sampled", "y")
+            .tag("state", "started")
+            .counter()
+            .count();
+
+    assertEquals("Wrong number of finishedSpans", 4.0, finishedSpans, assertDelta);
+    assertEquals("Wrong number of startedSpans", 10.0, startedSpans, assertDelta);
+    assertEquals("Wrong number of traces", 10.0, traces, assertDelta);
+  }
+
+  private void createSomeSpans(Tracer tracer) {
+    for (int i = 0; i < 10; i++) {
+      Span span = tracer.buildSpan("metricstest")
+              .withTag("foo", "bar" + i)
+              .start();
+
+      if (i % 3 == 0) {
+        span.finish();
+      }
+    }
+  }
+
+
 }
