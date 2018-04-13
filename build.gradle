@@ -34,6 +34,8 @@ ext.awaitilityVersion = '3.0.0'
 ext.logbackVersion = '1.2.3'
 ext.braveHttpVersion = '4.9.1'
 
+ext.skipSigning = project.hasProperty('skipSigning') && skipSigning.toBoolean()
+
 task wrapper(type: Wrapper) {
     gradleVersion = '4.0'
 }
@@ -145,6 +147,9 @@ subprojects {
         compileOnly 'org.codehaus.mojo:animal-sniffer-annotations:1.16'
     }
 
+    signing {
+        required { !skipSigning }
+    }
 }
 
 task codeCoverageReport(type: JacocoReport, group: 'Coverage reports') {
