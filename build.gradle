@@ -15,16 +15,16 @@ plugins {
     id 'com.github.ben-manes.versions' version '0.17.0'
 }
 
-ext.developmentVersion = '0.27.0-SNAPSHOT'
+ext.developmentVersion = project.properties['developmentVersion'] ?: '0.27.0-SNAPSHOT'
 
-ext.opentracingVersion = '0.31.0'
-ext.guavaVersion = '18.0'
-ext.apacheThriftVersion = '0.9.2'
-ext.jerseyVersion = '2.22.2'
-ext.slf4jVersion = '1.7.25'
-ext.gsonVersion = '2.8.2'
-ext.tracerResolverVersion = '0.1.4'
-ext.micrometerVersion = '1.0.0'
+ext.opentracingVersion = project.properties['opentracingVersion'] ?: '0.31.0'
+ext.guavaVersion = project.properties['guavaVersion'] ?: '18.0'
+ext.apacheThriftVersion = project.properties['apacheThriftVersion'] ?: '0.9.2'
+ext.jerseyVersion = project.properties['jerseyVersion'] ?: '2.22.2'
+ext.slf4jVersion = project.properties['slf4jVersion'] ?: '1.7.25'
+ext.gsonVersion = project.properties['gsonVersion'] ?: '2.8.2'
+ext.tracerResolverVersion = project.properties['tracerResolverVersion'] ?: '0.1.4'
+ext.micrometerVersion = project.properties['micrometerVersion'] ?: '1.0.0'
 
 ext.junitVersion = '4.12'
 ext.mockitoVersion = '2.12.0'
