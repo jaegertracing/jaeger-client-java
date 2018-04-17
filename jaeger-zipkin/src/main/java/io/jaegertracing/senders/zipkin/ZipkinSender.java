@@ -21,6 +21,7 @@ import com.twitter.zipkin.thriftjava.Span;
 import com.twitter.zipkin.thriftjava.zipkincoreConstants;
 import io.jaegertracing.exceptions.SenderException;
 import io.jaegertracing.senders.Sender;
+import io.jaegertracing.zipkin.ThriftSpanConverter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,7 +34,8 @@ import zipkin.reporter.urlconnection.URLConnectionSender;
 
 /**
  * This sends (TBinaryProtocol big-endian) encoded spans to a Zipkin Collector (usually a
- * zipkin-server).
+ * zipkin-server).  If you want to send newer Zipkin V2 spans in protocols other than Thrift,
+ * see {@link io.jaegertracing.zipkin.reporters.Zipkin2Reporter Zipkin2Reporter}.
  *
  * <p>
  * Example usage:

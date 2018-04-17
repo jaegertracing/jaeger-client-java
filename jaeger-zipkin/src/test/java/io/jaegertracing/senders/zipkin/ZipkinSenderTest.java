@@ -25,6 +25,7 @@ import io.jaegertracing.metrics.InMemoryMetricsFactory;
 import io.jaegertracing.reporters.InMemoryReporter;
 import io.jaegertracing.reporters.Reporter;
 import io.jaegertracing.samplers.ConstSampler;
+import io.jaegertracing.zipkin.ThriftSpanConverter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
