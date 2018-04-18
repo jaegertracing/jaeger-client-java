@@ -1,14 +1,19 @@
 Changes by Version
 ==================
 
-0.27.0
+0.27.0 (2018-04-18)
 -------------------
+
+- Enable development and dependency versions to be overridden from the commandline (#397) <Gary Brown>
+- Add tests for metrics exposed via prometheus (#386)  <Kevin Earls>
 - Change groupid to io.jaegertracing and remove instrumentations (#375). Sources with com.uber.jaeger have been moved to https://github.com/jaegertracing/legacy-client-java <Pavol Loffay>
-- Make some methods in HttpSender.Builder public (#376) <Pavol Loffay>
+- Remove reference to JAEGER_DISABLE_GLOBAL_TRACER (#379) <Charlie Sharpsteen>
 - Avoid direct access to apache thrift from jaeger-core via transitive dependency through jaeger-thrift (#374) <Gary Brown>
+- Make some methods in HttpSender.Builder public (#376) <Pavol Loffay>
 
 0.26.0 (2018-03-19)
 -------------------
+
 - Avoid host lookups if trace tags have already been provided (#371) <Christopher Hunt>
 - Update the ReporterConfig to set Sender Correctly (#370) <Nate Hart>
 - Fix for issue 366, fix deprecated code in example (#367) <Kevin Earls>
