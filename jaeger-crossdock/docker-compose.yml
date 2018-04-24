@@ -44,7 +44,7 @@ services:
             - "8080-8082"
 
     nodejs:
-        image: jaegertracing/xdock-nodejs
+        image: jaegertracing/xdock-node
         ports:
             - "8080-8082"
 
