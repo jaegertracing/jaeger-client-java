@@ -9,18 +9,19 @@ services:
             - java-udp
             - java-http
             - python
+            - nodejs
         environment:
-            - WAIT_FOR=test_driver,go,java-udp,java-http,python
+            - WAIT_FOR=test_driver,go,java-udp,java-http,python,nodejs
             - WAIT_FOR_TIMEOUT=60s
 
             - CALL_TIMEOUT=60s
 
             - AXIS_CLIENT=go
-            - AXIS_S1NAME=go,java-udp,python
+            - AXIS_S1NAME=go,java-udp,python,nodejs
             - AXIS_SAMPLED=true,false
-            - AXIS_S2NAME=go,java-udp,python
+            - AXIS_S2NAME=go,java-udp,python,nodejs
             - AXIS_S2TRANSPORT=http
-            - AXIS_S3NAME=go,java-udp,python
+            - AXIS_S3NAME=go,java-udp,python,nodejs
             - AXIS_S3TRANSPORT=http
 
             - BEHAVIOR_TRACE=client,s1name,sampled,s2name,s2transport,s3name,s3transport
@@ -39,6 +40,11 @@ services:
 
     python:
         image: jaegertracing/xdock-py
+        ports:
+            - "8080-8082"
+
+    nodejs:
+        image: jaegertracing/xdock-nodejs
         ports:
             - "8080-8082"
 
