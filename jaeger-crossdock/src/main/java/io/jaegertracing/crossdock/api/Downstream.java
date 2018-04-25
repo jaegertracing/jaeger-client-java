@@ -66,8 +66,6 @@ public class Downstream {
     switch (transport) {
       case HTTP:
         return Constants.TRANSPORT_HTTP;
-      case TCHANNEL:
-        return Constants.TRANSPORT_TCHANNEL;
       default:
         throw new IllegalArgumentException("Unknown transport " + transport);
     }
@@ -88,9 +86,6 @@ public class Downstream {
   private static Transport toThrift(String transport) {
     if (Constants.TRANSPORT_HTTP.equals(transport)) {
       return Transport.HTTP;
-    }
-    if (Constants.TRANSPORT_TCHANNEL.equals(transport)) {
-      return Transport.TCHANNEL;
     }
     throw new IllegalArgumentException("Unknown transport " + transport);
   }

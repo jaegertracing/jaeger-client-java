@@ -14,16 +14,13 @@
 
 package io.jaegertracing.crossdock;
 
-import com.uber.tchannel.api.TChannel.Builder;
 import io.jaegertracing.Configuration;
 import io.jaegertracing.Configuration.ReporterConfiguration;
 import io.jaegertracing.Configuration.SamplerConfiguration;
 import io.jaegertracing.crossdock.resources.behavior.EndToEndBehavior;
 import io.jaegertracing.crossdock.resources.behavior.ExceptionMapper;
-import io.jaegertracing.crossdock.resources.behavior.TraceBehavior;
 import io.jaegertracing.crossdock.resources.behavior.http.EndToEndBehaviorResource;
 import io.jaegertracing.crossdock.resources.behavior.http.TraceBehaviorResource;
-import io.jaegertracing.crossdock.resources.behavior.tchannel.TChannelServer;
 import io.jaegertracing.crossdock.resources.health.HealthResource;
 import io.jaegertracing.samplers.ConstSampler;
 import io.jaegertracing.senders.HttpSender;
@@ -131,10 +128,6 @@ public class JerseyServer {
             new HealthResource()));
 
     server.addNetworkListener(new NetworkListener("health", "0.0.0.0", 8080));
-
-    Builder tchannelBuilder = new Builder(serviceName);
-    tchannelBuilder.setServerPort(8082);
-    new TChannelServer(tchannelBuilder, new TraceBehavior(server.getTracer()), server.getTracer()).start();
   }
 
   private static String getEvn(String envName, String defaultValue) {
