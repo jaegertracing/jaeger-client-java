@@ -18,7 +18,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
-import com.uber.tchannel.api.TChannel.Builder;
 import io.jaegertracing.Configuration;
 import io.jaegertracing.Configuration.ReporterConfiguration;
 import io.jaegertracing.Configuration.SamplerConfiguration;
@@ -31,7 +30,6 @@ import io.jaegertracing.crossdock.api.ObservedSpan;
 import io.jaegertracing.crossdock.api.StartTraceRequest;
 import io.jaegertracing.crossdock.api.TraceResponse;
 import io.jaegertracing.crossdock.resources.behavior.TraceBehavior;
-import io.jaegertracing.crossdock.resources.behavior.tchannel.TChannelServer;
 import io.jaegertracing.samplers.ConstSampler;
 import io.opentracing.Scope;
 import io.opentracing.noop.NoopTracerFactory;
@@ -39,7 +37,6 @@ import io.opentracing.tag.Tags;
 import io.opentracing.util.GlobalTracer;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.util.Arrays;
 import java.util.Collection;
@@ -158,44 +155,6 @@ public class TraceBehaviorResourceTest {
     validateTraceResponse(traceResponse, String.format("%x",
         ((Span)scope.span()).context().getTraceId()), expectedBaggage, 2);
     scope.close();
-  }
-
-  @Test
-  public void testJoinTraceTChannel() throws Exception {
-    Builder tchannelBuilder = new Builder("foo");
-    tchannelBuilder.setServerPort(0);
-    tchannelBuilder.setServerHost(InetAddress.getLoopbackAddress());
-    TChannelServer tchannel = new TChannelServer(tchannelBuilder, behavior, server.getTracer());
-    tchannel.start();
-
-    Scope scope = server.getTracer().buildSpan("root").startActive(true);
-
-    String expectedBaggage = "baggage-example";
-    scope.span().setBaggageItem(Constants.BAGGAGE_KEY, expectedBaggage);
-    if (expectedSampled) {
-      Tags.SAMPLING_PRIORITY.set(scope.span(), 1);
-    }
-
-    TraceResponse response =
-        behavior.callDownstreamTChannel(
-            new Downstream(SERVICE_NAME,
-                tchannel.getChannel().getListeningHost(),
-                String.valueOf(tchannel.getChannel().getListeningPort()),
-                Constants.TRANSPORT_TCHANNEL,
-                "s2",
-                new Downstream(
-                    SERVICE_NAME,
-                    tchannel.getChannel().getListeningHost(),
-                    String.valueOf(tchannel.getChannel().getListeningPort()),
-                    Constants.TRANSPORT_TCHANNEL,
-                    "s3",
-                    null)));
-    assertNotNull(response);
-    validateTraceResponse(response, String.format("%x",
-        ((Span)scope.span()).context().getTraceId()), expectedBaggage, 1);
-    scope.close();
-
-    tchannel.shutdown();
   }
 
   private void validateTraceResponse(

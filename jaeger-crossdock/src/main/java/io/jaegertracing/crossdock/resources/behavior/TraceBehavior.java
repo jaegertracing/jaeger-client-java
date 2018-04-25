@@ -15,10 +15,6 @@
 package io.jaegertracing.crossdock.resources.behavior;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.uber.tchannel.api.SubChannel;
-import com.uber.tchannel.api.TFuture;
-import com.uber.tchannel.messages.ThriftRequest;
-import com.uber.tchannel.messages.ThriftResponse;
 import io.jaegertracing.Span;
 import io.jaegertracing.SpanContext;
 import io.jaegertracing.crossdock.Constants;
@@ -27,7 +23,6 @@ import io.jaegertracing.crossdock.api.Downstream;
 import io.jaegertracing.crossdock.api.JoinTraceRequest;
 import io.jaegertracing.crossdock.api.ObservedSpan;
 import io.jaegertracing.crossdock.api.TraceResponse;
-import io.jaegertracing.crossdock.resources.behavior.tchannel.TChannelServer;
 import io.jaegertracing.crossdock.thrift.TracedService;
 import io.opentracing.Tracer;
 import java.io.IOException;
@@ -69,8 +64,6 @@ public class TraceBehavior {
     switch (transport) {
       case Constants.TRANSPORT_HTTP:
         return callDownstreamHttp(downstream);
-      case Constants.TRANSPORT_TCHANNEL:
-        return callDownstreamTChannel(downstream);
       default:
         return new TraceResponse("Unrecognized transport received: %s" + transport);
     }
@@ -95,33 +88,6 @@ public class TraceBehavior {
     return response;
   }
 
-  public TraceResponse callDownstreamTChannel(Downstream downstream) throws Exception {
-    io.jaegertracing.crossdock.thrift.JoinTraceRequest joinTraceRequest =
-        new io.jaegertracing.crossdock.thrift.JoinTraceRequest(downstream.getServerRole());
-    joinTraceRequest.setDownstream(Downstream.toThrift(downstream.getDownstream()));
-
-    SubChannel subChannel = TChannelServer.server.makeSubChannel(downstream.getServiceName());
-
-    log.info("Calling downstream tchannel {}", joinTraceRequest);
-    ThriftRequest<TracedService.joinTrace_args> thriftRequest =
-        new ThriftRequest.Builder<TracedService.joinTrace_args>(
-                downstream.getServiceName(), "TracedService::joinTrace")
-            .setTimeout(2000)
-            .setBody(new TracedService.joinTrace_args(joinTraceRequest))
-            .build();
-    TFuture<ThriftResponse<TracedService.joinTrace_result>> future =
-        subChannel.send(thriftRequest, host(downstream), port(downstream));
-
-    try (ThriftResponse<TracedService.joinTrace_result> thriftResponse = future.get()) {
-      log.info("Received tchannel response {}", thriftResponse);
-      if (thriftResponse.isError()) {
-        throw new Exception(thriftResponse.getError().getMessage());
-      }
-      return TraceResponse.fromThrift(
-          thriftResponse.getBody(TracedService.joinTrace_result.class).getSuccess());
-    }
-  }
-
   private ObservedSpan observeSpan() {
     Span span = (Span)tracer.activeSpan();
     if (tracer.activeSpan() == null) {
@@ -134,17 +100,5 @@ public class TraceBehavior {
     boolean sampled = context.isSampled();
     String baggage = span.getBaggageItem(Constants.BAGGAGE_KEY);
     return new ObservedSpan(traceId, sampled, baggage);
-  }
-
-  private InetAddress host(Downstream downstream) {
-    try {
-      return InetAddress.getByName(downstream.getHost());
-    } catch (UnknownHostException e) {
-      throw new RuntimeException("Cannot resolve host address for " + downstream.getHost(), e);
-    }
-  }
-
-  private int port(Downstream downstream) {
-    return Integer.parseInt(downstream.getPort());
   }
 }
