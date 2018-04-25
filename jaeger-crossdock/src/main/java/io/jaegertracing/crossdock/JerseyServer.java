@@ -128,6 +128,8 @@ public class JerseyServer {
             new HealthResource()));
 
     server.addNetworkListener(new NetworkListener("health", "0.0.0.0", 8080));
+
+    Thread.currentThread().join();
   }
 
   private static String getEvn(String envName, String defaultValue) {
