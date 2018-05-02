@@ -33,7 +33,6 @@ ext.powermockitoVersion  = '1.7.0'
 ext.junitDataProviderVersion = '1.13.1'
 ext.awaitilityVersion = '3.0.0'
 ext.logbackVersion = '1.2.3'
-ext.braveHttpVersion = '4.9.1'
 
 ext.skipSigning = project.hasProperty('skipSigning') && skipSigning.toBoolean()
 
