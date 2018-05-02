@@ -161,7 +161,7 @@ public class Configuration {
   /**
    * The serviceName that the tracer will use
    */
-  private final String serviceName;
+  private String serviceName;
   private SamplerConfiguration samplerConfig;
   private ReporterConfiguration reporterConfig;
   private CodecConfiguration codecConfig;
@@ -284,6 +284,11 @@ public class Configuration {
     this.metricsFactory = metricsFactory;
   }
 
+  public Configuration withServiceName(String serviceName) {
+    this.serviceName = Tracer.Builder.checkValidServiceName(serviceName);
+    return this;
+  }
+
   public Configuration withReporter(ReporterConfiguration reporterConfig) {
     this.reporterConfig = reporterConfig;
     return this;
@@ -306,12 +311,24 @@ public class Configuration {
     return this;
   }
 
+  public String getServiceName() {
+    return serviceName;
+  }
+
   public ReporterConfiguration getReporter() {
     return reporterConfig;
   }
 
   public SamplerConfiguration getSampler() {
     return samplerConfig;
+  }
+
+  public CodecConfiguration getCodec() {
+    return codecConfig;
+  }
+
+  public MetricsFactory getMetricsFactory() {
+    return metricsFactory;
   }
 
   public Map<String, String> getTracerTags() {
@@ -430,6 +447,14 @@ public class Configuration {
   public static class CodecConfiguration {
     private Map<Format<?>, List<Codec<TextMap>>> codecs;
 
+    public CodecConfiguration() {
+    }
+
+    public CodecConfiguration withCodec(Format<?> format, Codec<TextMap> codec) {
+      addCodec(codecs, format, codec);
+      return this;
+    }
+
     private CodecConfiguration(Map<Format<?>, List<Codec<TextMap>>> codecs) {
       this.codecs = codecs;
     }
@@ -459,6 +484,10 @@ public class Configuration {
         }
       }
       return new CodecConfiguration(codecs);
+    }
+
+    public Map<Format<?>, List<Codec<TextMap>>> getCodecs() {
+      return Collections.unmodifiableMap(codecs);
     }
 
     private static void addCodec(Map<Format<?>, List<Codec<TextMap>>> codecs, Format<?> format, Codec<TextMap> codec) {
