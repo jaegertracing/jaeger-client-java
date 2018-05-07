@@ -31,7 +31,7 @@ before_install:
 - ./travis/prepare-signing.sh $encrypted_677f232983c0_key $encrypted_677f232983c0_iv
 
 stages:
-  - test
+  - name: test
   - name: deploy
     if: env(TRAVIS_PULL_REQUEST) = false
 
@@ -41,12 +41,14 @@ jobs:
       env: [ NAME=unit-test ]
       script: make test-travis && ./gradlew codeCoverageReport && bash <(curl -s https://codecov.io/bash)
 
-    - env: [ NAME=crossdock ]
+    - stage: test
+      env: [ NAME=crossdock ]
       script: make crossdock-fresh
 
     - stage: deploy
       env: [ NAME=deploy-to-maven ]
       script: ./gradlew upload
 
-    - env: [ NAME=deploy-to-dockerhub ]
-      script: ./travis/build-crossdock.sh
+    - stage: deploy
+      env: [ NAME=deploy-to-dockerhub ]
+      script: ./travis/publish-crossdock.sh
