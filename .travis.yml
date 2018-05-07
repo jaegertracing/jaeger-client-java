@@ -1,13 +1,6 @@
 sudo: required
 language: java
 dist: trusty
-matrix:
-  include:
-  - env:
-    - TESTS=true
-    - COVERAGE=true
-  - env:
-    - CROSSDOCK=true
 services:
 - docker
 env:
@@ -36,11 +29,26 @@ cache:
   - "$HOME/.gradle/wrapper/"
 before_install:
 - ./travis/prepare-signing.sh $encrypted_677f232983c0_key $encrypted_677f232983c0_iv
-- if [ "$CROSSDOCK" == true ]; then bash ./travis/install-crossdock-deps.sh ; fi
-script:
-- if [ "$TESTS" == true ]; then make test-travis ; else echo 'skipping tests'; fi
-- if [ "$COVERAGE" == true ]; then ./gradlew codeCoverageReport ; else echo 'skipping coverage'; fi
-- if [ "$CROSSDOCK" == true ]; then bash ./travis/build-crossdock.sh ; else echo 'skipping crossdock'; fi
-after_success:
-- if [ "$COVERAGE" == true ]; then bash <(curl -s https://codecov.io/bash) ; fi
-- if [ "$CROSSDOCK" == true -a "$TRAVIS_PULL_REQUEST" == false ]; then ./gradlew upload ; fi
+
+stages:
+  - name: test
+  - name: deploy
+    if: env(TRAVIS_PULL_REQUEST) = false
+
+jobs:
+  include:
+    - stage: test
+      env: [ NAME=unit-test ]
+      script: make test-travis && ./gradlew codeCoverageReport && bash <(curl -s https://codecov.io/bash)
+
+    - stage: test
+      env: [ NAME=crossdock ]
+      script: make crossdock-fresh
+
+    - stage: deploy
+      env: [ NAME=deploy-to-maven ]
+      script: ./gradlew upload
+
+    - stage: deploy
+      env: [ NAME=deploy-to-dockerhub ]
+      script: ./travis/publish-crossdock.sh

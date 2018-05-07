@@ -10,7 +10,7 @@ The release process consists of these steps:
   1. Create and push tag with the new version `git tag v0.20.0 && git push origin v0.20.0`
   1. Once the *tag* build finishes in Travis, the artifacts should have been uploaded to Sonatype staging,
      the staging repository closed, and the artifacts on the way to Maven Central (it takes 20min+ to get there).
-     In case of failures it is safe to retry by restarting the CROSSDOCK step of the build. If it keeps
+     In case of failures it is safe to retry by restarting the maven-deploy job. If it keeps
      failing, sometimes it may be necessary to close the staging repository manually.
   1. Create a release on GitHub for the new tag. Use the changes from the `CHANGELOG` as the description.
   1. Once the artifacts are available on Maven
