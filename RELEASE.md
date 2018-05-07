@@ -3,10 +3,11 @@
 ## Automatic release (preferred)
 
 The release process consists of these steps:
-  1. Add an entry to [`CHANGELOG`](CHANGELOG.rst) with description of changes in the new release
+  1. Create a pull request with:
+     * Change the version in [`build.gradle`](build.gradle) to match the release version e.g. `0.20.0`
+     * Add an entry to [`CHANGELOG`](CHANGELOG.rst) with changes since the last release
   1. Commit your `CHANGELOG` changes
-  1. Tag as a version (`git tag v0.20.0`). Use the one from [`build.gradle`](build.gradle) as reference.
-  1. Push the tag (`git push v0.20.0`)
+  1. Create and push tag with the new version `git tag v0.20.0 && git push origin v0.20.0`
   1. Once the *tag* build finishes in Travis, the artifacts should have been uploaded to Sonatype staging,
      the staging repository closed, and the artifacts on the way to Maven Central (it takes 20min+ to get there).
      In case of failures it is safe to retry by restarting the CROSSDOCK step of the build. If it keeps
@@ -26,7 +27,7 @@ While the Travis build is ready for that, releasing locally requires the followi
  * generate keys: `gpg --gen-key`
  * see installed keys with `gpg --list-keys` or `gpg --list-secret-keys`
  * create an account with Sonatype, get repo permissions (e.g. https://issues.sonatype.org/browse/OSSRH-23572)
- * create `$HOME/.gradle/gradle.properties` file
+ * create `$HOME/.gradle/gradle.properties` file or add parameters directly as it is shown at the last step.
 ```
     signing.keyId={key ID from gpg --list-secret-keys}
     signing.password={password you used to encrypt keys via gpg --gen-key}
@@ -39,6 +40,8 @@ While the Travis build is ready for that, releasing locally requires the followi
     * `gpg --keyserver http://keyserver.ubuntu.com:11371 --send-keys {pub key ID}`
     * you can also use Web UI and upload plain test key that you can obtain via
       * `gpg --armor --export {your email used for the keys}`
+ * Run gradle upload to Nexus. Note that it might be necessary to close and release via Nexus UI.
+    * `./gradlew upload -Psigning.keyId=<key ID from gpg --list-secret-keys> -Psigning.password=<password you used to encrypt keys via gpg --gen-key> -Psigning.secretKeyRingFile=<home/user>/.gnupg/secring.gpg -PossrhUsername=<name> -PossrhPassword=<pas>`
 
 ## Closing Staging Repository Manually
 
