@@ -223,7 +223,7 @@ public class Configuration {
       samplerConfig = new SamplerConfiguration();
     }
     if (codecConfig == null) {
-      codecConfig = new CodecConfiguration(Collections.<Format<?>, List<Codec<TextMap>>>emptyMap());
+      codecConfig = new CodecConfiguration();
     }
     if (metricsFactory == null) {
       metricsFactory = new NoopMetricsFactory();
@@ -280,8 +280,9 @@ public class Configuration {
   /**
    * @param metricsFactory the MetricsFactory to use on the Tracer to be built
    */
-  public void withMetricsFactory(MetricsFactory metricsFactory) {
+  public Configuration withMetricsFactory(MetricsFactory metricsFactory) {
     this.metricsFactory = metricsFactory;
+    return this;
   }
 
   public Configuration withServiceName(String serviceName) {
@@ -445,15 +446,12 @@ public class Configuration {
    * CodecConfiguration can be used to support additional trace context propagation codec.
    */
   public static class CodecConfiguration {
-    private Map<Format<?>, List<Codec<TextMap>>> codecs;
+    private final Map<Format<?>, List<Codec<TextMap>>> codecs;
 
     public CodecConfiguration() {
+      codecs = new HashMap<Format<?>, List<Codec<TextMap>>>();
     }
 
-    public CodecConfiguration withCodec(Format<?> format, Codec<TextMap> codec) {
-      addCodec(codecs, format, codec);
-      return this;
-    }
 
     private CodecConfiguration(Map<Format<?>, List<Codec<TextMap>>> codecs) {
       this.codecs = codecs;
@@ -484,6 +482,11 @@ public class Configuration {
         }
       }
       return new CodecConfiguration(codecs);
+    }
+
+    public CodecConfiguration withCodec(Format<?> format, Codec<TextMap> codec) {
+      addCodec(codecs, format, codec);
+      return this;
     }
 
     public Map<Format<?>, List<Codec<TextMap>>> getCodecs() {

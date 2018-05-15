@@ -21,10 +21,12 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import io.jaegertracing.Configuration.CodecConfiguration;
 import io.jaegertracing.Configuration.ReporterConfiguration;
 import io.jaegertracing.Configuration.SamplerConfiguration;
 import io.jaegertracing.metrics.InMemoryMetricsFactory;
 import io.jaegertracing.metrics.Metrics;
+import io.jaegertracing.propagation.Codec;
 import io.jaegertracing.samplers.ConstSampler;
 import io.jaegertracing.samplers.ProbabilisticSampler;
 import io.jaegertracing.samplers.RateLimitingSampler;
@@ -33,6 +35,7 @@ import io.jaegertracing.senders.HttpSender;
 import io.jaegertracing.senders.Sender;
 import io.opentracing.noop.NoopTracerFactory;
 import io.opentracing.propagation.Format;
+import io.opentracing.propagation.Format.Builtin;
 import io.opentracing.propagation.TextMap;
 import io.opentracing.util.GlobalTracer;
 import java.lang.reflect.Field;
@@ -329,6 +332,14 @@ public class ConfigurationTest {
   }
 
   @Test
+  public void testOverrideServiceName() {
+    System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
+    Configuration configuration = Configuration.fromEnv()
+        .withServiceName("bar");
+    assertEquals("bar", configuration.getServiceName());
+  }
+
+  @Test
   public void testDefaultTracer() {
     Configuration configuration = new Configuration("name");
     assertNotNull(configuration.getTracer());
@@ -370,6 +381,46 @@ public class ConfigurationTest {
     Sampler sampler = samplerConfiguration.createSampler("name",
         new Metrics(new InMemoryMetricsFactory()));
     assertTrue(sampler instanceof RateLimitingSampler);
+  }
+
+  @Test
+  public void testMetrics() {
+    InMemoryMetricsFactory inMemoryMetricsFactory = new InMemoryMetricsFactory();
+    Configuration configuration = new Configuration("foo")
+        .withMetricsFactory(inMemoryMetricsFactory);
+    assertEquals(inMemoryMetricsFactory, configuration.getMetricsFactory());
+  }
+
+  @Test
+  public void testCodec() {
+    Codec<TextMap> codec1 = new Codec<TextMap>() {
+      @Override
+      public SpanContext extract(TextMap carrier) {
+        return null;
+      }
+
+      @Override
+      public void inject(SpanContext spanContext, TextMap carrier) {
+      }
+    };
+
+    Codec<TextMap> codec2 = new Codec<TextMap>() {
+      @Override
+      public SpanContext extract(TextMap carrier) {
+        return null;
+      }
+
+      @Override
+      public void inject(SpanContext spanContext, TextMap carrier) {
+      }
+    };
+
+    CodecConfiguration codecConfiguration = new CodecConfiguration()
+        .withCodec(Builtin.HTTP_HEADERS, codec1)
+        .withCodec(Builtin.HTTP_HEADERS, codec2);
+    assertEquals(2, codecConfiguration.getCodecs().get(Builtin.HTTP_HEADERS).size());
+    assertEquals(codec1, codecConfiguration.getCodecs().get(Builtin.HTTP_HEADERS).get(0));
+    assertEquals(codec2, codecConfiguration.getCodecs().get(Builtin.HTTP_HEADERS).get(1));
   }
 
   static class TestTextMap implements TextMap {
