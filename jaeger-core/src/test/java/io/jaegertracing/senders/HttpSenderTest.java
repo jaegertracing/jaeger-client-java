@@ -63,9 +63,10 @@ public class HttpSenderTest extends JerseyTest {
   public void sendHappy() throws Exception {
     new HttpSender(target("/api/traces").getUri().toString())
         .send(new Process("robotrock"), generateSpans());
-    new HttpSender(target("/api/traces").getUri().toString(), 6500)
+    new HttpSender.Builder(target("/api/traces").getUri().toString()).withMaxPacketSize(6500).build()
         .send(new Process("name"), generateSpans());
-    new HttpSender(target("/api/traces").getUri().toString(), 6500, new OkHttpClient())
+    new HttpSender.Builder(target("/api/traces").getUri().toString()).withMaxPacketSize(6500)
+          .withClient(new OkHttpClient()).build()
         .send(new Process("name"), generateSpans());
   }
 

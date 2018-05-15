@@ -15,9 +15,8 @@
 package io.jaegertracing.samplers;
 
 import io.jaegertracing.exceptions.SamplingStrategyErrorException;
+import io.jaegertracing.metrics.InMemoryMetricsFactory;
 import io.jaegertracing.metrics.Metrics;
-import io.jaegertracing.metrics.NullStatsReporter;
-import io.jaegertracing.metrics.StatsFactoryImpl;
 import io.jaegertracing.samplers.http.OperationSamplingParameters;
 import io.jaegertracing.samplers.http.ProbabilisticSamplingStrategy;
 import io.jaegertracing.samplers.http.RateLimitingSamplingStrategy;
@@ -228,7 +227,7 @@ public class RemoteControlledSampler implements Sampler {
         initialSampler = new ProbabilisticSampler(0.001);
       }
       if (metrics == null) {
-        metrics = new Metrics(new StatsFactoryImpl(new NullStatsReporter()));
+        metrics = new Metrics(new InMemoryMetricsFactory());
       }
       return new RemoteControlledSampler(this);
     }

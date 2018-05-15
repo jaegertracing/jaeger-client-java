@@ -21,7 +21,7 @@ import static org.junit.Assert.assertTrue;
 import io.jaegertracing.Span;
 import io.jaegertracing.Tracer;
 import io.jaegertracing.exceptions.SenderException;
-import io.jaegertracing.metrics.InMemoryStatsReporter;
+import io.jaegertracing.metrics.InMemoryMetricsFactory;
 import io.jaegertracing.reporters.InMemoryReporter;
 import io.jaegertracing.reporters.Reporter;
 import io.jaegertracing.reporters.protocols.JaegerThriftSpanConverter;
@@ -68,7 +68,7 @@ public class UdpSenderTest {
     reporter = new InMemoryReporter();
     tracer =
         new Tracer.Builder(SERVICE_NAME, reporter, new ConstSampler(true))
-            .withStatsReporter(new InMemoryStatsReporter())
+            .withMetricsFactory(new InMemoryMetricsFactory())
             .withTag("foo", "bar")
             .build();
     sender = new UdpSender(destHost, destPort, maxPacketSize);

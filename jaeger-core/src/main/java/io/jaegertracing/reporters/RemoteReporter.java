@@ -16,9 +16,8 @@ package io.jaegertracing.reporters;
 
 import io.jaegertracing.Span;
 import io.jaegertracing.exceptions.SenderException;
+import io.jaegertracing.metrics.InMemoryMetricsFactory;
 import io.jaegertracing.metrics.Metrics;
-import io.jaegertracing.metrics.NullStatsReporter;
-import io.jaegertracing.metrics.StatsFactoryImpl;
 import io.jaegertracing.senders.Sender;
 import io.jaegertracing.senders.UdpSender;
 import java.util.Timer;
@@ -226,7 +225,7 @@ public class RemoteReporter implements Reporter {
         sender = new UdpSender();
       }
       if (metrics == null) {
-        metrics = new Metrics(new StatsFactoryImpl(new NullStatsReporter()));
+        metrics = new Metrics(new InMemoryMetricsFactory());
       }
       return new RemoteReporter(sender, flushInterval, maxQueueSize, DEFAULT_CLOSE_ENQUEUE_TIMEOUT_MILLIS, metrics);
     }

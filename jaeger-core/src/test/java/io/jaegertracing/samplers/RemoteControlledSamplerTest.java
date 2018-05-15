@@ -22,7 +22,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import io.jaegertracing.exceptions.SamplingStrategyErrorException;
-import io.jaegertracing.metrics.InMemoryStatsReporter;
+import io.jaegertracing.metrics.InMemoryMetricsFactory;
 import io.jaegertracing.metrics.Metrics;
 import io.jaegertracing.samplers.http.OperationSamplingParameters;
 import io.jaegertracing.samplers.http.PerOperationSamplingParameters;
@@ -49,8 +49,12 @@ public class RemoteControlledSamplerTest {
 
   @Before
   public void setUp() throws Exception {
-    metrics = Metrics.fromStatsReporter(new InMemoryStatsReporter());
-    undertest = new RemoteControlledSampler(SERVICE_NAME, samplingManager, initialSampler, metrics);
+    metrics = new Metrics(new InMemoryMetricsFactory());
+    undertest = new RemoteControlledSampler.Builder(SERVICE_NAME)
+        .withSamplingManager(samplingManager)
+        .withInitialSampler(initialSampler)
+        .withMetrics(metrics)
+        .build();
   }
 
   @After
@@ -105,7 +109,12 @@ public class RemoteControlledSamplerTest {
     OperationSamplingParameters parameters = mock(OperationSamplingParameters.class);
     when(samplingManager.getSamplingStrategy(SERVICE_NAME)).thenReturn(
         new SamplingStrategyResponse(null, null, parameters));
-    undertest = new RemoteControlledSampler(SERVICE_NAME, samplingManager, perOperationSampler, metrics);
+    undertest = new RemoteControlledSampler.Builder(SERVICE_NAME)
+        .withSamplingManager(samplingManager)
+        .withInitialSampler(perOperationSampler)
+        .withMetrics(metrics)
+        .build();
+
 
     undertest.updateSampler();
     Thread.sleep(20);
@@ -135,8 +144,11 @@ public class RemoteControlledSamplerTest {
 
   @Test
   public void testEquals() {
-    RemoteControlledSampler i2 = new RemoteControlledSampler(SERVICE_NAME, samplingManager,
-        mock(Sampler.class), metrics);
+    RemoteControlledSampler i2 = new RemoteControlledSampler.Builder(SERVICE_NAME)
+        .withSamplingManager(samplingManager)
+        .withInitialSampler(mock(Sampler.class))
+        .withMetrics(metrics)
+        .build();
 
     assertEquals(undertest, undertest);
     assertNotEquals(undertest, initialSampler);
@@ -146,7 +158,13 @@ public class RemoteControlledSamplerTest {
 
   @Test
   public void testDefaultProbabilisticSampler() {
-    undertest = new RemoteControlledSampler(SERVICE_NAME, samplingManager, null, metrics);
+    undertest = new RemoteControlledSampler.Builder(SERVICE_NAME)
+        .withSamplingManager(samplingManager)
+        .withInitialSampler(null)
+        .withMetrics(metrics)
+        .build();
+
+
     assertEquals(new ProbabilisticSampler(0.001), undertest.getSampler());
   }
 
