@@ -210,7 +210,12 @@ public class RemoteReporterTest {
   @Test
   public void testFlushUpdatesQueueLength() throws Exception {
     int neverFlushInterval = Integer.MAX_VALUE;
-    reporter = new RemoteReporter(sender, neverFlushInterval, maxQueueSize, metrics);
+    reporter = new RemoteReporter.Builder()
+        .withSender(sender)
+        .withFlushInterval(neverFlushInterval)
+        .withMaxQueueSize(maxQueueSize)
+        .withMetrics(metrics)
+        .build();
     tracer = new Tracer.Builder("test-remote-reporter", reporter, new ConstSampler(true))
         .withMetrics(metrics)
         .build();
@@ -242,7 +247,12 @@ public class RemoteReporterTest {
       }
     };
 
-    reporter = new RemoteReporter(sender, flushInterval, maxQueueSize, metrics);
+    reporter = new RemoteReporter.Builder()
+        .withSender(sender)
+        .withFlushInterval(flushInterval)
+        .withMaxQueueSize(maxQueueSize)
+        .withMetrics(metrics)
+        .build();
     tracer =
           new Tracer.Builder("test-remote-reporter", reporter, new ConstSampler(true))
                 .withMetrics(metrics)

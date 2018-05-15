@@ -21,7 +21,7 @@ import io.jaegertracing.Span;
 import io.jaegertracing.SpanContext;
 import io.jaegertracing.Tracer;
 import io.jaegertracing.exceptions.SenderException;
-import io.jaegertracing.metrics.InMemoryStatsReporter;
+import io.jaegertracing.metrics.InMemoryMetricsFactory;
 import io.jaegertracing.reporters.InMemoryReporter;
 import io.jaegertracing.reporters.Reporter;
 import io.jaegertracing.samplers.ConstSampler;
@@ -56,7 +56,7 @@ public class ZipkinSenderTest {
     reporter = new InMemoryReporter();
     tracer =
         new Tracer.Builder("test-sender", reporter, new ConstSampler(true))
-            .withStatsReporter(new InMemoryStatsReporter())
+            .withMetricsFactory(new InMemoryMetricsFactory())
             .build();
     sender = newSender(messageMaxBytes);
     converter = new ThriftSpanConverter();

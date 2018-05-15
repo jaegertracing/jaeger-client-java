@@ -53,7 +53,9 @@ public class BaggageSetterTest {
     mgr = mock(DefaultBaggageRestrictionManager.class);
     setter = new BaggageSetter(mgr, metrics);
     tracer =
-        new Tracer.Builder(SERVICE, reporter, new ConstSampler(true))
+        new Tracer.Builder(SERVICE)
+            .withReporter(reporter)
+            .withSampler(new ConstSampler(true))
             .withMetrics(metrics)
             .build();
     span = (Span) tracer.buildSpan("some-operation").startManual();
@@ -103,7 +105,9 @@ public class BaggageSetterTest {
   @Test
   public void testUnsampledSpan() {
     tracer =
-        new Tracer.Builder("SamplerTest", reporter, new ConstSampler(false))
+        new Tracer.Builder(SERVICE)
+            .withReporter(reporter)
+            .withSampler(new ConstSampler(false))
             .withMetrics(metrics)
             .build();
     span = (Span) tracer.buildSpan("some-operation").startManual();

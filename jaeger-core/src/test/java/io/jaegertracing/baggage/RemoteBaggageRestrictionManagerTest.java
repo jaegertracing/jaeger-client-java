@@ -21,10 +21,11 @@ import static org.mockito.Mockito.when;
 
 import io.jaegertracing.baggage.http.BaggageRestrictionResponse;
 import io.jaegertracing.exceptions.BaggageRestrictionManagerException;
-import io.jaegertracing.metrics.InMemoryStatsReporter;
+import io.jaegertracing.metrics.InMemoryMetricsFactory;
 import io.jaegertracing.metrics.Metrics;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,7 +37,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class RemoteBaggageRestrictionManagerTest {
   @Mock private BaggageRestrictionManagerProxy baggageRestrictionProxy;
   private Metrics metrics;
-  private InMemoryStatsReporter metricsReporter;
+  private InMemoryMetricsFactory metricsFactory;
   private static final String SERVICE_NAME = "service";
   private static final String BAGGAGE_KEY = "key";
   private static final int MAX_VALUE_LENGTH = 10;
@@ -47,8 +48,8 @@ public class RemoteBaggageRestrictionManagerTest {
 
   @Before
   public void setUp() throws Exception {
-    metricsReporter = new InMemoryStatsReporter();
-    metrics = Metrics.fromStatsReporter(metricsReporter);
+    metricsFactory = new InMemoryMetricsFactory();
+    metrics = new Metrics(metricsFactory);
     undertest = new RemoteBaggageRestrictionManager(SERVICE_NAME, baggageRestrictionProxy, metrics,
         false);
   }
@@ -67,7 +68,8 @@ public class RemoteBaggageRestrictionManagerTest {
     assertEquals(Restriction.of(true, MAX_VALUE_LENGTH), undertest.getRestriction(SERVICE_NAME, BAGGAGE_KEY));
     assertFalse(undertest.getRestriction(SERVICE_NAME, "bad-key").isKeyAllowed());
     assertTrue(
-        metricsReporter.counters.get("jaeger:baggage_restrictions_updates.result=ok") > 0L);
+        metricsFactory.getCounter("jaeger:baggage_restrictions_updates.result=ok",
+            Collections.emptyMap()) > 0L);
   }
 
   @Test
@@ -82,7 +84,8 @@ public class RemoteBaggageRestrictionManagerTest {
     assertFalse(undertest.isReady());
     // If baggage restriction update fails, all baggage should still be allowed.
     assertTrue(undertest.getRestriction(SERVICE_NAME, BAGGAGE_KEY).isKeyAllowed());
-    assertTrue(metricsReporter.counters.get("jaeger:baggage_restrictions_updates.result=err") > 0L);
+    assertTrue(metricsFactory.getCounter("jaeger:baggage_restrictions_updates.result=err",
+        Collections.emptyMap()) > 0L);
   }
 
   @Test

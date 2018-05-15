@@ -40,25 +40,36 @@ public class EndToEndBehavior {
 
   public EndToEndBehavior(String samplingHostPort, String serviceName, Sender sender) {
     Metrics metrics = new Metrics(new NoopMetricsFactory());
-    Reporter reporter = new RemoteReporter(sender, 1000, 100, metrics);
+    Reporter reporter = new RemoteReporter.Builder()
+        .withSender(sender)
+        .withFlushInterval(1000)
+        .withMaxQueueSize(100)
+        .withMetrics(metrics)
+        .build();
 
     ConstSampler constSampler = new ConstSampler(true);
 
     tracers = new HashMap<>();
     tracers.put(RemoteControlledSampler.TYPE, getRemoteTracer(metrics, reporter, serviceName, samplingHostPort));
-    tracers.put(ConstSampler.TYPE, new io.jaegertracing.Tracer.Builder(serviceName, reporter, constSampler).build());
+    tracers.put(ConstSampler.TYPE,
+        new io.jaegertracing.Tracer.Builder(serviceName).withReporter(reporter).withSampler(constSampler).build());
   }
 
   private Tracer getRemoteTracer(Metrics metrics, Reporter reporter, String serviceName, String samplingHostPort) {
     Sampler initialSampler = new ProbabilisticSampler(1.0);
     HttpSamplingManager manager = new HttpSamplingManager(samplingHostPort);
 
-    RemoteControlledSampler remoteSampler = new RemoteControlledSampler(serviceName, manager, initialSampler,
-        metrics, 5000);
+    RemoteControlledSampler remoteSampler = new RemoteControlledSampler.Builder(serviceName)
+        .withSamplingManager(manager)
+        .withInitialSampler(initialSampler)
+        .withMetrics(metrics)
+        .withPollingInterval(5000)
+        .build();
 
-    io.jaegertracing.Tracer.Builder remoteTracerBuilder = new io.jaegertracing.Tracer.Builder(serviceName, reporter,
-        remoteSampler);
-    return remoteTracerBuilder.build();
+    return new io.jaegertracing.Tracer.Builder(serviceName)
+        .withReporter(reporter)
+        .withSampler(remoteSampler)
+        .build();
   }
 
   public void generateTraces(CreateTracesRequest request) {

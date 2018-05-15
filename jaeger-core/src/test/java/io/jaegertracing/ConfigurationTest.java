@@ -23,9 +23,8 @@ import static org.junit.Assert.fail;
 
 import io.jaegertracing.Configuration.ReporterConfiguration;
 import io.jaegertracing.Configuration.SamplerConfiguration;
+import io.jaegertracing.metrics.InMemoryMetricsFactory;
 import io.jaegertracing.metrics.Metrics;
-import io.jaegertracing.metrics.NullStatsReporter;
-import io.jaegertracing.metrics.StatsFactoryImpl;
 import io.jaegertracing.samplers.ConstSampler;
 import io.jaegertracing.samplers.ProbabilisticSampler;
 import io.jaegertracing.samplers.RateLimitingSampler;
@@ -112,8 +111,8 @@ public class ConfigurationTest {
     System.setProperty(Configuration.JAEGER_REPORTER_MAX_QUEUE_SIZE, "1000");
     ReporterConfiguration reporterConfig = ReporterConfiguration.fromEnv();
     assertTrue(reporterConfig.getLogSpans());
-    assertEquals("MyHost", reporterConfig.getAgentHost());
-    assertEquals(1234, reporterConfig.getAgentPort().intValue());
+    assertEquals("MyHost", reporterConfig.getSenderConfiguration().getAgentHost());
+    assertEquals(1234, reporterConfig.getSenderConfiguration().getAgentPort().intValue());
     assertEquals(500, reporterConfig.getFlushIntervalMs().intValue());
     assertEquals(1000, reporterConfig.getMaxQueueSize().intValue());
   }
@@ -191,8 +190,10 @@ public class ConfigurationTest {
   public void testSenderBackwardsCompatibilityGettingAgentHostAndPort() {
     System.setProperty(Configuration.JAEGER_AGENT_HOST, "jaeger-agent");
     System.setProperty(Configuration.JAEGER_AGENT_PORT, "6832");
-    assertEquals("jaeger-agent", Configuration.ReporterConfiguration.fromEnv().getAgentHost());
-    assertEquals(Integer.valueOf(6832), Configuration.ReporterConfiguration.fromEnv().getAgentPort());
+    assertEquals("jaeger-agent", Configuration.ReporterConfiguration.fromEnv()
+        .getSenderConfiguration().getAgentHost());
+    assertEquals(Integer.valueOf(6832), Configuration.ReporterConfiguration.fromEnv()
+        .getSenderConfiguration().getAgentPort());
   }
 
   @Test
@@ -224,20 +225,18 @@ public class ConfigurationTest {
 
   @Test
   public void testSenderWithBasicAuthUsesHttpSender() {
-    Configuration.SenderConfiguration senderConfiguration = new Configuration.SenderConfiguration.Builder()
-            .endpoint("https://jaeger-collector:14268/api/traces")
-            .authUsername("username")
-            .authPassword("password")
-            .build();
+    Configuration.SenderConfiguration senderConfiguration = new Configuration.SenderConfiguration()
+            .withEndpoint("https://jaeger-collector:14268/api/traces")
+            .withAuthUsername("username")
+            .withAuthPassword("password");
     assertTrue(senderConfiguration.getSender() instanceof HttpSender);
   }
 
   @Test
   public void testSenderWithAuthTokenUsesHttpSender() {
-    Configuration.SenderConfiguration senderConfiguration = new Configuration.SenderConfiguration.Builder()
-            .endpoint("https://jaeger-collector:14268/api/traces")
-            .authToken("authToken")
-            .build();
+    Configuration.SenderConfiguration senderConfiguration = new Configuration.SenderConfiguration()
+            .withEndpoint("https://jaeger-collector:14268/api/traces")
+            .withAuthToken("authToken");
     assertTrue(senderConfiguration.getSender() instanceof HttpSender);
   }
 
@@ -351,7 +350,7 @@ public class ConfigurationTest {
     SamplerConfiguration samplerConfiguration = new SamplerConfiguration()
         .withType(ConstSampler.TYPE);
     Sampler sampler = samplerConfiguration.createSampler("name",
-        new Metrics(new StatsFactoryImpl(new NullStatsReporter())));
+        new Metrics(new InMemoryMetricsFactory()));
     assertTrue(sampler instanceof ConstSampler);
   }
 
@@ -360,7 +359,7 @@ public class ConfigurationTest {
     SamplerConfiguration samplerConfiguration = new SamplerConfiguration()
         .withType(ProbabilisticSampler.TYPE);
     Sampler sampler = samplerConfiguration.createSampler("name",
-        new Metrics(new StatsFactoryImpl(new NullStatsReporter())));
+        new Metrics(new InMemoryMetricsFactory()));
     assertTrue(sampler instanceof ProbabilisticSampler);
   }
 
@@ -369,7 +368,7 @@ public class ConfigurationTest {
     SamplerConfiguration samplerConfiguration = new SamplerConfiguration()
         .withType(RateLimitingSampler.TYPE);
     Sampler sampler = samplerConfiguration.createSampler("name",
-        new Metrics(new StatsFactoryImpl(new NullStatsReporter())));
+        new Metrics(new InMemoryMetricsFactory()));
     assertTrue(sampler instanceof RateLimitingSampler);
   }
 
