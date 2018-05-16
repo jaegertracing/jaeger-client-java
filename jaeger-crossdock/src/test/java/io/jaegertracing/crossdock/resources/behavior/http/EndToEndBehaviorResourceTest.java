@@ -37,7 +37,9 @@ public class EndToEndBehaviorResourceTest {
   public void setUp() throws Exception {
     reporter = new InMemoryReporter();
     Tracer tracer =
-        new io.jaegertracing.Tracer.Builder("crossdock-java", reporter, new ConstSampler(true))
+        new io.jaegertracing.Tracer.Builder("crossdock-java")
+            .withReporter(reporter)
+            .withSampler(new ConstSampler(true))
             .build();
     Map<String, Tracer> tracers = new HashMap<>();
     tracers.put("const", tracer);
