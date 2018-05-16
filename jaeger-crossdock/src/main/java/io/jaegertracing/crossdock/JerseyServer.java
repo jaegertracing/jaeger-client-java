@@ -40,6 +40,7 @@ import javax.servlet.DispatcherType;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import org.apache.log4j.BasicConfigurator;
+import org.glassfish.grizzly.GrizzlyFuture;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.http.server.NetworkListener;
 import org.glassfish.grizzly.servlet.WebappContext;
@@ -103,7 +104,7 @@ public class JerseyServer {
     Iterator<NetworkListener> iterator = server.getListeners().iterator();
     while (iterator.hasNext()) {
       NetworkListener next = iterator.next();
-      next.shutdown();
+      GrizzlyFuture<NetworkListener> shutdown = next.shutdown();
     }
   }
 

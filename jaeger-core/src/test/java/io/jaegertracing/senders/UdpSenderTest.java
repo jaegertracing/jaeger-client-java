@@ -83,7 +83,7 @@ public class UdpSenderTest {
 
   @Test(expected = SenderException.class)
   public void testAppendSpanTooLarge() throws Exception {
-    Span jaegerSpan = (Span) tracer.buildSpan("raza").startManual();
+    Span jaegerSpan = (Span) tracer.buildSpan("raza").start();
     String msg = "";
     for (int i = 0; i < 10001; i++) {
       msg += ".";
@@ -101,7 +101,7 @@ public class UdpSenderTest {
   @Test
   public void testAppend() throws Exception {
     // find size of the initial span
-    Span jaegerSpan = (Span)tracer.buildSpan("raza").startManual();
+    Span jaegerSpan = (Span)tracer.buildSpan("raza").start();
     io.jaegertracing.thriftjava.Span span =
             JaegerThriftSpanConverter.convertSpan(jaegerSpan);
 
@@ -133,7 +133,7 @@ public class UdpSenderTest {
   public void testFlushSendsSpan() throws Exception {
     int timeout = 50; // in milliseconds
     int expectedNumSpans = 1;
-    Span expectedSpan = (Span) tracer.buildSpan("raza").startManual();
+    Span expectedSpan = (Span) tracer.buildSpan("raza").start();
     int appendNum = sender.append(expectedSpan);
     int flushNum = sender.flush();
     assertEquals(appendNum, 0);

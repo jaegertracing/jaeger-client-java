@@ -33,7 +33,7 @@ public class TracerTagsTest {
         .withTag("tracer.tag.str", "y")
         .build();
 
-    Span span = (Span) tracer.buildSpan("root").startManual();
+    Span span = (Span) tracer.buildSpan("root").start();
 
     // span should only contain sampler tags and no tracer tags
     assertEquals(2, span.getTags().size());

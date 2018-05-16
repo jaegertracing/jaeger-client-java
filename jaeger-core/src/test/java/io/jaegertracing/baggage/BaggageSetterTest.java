@@ -58,7 +58,7 @@ public class BaggageSetterTest {
             .withSampler(new ConstSampler(true))
             .withMetrics(metrics)
             .build();
-    span = (Span) tracer.buildSpan("some-operation").startManual();
+    span = (Span) tracer.buildSpan("some-operation").start();
   }
 
   @Test
@@ -93,7 +93,7 @@ public class BaggageSetterTest {
     when(mgr.getRestriction(SERVICE, KEY)).thenReturn(Restriction.of(true, 5));
     final String value = "value";
     SpanContext ctx = setter.setBaggage(span, KEY, value);
-    Span child = (Span) tracer.buildSpan("some-operation").asChildOf(ctx).startManual();
+    Span child = (Span) tracer.buildSpan("some-operation").asChildOf(ctx).start();
     ctx = setter.setBaggage(child, KEY, value);
 
     assertBaggageLogs(child, KEY, value, false, true, false);
@@ -110,7 +110,7 @@ public class BaggageSetterTest {
             .withSampler(new ConstSampler(false))
             .withMetrics(metrics)
             .build();
-    span = (Span) tracer.buildSpan("some-operation").startManual();
+    span = (Span) tracer.buildSpan("some-operation").start();
 
     when(mgr.getRestriction(SERVICE, KEY)).thenReturn(Restriction.of(true, 5));
     final String value = "value";
@@ -137,7 +137,7 @@ public class BaggageSetterTest {
     final String value = "value";
     Span originalSpan = span.setBaggageItem(KEY, value);
     assertEquals(value, originalSpan.getBaggageItem(KEY));
-    Span child = (Span) tracer.buildSpan("some-operation").asChildOf(originalSpan).startManual();
+    Span child = (Span) tracer.buildSpan("some-operation").asChildOf(originalSpan).start();
     child = child.setBaggageItem(KEY, null);
 
     assertBaggageLogs(child, KEY, null, false, true, false);

@@ -82,7 +82,7 @@ public class EndToEndBehavior {
           builder.withTag(kv.getKey(), kv.getValue());
         }
       }
-      Span span = builder.startManual();
+      Span span = builder.start();
       span.finish();
     }
   }
