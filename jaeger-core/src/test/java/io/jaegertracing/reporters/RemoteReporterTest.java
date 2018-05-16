@@ -27,8 +27,8 @@ import io.jaegertracing.Tracer;
 import io.jaegertracing.exceptions.SenderException;
 import io.jaegertracing.metrics.InMemoryMetricsFactory;
 import io.jaegertracing.metrics.Metrics;
+import io.jaegertracing.reporters.RemoteReporter.Builder;
 import io.jaegertracing.samplers.ConstSampler;
-import io.jaegertracing.senders.Sender;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -244,7 +244,7 @@ public class RemoteReporterTest {
   public void testFlushIsCalledOnSender() throws InterruptedException {
     CountDownLatch latch = new CountDownLatch(1);
 
-    Sender sender = new InMemorySender() {
+    InMemorySender sender = new InMemorySender() {
       @Override
       public int flush() throws SenderException {
         latch.countDown();
@@ -252,21 +252,23 @@ public class RemoteReporterTest {
       }
     };
 
-    reporter = new RemoteReporter.Builder()
+    RemoteReporter remoteReporter = new Builder()
         .withSender(sender)
         .withFlushInterval(flushInterval)
         .withMaxQueueSize(maxQueueSize)
         .withMetrics(metrics)
         .build();
     tracer = new Tracer.Builder("test-remote-reporter")
-              .withReporter(reporter)
-              .withSampler(new ConstSampler(true))
-              .withMetrics(metrics)
-              .build();
+        .withReporter(remoteReporter)
+        .withSampler(new ConstSampler(true))
+        .withMetrics(metrics)
+        .build();
 
     tracer.buildSpan("mySpan").start().finish();
-    latch.await(1, TimeUnit.SECONDS);
+    remoteReporter.flush();
+    latch.await();
     assertEquals("Should have called the custom sender flush", 0, latch.getCount());
+    assertEquals("mySpan", sender.getReceived().get(0).operationName);
   }
 
   private Span newSpan() {
