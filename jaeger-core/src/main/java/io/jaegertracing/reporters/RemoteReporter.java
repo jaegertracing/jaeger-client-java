@@ -46,17 +46,6 @@ public class RemoteReporter implements Reporter {
   private final int closeEnqueueTimeout;
   private final Metrics metrics;
 
-  /**
-   * RemoteReporter takes a Sender object, and sends spans for a specific protocol, and transport.
-   * At this point in time the protocol (thrift) is tightly-coupled to  Reporter, but in the future it may not be.
-   *
-   * @deprecated use {@link RemoteReporter.Builder} with fluent API
-   **/
-  @Deprecated
-  public RemoteReporter(Sender sender, int flushInterval, int maxQueueSize, Metrics metrics) {
-    this(sender, flushInterval, maxQueueSize, DEFAULT_CLOSE_ENQUEUE_TIMEOUT_MILLIS, metrics);
-  }
-
   RemoteReporter(Sender sender, int flushInterval, int maxQueueSize, int closeEnqueueTimeout,
       Metrics metrics) {
     this.sender = sender;

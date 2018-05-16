@@ -22,13 +22,6 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 public class Metrics {
-  /**
-   * @deprecated Use {@link #Metrics(MetricsFactory)} instead
-   */
-  @Deprecated
-  public Metrics(StatsFactory factory) {
-    createMetrics(factory);
-  }
 
   public Metrics(MetricsFactory factory) {
     createMetrics(factory);
@@ -98,14 +91,6 @@ public class Metrics {
       sb.append(entry.getValue());
     }
     return sb.toString();
-  }
-
-  /**
-   * @deprecated Use {@link MetricsFactory} and {@link Metrics#Metrics(MetricsFactory)} instead
-   */
-  @Deprecated
-  public static Metrics fromStatsReporter(StatsReporter reporter) {
-    return new Metrics(new StatsFactoryImpl(reporter));
   }
 
   @Metric(

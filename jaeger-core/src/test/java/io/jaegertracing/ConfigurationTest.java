@@ -202,33 +202,6 @@ public class ConfigurationTest {
   }
 
   @Test
-  public void testNoNullPointerOnNullSender() {
-    Configuration.ReporterConfiguration reporterConfiguration =
-            new Configuration.ReporterConfiguration(null, null, null, null);
-    assertNull(reporterConfiguration.getAgentHost());
-    assertNull(reporterConfiguration.getAgentPort());
-
-    reporterConfiguration = new Configuration.ReporterConfiguration(null);
-    assertNull(reporterConfiguration.getAgentHost());
-    assertNull(reporterConfiguration.getAgentPort());
-
-    reporterConfiguration = new Configuration.ReporterConfiguration();
-    assertNull(reporterConfiguration.getAgentHost());
-    assertNull(reporterConfiguration.getAgentPort());
-  }
-
-  @Test
-  public void testCustomSender() {
-    String endpoint = "https://custom-sender-endpoint:14268/api/traces";
-    System.setProperty(Configuration.JAEGER_ENDPOINT, "https://jaeger-collector:14268/api/traces");
-    CustomSender customSender = new CustomSender(endpoint);
-    Configuration.SenderConfiguration senderConfiguration = new Configuration.SenderConfiguration.Builder()
-            .sender(customSender)
-            .build();
-    assertEquals(endpoint, ((CustomSender)senderConfiguration.getSender()).getEndpoint());
-  }
-
-  @Test
   public void testSenderWithBasicAuthUsesHttpSender() {
     Configuration.SenderConfiguration senderConfiguration = new Configuration.SenderConfiguration()
             .withEndpoint("https://jaeger-collector:14268/api/traces")

@@ -23,8 +23,6 @@ import io.jaegertracing.exceptions.UnsupportedFormatException;
 import io.jaegertracing.metrics.Metrics;
 import io.jaegertracing.metrics.MetricsFactory;
 import io.jaegertracing.metrics.NoopMetricsFactory;
-import io.jaegertracing.metrics.StatsFactoryImpl;
-import io.jaegertracing.metrics.StatsReporter;
 import io.jaegertracing.propagation.Extractor;
 import io.jaegertracing.propagation.Injector;
 import io.jaegertracing.propagation.TextMapCodec;
@@ -512,15 +510,6 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
 
     public <T> Builder registerExtractor(Format<T> format, Extractor<T> extractor) {
       this.registry.register(format, extractor);
-      return this;
-    }
-
-    /**
-     * @deprecated Use {@link #withMetricsFactory(MetricsFactory)} instead
-     */
-    @Deprecated
-    public Builder withStatsReporter(StatsReporter statsReporter) {
-      this.metrics = new Metrics(new StatsFactoryImpl(statsReporter));
       return this;
     }
 
