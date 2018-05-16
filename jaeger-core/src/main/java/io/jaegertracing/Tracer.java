@@ -478,16 +478,6 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
     }
 
     /**
-     * Use {@link #Builder(String)} and fluent API {@link #withReporter(Reporter)}, {@link #withSampler(Sampler)}
-     */
-    @Deprecated
-    public Builder(String serviceName, Reporter reporter, Sampler sampler) {
-      this(serviceName);
-      this.reporter = reporter;
-      this.sampler = sampler;
-    }
-
-    /**
      * @param reporter reporter.
      */
     public Builder withReporter(Reporter reporter) {
