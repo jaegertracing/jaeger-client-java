@@ -37,6 +37,8 @@ import io.opentracing.noop.NoopTracerFactory;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.Format.Builtin;
 import io.opentracing.propagation.TextMap;
+import io.opentracing.propagation.TextMapExtractAdapter;
+import io.opentracing.propagation.TextMapInjectAdapter;
 import io.opentracing.util.GlobalTracer;
 import java.lang.reflect.Field;
 import java.net.SocketException;
@@ -392,7 +394,7 @@ public class ConfigurationTest {
   }
 
   @Test
-  public void testCodec() {
+  public void testAddedCodecs() {
     Codec<TextMap> codec1 = new Codec<TextMap>() {
       @Override
       public SpanContext extract(TextMap carrier) {
@@ -421,6 +423,35 @@ public class ConfigurationTest {
     assertEquals(2, codecConfiguration.getCodecs().get(Builtin.HTTP_HEADERS).size());
     assertEquals(codec1, codecConfiguration.getCodecs().get(Builtin.HTTP_HEADERS).get(0));
     assertEquals(codec2, codecConfiguration.getCodecs().get(Builtin.HTTP_HEADERS).get(1));
+
+    Configuration configuration = new Configuration("foo")
+        .withCodec(codecConfiguration);
+    SpanContext spanContext = new SpanContext(2L, 11L, 22L, (byte) 0);
+    assertInjectExtract(configuration.getTracer(), Builtin.TEXT_MAP, spanContext, false);
+    // added codecs above overrides the default implementation
+    assertInjectExtract(configuration.getTracer(), Builtin.HTTP_HEADERS, spanContext, true);
+  }
+
+  @Test
+  public void testDefaultCodecs() {
+    Configuration configuration = new Configuration("foo");
+    SpanContext spanContext = new SpanContext(2L, 11L, 22L, (byte) 0);
+    assertInjectExtract(configuration.getTracer(), Builtin.TEXT_MAP, spanContext, false);
+    assertInjectExtract(configuration.getTracer(), Builtin.HTTP_HEADERS, spanContext, false);
+  }
+
+  private <C> void assertInjectExtract(io.opentracing.Tracer tracer, Format<C> format, SpanContext contextToInject,
+      boolean injectMapIsEmpty) {
+    HashMap<String, String> injectMap = new HashMap<>();
+    tracer.inject(contextToInject, format, (C)new TextMapInjectAdapter(injectMap));
+    assertEquals(injectMapIsEmpty, injectMap.isEmpty());
+    if (injectMapIsEmpty) {
+      return;
+    }
+    SpanContext extractedContext = (io.jaegertracing.SpanContext) tracer.extract(format,
+        (C)new TextMapExtractAdapter(injectMap));
+    assertEquals(contextToInject.getTraceId(), extractedContext.getTraceId());
+    assertEquals(contextToInject.getSpanId(), extractedContext.getSpanId());
   }
 
   static class TestTextMap implements TextMap {
