@@ -67,7 +67,9 @@ public class UdpSenderTest {
     server = startServer();
     reporter = new InMemoryReporter();
     tracer =
-        new Tracer.Builder(SERVICE_NAME, reporter, new ConstSampler(true))
+        new Tracer.Builder(SERVICE_NAME)
+            .withReporter(reporter)
+            .withSampler(new ConstSampler(true))
             .withMetricsFactory(new InMemoryMetricsFactory())
             .withTag("foo", "bar")
             .build();

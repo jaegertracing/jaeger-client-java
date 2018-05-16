@@ -85,8 +85,9 @@ public class TracerTest {
     @SuppressWarnings("unchecked")
     Injector<TextMap> injector = mock(Injector.class);
 
-    Tracer tracer =
-        new Tracer.Builder("TracerTestService", new InMemoryReporter(), new ConstSampler(true))
+    Tracer tracer = new Tracer.Builder("TracerTestService")
+            .withReporter(new InMemoryReporter())
+            .withSampler(new ConstSampler(true))
             .withMetrics(new Metrics(new InMemoryMetricsFactory()))
             .registerInjector(Format.Builtin.TEXT_MAP, injector)
             .build();
@@ -100,12 +101,12 @@ public class TracerTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testServiceNameNotNull() {
-    new Tracer.Builder(null, new InMemoryReporter(), new ConstSampler(true));
+    new Tracer.Builder(null);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testServiceNameNotEmptyNull() {
-    new Tracer.Builder("  ", new InMemoryReporter(), new ConstSampler(true));
+    new Tracer.Builder("  ");
   }
 
   @Test
@@ -126,8 +127,9 @@ public class TracerTest {
 
   @Test
   public void testWithBaggageRestrictionManager() {
-    tracer =
-        new Tracer.Builder("TracerTestService", new InMemoryReporter(), new ConstSampler(true))
+    tracer = new Tracer.Builder("TracerTestService")
+            .withReporter(new InMemoryReporter())
+            .withSampler(new ConstSampler(true))
             .withMetrics(new Metrics(metricsFactory))
             .build();
     Span span = (Span) tracer.buildSpan("some-operation").start();
@@ -146,7 +148,10 @@ public class TracerTest {
   public void testClose() {
     Reporter reporter = mock(Reporter.class);
     Sampler sampler = mock(Sampler.class);
-    tracer = new Tracer.Builder("bonda", reporter, sampler).build();
+    tracer = new Tracer.Builder("bonda")
+        .withReporter(reporter)
+        .withSampler(sampler)
+        .build();
     tracer.close();
     verify(reporter).close();
     verify(sampler).close();
@@ -154,7 +159,10 @@ public class TracerTest {
 
   @Test
   public void testAsChildOfAcceptNull() {
-    tracer = new Tracer.Builder("foo", new InMemoryReporter(), new ConstSampler(true)).build();
+    tracer = new Tracer.Builder("foo")
+        .withReporter(new InMemoryReporter())
+        .withSampler(new ConstSampler(true))
+        .build();
 
     Span span = (Span)tracer.buildSpan("foo").asChildOf((Span) null).start();
     span.finish();

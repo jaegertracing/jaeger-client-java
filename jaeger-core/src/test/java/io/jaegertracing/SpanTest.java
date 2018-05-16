@@ -58,8 +58,9 @@ public class SpanTest {
     reporter = new InMemoryReporter();
     clock = mock(Clock.class);
     metrics = new Metrics(metricsFactory);
-    tracer =
-        new Tracer.Builder("SamplerTest", reporter, new ConstSampler(true))
+    tracer = new Tracer.Builder("SamplerTest")
+            .withReporter(reporter)
+            .withSampler(new ConstSampler(true))
             .withMetrics(metrics)
             .withClock(clock)
             .withBaggageRestrictionManager(new DefaultBaggageRestrictionManager())
@@ -78,8 +79,9 @@ public class SpanTest {
   public void testSetAndGetBaggageItem() {
     final String service = "SamplerTest";
     final BaggageRestrictionManager mgr = Mockito.mock(DefaultBaggageRestrictionManager.class);
-    tracer =
-        new Tracer.Builder(service, reporter, new ConstSampler(true))
+    tracer = new Tracer.Builder(service)
+            .withReporter(reporter)
+            .withSampler(new ConstSampler(true))
             .withClock(clock)
             .withBaggageRestrictionManager(mgr)
             .build();
@@ -410,7 +412,9 @@ public class SpanTest {
 
   @Test
   public void testNoExpandExceptionLogs() {
-    Tracer tracer = new Tracer.Builder("fo", reporter, new ConstSampler(true))
+    Tracer tracer = new Tracer.Builder("fo")
+        .withReporter(reporter)
+        .withSampler(new ConstSampler(true))
         .build();
 
     Span span = (Span)tracer.buildSpan("foo").start();
@@ -428,7 +432,9 @@ public class SpanTest {
 
   @Test
   public void testSpanNotSampled() {
-    Tracer tracer = new Tracer.Builder("fo", reporter, new ConstSampler(false))
+    Tracer tracer = new Tracer.Builder("fo")
+        .withReporter(reporter)
+        .withSampler(new ConstSampler(false))
         .build();
     io.opentracing.Span foo = tracer.buildSpan("foo")
         .start();

@@ -60,8 +60,9 @@ public class RemoteReporterTest {
         .withMaxQueueSize(maxQueueSize)
         .withMetrics(metrics)
         .build();
-    tracer =
-        new Tracer.Builder("test-remote-reporter", reporter, new ConstSampler(true))
+    tracer = new Tracer.Builder("test-remote-reporter")
+            .withReporter(reporter)
+            .withSampler(new ConstSampler(true))
             .withMetrics(metrics)
             .build();
   }
@@ -176,7 +177,9 @@ public class RemoteReporterTest {
   public void testCloseWhenQueueFull() {
     int closeTimeoutMillis = 5;
     reporter = new RemoteReporter(sender, Integer.MAX_VALUE, maxQueueSize, closeTimeoutMillis, metrics);
-    tracer = new Tracer.Builder("test-remote-reporter", reporter, new ConstSampler(true))
+    tracer = new Tracer.Builder("test-remote-reporter")
+        .withReporter(reporter)
+        .withSampler(new ConstSampler(true))
         .withMetrics(metrics)
         .build();
     // change sender to blocking mode
@@ -216,7 +219,9 @@ public class RemoteReporterTest {
         .withMaxQueueSize(maxQueueSize)
         .withMetrics(metrics)
         .build();
-    tracer = new Tracer.Builder("test-remote-reporter", reporter, new ConstSampler(true))
+    tracer = new Tracer.Builder("test-remote-reporter")
+        .withReporter(reporter)
+        .withSampler(new ConstSampler(true))
         .withMetrics(metrics)
         .build();
 
@@ -253,10 +258,11 @@ public class RemoteReporterTest {
         .withMaxQueueSize(maxQueueSize)
         .withMetrics(metrics)
         .build();
-    tracer =
-          new Tracer.Builder("test-remote-reporter", reporter, new ConstSampler(true))
-                .withMetrics(metrics)
-                .build();
+    tracer = new Tracer.Builder("test-remote-reporter")
+              .withReporter(reporter)
+              .withSampler(new ConstSampler(true))
+              .withMetrics(metrics)
+              .build();
 
     tracer.buildSpan("mySpan").start().finish();
     latch.await(1, TimeUnit.SECONDS);

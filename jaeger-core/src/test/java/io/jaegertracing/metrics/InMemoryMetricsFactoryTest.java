@@ -100,8 +100,9 @@ public class InMemoryMetricsFactoryTest {
   @Test
   public void emptyValueForTag() {
     InMemoryMetricsFactory metricsFactory = new InMemoryMetricsFactory();
-    Tracer tracer =
-        new Tracer.Builder("metricsFactoryTest", new InMemoryReporter(), new ConstSampler(true))
+    Tracer tracer =  new Tracer.Builder("metricsFactoryTest")
+            .withReporter(new InMemoryReporter())
+            .withSampler(new ConstSampler(true))
             .withMetrics(new Metrics(metricsFactory))
             .build();
 
@@ -113,8 +114,9 @@ public class InMemoryMetricsFactoryTest {
   @Test
   public void canBeUsedWithMetrics() {
     InMemoryMetricsFactory metricsFactory = new InMemoryMetricsFactory();
-    Tracer tracer =
-        new Tracer.Builder("metricsFactoryTest", new InMemoryReporter(), new ConstSampler(true))
+    Tracer tracer = new Tracer.Builder("metricsFactoryTest")
+            .withReporter(new InMemoryReporter())
+            .withSampler(new ConstSampler(true))
             .withMetrics(new Metrics(metricsFactory))
             .build();
 
