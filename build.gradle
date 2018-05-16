@@ -8,9 +8,9 @@ plugins {
     id "jacoco"
     id "com.github.hierynomus.license" version "0.14.0"
     id 'com.github.sherter.google-java-format' version '0.6'
-    id "com.github.johnrengelman.shadow" version "2.0.1"
-    id "net.ltgt.errorprone" version "0.0.12"
-    id 'ru.vyarus.animalsniffer' version '1.4.2'
+    id "com.github.johnrengelman.shadow" version "2.0.4"
+    id "net.ltgt.errorprone" version "0.0.14"
+    id 'ru.vyarus.animalsniffer' version '1.4.3'
     id 'io.codearte.nexus-staging' version '0.11.0'
     id 'com.github.ben-manes.versions' version '0.17.0'
 }
