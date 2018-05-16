@@ -333,6 +333,11 @@ public class ConfigurationTest {
     new Configuration(null);
   }
 
+  @Test(expected = RuntimeException.class)
+  public void testEmptyServiceName() {
+    new Configuration("");
+  }
+
   @Test
   public void testOverrideServiceName() {
     System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
