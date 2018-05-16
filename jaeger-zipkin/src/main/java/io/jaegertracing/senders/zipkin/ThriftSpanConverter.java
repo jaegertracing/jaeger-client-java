@@ -12,7 +12,7 @@
  * the License.
  */
 
-package io.jaegertracing.zipkin;
+package io.jaegertracing.senders.zipkin;
 
 import com.google.gson.Gson;
 import com.twitter.zipkin.thriftjava.Annotation;
@@ -25,6 +25,7 @@ import io.jaegertracing.LogData;
 import io.jaegertracing.Span;
 import io.jaegertracing.SpanContext;
 import io.jaegertracing.Tracer;
+import io.jaegertracing.zipkin.ConverterUtil;
 import io.opentracing.tag.Tags;
 import java.nio.charset.Charset;
 import java.util.ArrayList;

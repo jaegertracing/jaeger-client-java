@@ -148,53 +148,7 @@ public class V2SpanConverterTest {
   }
 
   @Test
-  public void testSpanKindServerCreatesAnnotations() {
-    Span span = (Span) tracer.buildSpan("operation-name").start();
-    Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_SERVER);
-
-    zipkin2.Span zipkinSpan = V2SpanConverter.convertSpan(span);
-
-    List<Annotation> annotations = zipkinSpan.annotations();
-    boolean serverReceiveFound = false;
-    boolean serverSendFound = false;
-    for (Annotation anno : annotations) {
-      if (anno.value().equals(zipkin.Constants.SERVER_RECV)) {
-        serverReceiveFound = true;
-      }
-      if (anno.value().equals(zipkin.Constants.SERVER_SEND)) {
-        serverSendFound = true;
-      }
-    }
-    assertTrue(serverReceiveFound);
-    assertTrue(serverSendFound);
-  }
-
-  @Test
-  public void testSpanKindClientCreatesAnnotations() {
-    Span span = (Span) tracer.buildSpan("operation-name").start();
-    Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
-
-    zipkin2.Span zipkinSpan = V2SpanConverter.convertSpan(span);
-
-    List<Annotation> annotations = zipkinSpan.annotations();
-    boolean clientReceiveFound = false;
-    boolean clientSendFound = false;
-    for (Annotation anno : annotations) {
-      if (anno.value().equals(zipkin.Constants.CLIENT_RECV)) {
-        clientReceiveFound = true;
-      }
-
-      if (anno.value().equals(zipkin.Constants.CLIENT_SEND)) {
-        clientSendFound = true;
-      }
-    }
-
-    assertTrue(clientReceiveFound);
-    assertTrue(clientSendFound);
-  }
-
-  @Test
-  public void testSpanKindConsumerCreatesAnnotations() {
+  public void testSpanKindConsumerHasCorrectKind() {
     Span span = (Span) tracer.buildSpan("operation-name").start();
     Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CONSUMER);
 
@@ -204,7 +158,7 @@ public class V2SpanConverterTest {
   }
 
   @Test
-  public void testSpanKindProducerCreatesAnnotations() {
+  public void testSpanKindProducerHasCorrectKind() {
     Span span = (Span) tracer.buildSpan("operation-name").start();
     Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_PRODUCER);
 

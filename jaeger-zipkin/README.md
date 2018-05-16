@@ -37,17 +37,17 @@ tracer = new Tracer.Builder(serviceName, reporter, sampler)
 ```
 
 ### Zipkin 2 Reporters
-You can reuse a Zipkin 2 reporter instance as-is by using `Zipkin2Reporter`, which adapts a Zipkin
+You can reuse a Zipkin 2 reporter instance as-is by using `ZipkinV2Reporter`, which adapts a Zipkin
 2 reporter to the Jaeger reporter interface and deals with converting Jaeger spans to the Zipkin 2 
 model.
 
 For example:
 ```java
-import io.jaegertracing.zipkin.reporters.Zipkin2Reporter;
+import io.jaegertracing.zipkin.reporters.ZipkinV2Reporter;
 import zipkin2.reporter.AsyncReporter;
 import zipkin2.reporter.urlconnection.URLConnectionSender;
 
-reporter = new Zipkin2Reporter(
+reporter = new ZipkinV2Reporter(
     AsyncReporter.create(URLConnectionSender.create("http://localhost:9411/api/v2/spans")));
 
 tracer = new Tracer.Builder(serviceName)

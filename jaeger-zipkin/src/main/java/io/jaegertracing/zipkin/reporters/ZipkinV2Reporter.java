@@ -20,10 +20,10 @@ import io.jaegertracing.zipkin.V2SpanConverter;
 /**
  * Wrapper around a zipkin v2 AsyncReporter that reports spans using the newer v2 Span class
  */
-public class Zipkin2Reporter implements Reporter {
+public class ZipkinV2Reporter implements Reporter {
   public final zipkin2.reporter.AsyncReporter<zipkin2.Span> reporter;
 
-  public Zipkin2Reporter(zipkin2.reporter.AsyncReporter<zipkin2.Span> reporter) {
+  public ZipkinV2Reporter(zipkin2.reporter.AsyncReporter<zipkin2.Span> reporter) {
     this.reporter = reporter;
   }
 

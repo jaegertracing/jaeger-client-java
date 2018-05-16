@@ -12,7 +12,7 @@
  * the License.
  */
 
-package io.jaegertracing.zipkin;
+package io.jaegertracing.senders.zipkin;
 
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
@@ -30,6 +30,7 @@ import io.jaegertracing.SpanContext;
 import io.jaegertracing.Tracer;
 import io.jaegertracing.reporters.InMemoryReporter;
 import io.jaegertracing.samplers.ConstSampler;
+import io.jaegertracing.zipkin.ConverterUtil;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
 import io.opentracing.propagation.TextMapExtractAdapter;

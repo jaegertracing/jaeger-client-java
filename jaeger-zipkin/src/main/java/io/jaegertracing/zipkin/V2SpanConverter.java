@@ -77,18 +77,6 @@ public class V2SpanConverter {
   }
 
   private static void buildAnnotations(Span span, zipkin2.Span.Builder builder) {
-    if (ConverterUtil.isRpc(span)) {
-      String startLabel = zipkin.Constants.SERVER_RECV;
-      String endLabel = zipkin.Constants.SERVER_SEND;
-      if (ConverterUtil.isRpcClient(span)) {
-        startLabel = zipkin.Constants.CLIENT_SEND;
-        endLabel = zipkin.Constants.CLIENT_RECV;
-      }
-
-      builder.addAnnotation(span.getStart(), startLabel);
-      builder.addAnnotation(span.getStart() + span.getDuration(), endLabel);
-    }
-
     List<LogData> logs = span.getLogs();
     if (logs != null) {
       for (LogData logData : logs) {
@@ -105,7 +93,6 @@ public class V2SpanConverter {
 
   private static void buildTags(Span span, zipkin2.Span.Builder builder) {
     Map<String, Object> tags = span.getTags();
-    boolean isRpc = ConverterUtil.isRpc(span);
     boolean firstSpanInProcess = span.getReferences().isEmpty() || ConverterUtil.isRpcServer(span);
 
     if (firstSpanInProcess) {
@@ -120,19 +107,6 @@ public class V2SpanConverter {
           builder.putTag("tracer." + tagKey, tagValue.toString());
         }
       }
-    }
-
-    if (!isRpc) {
-      String componentName;
-      Object componentTag = tags.get(Tags.COMPONENT.getKey());
-      if (componentTag instanceof String) {
-        componentName = componentTag.toString();
-      } else {
-        // spans always have associated tracers, and service names
-        componentName = span.getTracer().getServiceName();
-      }
-
-      builder.putTag(zipkin.Constants.LOCAL_COMPONENT, componentName);
     }
 
     if (tags != null) {

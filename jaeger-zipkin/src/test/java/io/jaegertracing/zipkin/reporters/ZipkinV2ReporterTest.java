@@ -32,10 +32,11 @@ import zipkin2.reporter.Sender;
 import zipkin2.reporter.urlconnection.URLConnectionSender;
 
 
-public class Zipkin2ReporterTest {
+public class ZipkinV2ReporterTest {
   @Rule public ZipkinRule zipkinRule = new ZipkinRule();
 
   Sender sender;
+  zipkin2.reporter.AsyncReporter zipkinReporter;
   Reporter reporter;
   Tracer tracer;
 
@@ -46,11 +47,11 @@ public class Zipkin2ReporterTest {
         .endpoint(zipkinRule.httpUrl() + "/api/v2/spans")
         .build();
 
-    reporter = new Zipkin2Reporter(
-        zipkin2.reporter.AsyncReporter.builder(sender)
-        .messageTimeout(10, TimeUnit.SECONDS)
-        .closeTimeout(10, TimeUnit.SECONDS)
-        .build());
+    zipkinReporter = zipkin2.reporter.AsyncReporter.builder(sender)
+        .messageTimeout(0, TimeUnit.MILLISECONDS)
+        .build();
+
+    reporter = new ZipkinV2Reporter(zipkinReporter);
 
     tracer = new Tracer.Builder("test-sender")
             .withReporter(reporter)
@@ -65,7 +66,7 @@ public class Zipkin2ReporterTest {
     jaegerSpan.finish();
 
     reporter.report(jaegerSpan);
-    reporter.close();
+    zipkinReporter.flush();
 
     List<List<zipkin.Span>> spans = zipkinRule.getTraces();
     assertEquals(spans.get(0).get(0).name, "raza");
