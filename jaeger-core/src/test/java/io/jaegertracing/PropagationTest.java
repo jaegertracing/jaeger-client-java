@@ -34,8 +34,10 @@ import org.junit.Test;
 public class PropagationTest {
   @Test
   public void testDebugCorrelationId() {
-    Tracer tracer =
-        new Tracer.Builder("test", new InMemoryReporter(), new ConstSampler(true)).build();
+    Tracer tracer = new Tracer.Builder("test")
+            .withReporter(new InMemoryReporter())
+            .withSampler(new ConstSampler(true))
+            .build();
     Map<String, String> headers = new HashMap<>();
     headers.put(Constants.DEBUG_ID_HEADER_KEY, "Coraline");
     TextMap carrier = new TextMapExtractAdapter(headers);
@@ -51,8 +53,10 @@ public class PropagationTest {
 
   @Test
   public void testActiveSpanPropagation() {
-    Tracer tracer =
-        new Tracer.Builder("test", new InMemoryReporter(), new ConstSampler(true)).build();
+    Tracer tracer = new Tracer.Builder("test")
+            .withReporter(new InMemoryReporter())
+            .withSampler(new ConstSampler(true))
+            .build();
     try (Scope parent = tracer.buildSpan("parent").startActive(true)) {
       assertEquals(parent, tracer.scopeManager().active());
     }
@@ -61,8 +65,10 @@ public class PropagationTest {
   @Test
   public void testActiveSpanAutoReference() {
     InMemoryReporter reporter = new InMemoryReporter();
-    Tracer tracer =
-        new Tracer.Builder("test", reporter, new ConstSampler(true)).build();
+    Tracer tracer = new Tracer.Builder("test")
+            .withReporter(reporter)
+            .withSampler(new ConstSampler(true))
+            .build();
     try (Scope parent = tracer.buildSpan("parent").startActive(true)) {
       tracer.buildSpan("child").startActive(true).close();
     }
@@ -85,8 +91,10 @@ public class PropagationTest {
   @Test
   public void testActiveSpanAutoFinishOnClose() {
     InMemoryReporter reporter = new InMemoryReporter();
-    Tracer tracer =
-        new Tracer.Builder("test", reporter, new ConstSampler(true)).build();
+    Tracer tracer = new Tracer.Builder("test")
+            .withReporter(reporter)
+            .withSampler(new ConstSampler(true))
+            .build();
     tracer.buildSpan("parent").startActive(true).close();
     assertEquals(1, reporter.getSpans().size());
   }
@@ -94,8 +102,10 @@ public class PropagationTest {
   @Test
   public void testActiveSpanNotAutoFinishOnClose() {
     InMemoryReporter reporter = new InMemoryReporter();
-    Tracer tracer =
-        new Tracer.Builder("test", reporter, new ConstSampler(true)).build();
+    Tracer tracer = new Tracer.Builder("test")
+            .withReporter(reporter)
+            .withSampler(new ConstSampler(true))
+            .build();
     Scope scope = tracer.buildSpan("parent").startActive(false);
     Span span = (Span) scope.span();
     scope.close();
@@ -107,8 +117,10 @@ public class PropagationTest {
   @Test
   public void testIgnoreActiveSpan() {
     InMemoryReporter reporter = new InMemoryReporter();
-    Tracer tracer =
-        new Tracer.Builder("test", reporter, new ConstSampler(true)).build();
+    Tracer tracer = new Tracer.Builder("test")
+            .withReporter(reporter)
+            .withSampler(new ConstSampler(true))
+            .build();
     try (Scope parent = tracer.buildSpan("parent").startActive(true)) {
       tracer.buildSpan("child").ignoreActiveSpan().startActive(true).close();
     }
@@ -126,8 +138,10 @@ public class PropagationTest {
   @Test
   public void testNoAutoRefWithExistingRefs() {
     InMemoryReporter reporter = new InMemoryReporter();
-    Tracer tracer =
-        new Tracer.Builder("test", reporter, new ConstSampler(true)).build();
+    Tracer tracer = new Tracer.Builder("test")
+            .withReporter(reporter)
+            .withSampler(new ConstSampler(true))
+            .build();
 
     io.opentracing.Span initialSpan = tracer.buildSpan("initial").start();
 
@@ -156,8 +170,9 @@ public class PropagationTest {
   @Test
   public void testCustomScopeManager() {
     Scope scope = mock(Scope.class);
-    Tracer tracer =
-        new Tracer.Builder("test", new InMemoryReporter(), new ConstSampler(true))
+    Tracer tracer = new Tracer.Builder("test")
+        .withReporter(new InMemoryReporter())
+        .withSampler(new ConstSampler(true))
         .withScopeManager(new ScopeManager() {
 
           @Override

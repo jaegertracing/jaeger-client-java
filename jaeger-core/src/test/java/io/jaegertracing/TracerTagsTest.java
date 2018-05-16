@@ -28,7 +28,9 @@ public class TracerTagsTest {
   @Test
   public void testTracerTags() throws Exception {
     InMemoryReporter spanReporter = new InMemoryReporter();
-    Tracer tracer = new Tracer.Builder("x", spanReporter, new ConstSampler(true))
+    Tracer tracer = new Tracer.Builder("x")
+        .withReporter(spanReporter)
+        .withSampler(new ConstSampler(true))
         .withZipkinSharedRpcSpan()
         .withTag("tracer.tag.str", "y")
         .build();

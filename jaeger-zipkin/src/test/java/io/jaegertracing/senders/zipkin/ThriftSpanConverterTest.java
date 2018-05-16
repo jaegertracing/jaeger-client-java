@@ -51,9 +51,10 @@ public class ThriftSpanConverterTest {
 
   @Before
   public void setUp() {
-    tracer =
-        new Tracer.Builder("test-service-name", new InMemoryReporter(), new ConstSampler(true))
-                .withZipkinSharedRpcSpan()
+    tracer = new Tracer.Builder("test-service-name")
+            .withReporter(new InMemoryReporter())
+            .withSampler(new ConstSampler(true))
+            .withZipkinSharedRpcSpan()
             .build();
   }
 
@@ -71,7 +72,10 @@ public class ThriftSpanConverterTest {
 
   @DataProvider
   public static Object[][] dataProviderTracerTags() {
-    Tracer tracer = new Tracer.Builder("x", null, null).build();
+    Tracer tracer = new Tracer.Builder("x")
+        .withReporter(null)
+        .withSampler(null)
+        .build();
 
     Map<String, String> rootTags = new HashMap<>();
     rootTags.put("tracer.jaeger.version", tracer.getVersion());
@@ -111,7 +115,9 @@ public class ThriftSpanConverterTest {
   @UseDataProvider("dataProviderTracerTags")
   public void testTracerTags(SpanType spanType, Map<String, String> expectedTags) throws Exception {
     InMemoryReporter spanReporter = new InMemoryReporter();
-    Tracer tracer = new Tracer.Builder("x", spanReporter, new ConstSampler(true))
+    Tracer tracer = new Tracer.Builder("x")
+        .withReporter(spanReporter)
+        .withSampler(new ConstSampler(true))
         .withZipkinSharedRpcSpan()
         .withTag("tag.str", "y")
         .withTag("tag.bool", true)

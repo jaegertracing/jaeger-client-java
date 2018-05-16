@@ -54,8 +54,9 @@ public class ZipkinSenderTest {
   @Before
   public void setUp() throws Exception {
     reporter = new InMemoryReporter();
-    tracer =
-        new Tracer.Builder("test-sender", reporter, new ConstSampler(true))
+    tracer = new Tracer.Builder("test-sender")
+            .withReporter(reporter)
+            .withSampler(new ConstSampler(true))
             .withMetricsFactory(new InMemoryMetricsFactory())
             .build();
     sender = newSender(messageMaxBytes);

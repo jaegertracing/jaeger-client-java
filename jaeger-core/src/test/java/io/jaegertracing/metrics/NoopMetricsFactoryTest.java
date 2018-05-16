@@ -88,8 +88,9 @@ public class NoopMetricsFactoryTest {
   @Test
   public void canBeUsedWithMetrics() {
     NoopMetricsFactory metricsFactory = new NoopMetricsFactory();
-    Tracer tracer =
-        new Tracer.Builder("metricsFactoryTest", new InMemoryReporter(), new ConstSampler(true))
+    Tracer tracer = new Tracer.Builder("metricsFactoryTest")
+            .withReporter(new InMemoryReporter())
+            .withSampler(new ConstSampler(true))
             .withMetrics(new Metrics(metricsFactory))
             .build();
 

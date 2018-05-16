@@ -46,8 +46,9 @@ public class JaegerThriftSpanConverterTest {
 
   @Before
   public void setUp() {
-    tracer =
-        new Tracer.Builder("test-service-name", new InMemoryReporter(), new ConstSampler(true))
+    tracer = new Tracer.Builder("test-service-name")
+            .withReporter(new InMemoryReporter())
+            .withSampler(new ConstSampler(true))
             .build();
   }
 
