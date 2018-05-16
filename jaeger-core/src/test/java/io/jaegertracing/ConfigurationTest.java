@@ -21,10 +21,12 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import io.jaegertracing.Configuration.CodecConfiguration;
 import io.jaegertracing.Configuration.ReporterConfiguration;
 import io.jaegertracing.Configuration.SamplerConfiguration;
 import io.jaegertracing.metrics.InMemoryMetricsFactory;
 import io.jaegertracing.metrics.Metrics;
+import io.jaegertracing.propagation.Codec;
 import io.jaegertracing.samplers.ConstSampler;
 import io.jaegertracing.samplers.ProbabilisticSampler;
 import io.jaegertracing.samplers.RateLimitingSampler;
@@ -33,7 +35,10 @@ import io.jaegertracing.senders.HttpSender;
 import io.jaegertracing.senders.Sender;
 import io.opentracing.noop.NoopTracerFactory;
 import io.opentracing.propagation.Format;
+import io.opentracing.propagation.Format.Builtin;
 import io.opentracing.propagation.TextMap;
+import io.opentracing.propagation.TextMapExtractAdapter;
+import io.opentracing.propagation.TextMapInjectAdapter;
 import io.opentracing.util.GlobalTracer;
 import java.lang.reflect.Field;
 import java.net.SocketException;
@@ -328,6 +333,19 @@ public class ConfigurationTest {
     new Configuration(null);
   }
 
+  @Test(expected = RuntimeException.class)
+  public void testEmptyServiceName() {
+    new Configuration("");
+  }
+
+  @Test
+  public void testOverrideServiceName() {
+    System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
+    Configuration configuration = Configuration.fromEnv()
+        .withServiceName("bar");
+    assertEquals("bar", configuration.getServiceName());
+  }
+
   @Test
   public void testDefaultTracer() {
     Configuration configuration = new Configuration("name");
@@ -370,6 +388,75 @@ public class ConfigurationTest {
     Sampler sampler = samplerConfiguration.createSampler("name",
         new Metrics(new InMemoryMetricsFactory()));
     assertTrue(sampler instanceof RateLimitingSampler);
+  }
+
+  @Test
+  public void testMetrics() {
+    InMemoryMetricsFactory inMemoryMetricsFactory = new InMemoryMetricsFactory();
+    Configuration configuration = new Configuration("foo")
+        .withMetricsFactory(inMemoryMetricsFactory);
+    assertEquals(inMemoryMetricsFactory, configuration.getMetricsFactory());
+  }
+
+  @Test
+  public void testAddedCodecs() {
+    Codec<TextMap> codec1 = new Codec<TextMap>() {
+      @Override
+      public SpanContext extract(TextMap carrier) {
+        return null;
+      }
+
+      @Override
+      public void inject(SpanContext spanContext, TextMap carrier) {
+      }
+    };
+
+    Codec<TextMap> codec2 = new Codec<TextMap>() {
+      @Override
+      public SpanContext extract(TextMap carrier) {
+        return null;
+      }
+
+      @Override
+      public void inject(SpanContext spanContext, TextMap carrier) {
+      }
+    };
+
+    CodecConfiguration codecConfiguration = new CodecConfiguration()
+        .withCodec(Builtin.HTTP_HEADERS, codec1)
+        .withCodec(Builtin.HTTP_HEADERS, codec2);
+    assertEquals(2, codecConfiguration.getCodecs().get(Builtin.HTTP_HEADERS).size());
+    assertEquals(codec1, codecConfiguration.getCodecs().get(Builtin.HTTP_HEADERS).get(0));
+    assertEquals(codec2, codecConfiguration.getCodecs().get(Builtin.HTTP_HEADERS).get(1));
+
+    Configuration configuration = new Configuration("foo")
+        .withCodec(codecConfiguration);
+    SpanContext spanContext = new SpanContext(2L, 11L, 22L, (byte) 0);
+    assertInjectExtract(configuration.getTracer(), Builtin.TEXT_MAP, spanContext, false);
+    // added codecs above overrides the default implementation
+    assertInjectExtract(configuration.getTracer(), Builtin.HTTP_HEADERS, spanContext, true);
+  }
+
+  @Test
+  public void testDefaultCodecs() {
+    Configuration configuration = new Configuration("foo");
+    SpanContext spanContext = new SpanContext(2L, 11L, 22L, (byte) 0);
+    assertInjectExtract(configuration.getTracer(), Builtin.TEXT_MAP, spanContext, false);
+    assertInjectExtract(configuration.getTracer(), Builtin.HTTP_HEADERS, spanContext, false);
+  }
+
+  private <C> void assertInjectExtract(io.opentracing.Tracer tracer, Format<C> format, SpanContext contextToInject,
+      boolean injectMapIsEmpty) {
+    HashMap<String, String> injectMap = new HashMap<>();
+    tracer.inject(contextToInject, format, (C)new TextMapInjectAdapter(injectMap));
+    assertEquals(injectMapIsEmpty, injectMap.isEmpty());
+    if (injectMapIsEmpty) {
+      return;
+    }
+    SpanContext extractedContext = (io.jaegertracing.SpanContext) tracer.extract(format,
+        (C)new TextMapExtractAdapter(injectMap));
+    assertEquals(contextToInject.getTraceId(), extractedContext.getTraceId());
+    assertEquals(contextToInject.getSpanId(), extractedContext.getSpanId());
   }
 
   static class TestTextMap implements TextMap {
