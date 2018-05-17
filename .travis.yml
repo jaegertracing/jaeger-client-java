@@ -50,5 +50,5 @@ jobs:
       script: ./gradlew upload
 
     - stage: deploy
-      env: [ NAME=deploy-to-dockerhub ]
+      env: [ NAME=deploy-crossdock-to-dockerhub ]
       script: ./travis/publish-crossdock.sh
