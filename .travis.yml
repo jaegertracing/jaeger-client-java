@@ -33,7 +33,7 @@ before_install:
 stages:
   - name: test
   - name: deploy
-    if: env(TRAVIS_PULL_REQUEST) = false
+    if: NOT (type IN (pull_request))
 
 jobs:
   include:
