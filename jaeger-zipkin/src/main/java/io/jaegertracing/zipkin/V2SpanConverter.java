@@ -26,10 +26,12 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Converts a Jaeger span to a Zipkin2 span.
  */
+@Slf4j
 public class V2SpanConverter {
 
   private static final Gson gson = new Gson();
@@ -125,6 +127,7 @@ public class V2SpanConverter {
     try {
       return InetAddress.getByAddress(bytes);
     } catch (UnknownHostException e) {
+      log.error("Jaeger span IP " + ip + " could not be converted", e);
       return null;
     }
   }

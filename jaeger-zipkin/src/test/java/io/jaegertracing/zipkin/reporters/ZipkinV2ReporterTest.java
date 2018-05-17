@@ -41,7 +41,7 @@ public class ZipkinV2ReporterTest {
   Tracer tracer;
 
   @Before
-  public void setUp() throws Exception {
+  public void setup() throws Exception {
     sender = URLConnectionSender.newBuilder()
         .encoding(Encoding.JSON)
         .endpoint(zipkinRule.httpUrl() + "/api/v2/spans")
