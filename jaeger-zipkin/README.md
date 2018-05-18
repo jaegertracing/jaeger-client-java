@@ -21,12 +21,39 @@ tracer = new Tracer.Builder(serviceName, reporter, sampler)
 ```
 
 ## Sending data to Zipkin
-Zipkin supports transports including Http and Kafka. You can configure Jaeger to send to a Zipkin server with
-`ZipkinSender`.
+There are two ways to send spans to a Zipkin server:
+
+### Thrift
+If you want to send Zipkin v1 Thrift-encoded spans, you should use the `ZipkinSender` sender, which
+wraps a Zipkin sender class to enable the use of various transports such as HTTP and Kafka.
 
 For example:
 ```java
+import io.jaegertracing.senders.zipkin.ZipkinSender;
+
 reporter = new RemoteReporter(ZipkinSender.create("http://localhost:9411/api/v1/spans"));
 tracer = new Tracer.Builder(serviceName, reporter, sampler)
                    ...
 ```
+
+### Zipkin 2 Reporters
+You can reuse a Zipkin 2 reporter instance as-is by using `ZipkinV2Reporter`, which adapts a Zipkin
+2 reporter to the Jaeger reporter interface and deals with converting Jaeger spans to the Zipkin 2 
+model.
+
+For example:
+```java
+import io.jaegertracing.zipkin.reporters.ZipkinV2Reporter;
+import zipkin2.reporter.AsyncReporter;
+import zipkin2.reporter.urlconnection.URLConnectionSender;
+
+reporter = new ZipkinV2Reporter(
+    AsyncReporter.create(URLConnectionSender.create("http://localhost:9411/api/v2/spans")));
+
+tracer = new Tracer.Builder(serviceName)
+             .withReporter(reporter)
+             ...
+             .build()
+```
+
+This will send spans to the Zipkin v2 endpoint using the v2 JSON encoding.

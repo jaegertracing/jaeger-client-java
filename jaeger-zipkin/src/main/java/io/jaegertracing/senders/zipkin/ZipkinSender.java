@@ -33,7 +33,8 @@ import zipkin.reporter.urlconnection.URLConnectionSender;
 
 /**
  * This sends (TBinaryProtocol big-endian) encoded spans to a Zipkin Collector (usually a
- * zipkin-server).
+ * zipkin-server).  If you want to send newer Zipkin V2 spans in protocols other than Thrift,
+ * see {@link io.jaegertracing.zipkin.reporters.ZipkinV2Reporter ZipkinV2Reporter}.
  *
  * <p>
  * Example usage:

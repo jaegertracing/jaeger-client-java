@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Uber Technologies, Inc
+ * Copyright (c) 2018, The Jaeger Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -12,31 +12,27 @@
  * the License.
  */
 
-package io.jaegertracing.senders.zipkin;
+package io.jaegertracing.zipkin;
 
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
-import com.twitter.zipkin.thriftjava.Annotation;
-import com.twitter.zipkin.thriftjava.BinaryAnnotation;
-import com.twitter.zipkin.thriftjava.zipkincoreConstants;
 import io.jaegertracing.Span;
 import io.jaegertracing.SpanContext;
 import io.jaegertracing.Tracer;
 import io.jaegertracing.reporters.InMemoryReporter;
 import io.jaegertracing.samplers.ConstSampler;
-import io.jaegertracing.zipkin.ConverterUtil;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
 import io.opentracing.propagation.TextMapExtractAdapter;
 import io.opentracing.propagation.TextMapInjectAdapter;
 import io.opentracing.tag.Tags;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -45,14 +41,16 @@ import java.util.TreeMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import zipkin2.Annotation;
 
 @RunWith(DataProviderRunner.class)
-public class ThriftSpanConverterTest {
+public class V2SpanConverterTest {
   Tracer tracer;
 
   @Before
   public void setUp() {
-    tracer = new Tracer.Builder("test-service-name")
+    tracer =
+        new Tracer.Builder("test-service-name")
             .withReporter(new InMemoryReporter())
             .withSampler(new ConstSampler(true))
             .withZipkinSharedRpcSpan()
@@ -73,10 +71,7 @@ public class ThriftSpanConverterTest {
 
   @DataProvider
   public static Object[][] dataProviderTracerTags() {
-    Tracer tracer = new Tracer.Builder("x")
-        .withReporter(null)
-        .withSampler(null)
-        .build();
+    Tracer tracer = new Tracer.Builder("x").build();
 
     Map<String, String> rootTags = new HashMap<>();
     rootTags.put("tracer.jaeger.version", tracer.getVersion());
@@ -116,9 +111,7 @@ public class ThriftSpanConverterTest {
   @UseDataProvider("dataProviderTracerTags")
   public void testTracerTags(SpanType spanType, Map<String, String> expectedTags) throws Exception {
     InMemoryReporter spanReporter = new InMemoryReporter();
-    Tracer tracer = new Tracer.Builder("x")
-        .withReporter(spanReporter)
-        .withSampler(new ConstSampler(true))
+    Tracer tracer = new Tracer.Builder("x", spanReporter, new ConstSampler(true))
         .withZipkinSharedRpcSpan()
         .withTag("tag.str", "y")
         .withTag("tag.bool", true)
@@ -137,104 +130,68 @@ public class ThriftSpanConverterTest {
                   .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
                   .start();
     }
-    com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan(span);
+    zipkin2.Span zipkinSpan = V2SpanConverter.convertSpan(span);
 
-    List<BinaryAnnotation> annotations = zipkinSpan.getBinary_annotations();
+    Map<String, String> zipkinTags = zipkinSpan.tags();
     for (Map.Entry<String, String> entry : expectedTags.entrySet()) {
       String key = entry.getKey();
       Object expectedValue = entry.getValue();
-      BinaryAnnotation anno = findBinaryAnnotation(annotations, key);
+      String tagValue = zipkinTags.get(key);
       if (expectedValue.equals(UNDEF)) {
-        assertNull("Not expecting " + key + " for " + spanType, anno);
+        assertNull("Not expecting " + key + " for " + spanType, tagValue);
       } else if (expectedValue.equals(ANY)) {
-        assertEquals(key, anno.getKey());
+        assertNotNull(key, tagValue);
       } else {
-        String actualValue = new String(anno.getValue(), StandardCharsets.UTF_8);
-        assertEquals("Expecting " + key + " for " + spanType, expectedValue, actualValue);
+        assertEquals("Expecting " + key + " for " + spanType, expectedValue, tagValue);
       }
     }
-  }
-
-  private BinaryAnnotation findBinaryAnnotation(List<BinaryAnnotation> annotations, String key) {
-    for (BinaryAnnotation anno : annotations) {
-      if (anno.getKey().equals(key)) {
-        return anno;
-      }
-    }
-    return null;
   }
 
   @Test
-  public void testSpanKindServerCreatesAnnotations() {
-    Span span = (io.jaegertracing.Span) tracer.buildSpan("operation-name").start();
-    Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_SERVER);
+  public void testSpanKindConsumerHasCorrectKind() {
+    Span span = (Span) tracer.buildSpan("operation-name").start();
+    Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CONSUMER);
 
-    com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan(span);
+    zipkin2.Span zipkinSpan = V2SpanConverter.convertSpan(span);
 
-    List<Annotation> annotations = zipkinSpan.getAnnotations();
-    boolean serverReceiveFound = false;
-    boolean serverSendFound = false;
-    for (Annotation anno : annotations) {
-      if (anno.getValue().equals(zipkincoreConstants.SERVER_RECV)) {
-        serverReceiveFound = true;
-      }
-      if (anno.getValue().equals(zipkincoreConstants.SERVER_SEND)) {
-        serverSendFound = true;
-      }
-    }
-    assertTrue(serverReceiveFound);
-    assertTrue(serverSendFound);
+    assertEquals(zipkinSpan.kind(), zipkin2.Span.Kind.CONSUMER);
   }
 
   @Test
-  public void testSpanKindClientCreatesAnnotations() {
-    Span span = (io.jaegertracing.Span) tracer.buildSpan("operation-name").start();
-    Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
+  public void testSpanKindProducerHasCorrectKind() {
+    Span span = (Span) tracer.buildSpan("operation-name").start();
+    Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_PRODUCER);
 
-    com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan(span);
+    zipkin2.Span zipkinSpan = V2SpanConverter.convertSpan(span);
 
-    List<Annotation> annotations = zipkinSpan.getAnnotations();
-    boolean clientReceiveFound = false;
-    boolean clientSendFound = false;
-    for (Annotation anno : annotations) {
-      if (anno.getValue().equals(zipkincoreConstants.CLIENT_RECV)) {
-        clientReceiveFound = true;
-      }
-
-      if (anno.getValue().equals(zipkincoreConstants.CLIENT_SEND)) {
-        clientSendFound = true;
-      }
-    }
-
-    assertTrue(clientReceiveFound);
-    assertTrue(clientSendFound);
+    assertEquals(zipkinSpan.kind(), zipkin2.Span.Kind.PRODUCER);
   }
 
   @Test
   public void testExpectedLocalComponentNameUsed() {
     String expectedComponentName = "local-name";
-    Span span = (io.jaegertracing.Span) tracer.buildSpan("operation-name").start();
+    Span span = (Span) tracer.buildSpan("operation-name").start();
     Tags.COMPONENT.set(span, expectedComponentName);
 
-    com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan(span);
-    String actualComponent =
-        new String(zipkinSpan.getBinary_annotations().get(3).getValue(), StandardCharsets.UTF_8);
+    zipkin2.Span zipkinSpan = V2SpanConverter.convertSpan(span);
+
+    String actualComponent = zipkinSpan.tags().get(Tags.COMPONENT.getKey());
     assertEquals(expectedComponentName, actualComponent);
   }
 
   @Test
   public void testSpanDetectsEndpointTags() {
-    int expectedIp = (127 << 24) | 1;
-    int expectedPort = 8080;
+    String expectedIp = "127.0.0.1";
+    Integer expectedPort = 8080;
     String expectedServiceName = "some-peer-service";
     Span span = (Span) tracer.buildSpan("test-service-operation").start();
     Tags.PEER_HOST_IPV4.set(span, expectedIp);
     Tags.PEER_PORT.set(span, expectedPort);
     Tags.PEER_SERVICE.set(span, expectedServiceName);
 
-    assertEquals(expectedIp, ThriftSpanConverter.extractPeerEndpoint(span.getTags()).getIpv4());
-    assertEquals(expectedPort, ThriftSpanConverter.extractPeerEndpoint(span.getTags()).getPort());
-    assertEquals(expectedServiceName, ThriftSpanConverter.extractPeerEndpoint(span.getTags()).getService_name());
+    assertEquals(expectedIp, V2SpanConverter.extractPeerEndpoint(span.getTags()).ipv4());
+    assertEquals(expectedPort, V2SpanConverter.extractPeerEndpoint(span.getTags()).port());
+    assertEquals(expectedServiceName, V2SpanConverter.extractPeerEndpoint(span.getTags()).serviceName());
   }
 
   @Test
@@ -281,7 +238,7 @@ public class ThriftSpanConverterTest {
 
   @Test
   public void testSpanLogsCreateAnnotations() {
-    Span span = (io.jaegertracing.Span) tracer.buildSpan("span-with-logs").start();
+    Span span = (Span) tracer.buildSpan("span-with-logs").start();
 
     span.log("event");
 
@@ -293,11 +250,11 @@ public class ThriftSpanConverterTest {
     fields.put("boolean", true);
     span.log(fields);
 
-    com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan(span);
+    zipkin2.Span zipkinSpan = V2SpanConverter.convertSpan(span);
 
     List<String> annotationValues = new ArrayList<String>();
-    for (Annotation annotation : zipkinSpan.getAnnotations()) {
-      annotationValues.add(annotation.getValue());
+    for (Annotation annotation : zipkinSpan.annotations()) {
+      annotationValues.add(annotation.value());
     }
 
     List<String> expectedValues = new ArrayList<String>();

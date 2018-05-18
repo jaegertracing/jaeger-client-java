@@ -25,6 +25,7 @@ import io.jaegertracing.LogData;
 import io.jaegertracing.Span;
 import io.jaegertracing.SpanContext;
 import io.jaegertracing.Tracer;
+import io.jaegertracing.zipkin.ConverterUtil;
 import io.opentracing.tag.Tags;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -56,10 +57,10 @@ public class ThriftSpanConverter {
   private static List<Annotation> buildAnnotations(Span span, Endpoint host) {
     List<Annotation> annotations = new ArrayList<Annotation>();
 
-    if (isRpc(span)) {
+    if (ConverterUtil.isRpc(span)) {
       String startLabel = zipkincoreConstants.SERVER_RECV;
       String endLabel = zipkincoreConstants.SERVER_SEND;
-      if (isRpcClient(span)) {
+      if (ConverterUtil.isRpcClient(span)) {
         startLabel = zipkincoreConstants.CLIENT_SEND;
         endLabel = zipkincoreConstants.CLIENT_RECV;
       }
@@ -87,9 +88,9 @@ public class ThriftSpanConverter {
   private static List<BinaryAnnotation> buildBinaryAnnotations(Span span, Endpoint host) {
     List<BinaryAnnotation> binaryAnnotations = new ArrayList<BinaryAnnotation>();
     Map<String, Object> tags = span.getTags();
-    boolean isRpc = isRpc(span);
-    boolean isClient = isRpcClient(span);
-    boolean firstSpanInProcess = span.getReferences().isEmpty() || isRpcServer(span);
+    boolean isRpc = ConverterUtil.isRpc(span);
+    boolean isClient = ConverterUtil.isRpcClient(span);
+    boolean firstSpanInProcess = span.getReferences().isEmpty() || ConverterUtil.isRpcServer(span);
 
     if (firstSpanInProcess) {
       Map<String, ?> processTags = span.getTracer().tags();
@@ -152,20 +153,6 @@ public class ThriftSpanConverter {
     BinaryAnnotation banno = new BinaryAnnotation().setKey(tagKey);
     banno.setValue(String.valueOf(tagValue).getBytes(UTF_8)).setAnnotation_type(AnnotationType.STRING);
     return banno;
-  }
-
-  static boolean isRpcServer(Span span) {
-    return Tags.SPAN_KIND_SERVER.equals(span.getTags().get(Tags.SPAN_KIND.getKey()));
-  }
-
-  static boolean isRpc(Span span) {
-    Object spanKindValue = span.getTags().get(Tags.SPAN_KIND.getKey());
-    return Tags.SPAN_KIND_CLIENT.equals(spanKindValue) || Tags.SPAN_KIND_SERVER.equals(spanKindValue);
-
-  }
-
-  static boolean isRpcClient(Span span) {
-    return Tags.SPAN_KIND_CLIENT.equals(span.getTags().get(Tags.SPAN_KIND.getKey()));
   }
 
   /**
