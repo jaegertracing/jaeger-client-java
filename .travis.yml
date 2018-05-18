@@ -33,7 +33,7 @@ before_install:
 stages:
   - name: test
   - name: deploy
-    if: env(TRAVIS_PULL_REQUEST) = false
+    if: NOT (type IN (pull_request))
 
 jobs:
   include:
@@ -50,5 +50,5 @@ jobs:
       script: ./gradlew upload
 
     - stage: deploy
-      env: [ NAME=deploy-to-dockerhub ]
+      env: [ NAME=deploy-crossdock-to-dockerhub ]
       script: ./travis/publish-crossdock.sh
