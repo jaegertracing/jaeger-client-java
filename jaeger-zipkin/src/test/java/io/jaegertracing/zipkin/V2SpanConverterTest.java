@@ -111,7 +111,9 @@ public class V2SpanConverterTest {
   @UseDataProvider("dataProviderTracerTags")
   public void testTracerTags(SpanType spanType, Map<String, String> expectedTags) throws Exception {
     InMemoryReporter spanReporter = new InMemoryReporter();
-    Tracer tracer = new Tracer.Builder("x", spanReporter, new ConstSampler(true))
+    Tracer tracer = new Tracer.Builder("x")
+        .withReporter(spanReporter)
+        .withSampler(new ConstSampler(true))
         .withZipkinSharedRpcSpan()
         .withTag("tag.str", "y")
         .withTag("tag.bool", true)
