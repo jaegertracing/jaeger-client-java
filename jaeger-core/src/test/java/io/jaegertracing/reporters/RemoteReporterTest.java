@@ -176,7 +176,13 @@ public class RemoteReporterTest {
   @Ignore("See https://github.com/jaegertracing/jaeger-client-java/issues/340")
   public void testCloseWhenQueueFull() {
     int closeTimeoutMillis = 5;
-    reporter = new RemoteReporter(sender, Integer.MAX_VALUE, maxQueueSize, closeTimeoutMillis, metrics);
+    reporter = new RemoteReporter.Builder()
+        .withSender(sender)
+        .withFlushInterval(Integer.MAX_VALUE)
+        .withMaxQueueSize(maxQueueSize)
+        .withCloseEnqueueTimeout(closeTimeoutMillis)
+        .withMetrics(metrics)
+        .build();
     tracer = new Tracer.Builder("test-remote-reporter")
         .withReporter(reporter)
         .withSampler(new ConstSampler(true))

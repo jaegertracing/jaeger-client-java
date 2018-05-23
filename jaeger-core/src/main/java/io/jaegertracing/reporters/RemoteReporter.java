@@ -46,7 +46,7 @@ public class RemoteReporter implements Reporter {
   private final int closeEnqueueTimeout;
   private final Metrics metrics;
 
-  RemoteReporter(Sender sender, int flushInterval, int maxQueueSize, int closeEnqueueTimeout,
+  private RemoteReporter(Sender sender, int flushInterval, int maxQueueSize, int closeEnqueueTimeout,
       Metrics metrics) {
     this.sender = sender;
     this.metrics = metrics;
@@ -187,6 +187,7 @@ public class RemoteReporter implements Reporter {
     private Sender sender;
     private int flushInterval = DEFAULT_FLUSH_INTERVAL_MS;
     private int maxQueueSize = DEFAULT_MAX_QUEUE_SIZE;
+    private int closeEnqueTimeout = DEFAULT_CLOSE_ENQUEUE_TIMEOUT_MILLIS;
     private Metrics metrics;
 
     public Builder withFlushInterval(int flushInterval) {
@@ -209,6 +210,11 @@ public class RemoteReporter implements Reporter {
       return this;
     }
 
+    public Builder withCloseEnqueueTimeout(int closeEnqueueTimeoutMs) {
+      this.closeEnqueTimeout = closeEnqueueTimeoutMs;
+      return this;
+    }
+
     public RemoteReporter build() {
       if (sender == null) {
         sender = new UdpSender();
@@ -216,7 +222,7 @@ public class RemoteReporter implements Reporter {
       if (metrics == null) {
         metrics = new Metrics(new InMemoryMetricsFactory());
       }
-      return new RemoteReporter(sender, flushInterval, maxQueueSize, DEFAULT_CLOSE_ENQUEUE_TIMEOUT_MILLIS, metrics);
+      return new RemoteReporter(sender, flushInterval, maxQueueSize, closeEnqueTimeout, metrics);
     }
   }
 }

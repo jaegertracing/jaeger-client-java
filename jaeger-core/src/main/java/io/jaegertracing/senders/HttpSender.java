@@ -44,7 +44,9 @@ public class HttpSender extends ThriftSender {
    *
    * Uses the default {@link okhttp3.OkHttpClient} which uses {@link okhttp3.ConnectionPool#ConnectionPool()}.
    * Use {@link HttpSender.Builder} if you need to add more parameters
+   * @deprecated use {@link Builder}
    */
+  @Deprecated
   public HttpSender(String endpoint) {
     this(new Builder(endpoint));
   }
