@@ -43,45 +43,10 @@ public class HttpSender extends ThriftSender {
    * http://localhost:14268/api/traces
    *
    * Uses the default {@link okhttp3.OkHttpClient} which uses {@link okhttp3.ConnectionPool#ConnectionPool()}.
-   * Use {@link HttpSender#HttpSender(java.lang.String, int, okhttp3.OkHttpClient)} to adjust parameters.
+   * Use {@link HttpSender.Builder} if you need to add more parameters
    */
   public HttpSender(String endpoint) {
     this(new Builder(endpoint));
-  }
-
-  /**
-   * @param endpoint Jaeger REST endpoint consuming jaeger.thrift, e.g
-   * http://localhost:14268/api/traces
-   * @param maxPacketSize max bytes to serialize as payload, if 0 it will use
-   *   {@value io.jaegertracing.thrift.reporters.protocols.ThriftUdpTransport#MAX_PACKET_SIZE}
-   * @deprecated use {@link HttpSender.Builder} with fluent API
-   */
-  @Deprecated
-  public HttpSender(String endpoint, int maxPacketSize) {
-    this(new Builder(endpoint).withMaxPacketSize(maxPacketSize));
-  }
-
-  /**
-   * @deprecated use {@link HttpSender.Builder} with fluent API
-   */
-  @Deprecated
-  public HttpSender(String endpoint, OkHttpClient client) {
-    this(new Builder(endpoint).withClient(client));
-  }
-
-  /**
-   * @param endpoint Jaeger REST endpoint consuming jaeger.thrift, e.g
-   * http://localhost:14268/api/traces
-   * @param maxPacketSize max bytes to serialize as payload, if 0 it will use
-   *   {@value io.jaegertracing.thrift.reporters.protocols.ThriftUdpTransport#MAX_PACKET_SIZE}
-   * @param client a client used to make http requests
-   * @deprecated use {@link HttpSender.Builder} with fluent API
-   */
-  @Deprecated
-  public HttpSender(String endpoint, int maxPacketSize, OkHttpClient client) {
-    this(new Builder(endpoint)
-        .withClient(client)
-        .withMaxPacketSize(maxPacketSize));
   }
 
   private HttpSender(Builder builder) {

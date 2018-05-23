@@ -17,7 +17,6 @@ package io.jaegertracing;
 import io.jaegertracing.metrics.Metrics;
 import io.jaegertracing.metrics.MetricsFactory;
 import io.jaegertracing.metrics.NoopMetricsFactory;
-import io.jaegertracing.metrics.StatsFactory;
 import io.jaegertracing.propagation.B3TextMapCodec;
 import io.jaegertracing.propagation.Codec;
 import io.jaegertracing.propagation.CompositeCodec;
@@ -55,12 +54,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class Configuration {
-  /**
-   * @deprecated use {@link ProbabilisticSampler#DEFAULT_SAMPLING_PROBABILITY} instead
-   */
-  @Deprecated
-  public static final double DEFAULT_SAMPLING_PROBABILITY = ProbabilisticSampler.DEFAULT_SAMPLING_PROBABILITY;
-
   /**
    * Prefix for all properties used to configure the Jaeger tracer.
    */
@@ -178,33 +171,6 @@ public class Configuration {
   }
 
   /**
-   * @deprecated use {@link #Configuration(String)} and fluent API
-   */
-  @Deprecated
-  public Configuration(
-      String serviceName,
-      SamplerConfiguration samplerConfig,
-      ReporterConfiguration reporterConfig) {
-    this(serviceName, samplerConfig, reporterConfig, null);
-  }
-
-  /**
-   * @deprecated use {@link #Configuration(String)} and fluent API
-   */
-  @Deprecated
-  private Configuration(
-      String serviceName,
-      SamplerConfiguration samplerConfig,
-      ReporterConfiguration reporterConfig,
-      CodecConfiguration codecConfig) {
-    this(serviceName);
-    this.samplerConfig = samplerConfig;
-    this.reporterConfig = reporterConfig;
-    this.codecConfig = codecConfig;
-    this.metricsFactory = new NoopMetricsFactory();
-  }
-
-  /**
    * @return Configuration object from environmental variables
    */
   public static Configuration fromEnv() {
@@ -255,26 +221,6 @@ public class Configuration {
     if (tracer != null) {
       tracer.close();
     }
-  }
-
-  /**
-   * @see #withMetricsFactory(MetricsFactory)
-   * @param statsFactory the StatsFactory to use on the Tracer to be built
-   * @deprecated Use {@link #withMetricsFactory(MetricsFactory)} instead
-   */
-  @Deprecated
-  public void setStatsFactor(StatsFactory statsFactory) {
-    this.metricsFactory = statsFactory;
-  }
-
-  /**
-   * @see #withMetricsFactory(MetricsFactory)
-   * @param statsFactory the StatsFactory to use on the Tracer to be built
-   * @deprecated Use {@link #withMetricsFactory(MetricsFactory)} instead
-   */
-  @Deprecated
-  public void setStatsFactory(StatsFactory statsFactory) {
-    this.metricsFactory = statsFactory;
   }
 
   /**
@@ -358,24 +304,6 @@ public class Configuration {
     private String managerHostPort;
 
     public SamplerConfiguration() {
-    }
-
-    /**
-     * @deprecated use {@link #SamplerConfiguration()} and fluent API
-     */
-    @Deprecated
-    public SamplerConfiguration(String type, Number param) {
-      this(type, param, null);
-    }
-
-    /**
-     * @deprecated use {@link #SamplerConfiguration()} and fluent API
-     */
-    @Deprecated
-    public SamplerConfiguration(String type, Number param, String managerHostPort) {
-      this.type = type;
-      this.param = param;
-      this.managerHostPort = managerHostPort;
     }
 
     public static SamplerConfiguration fromEnv() {
@@ -529,48 +457,6 @@ public class Configuration {
     public ReporterConfiguration() {
     }
 
-    /**
-     * @deprecated use {@link Tracer.Builder} instead or {@link Configuration#getTracerBuilder()}
-     */
-    @Deprecated
-    public ReporterConfiguration(Sender sender) {
-      this.senderConfiguration = new Configuration.SenderConfiguration.Builder()
-          .sender(sender)
-          .build();
-    }
-
-    /**
-     * @deprecated use {@link #ReporterConfiguration()} and fluent API
-     */
-    @Deprecated
-    public ReporterConfiguration(
-        Boolean logSpans,
-        String agentHost,
-        Integer agentPort,
-        Integer flushIntervalMs,
-        Integer maxQueueSize) {
-      this.logSpans = logSpans;
-      this.flushIntervalMs = flushIntervalMs;
-      this.maxQueueSize = maxQueueSize;
-      this.senderConfiguration.withAgentHost(agentHost)
-          .withAgentPort(agentPort);
-    }
-
-    /**
-     * @deprecated use {@link #ReporterConfiguration()} and fluent API
-     */
-    @Deprecated
-    public ReporterConfiguration(
-        Boolean logSpans,
-        Integer flushIntervalMs,
-        Integer maxQueueSize,
-        SenderConfiguration senderConfiguration) {
-      this.logSpans = logSpans;
-      this.flushIntervalMs = flushIntervalMs;
-      this.maxQueueSize = maxQueueSize;
-      this.senderConfiguration = senderConfiguration;
-    }
-
     public static ReporterConfiguration fromEnv() {
       return new ReporterConfiguration()
           .withLogSpans(getPropertyAsBool(JAEGER_REPORTER_LOG_SPANS))
@@ -616,30 +502,6 @@ public class Configuration {
 
     public Boolean getLogSpans() {
       return logSpans;
-    }
-
-    /**
-     * @deprecated use {@link #getSenderConfiguration()}
-     */
-    @Deprecated
-    public String getAgentHost() {
-      if (null == this.senderConfiguration) {
-        return null;
-      }
-
-      return this.senderConfiguration.agentHost;
-    }
-
-    /**
-     * @deprecated use {@link #getSenderConfiguration()}
-     */
-    @Deprecated
-    public Integer getAgentPort() {
-      if (null == this.senderConfiguration) {
-        return null;
-      }
-
-      return this.senderConfiguration.agentPort;
     }
 
     public Integer getFlushIntervalMs() {
@@ -697,16 +559,6 @@ public class Configuration {
     private String authPassword;
 
     public SenderConfiguration() {
-    }
-
-    private SenderConfiguration(SenderConfiguration.Builder builder) {
-      this.sender = builder.sender;
-      this.agentHost = builder.agentHost;
-      this.agentPort = builder.agentPort;
-      this.endpoint = builder.endpoint;
-      this.authToken = builder.authToken;
-      this.authUsername = builder.authUsername;
-      this.authPassword = builder.authPassword;
     }
 
     public SenderConfiguration withAgentHost(String agentHost) {
@@ -792,91 +644,6 @@ public class Configuration {
               .withAuthToken(authToken)
               .withAuthUsername(authUsername)
               .withAuthPassword(authPassword);
-    }
-
-    /**
-     * @deprecated use {@link SenderConfiguration} directly
-     */
-    @Deprecated
-    public static class Builder {
-      private Sender sender;
-      private String agentHost = null;
-      private Integer agentPort = null;
-      private String endpoint = null;
-      private String authToken = null;
-      private String authUsername = null;
-      private String authPassword = null;
-
-      /**
-       * @deprecated use {@link Configuration#getTracerBuilder()} or {@link Tracer.Builder} directly
-       */
-      @Deprecated
-      public Builder sender(Sender sender) {
-        this.sender = sender;
-        return this;
-      }
-
-      /**
-       * @deprecated use {@link SenderConfiguration} directly
-       */
-      @Deprecated
-      public Builder agentHost(String agentHost) {
-        this.agentHost = agentHost;
-        return this;
-      }
-
-      /**
-       * @deprecated use {@link SenderConfiguration} directly
-       */
-      @Deprecated
-      public Builder agentPort(Integer agentPort) {
-        this.agentPort = agentPort;
-        return this;
-      }
-
-      /**
-       * @deprecated use {@link SenderConfiguration} directly
-       */
-      @Deprecated
-      public Builder endpoint(String endpoint) {
-        this.endpoint = endpoint;
-        return this;
-      }
-
-      /**
-       * @deprecated use {@link SenderConfiguration} directly
-       */
-      @Deprecated
-      public Builder authToken(String authToken) {
-        this.authToken = authToken;
-        return this;
-      }
-
-      /**
-       * @deprecated use {@link SenderConfiguration} directly
-       */
-      @Deprecated
-      public Builder authUsername(String authUsername) {
-        this.authUsername = authUsername;
-        return this;
-      }
-
-      /**
-       * @deprecated use {@link SenderConfiguration} directly
-       */
-      @Deprecated
-      public Builder authPassword(String authPassword) {
-        this.authPassword = authPassword;
-        return this;
-      }
-
-      /**
-       * @deprecated use {@link SenderConfiguration} directly
-       */
-      @Deprecated
-      public Configuration.SenderConfiguration build() {
-        return new Configuration.SenderConfiguration(this);
-      }
     }
   }
 

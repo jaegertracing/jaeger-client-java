@@ -46,9 +46,9 @@ Example configuration:
 ```java
 b3Codec = new B3TextMapCodec();
 tracer = new Tracer.Builder(serviceName)
-                   .registerInjector(Format.Builtin.HTTP_HEADERS, b3Codec)
-                   .registerExtractor(Format.Builtin.HTTP_HEADERS, b3Codec)
-                   ...
+  .registerInjector(Format.Builtin.HTTP_HEADERS, b3Codec)
+  .registerExtractor(Format.Builtin.HTTP_HEADERS, b3Codec)
+  ...
 ```
 
 #### Configuration via Environment
@@ -110,24 +110,23 @@ To accomplish that, include the artifact `io.jaegertracing:jaeger-micrometer` as
 MicrometerMetricsFactory metricsReporter = new MicrometerMetricsFactory();
 Configuration configuration = new Configuration("myServiceName");
 Tracer tracer = configuration
-    .getTracerBuilder()
-    .withMetrics(new io.jaegertracing.metrics.Metrics(metricsReporter))
-    .build();
+  .getTracerBuilder()
+  .withMetrics(new io.jaegertracing.metrics.Metrics(metricsReporter))
+  .build();
 ```
 
 ### Development
 
-The last two parameters to `new Configuration()` allow control over configuration of the Sampler and Reporter.
-However, especially in unit tests, it's useful to have tracer that is not connected to tracing backend, but collects
+Especially in unit tests, it's useful to have tracer that is not connected to tracing backend, but collects
 spans in memory:
 
 ```java
 Reporter reporter = new InMemoryReporter();
 Sampler sampler = new ConstSampler(true);
 Tracer tracer = new Tracer.Builder(serviceName)
-    .withReporter(reporter)
-    .withSampler(sampler)
-    .build();
+  .withReporter(reporter)
+  .withSampler(sampler)
+  .build();
 ```
 
 See also: [opentracing-java](https://github.com/opentracing/opentracing-java)

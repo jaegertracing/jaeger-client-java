@@ -45,31 +45,6 @@ public class RemoteControlledSampler implements Sampler {
   @Getter(AccessLevel.PACKAGE)
   private Sampler sampler;
 
-  /**
-   * @deprecated use {@link Builder} instead
-   */
-  @Deprecated
-  public RemoteControlledSampler(
-      String serviceName, SamplingManager manager, Sampler initial, Metrics metrics) {
-    this(new Builder(serviceName)
-        .withSamplingManager(manager)
-        .withInitialSampler(initial)
-        .withMetrics(metrics));
-  }
-
-  /**
-   * @deprecated use {@link Builder} instead
-   */
-  @Deprecated
-  public RemoteControlledSampler(
-      String serviceName, SamplingManager manager, Sampler initial, Metrics metrics, int pollingIntervalMs) {
-    this(new Builder(serviceName)
-        .withSamplingManager(manager)
-        .withInitialSampler(initial)
-        .withMetrics(metrics)
-        .withPollingInterval(pollingIntervalMs));
-  }
-
   private RemoteControlledSampler(Builder builder) {
     this.serviceName = builder.serviceName;
     this.manager = builder.samplingManager;

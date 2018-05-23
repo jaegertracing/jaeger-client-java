@@ -14,10 +14,10 @@ register `B3TextMapCodec`, Jaeger can join traces started by other Zipkin instru
 For example:
 ```java
 b3Codec = new B3TextMapCodec();
-tracer = new Tracer.Builder(serviceName, reporter, sampler)
-                   .registerInjector(Format.Builtin.HTTP_HEADERS, b3Codec)
-                   .registerExtractor(Format.Builtin.HTTP_HEADERS, b3Codec)
-                   ...
+tracer = new Tracer.Builder(serviceName)
+  .registerInjector(Format.Builtin.HTTP_HEADERS, b3Codec)
+  .registerExtractor(Format.Builtin.HTTP_HEADERS, b3Codec)
+  ...
 ```
 
 ## Sending data to Zipkin
@@ -32,8 +32,9 @@ For example:
 import io.jaegertracing.senders.zipkin.ZipkinSender;
 
 reporter = new RemoteReporter(ZipkinSender.create("http://localhost:9411/api/v1/spans"));
-tracer = new Tracer.Builder(serviceName, reporter, sampler)
-                   ...
+tracer = new Tracer.Builder(serviceName)
+  .withReporter(reporter)
+  ...
 ```
 
 ### Zipkin 2 Reporters
