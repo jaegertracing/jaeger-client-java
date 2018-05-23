@@ -50,8 +50,11 @@ public class RemoteBaggageRestrictionManagerTest {
   public void setUp() throws Exception {
     metricsFactory = new InMemoryMetricsFactory();
     metrics = new Metrics(metricsFactory);
-    undertest = new RemoteBaggageRestrictionManager(SERVICE_NAME, baggageRestrictionProxy, metrics,
-        false);
+    undertest = new RemoteBaggageRestrictionManager.Builder(SERVICE_NAME)
+        .withProxy(baggageRestrictionProxy)
+        .withMetrics(metrics)
+        .withDenyBaggageInitializationFailure(false)
+        .build();
   }
 
   @After
@@ -76,8 +79,13 @@ public class RemoteBaggageRestrictionManagerTest {
   public void testAllowBaggageOnInitializationFailure() throws Exception {
     when(baggageRestrictionProxy.getBaggageRestrictions(SERVICE_NAME))
         .thenThrow(new BaggageRestrictionManagerException("error"));
-    undertest = new RemoteBaggageRestrictionManager(SERVICE_NAME, baggageRestrictionProxy, metrics,
-        false, 60000, 60000);
+    undertest = new RemoteBaggageRestrictionManager.Builder(SERVICE_NAME)
+        .withProxy(baggageRestrictionProxy)
+        .withMetrics(metrics)
+        .withDenyBaggageInitializationFailure(false)
+        .withRefreshIntervalMs(60000)
+        .withInitialDelayMs(60000)
+        .build();
 
     assertTrue(undertest.getRestriction(SERVICE_NAME, BAGGAGE_KEY).isKeyAllowed());
     undertest.updateBaggageRestrictions();
@@ -92,8 +100,13 @@ public class RemoteBaggageRestrictionManagerTest {
   public void testDenyBaggageOnInitializationFailure() throws Exception {
     when(baggageRestrictionProxy.getBaggageRestrictions(SERVICE_NAME))
         .thenReturn(new ArrayList<BaggageRestrictionResponse>(Arrays.asList(RESTRICTION)));
-    undertest = new RemoteBaggageRestrictionManager(SERVICE_NAME, baggageRestrictionProxy, metrics,
-        true, 60000, 60000);
+    undertest = new RemoteBaggageRestrictionManager.Builder(SERVICE_NAME)
+        .withProxy(baggageRestrictionProxy)
+        .withMetrics(metrics)
+        .withDenyBaggageInitializationFailure(true)
+        .withRefreshIntervalMs(60000)
+        .withInitialDelayMs(60000)
+        .build();
 
     assertFalse(undertest.getRestriction(SERVICE_NAME, BAGGAGE_KEY).isKeyAllowed());
     undertest.updateBaggageRestrictions();

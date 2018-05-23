@@ -14,6 +14,7 @@
 
 package io.jaegertracing.exceptions;
 
+@Deprecated
 public class UnknownSamplingStrategyException extends Exception {
   public UnknownSamplingStrategyException(String msg) {
     super(msg);
