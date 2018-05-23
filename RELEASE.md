@@ -5,7 +5,7 @@
 The release process consists of these steps:
   1. Create a pull request with:
      * Change the version in [`build.gradle`](build.gradle) to match the release version e.g. `0.20.0`
-     * Add an entry to [`CHANGELOG`](CHANGELOG.rst) with changes since the last release
+     * Add an entry to [`CHANGELOG`](CHANGELOG.md) with changes since the last release
   1. Commit your `CHANGELOG` changes
   1. Create and push tag with the new version `git tag v0.20.0 && git push origin v0.20.0`
   1. Once the *tag* build finishes in Travis, the artifacts should have been uploaded to Sonatype staging,
