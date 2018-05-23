@@ -171,12 +171,14 @@ public class RemoteBaggageRestrictionManager implements BaggageRestrictionManage
     }
 
     /**
-     * @param denyBaggageOnInitializationFailure determines the startup failure mode of
-     * RemoteBaggageRestrictionManager. If denyBaggageOnInitializationFailure is true,
+     * If {@code denyBaggageOnInitializationFailure} is true,
      * {@link RemoteBaggageRestrictionManager} will not allow any baggage to be written until
-     * baggage restrictions have been retrieved from agent. If denyBaggageOnInitializationFailure is
+     * baggage restrictions have been retrieved from agent. If {@code denyBaggageOnInitializationFailure} is
      * false, {@link RemoteBaggageRestrictionManager} will allow any baggage to be written until
      * baggage restrictions have been retrieved from agent.
+     *
+     * @param denyBaggageOnInitializationFailure determines the startup failure mode of
+     * {@link RemoteBaggageRestrictionManager}
      */
     public Builder withDenyBaggageInitializationFailure(boolean denyBaggageOnInitializationFailure) {
       this.denyBaggageOnInitializationFailure = denyBaggageOnInitializationFailure;
@@ -192,11 +194,13 @@ public class RemoteBaggageRestrictionManager implements BaggageRestrictionManage
     }
 
     /**
-     * @param initialDelayMs delay before first fetch of restrictions. It is only exposed for testing
-     * purposes so users can determine when the first call to remote agent is made. Under normal operations,
-     * this RemoteBaggageRestrictionManager will start up and
-     * asynchronously fetch restrictions. If the user wants to know if restrictions are ready, they can check via
-     * isReady().
+     * {@code initialDelayMs} is only exposed for testing purposes so users can determine when
+     * the first call to remote agent is made. Under normal operations,
+     * this {@link RemoteBaggageRestrictionManager} will start up and asynchronously fetch restrictions.
+     * If the user wants to know if restrictions are ready, they can check via
+     * {@link RemoteBaggageRestrictionManager#isReady()}.
+     *
+     * @param initialDelayMs delay before first fetch of restrictions.
      */
     public Builder withInitialDelayMs(int initialDelayMs) {
       this.initialDelayMs = initialDelayMs;
