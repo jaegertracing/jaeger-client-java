@@ -92,8 +92,13 @@ public class SpanContext implements io.opentracing.SpanContext {
   }
 
   public String contextAsString() {
-    // TODO(oibe) profile, and make sure this is fast enough
-    return String.format("%x:%x:%x:%x", traceId, spanId, parentId, flags);
+    int intFlag = flags & 0xFF;
+    return new StringBuilder()
+        .append(Long.toHexString(traceId)).append(":")
+        .append(Long.toHexString(spanId)).append(":")
+        .append(Long.toHexString(parentId)).append(":")
+        .append(Integer.toHexString(intFlag))
+        .toString();
   }
 
   @Override
