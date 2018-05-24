@@ -14,6 +14,7 @@ docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
 
 set -x
 
+./gradlew shadowJar
 pushd 'jaeger-crossdock'
 docker build -f Dockerfile -t $REPO:$COMMIT .
 popd
