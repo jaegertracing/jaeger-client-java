@@ -450,17 +450,4 @@ public class ConfigurationTest {
       return values.get(key);
     }
   }
-
-  private static class CustomSender extends HttpSender {
-    private String endpoint;
-
-    public CustomSender(String endpoint) {
-      super(endpoint);
-      this.endpoint = endpoint;
-    }
-
-    public String getEndpoint() {
-      return endpoint;
-    }
-  }
 }

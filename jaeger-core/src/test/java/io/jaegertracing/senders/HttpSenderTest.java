@@ -61,7 +61,8 @@ public class HttpSenderTest extends JerseyTest {
 
   @Test
   public void sendHappy() throws Exception {
-    new HttpSender(target("/api/traces").getUri().toString())
+    new HttpSender.Builder(target("/api/traces").getUri().toString())
+        .build()
         .send(new Process("robotrock"), generateSpans());
     new HttpSender.Builder(target("/api/traces").getUri().toString()).withMaxPacketSize(6500).build()
         .send(new Process("name"), generateSpans());
@@ -72,24 +73,27 @@ public class HttpSenderTest extends JerseyTest {
 
   @Test(expected = Exception.class)
   public void sendServerError() throws Exception {
-    HttpSender sender = new HttpSender(target("/api/tracesErr").getUri().toString());
+    HttpSender sender = new HttpSender.Builder(target("/api/tracesErr").getUri().toString())
+        .build();
     sender.send(new Process("robotrock"), generateSpans());
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void misconfiguredUrl() throws Exception {
-    new HttpSender("misconfiguredUrl");
+    new HttpSender.Builder("misconfiguredUrl").build();
   }
 
   @Test(expected = Exception.class)
   public void serverDoesntExist() throws Exception {
-    HttpSender sender = new HttpSender("http://some-server/api/traces");
+    HttpSender sender = new HttpSender.Builder("http://some-server/api/traces")
+        .build();
     sender.send(new Process("robotrock"), generateSpans());
   }
 
   @Test(expected = SenderException.class)
   public void senderFail() throws Exception {
-    HttpSender sender = new HttpSender("http://some-server/api/traces");
+    HttpSender sender = new HttpSender.Builder("http://some-server/api/traces")
+        .build();
     sender.send(null, generateSpans());
   }
 

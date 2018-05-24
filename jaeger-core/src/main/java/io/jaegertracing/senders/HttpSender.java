@@ -38,19 +38,6 @@ public class HttpSender extends ThriftSender {
   private final OkHttpClient httpClient;
   private final Request.Builder requestBuilder;
 
-  /**
-   * @param endpoint Jaeger REST endpoint consuming jaeger.thrift, e.g
-   * http://localhost:14268/api/traces
-   *
-   * Uses the default {@link okhttp3.OkHttpClient} which uses {@link okhttp3.ConnectionPool#ConnectionPool()}.
-   * Use {@link HttpSender.Builder} if you need to add more parameters
-   * @deprecated use {@link Builder}
-   */
-  @Deprecated
-  public HttpSender(String endpoint) {
-    this(new Builder(endpoint));
-  }
-
   private HttpSender(Builder builder) {
     super(ProtocolType.Binary, builder.maxPacketSize);
     HttpUrl collectorUrl = HttpUrl
