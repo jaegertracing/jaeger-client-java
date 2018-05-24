@@ -41,7 +41,7 @@ public class RemoteBaggageRestrictionManager implements BaggageRestrictionManage
   private final Restriction invalidRestriction;
   private final Restriction validRestriction;
 
-  private RemoteBaggageRestrictionManager(
+  protected RemoteBaggageRestrictionManager(
       String serviceName,
       BaggageRestrictionManagerProxy proxy,
       Metrics metrics,

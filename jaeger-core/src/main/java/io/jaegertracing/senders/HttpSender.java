@@ -38,7 +38,7 @@ public class HttpSender extends ThriftSender {
   private final OkHttpClient httpClient;
   private final Request.Builder requestBuilder;
 
-  private HttpSender(Builder builder) {
+  protected HttpSender(Builder builder) {
     super(ProtocolType.Binary, builder.maxPacketSize);
     HttpUrl collectorUrl = HttpUrl
         .parse(String.format("%s?%s", builder.endpoint, HTTP_COLLECTOR_JAEGER_THRIFT_FORMAT_PARAM));
