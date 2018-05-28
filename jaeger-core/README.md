@@ -103,8 +103,10 @@ More information about using the `TracerResolver` can be found [here](../jaeger-
 #### Reporting internal metrics via Micrometer
 
 The Jaeger Java Client collects internal metrics and is able to report them via [Micrometer](http://micrometer.io).
-To accomplish that, include the artifact `io.jaegertracing:jaeger-micrometer` as a dependency to your project and use
-`MicrometerMetricsFactory` like this:
+To accomplish that, include the artifact `io.jaegertracing:jaeger-micrometer` as a dependency to your project. The
+integration should be done automatically via the service loader.
+
+If you prefer a manual configuration, it can be done with a code similar to this:
 
 ```java
 MicrometerMetricsFactory metricsReporter = new MicrometerMetricsFactory();

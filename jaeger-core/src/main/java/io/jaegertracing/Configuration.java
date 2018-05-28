@@ -41,9 +41,11 @@ import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.ServiceLoader;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -170,6 +172,7 @@ public class Configuration {
     this.serviceName = Tracer.Builder.checkValidServiceName(serviceName);
   }
 
+
   /**
    * @return Configuration object from environmental variables
    */
@@ -192,7 +195,7 @@ public class Configuration {
       codecConfig = new CodecConfiguration();
     }
     if (metricsFactory == null) {
-      metricsFactory = new NoopMetricsFactory();
+      metricsFactory = loadMetricsFactory();
     }
     Metrics metrics = new Metrics(metricsFactory);
     Reporter reporter = reporterConfig.getReporter(metrics);
@@ -221,6 +224,19 @@ public class Configuration {
     if (tracer != null) {
       tracer.close();
     }
+  }
+
+  private MetricsFactory loadMetricsFactory() {
+    ServiceLoader<MetricsFactory> loader = ServiceLoader.load(MetricsFactory.class);
+
+    Iterator<MetricsFactory> iterator = loader.iterator();
+    if (iterator.hasNext()) {
+      MetricsFactory metricsFactory = iterator.next();
+      log.info("Found a Metrics Factory service: {}", metricsFactory.getClass());
+      return metricsFactory;
+    }
+
+    return new NoopMetricsFactory();
   }
 
   /**

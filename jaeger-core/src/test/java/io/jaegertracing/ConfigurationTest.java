@@ -26,6 +26,7 @@ import io.jaegertracing.Configuration.ReporterConfiguration;
 import io.jaegertracing.Configuration.SamplerConfiguration;
 import io.jaegertracing.metrics.InMemoryMetricsFactory;
 import io.jaegertracing.metrics.Metrics;
+import io.jaegertracing.metrics.MockMetricsFactory;
 import io.jaegertracing.propagation.Codec;
 import io.jaegertracing.samplers.ConstSampler;
 import io.jaegertracing.samplers.ProbabilisticSampler;
@@ -430,6 +431,15 @@ public class ConfigurationTest {
         (C)new TextMapExtractAdapter(injectMap));
     assertEquals(contextToInject.getTraceId(), extractedContext.getTraceId());
     assertEquals(contextToInject.getSpanId(), extractedContext.getSpanId());
+  }
+
+  @Test
+  public void testMetricsFactoryFromServiceLoader() {
+    System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
+
+    int instances = MockMetricsFactory.instances.size();
+    Configuration.fromEnv().getTracer();
+    assertEquals(++instances, MockMetricsFactory.instances.size());
   }
 
   static class TestTextMap implements TextMap {

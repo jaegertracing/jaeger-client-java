@@ -186,6 +186,29 @@ public class MicrometerTest {
     assertEquals("Wrong number of traces", 10.0, traces, assertDelta);
   }
 
+  @Test
+  public void testServiceLoader() {
+    System.setProperty(Configuration.JAEGER_SAMPLER_TYPE, ConstSampler.TYPE);
+    System.setProperty(Configuration.JAEGER_SAMPLER_PARAM, "1");
+    System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
+
+    // the fact that there's a service on the classpath is enough to get it loaded, unless we have an env var
+    // saying to skip it
+    final Configuration configuration = Configuration.fromEnv();
+
+    System.clearProperty(Configuration.JAEGER_SERVICE_NAME);
+    System.clearProperty(Configuration.JAEGER_SAMPLER_TYPE);
+    System.clearProperty(Configuration.JAEGER_SAMPLER_PARAM);
+
+    PrometheusMeterRegistry registry = (PrometheusMeterRegistry) io.micrometer.core.instrument.Metrics.globalRegistry
+        .getRegistries()
+        .iterator()
+        .next();
+
+    configuration.getTracer().buildSpan("theoperation").start().finish(100);
+    assertEquals(1, registry.find("jaeger:started_spans").counter().count(), 0);
+  }
+
   private void createSomeSpans(Tracer tracer) {
     for (int i = 0; i < 10; i++) {
       Span span = tracer.buildSpan("metricstest")
