@@ -15,19 +15,17 @@
 package io.jaegertracing.crossdock.resources.behavior;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.jaegertracing.Span;
-import io.jaegertracing.SpanContext;
 import io.jaegertracing.crossdock.Constants;
 import io.jaegertracing.crossdock.JerseyServer;
 import io.jaegertracing.crossdock.api.Downstream;
 import io.jaegertracing.crossdock.api.JoinTraceRequest;
 import io.jaegertracing.crossdock.api.ObservedSpan;
 import io.jaegertracing.crossdock.api.TraceResponse;
-import io.jaegertracing.crossdock.thrift.TracedService;
+import io.jaegertracing.internal.Span;
+import io.jaegertracing.internal.SpanContext;
 import io.opentracing.Tracer;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;

@@ -14,13 +14,13 @@ This module provides core tracing functionality for custom instrumentation.
 
 ### Production
 
-Tracer can be created via `io.jaegertracing.Tracer.Builder` or `io.jaegertracing.Configuration`.
+Tracer can be created via `io.jaegertracing.JaegerTracerBuilder` or `io.jaegertracing.Configuration`.
 For production it is recommended to use both classes with default values.
 
-`Tracer.Builder` example:
+`JaegerTracerBuilder` example:
 
 ```java
-Tracer tracer = new Tracer.Builder("myServiceName")
+Tracer tracer = new JaegerTracerBuilder("myServiceName")
   .build()
 ```
 
@@ -45,7 +45,7 @@ like "X-B3-TraceId".
 Example configuration:
 ```java
 b3Codec = new B3TextMapCodec();
-tracer = new Tracer.Builder(serviceName)
+tracer = new JaegerTracerBuilder(serviceName)
   .registerInjector(Format.Builtin.HTTP_HEADERS, b3Codec)
   .registerExtractor(Format.Builtin.HTTP_HEADERS, b3Codec)
   ...
@@ -123,7 +123,7 @@ spans in memory:
 ```java
 Reporter reporter = new InMemoryReporter();
 Sampler sampler = new ConstSampler(true);
-Tracer tracer = new Tracer.Builder(serviceName)
+Tracer tracer = new JaegerTracerBuilder(serviceName)
   .withReporter(reporter)
   .withSampler(sampler)
   .build();

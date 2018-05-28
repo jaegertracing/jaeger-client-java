@@ -17,14 +17,15 @@ package io.jaegertracing.senders.zipkin;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-import io.jaegertracing.Span;
-import io.jaegertracing.SpanContext;
-import io.jaegertracing.Tracer;
-import io.jaegertracing.exceptions.SenderException;
-import io.jaegertracing.metrics.InMemoryMetricsFactory;
-import io.jaegertracing.reporters.InMemoryReporter;
-import io.jaegertracing.reporters.Reporter;
-import io.jaegertracing.samplers.ConstSampler;
+import io.jaegertracing.JaegerTracer;
+import io.jaegertracing.JaegerTracerBuilder;
+import io.jaegertracing.internal.Span;
+import io.jaegertracing.internal.SpanContext;
+import io.jaegertracing.internal.exceptions.SenderException;
+import io.jaegertracing.internal.metrics.InMemoryMetricsFactory;
+import io.jaegertracing.internal.reporters.InMemoryReporter;
+import io.jaegertracing.internal.samplers.ConstSampler;
+import io.jaegertracing.spi.Reporter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -49,12 +50,12 @@ public class ZipkinSenderTest {
   ZipkinSender sender;
   Reporter reporter;
   ThriftSpanConverter converter;
-  Tracer tracer;
+  JaegerTracer tracer;
 
   @Before
   public void setUp() throws Exception {
     reporter = new InMemoryReporter();
-    tracer = new Tracer.Builder("test-sender")
+    tracer = new JaegerTracerBuilder("test-sender")
             .withReporter(reporter)
             .withSampler(new ConstSampler(true))
             .withMetricsFactory(new InMemoryMetricsFactory())

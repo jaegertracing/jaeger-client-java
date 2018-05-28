@@ -14,26 +14,27 @@
 
 package io.jaegertracing;
 
-import io.jaegertracing.metrics.Metrics;
-import io.jaegertracing.metrics.MetricsFactory;
-import io.jaegertracing.metrics.NoopMetricsFactory;
-import io.jaegertracing.propagation.B3TextMapCodec;
-import io.jaegertracing.propagation.Codec;
-import io.jaegertracing.propagation.CompositeCodec;
-import io.jaegertracing.propagation.TextMapCodec;
-import io.jaegertracing.reporters.CompositeReporter;
-import io.jaegertracing.reporters.LoggingReporter;
-import io.jaegertracing.reporters.RemoteReporter;
-import io.jaegertracing.reporters.Reporter;
-import io.jaegertracing.samplers.ConstSampler;
-import io.jaegertracing.samplers.HttpSamplingManager;
-import io.jaegertracing.samplers.ProbabilisticSampler;
-import io.jaegertracing.samplers.RateLimitingSampler;
-import io.jaegertracing.samplers.RemoteControlledSampler;
-import io.jaegertracing.samplers.Sampler;
-import io.jaegertracing.senders.HttpSender;
-import io.jaegertracing.senders.Sender;
-import io.jaegertracing.senders.UdpSender;
+import io.jaegertracing.internal.JaegerBaseTracer;
+import io.jaegertracing.internal.metrics.Metrics;
+import io.jaegertracing.internal.metrics.NoopMetricsFactory;
+import io.jaegertracing.internal.propagation.B3TextMapCodec;
+import io.jaegertracing.internal.propagation.CompositeCodec;
+import io.jaegertracing.internal.propagation.TextMapCodec;
+import io.jaegertracing.internal.reporters.CompositeReporter;
+import io.jaegertracing.internal.reporters.LoggingReporter;
+import io.jaegertracing.internal.reporters.RemoteReporter;
+import io.jaegertracing.internal.samplers.ConstSampler;
+import io.jaegertracing.internal.samplers.HttpSamplingManager;
+import io.jaegertracing.internal.samplers.ProbabilisticSampler;
+import io.jaegertracing.internal.samplers.RateLimitingSampler;
+import io.jaegertracing.internal.samplers.RemoteControlledSampler;
+import io.jaegertracing.internal.senders.HttpSender;
+import io.jaegertracing.internal.senders.UdpSender;
+import io.jaegertracing.spi.Codec;
+import io.jaegertracing.spi.Reporter;
+import io.jaegertracing.spi.Sampler;
+import io.jaegertracing.spi.Sender;
+import io.jaegertracing.spi.metrics.MetricsFactory;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
 import java.text.NumberFormat;
@@ -48,7 +49,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * This class is designed to provide {@link Tracer} or {@link Tracer.Builder} when Jaeger client
+ * This class is designed to provide {@link JaegerBaseTracer} or {@link JaegerTracerBuilder} when Jaeger client
  * configuration is provided in environmental or property variables. It also simplifies creation
  * of the client from configuration files.
  */
@@ -162,12 +163,12 @@ public class Configuration {
   private Map<String, String> tracerTags;
 
   /**
-   * lazy singleton Tracer initialized in getTracer() method.
+   * lazy singleton JaegerBaseTracer initialized in getTracer() method.
    */
-  private Tracer tracer;
+  private JaegerBaseTracer tracer;
 
   public Configuration(String serviceName) {
-    this.serviceName = Tracer.Builder.checkValidServiceName(serviceName);
+    this.serviceName = JaegerTracerBuilder.checkValidServiceName(serviceName);
   }
 
   /**
@@ -181,7 +182,7 @@ public class Configuration {
         .withCodec(CodecConfiguration.fromEnv());
   }
 
-  public Tracer.Builder getTracerBuilder() {
+  public JaegerTracerBuilder getTracerBuilder() {
     if (reporterConfig == null) {
       reporterConfig = new ReporterConfiguration();
     }
@@ -197,13 +198,13 @@ public class Configuration {
     Metrics metrics = new Metrics(metricsFactory);
     Reporter reporter = reporterConfig.getReporter(metrics);
     Sampler sampler = samplerConfig.createSampler(serviceName, metrics);
-    Tracer.Builder builder = new Tracer.Builder(serviceName)
+    JaegerTracerBuilder jaegerTracerBuilder = new JaegerTracerBuilder(serviceName)
         .withSampler(sampler)
         .withReporter(reporter)
         .withMetrics(metrics)
         .withTags(tracerTags);
-    codecConfig.apply(builder);
-    return builder;
+    codecConfig.apply(jaegerTracerBuilder);
+    return jaegerTracerBuilder;
   }
 
   public synchronized io.opentracing.Tracer getTracer() {
@@ -224,7 +225,7 @@ public class Configuration {
   }
 
   /**
-   * @param metricsFactory the MetricsFactory to use on the Tracer to be built
+   * @param metricsFactory the MetricsFactory to use on the JaegerBaseTracer to be built
    */
   public Configuration withMetricsFactory(MetricsFactory metricsFactory) {
     this.metricsFactory = metricsFactory;
@@ -232,7 +233,7 @@ public class Configuration {
   }
 
   public Configuration withServiceName(String serviceName) {
-    this.serviceName = Tracer.Builder.checkValidServiceName(serviceName);
+    this.serviceName = JaegerTracerBuilder.checkValidServiceName(serviceName);
     return this;
   }
 
@@ -313,8 +314,7 @@ public class Configuration {
           .withManagerHostPort(getProperty(JAEGER_SAMPLER_MANAGER_HOST_PORT));
     }
 
-    // for tests
-    Sampler createSampler(String serviceName, Metrics metrics) {
+    public Sampler createSampler(String serviceName, Metrics metrics) {
       String samplerType = stringOrDefault(this.getType(), RemoteControlledSampler.TYPE);
       Number samplerParam = numberOrDefault(this.getParam(), ProbabilisticSampler.DEFAULT_SAMPLING_PROBABILITY);
       String hostPort = stringOrDefault(this.getManagerHostPort(), HttpSamplingManager.DEFAULT_HOST_PORT);
@@ -430,20 +430,20 @@ public class Configuration {
       codecList.add(codec);
     }
 
-    public void apply(Tracer.Builder builder) {
+    public void apply(JaegerTracerBuilder jaegerTracerBuilder) {
       // Replace existing TEXT_MAP and HTTP_HEADERS codec with one that represents the
       // configured propagation formats
-      registerCodec(builder, Format.Builtin.HTTP_HEADERS);
-      registerCodec(builder, Format.Builtin.TEXT_MAP);
+      registerCodec(jaegerTracerBuilder, Format.Builtin.HTTP_HEADERS);
+      registerCodec(jaegerTracerBuilder, Format.Builtin.TEXT_MAP);
     }
 
-    protected void registerCodec(Tracer.Builder builder, Format<TextMap> format) {
+    protected void registerCodec(JaegerTracerBuilder jaegerTracerBuilder, Format<TextMap> format) {
       if (codecs.containsKey(format)) {
         List<Codec<TextMap>> codecsForFormat = codecs.get(format);
         Codec<TextMap> codec = codecsForFormat.size() == 1
             ? codecsForFormat.get(0) : new CompositeCodec<TextMap>(codecsForFormat);
-        builder.registerInjector(format, codec);
-        builder.registerExtractor(format, codec);
+        jaegerTracerBuilder.registerInjector(format, codec);
+        jaegerTracerBuilder.registerExtractor(format, codec);
       }
     }
   }
@@ -705,7 +705,7 @@ public class Configuration {
           }
           tracerTagMaps.put(tagValue[0], resolveValue(tagValue[1]));
         } else {
-          log.error("Tracer tag incorrectly formatted: " + tag);
+          log.error("JaegerBaseTracer tag incorrectly formatted: " + tag);
         }
       }
     }

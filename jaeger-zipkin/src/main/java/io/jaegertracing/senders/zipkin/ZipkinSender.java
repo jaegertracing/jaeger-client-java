@@ -19,8 +19,8 @@ import com.twitter.zipkin.thriftjava.BinaryAnnotation;
 import com.twitter.zipkin.thriftjava.Endpoint;
 import com.twitter.zipkin.thriftjava.Span;
 import com.twitter.zipkin.thriftjava.zipkincoreConstants;
-import io.jaegertracing.exceptions.SenderException;
-import io.jaegertracing.senders.Sender;
+import io.jaegertracing.internal.exceptions.SenderException;
+import io.jaegertracing.spi.Sender;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,7 +41,7 @@ import zipkin.reporter.urlconnection.URLConnectionSender;
  *
  * <pre>{@code
  * reporter = new RemoteReporter(ZipkinSender.create("http://localhost:9411/api/v1/spans"));
- * tracer = new Tracer.Builder(serviceName, reporter, sampler)
+ * tracer = new JaegerTracerBuilder(serviceName, reporter, sampler)
  *                    ...
  * }</pre>
  *
@@ -93,7 +93,7 @@ public final class ZipkinSender implements Sender {
    * a single thread that calls this append function
    */
   @Override
-  public int append(io.jaegertracing.Span span) throws SenderException {
+  public int append(io.jaegertracing.internal.Span span) throws SenderException {
     byte[] next = encoder.encode(backFillHostOnAnnotations(ThriftSpanConverter.convertSpan(span)));
     int messageSizeOfNextSpan = delegate.messageSizeInBytes(Collections.singletonList(next));
     // don't enqueue something larger than we can drain

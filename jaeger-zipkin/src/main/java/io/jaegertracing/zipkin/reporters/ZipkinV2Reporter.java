@@ -14,7 +14,8 @@
 
 package io.jaegertracing.zipkin.reporters;
 
-import io.jaegertracing.reporters.Reporter;
+import io.jaegertracing.internal.Span;
+import io.jaegertracing.spi.Reporter;
 import io.jaegertracing.zipkin.V2SpanConverter;
 
 /**
@@ -28,7 +29,7 @@ public class ZipkinV2Reporter implements Reporter {
   }
 
   @Override
-  public void report(io.jaegertracing.Span span) {
+  public void report(Span span) {
     reporter.report(V2SpanConverter.convertSpan(span));
   }
 

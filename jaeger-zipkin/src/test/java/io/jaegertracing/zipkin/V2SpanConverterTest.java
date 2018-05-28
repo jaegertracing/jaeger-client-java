@@ -23,11 +23,12 @@ import static org.junit.Assert.assertNull;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
-import io.jaegertracing.Span;
-import io.jaegertracing.SpanContext;
-import io.jaegertracing.Tracer;
-import io.jaegertracing.reporters.InMemoryReporter;
-import io.jaegertracing.samplers.ConstSampler;
+import io.jaegertracing.JaegerTracerBuilder;
+import io.jaegertracing.internal.JaegerBaseTracer;
+import io.jaegertracing.internal.Span;
+import io.jaegertracing.internal.SpanContext;
+import io.jaegertracing.internal.reporters.InMemoryReporter;
+import io.jaegertracing.internal.samplers.ConstSampler;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
 import io.opentracing.propagation.TextMapExtractAdapter;
@@ -45,12 +46,12 @@ import zipkin2.Annotation;
 
 @RunWith(DataProviderRunner.class)
 public class V2SpanConverterTest {
-  Tracer tracer;
+  JaegerBaseTracer tracer;
 
   @Before
   public void setUp() {
     tracer =
-        new Tracer.Builder("test-service-name")
+        new JaegerTracerBuilder("test-service-name")
             .withReporter(new InMemoryReporter())
             .withSampler(new ConstSampler(true))
             .withZipkinSharedRpcSpan()
@@ -71,7 +72,7 @@ public class V2SpanConverterTest {
 
   @DataProvider
   public static Object[][] dataProviderTracerTags() {
-    Tracer tracer = new Tracer.Builder("x").build();
+    JaegerBaseTracer tracer = new JaegerTracerBuilder("x").build();
 
     Map<String, String> rootTags = new HashMap<>();
     rootTags.put("tracer.jaeger.version", tracer.getVersion());
@@ -111,7 +112,7 @@ public class V2SpanConverterTest {
   @UseDataProvider("dataProviderTracerTags")
   public void testTracerTags(SpanType spanType, Map<String, String> expectedTags) throws Exception {
     InMemoryReporter spanReporter = new InMemoryReporter();
-    Tracer tracer = new Tracer.Builder("x")
+    JaegerBaseTracer tracer = new JaegerTracerBuilder("x")
         .withReporter(spanReporter)
         .withSampler(new ConstSampler(true))
         .withZipkinSharedRpcSpan()

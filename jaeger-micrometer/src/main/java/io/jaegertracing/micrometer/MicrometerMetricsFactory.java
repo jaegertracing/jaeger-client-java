@@ -18,10 +18,10 @@ import static io.micrometer.core.instrument.Metrics.counter;
 import static io.micrometer.core.instrument.Metrics.gauge;
 import static io.micrometer.core.instrument.Metrics.timer;
 
-import io.jaegertracing.metrics.Counter;
-import io.jaegertracing.metrics.Gauge;
-import io.jaegertracing.metrics.MetricsFactory;
-import io.jaegertracing.metrics.Timer;
+import io.jaegertracing.spi.metrics.Counter;
+import io.jaegertracing.spi.metrics.Gauge;
+import io.jaegertracing.spi.metrics.MetricsFactory;
+import io.jaegertracing.spi.metrics.Timer;
 import io.micrometer.core.instrument.ImmutableTag;
 import io.micrometer.core.instrument.Tag;
 import java.util.ArrayList;

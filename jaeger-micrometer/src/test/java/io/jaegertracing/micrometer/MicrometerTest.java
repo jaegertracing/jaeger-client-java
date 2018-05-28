@@ -21,23 +21,21 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import io.jaegertracing.Configuration;
-import io.jaegertracing.Tracer;
-import io.jaegertracing.metrics.Metrics;
-import io.jaegertracing.metrics.Timer;
-import io.jaegertracing.samplers.ConstSampler;
-import io.jaegertracing.samplers.Sampler;
+import io.jaegertracing.internal.JaegerBaseTracer;
+import io.jaegertracing.internal.metrics.Metrics;
+import io.jaegertracing.internal.samplers.ConstSampler;
+import io.jaegertracing.spi.Sampler;
+import io.jaegertracing.spi.metrics.Timer;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.opentracing.Span;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
 import org.hamcrest.core.IsEqual;
 import org.junit.After;
 import org.junit.Before;
@@ -125,7 +123,7 @@ public class MicrometerTest {
   @Test
   public void testExposedMetrics() {
     Configuration configuration = new Configuration("exposedmetrics");
-    final Tracer tracer = configuration
+    final JaegerBaseTracer tracer = configuration
             .getTracerBuilder()
             .withMetrics(metrics)
             .build();
@@ -157,7 +155,7 @@ public class MicrometerTest {
   public void validateMetricCounts() throws InterruptedException {
     Sampler constantSampler = new ConstSampler(true);
     Configuration configuration = new Configuration("validateMetricCounts");
-    Tracer tracer = configuration
+    JaegerBaseTracer tracer = configuration
             .getTracerBuilder()
             .withSampler(constantSampler)
             .withMetrics(metrics)
@@ -186,7 +184,7 @@ public class MicrometerTest {
     assertEquals("Wrong number of traces", 10.0, traces, assertDelta);
   }
 
-  private void createSomeSpans(Tracer tracer) {
+  private void createSomeSpans(JaegerBaseTracer tracer) {
     for (int i = 0; i < 10; i++) {
       Span span = tracer.buildSpan("metricstest")
               .withTag("foo", "bar" + i)
