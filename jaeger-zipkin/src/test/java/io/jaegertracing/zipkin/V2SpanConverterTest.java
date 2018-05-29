@@ -23,8 +23,7 @@ import static org.junit.Assert.assertNull;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
-import io.jaegertracing.JaegerTracerBuilder;
-import io.jaegertracing.internal.JaegerBaseTracer;
+import io.jaegertracing.JaegerTracer;
 import io.jaegertracing.internal.Span;
 import io.jaegertracing.internal.SpanContext;
 import io.jaegertracing.internal.reporters.InMemoryReporter;
@@ -46,12 +45,11 @@ import zipkin2.Annotation;
 
 @RunWith(DataProviderRunner.class)
 public class V2SpanConverterTest {
-  JaegerBaseTracer tracer;
+  JaegerTracer tracer;
 
   @Before
   public void setUp() {
-    tracer =
-        new JaegerTracerBuilder("test-service-name")
+    tracer = new JaegerTracer.Builder("test-service-name")
             .withReporter(new InMemoryReporter())
             .withSampler(new ConstSampler(true))
             .withZipkinSharedRpcSpan()
@@ -72,7 +70,7 @@ public class V2SpanConverterTest {
 
   @DataProvider
   public static Object[][] dataProviderTracerTags() {
-    JaegerBaseTracer tracer = new JaegerTracerBuilder("x").build();
+    JaegerTracer tracer = new JaegerTracer.Builder("x").build();
 
     Map<String, String> rootTags = new HashMap<>();
     rootTags.put("tracer.jaeger.version", tracer.getVersion());
@@ -112,7 +110,7 @@ public class V2SpanConverterTest {
   @UseDataProvider("dataProviderTracerTags")
   public void testTracerTags(SpanType spanType, Map<String, String> expectedTags) throws Exception {
     InMemoryReporter spanReporter = new InMemoryReporter();
-    JaegerBaseTracer tracer = new JaegerTracerBuilder("x")
+    JaegerTracer tracer = new JaegerTracer.Builder("x")
         .withReporter(spanReporter)
         .withSampler(new ConstSampler(true))
         .withZipkinSharedRpcSpan()

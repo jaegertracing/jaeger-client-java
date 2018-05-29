@@ -19,8 +19,7 @@ import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import io.jaegertracing.JaegerTracerBuilder;
-import io.jaegertracing.internal.JaegerBaseTracer;
+import io.jaegertracing.JaegerTracer;
 import io.jaegertracing.internal.LogData;
 import io.jaegertracing.internal.Span;
 import io.jaegertracing.internal.SpanContext;
@@ -29,6 +28,7 @@ import io.jaegertracing.internal.metrics.Metrics;
 import io.jaegertracing.internal.reporters.InMemoryReporter;
 import io.jaegertracing.internal.samplers.ConstSampler;
 import io.jaegertracing.spi.BaggageRestrictionManager;
+import io.opentracing.Tracer;
 import java.util.List;
 import java.util.Map;
 import org.junit.Before;
@@ -37,7 +37,7 @@ import org.junit.Test;
 public class BaggageSetterTest {
 
   private InMemoryReporter reporter;
-  private JaegerBaseTracer tracer;
+  private Tracer tracer;
   private Span span;
   private InMemoryMetricsFactory metricsFactory;
   private Metrics metrics;
@@ -54,7 +54,7 @@ public class BaggageSetterTest {
     metrics = new Metrics(metricsFactory);
     mgr = mock(DefaultBaggageRestrictionManager.class);
     setter = new BaggageSetter(mgr, metrics);
-    tracer = new JaegerTracerBuilder(SERVICE)
+    tracer = new JaegerTracer.Builder(SERVICE)
             .withReporter(reporter)
             .withSampler(new ConstSampler(true))
             .withMetrics(metrics)
@@ -105,7 +105,7 @@ public class BaggageSetterTest {
 
   @Test
   public void testUnsampledSpan() {
-    tracer = new JaegerTracerBuilder(SERVICE)
+    tracer = new JaegerTracer.Builder(SERVICE)
             .withReporter(reporter)
             .withSampler(new ConstSampler(false))
             .withMetrics(metrics)

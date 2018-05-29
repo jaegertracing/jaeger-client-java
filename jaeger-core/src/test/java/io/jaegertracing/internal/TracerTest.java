@@ -21,7 +21,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-import io.jaegertracing.JaegerTracerBuilder;
+import io.jaegertracing.JaegerTracer;
 import io.jaegertracing.internal.metrics.InMemoryMetricsFactory;
 import io.jaegertracing.internal.metrics.Metrics;
 import io.jaegertracing.internal.reporters.InMemoryReporter;
@@ -30,24 +30,25 @@ import io.jaegertracing.internal.samplers.ConstSampler;
 import io.jaegertracing.spi.Injector;
 import io.jaegertracing.spi.Reporter;
 import io.jaegertracing.spi.Sampler;
+import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
 import io.opentracing.tag.Tags;
 import java.io.Closeable;
+import java.io.IOException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
 public class TracerTest {
 
-  JaegerBaseTracer tracer;
+  JaegerTracer tracer;
   InMemoryMetricsFactory metricsFactory;
 
   @Before
   public void setUp() throws Exception {
     metricsFactory = new InMemoryMetricsFactory();
-    tracer =
-        new JaegerTracerBuilder("TracerTestService")
+    tracer = new JaegerTracer.Builder("TracerTestService")
             .withReporter(new InMemoryReporter())
             .withSampler(new ConstSampler(true))
             .withMetrics(new Metrics(metricsFactory))
@@ -56,7 +57,7 @@ public class TracerTest {
 
   @Test
   public void testDefaultConstructor() {
-    JaegerBaseTracer tracer = new JaegerTracerBuilder("name").build();
+    JaegerTracer tracer = new JaegerTracer.Builder("name").build();
     assertTrue(tracer.getReporter() instanceof RemoteReporter);
     // no exception
     tracer.buildSpan("foo").start().finish();
@@ -85,7 +86,7 @@ public class TracerTest {
     @SuppressWarnings("unchecked")
     Injector<TextMap> injector = mock(Injector.class);
 
-    JaegerBaseTracer tracer = new JaegerTracerBuilder("TracerTestService")
+    Tracer tracer = new JaegerTracer.Builder("TracerTestService")
             .withReporter(new InMemoryReporter())
             .withSampler(new ConstSampler(true))
             .withMetrics(new Metrics(new InMemoryMetricsFactory()))
@@ -101,12 +102,12 @@ public class TracerTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testServiceNameNotNull() {
-    new JaegerTracerBuilder(null);
+    new JaegerTracer.Builder(null);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testServiceNameNotEmptyNull() {
-    new JaegerTracerBuilder("  ");
+    new JaegerTracer.Builder("  ");
   }
 
   @Test
@@ -127,7 +128,7 @@ public class TracerTest {
 
   @Test
   public void testWithBaggageRestrictionManager() {
-    tracer = new JaegerTracerBuilder("TracerTestService")
+    tracer = new JaegerTracer.Builder("TracerTestService")
             .withReporter(new InMemoryReporter())
             .withSampler(new ConstSampler(true))
             .withMetrics(new Metrics(metricsFactory))
@@ -145,10 +146,10 @@ public class TracerTest {
   }
 
   @Test
-  public void testClose() {
+  public void testClose() throws IOException {
     Reporter reporter = mock(Reporter.class);
     Sampler sampler = mock(Sampler.class);
-    tracer = new JaegerTracerBuilder("bonda")
+    tracer = new JaegerTracer.Builder("bonda")
         .withReporter(reporter)
         .withSampler(sampler)
         .build();
@@ -159,7 +160,7 @@ public class TracerTest {
 
   @Test
   public void testAsChildOfAcceptNull() {
-    tracer = new JaegerTracerBuilder("foo")
+    tracer = new JaegerTracer.Builder("foo")
         .withReporter(new InMemoryReporter())
         .withSampler(new ConstSampler(true))
         .build();

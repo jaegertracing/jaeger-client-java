@@ -16,10 +16,11 @@ package io.jaegertracing.internal;
 
 import static org.junit.Assert.assertNull;
 
-import io.jaegertracing.JaegerTracerBuilder;
+import io.jaegertracing.JaegerTracer;
 import io.jaegertracing.internal.reporters.InMemoryReporter;
 import io.jaegertracing.internal.samplers.ConstSampler;
 import io.jaegertracing.spi.Codec;
+import io.opentracing.Tracer;
 import io.opentracing.propagation.Format.Builtin;
 import io.opentracing.propagation.TextMap;
 import java.util.Iterator;
@@ -29,11 +30,11 @@ import org.junit.Test;
 
 public class TracerResiliencyTest {
 
-  private JaegerBaseTracer tracer;
+  private Tracer tracer;
 
   @Before
   public void setUpTracer() {
-    tracer = new JaegerTracerBuilder("TracerResiliencyTestService")
+    tracer = new JaegerTracer.Builder("TracerResiliencyTestService")
         .withReporter(new InMemoryReporter())
         .withSampler(new ConstSampler(true))
         .registerExtractor(Builtin.TEXT_MAP, new FaultyCodec())

@@ -14,13 +14,13 @@
 
 package io.jaegertracing.internal.metrics;
 
-import io.jaegertracing.JaegerTracerBuilder;
-import io.jaegertracing.internal.JaegerBaseTracer;
+import io.jaegertracing.JaegerTracer;
 import io.jaegertracing.internal.reporters.InMemoryReporter;
 import io.jaegertracing.internal.samplers.ConstSampler;
 import io.jaegertracing.spi.metrics.Counter;
 import io.jaegertracing.spi.metrics.Gauge;
 import io.jaegertracing.spi.metrics.Timer;
+import io.opentracing.Tracer;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.Test;
@@ -92,7 +92,7 @@ public class NoopMetricsFactoryTest {
   @Test
   public void canBeUsedWithMetrics() {
     NoopMetricsFactory metricsFactory = new NoopMetricsFactory();
-    JaegerBaseTracer tracer = new JaegerTracerBuilder("metricsFactoryTest")
+    Tracer tracer = new JaegerTracer.Builder("metricsFactoryTest")
             .withReporter(new InMemoryReporter())
             .withSampler(new ConstSampler(true))
             .withMetrics(new Metrics(metricsFactory))

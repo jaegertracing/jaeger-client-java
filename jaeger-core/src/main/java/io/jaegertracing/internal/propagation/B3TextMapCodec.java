@@ -27,7 +27,7 @@ import java.util.Map;
  *
  * <pre>{@code
  * b3Codec = new B3TextMapCodec();
- * tracer = new JaegerTracerBuilder(serviceName, reporter, sampler)
+ * tracer = new JaegerTracer.Builder(serviceName, reporter, sampler)
  *                    .registerInjector(Format.Builtin.HTTP_HEADERS, b3Codec)
  *                    .registerExtractor(Format.Builtin.HTTP_HEADERS, b3Codec)
  *                    ...

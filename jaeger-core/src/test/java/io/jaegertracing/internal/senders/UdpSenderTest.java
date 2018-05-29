@@ -18,8 +18,7 @@ import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import io.jaegertracing.JaegerTracerBuilder;
-import io.jaegertracing.internal.JaegerBaseTracer;
+import io.jaegertracing.JaegerTracer;
 import io.jaegertracing.internal.Span;
 import io.jaegertracing.internal.exceptions.SenderException;
 import io.jaegertracing.internal.metrics.InMemoryMetricsFactory;
@@ -30,6 +29,7 @@ import io.jaegertracing.spi.Reporter;
 import io.jaegertracing.thrift.reporters.protocols.TestTServer;
 import io.jaegertracing.thriftjava.Batch;
 import io.jaegertracing.thriftjava.Process;
+import io.opentracing.Tracer;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import org.junit.After;
@@ -42,7 +42,7 @@ public class UdpSenderTest {
   int destPort;
   final int maxPacketSize = 1000;
 
-  JaegerBaseTracer tracer;
+  JaegerTracer tracer;
   Reporter reporter;
   UdpSender sender;
   TestTServer server;
@@ -68,7 +68,7 @@ public class UdpSenderTest {
     server = startServer();
     reporter = new InMemoryReporter();
     tracer =
-        new JaegerTracerBuilder(SERVICE_NAME)
+        new JaegerTracer.Builder(SERVICE_NAME)
             .withReporter(reporter)
             .withSampler(new ConstSampler(true))
             .withMetricsFactory(new InMemoryMetricsFactory())

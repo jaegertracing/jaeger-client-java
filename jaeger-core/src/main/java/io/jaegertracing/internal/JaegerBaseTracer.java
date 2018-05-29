@@ -119,6 +119,7 @@ public class JaegerBaseTracer implements JaegerTracer, Closeable {
     this.tags = Collections.unmodifiableMap(tags);
   }
 
+  @Override
   public String getVersion() {
     return version;
   }
@@ -132,6 +133,7 @@ public class JaegerBaseTracer implements JaegerTracer, Closeable {
     return serviceName;
   }
 
+  @Override
   public Map<String, ?> tags() {
     return tags;
   }
@@ -145,7 +147,8 @@ public class JaegerBaseTracer implements JaegerTracer, Closeable {
     return clock;
   }
 
-  Reporter getReporter() {
+  @Override
+  public Reporter getReporter() {
     return reporter;
   }
 
@@ -474,7 +477,8 @@ public class JaegerBaseTracer implements JaegerTracer, Closeable {
     }
   }
 
-  SpanContext setBaggage(Span span, String key, String value) {
+  @Override
+  public SpanContext setBaggage(Span span, String key, String value) {
     return baggageSetter.setBaggage(span, key, value);
   }
 

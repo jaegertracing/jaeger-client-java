@@ -18,7 +18,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import io.jaegertracing.JaegerTracer;
-import io.jaegertracing.JaegerTracerBuilder;
 import io.jaegertracing.internal.Span;
 import io.jaegertracing.internal.SpanContext;
 import io.jaegertracing.internal.exceptions.SenderException;
@@ -55,7 +54,7 @@ public class ZipkinSenderTest {
   @Before
   public void setUp() throws Exception {
     reporter = new InMemoryReporter();
-    tracer = new JaegerTracerBuilder("test-sender")
+    tracer = new JaegerTracer.Builder("test-sender")
             .withReporter(reporter)
             .withSampler(new ConstSampler(true))
             .withMetricsFactory(new InMemoryMetricsFactory())

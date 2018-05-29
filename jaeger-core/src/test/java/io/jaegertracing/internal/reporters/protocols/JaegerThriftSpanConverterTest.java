@@ -20,8 +20,7 @@ import static org.junit.Assert.assertNotNull;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
-import io.jaegertracing.JaegerTracerBuilder;
-import io.jaegertracing.internal.JaegerBaseTracer;
+import io.jaegertracing.JaegerTracer;
 import io.jaegertracing.internal.Reference;
 import io.jaegertracing.internal.SpanContext;
 import io.jaegertracing.internal.reporters.InMemoryReporter;
@@ -32,6 +31,7 @@ import io.jaegertracing.thriftjava.Tag;
 import io.jaegertracing.thriftjava.TagType;
 import io.opentracing.References;
 import io.opentracing.Span;
+import io.opentracing.Tracer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -43,11 +43,11 @@ import org.junit.runner.RunWith;
 
 @RunWith(DataProviderRunner.class)
 public class JaegerThriftSpanConverterTest {
-  JaegerBaseTracer tracer;
+  Tracer tracer;
 
   @Before
   public void setUp() {
-    tracer = new JaegerTracerBuilder("test-service-name")
+    tracer = new JaegerTracer.Builder("test-service-name")
             .withReporter(new InMemoryReporter())
             .withSampler(new ConstSampler(true))
             .build();

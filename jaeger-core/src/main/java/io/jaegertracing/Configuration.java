@@ -37,6 +37,7 @@ import io.jaegertracing.spi.Sender;
 import io.jaegertracing.spi.metrics.MetricsFactory;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
+import java.io.IOException;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Arrays;
@@ -49,7 +50,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * This class is designed to provide {@link JaegerBaseTracer} or {@link JaegerTracerBuilder} when Jaeger client
+ * This class is designed to provide {@link JaegerTracer} or {@link JaegerTracer.Builder} when Jaeger client
  * configuration is provided in environmental or property variables. It also simplifies creation
  * of the client from configuration files.
  */
@@ -163,12 +164,12 @@ public class Configuration {
   private Map<String, String> tracerTags;
 
   /**
-   * lazy singleton JaegerBaseTracer initialized in getTracer() method.
+   * lazy singleton JaegerTracer initialized in getTracer() method.
    */
-  private JaegerBaseTracer tracer;
+  private JaegerTracer tracer;
 
   public Configuration(String serviceName) {
-    this.serviceName = JaegerTracerBuilder.checkValidServiceName(serviceName);
+    this.serviceName = JaegerTracer.Builder.checkValidServiceName(serviceName);
   }
 
   /**
@@ -182,7 +183,7 @@ public class Configuration {
         .withCodec(CodecConfiguration.fromEnv());
   }
 
-  public JaegerTracerBuilder getTracerBuilder() {
+  public JaegerTracer.Builder getTracerBuilder() {
     if (reporterConfig == null) {
       reporterConfig = new ReporterConfiguration();
     }
@@ -198,7 +199,7 @@ public class Configuration {
     Metrics metrics = new Metrics(metricsFactory);
     Reporter reporter = reporterConfig.getReporter(metrics);
     Sampler sampler = samplerConfig.createSampler(serviceName, metrics);
-    JaegerTracerBuilder jaegerTracerBuilder = new JaegerTracerBuilder(serviceName)
+    JaegerTracer.Builder jaegerTracerBuilder = new JaegerTracer.Builder(serviceName)
         .withSampler(sampler)
         .withReporter(reporter)
         .withMetrics(metrics)
@@ -220,7 +221,11 @@ public class Configuration {
 
   public synchronized void closeTracer() {
     if (tracer != null) {
-      tracer.close();
+      try {
+        tracer.close();
+      } catch (IOException e) {
+        log.error("Error closing the tracer", e);
+      }
     }
   }
 
@@ -233,7 +238,7 @@ public class Configuration {
   }
 
   public Configuration withServiceName(String serviceName) {
-    this.serviceName = JaegerTracerBuilder.checkValidServiceName(serviceName);
+    this.serviceName = JaegerTracer.Builder.checkValidServiceName(serviceName);
     return this;
   }
 
@@ -430,14 +435,14 @@ public class Configuration {
       codecList.add(codec);
     }
 
-    public void apply(JaegerTracerBuilder jaegerTracerBuilder) {
+    public void apply(JaegerTracer.Builder jaegerTracerBuilder) {
       // Replace existing TEXT_MAP and HTTP_HEADERS codec with one that represents the
       // configured propagation formats
       registerCodec(jaegerTracerBuilder, Format.Builtin.HTTP_HEADERS);
       registerCodec(jaegerTracerBuilder, Format.Builtin.TEXT_MAP);
     }
 
-    protected void registerCodec(JaegerTracerBuilder jaegerTracerBuilder, Format<TextMap> format) {
+    protected void registerCodec(JaegerTracer.Builder jaegerTracerBuilder, Format<TextMap> format) {
       if (codecs.containsKey(format)) {
         List<Codec<TextMap>> codecsForFormat = codecs.get(format);
         Codec<TextMap> codec = codecsForFormat.size() == 1
@@ -705,7 +710,7 @@ public class Configuration {
           }
           tracerTagMaps.put(tagValue[0], resolveValue(tagValue[1]));
         } else {
-          log.error("JaegerBaseTracer tag incorrectly formatted: " + tag);
+          log.error("Tracer tag incorrectly formatted: " + tag);
         }
       }
     }

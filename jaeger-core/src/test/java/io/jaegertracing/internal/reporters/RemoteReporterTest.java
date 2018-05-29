@@ -22,8 +22,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
-import io.jaegertracing.JaegerTracerBuilder;
-import io.jaegertracing.internal.JaegerBaseTracer;
+import io.jaegertracing.JaegerTracer;
 import io.jaegertracing.internal.Span;
 import io.jaegertracing.internal.exceptions.SenderException;
 import io.jaegertracing.internal.metrics.InMemoryMetricsFactory;
@@ -31,6 +30,7 @@ import io.jaegertracing.internal.metrics.Metrics;
 import io.jaegertracing.internal.reporters.RemoteReporter.Builder;
 import io.jaegertracing.internal.samplers.ConstSampler;
 import io.jaegertracing.spi.Reporter;
+import io.opentracing.Tracer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -43,7 +43,7 @@ import org.junit.Test;
 
 public class RemoteReporterTest {
   private Reporter reporter;
-  private JaegerBaseTracer tracer;
+  private Tracer tracer;
   private InMemorySender sender;
   private final int flushInterval = 1000; // in milliseconds
   private final int maxQueueSize = 500;
@@ -62,7 +62,7 @@ public class RemoteReporterTest {
         .withMaxQueueSize(maxQueueSize)
         .withMetrics(metrics)
         .build();
-    tracer = new JaegerTracerBuilder("test-remote-reporter")
+    tracer = new JaegerTracer.Builder("test-remote-reporter")
             .withReporter(reporter)
             .withSampler(new ConstSampler(true))
             .withMetrics(metrics)
@@ -185,7 +185,7 @@ public class RemoteReporterTest {
         .withCloseEnqueueTimeout(closeTimeoutMillis)
         .withMetrics(metrics)
         .build();
-    tracer = new JaegerTracerBuilder("test-remote-reporter")
+    tracer = new JaegerTracer.Builder("test-remote-reporter")
         .withReporter(reporter)
         .withSampler(new ConstSampler(true))
         .withMetrics(metrics)
@@ -227,7 +227,7 @@ public class RemoteReporterTest {
         .withMaxQueueSize(maxQueueSize)
         .withMetrics(metrics)
         .build();
-    tracer = new JaegerTracerBuilder("test-remote-reporter")
+    tracer = new JaegerTracer.Builder("test-remote-reporter")
         .withReporter(reporter)
         .withSampler(new ConstSampler(true))
         .withMetrics(metrics)
@@ -266,7 +266,7 @@ public class RemoteReporterTest {
         .withMaxQueueSize(maxQueueSize)
         .withMetrics(metrics)
         .build();
-    tracer = new JaegerTracerBuilder("test-remote-reporter")
+    tracer = new JaegerTracer.Builder("test-remote-reporter")
         .withReporter(remoteReporter)
         .withSampler(new ConstSampler(true))
         .withMetrics(metrics)

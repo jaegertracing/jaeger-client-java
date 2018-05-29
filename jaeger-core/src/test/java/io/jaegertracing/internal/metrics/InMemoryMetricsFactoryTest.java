@@ -16,13 +16,13 @@ package io.jaegertracing.internal.metrics;
 
 import static org.junit.Assert.assertEquals;
 
-import io.jaegertracing.JaegerTracerBuilder;
-import io.jaegertracing.internal.JaegerBaseTracer;
+import io.jaegertracing.JaegerTracer;
 import io.jaegertracing.internal.reporters.InMemoryReporter;
 import io.jaegertracing.internal.samplers.ConstSampler;
 import io.jaegertracing.spi.metrics.Counter;
 import io.jaegertracing.spi.metrics.Gauge;
 import io.jaegertracing.spi.metrics.Timer;
+import io.opentracing.Tracer;
 import java.util.Collections;
 import java.util.Map;
 import org.junit.Test;
@@ -104,7 +104,7 @@ public class InMemoryMetricsFactoryTest {
   @Test
   public void emptyValueForTag() {
     InMemoryMetricsFactory metricsFactory = new InMemoryMetricsFactory();
-    JaegerBaseTracer tracer =  new JaegerTracerBuilder("metricsFactoryTest")
+    Tracer tracer =  new JaegerTracer.Builder("metricsFactoryTest")
             .withReporter(new InMemoryReporter())
             .withSampler(new ConstSampler(true))
             .withMetrics(new Metrics(metricsFactory))
@@ -118,7 +118,7 @@ public class InMemoryMetricsFactoryTest {
   @Test
   public void canBeUsedWithMetrics() {
     InMemoryMetricsFactory metricsFactory = new InMemoryMetricsFactory();
-    JaegerBaseTracer tracer = new JaegerTracerBuilder("metricsFactoryTest")
+    Tracer tracer = new JaegerTracer.Builder("metricsFactoryTest")
             .withReporter(new InMemoryReporter())
             .withSampler(new ConstSampler(true))
             .withMetrics(new Metrics(metricsFactory))

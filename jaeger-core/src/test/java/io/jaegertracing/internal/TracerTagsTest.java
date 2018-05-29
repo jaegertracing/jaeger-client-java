@@ -16,10 +16,11 @@ package io.jaegertracing.internal;
 
 import static org.junit.Assert.assertEquals;
 
-import io.jaegertracing.JaegerTracerBuilder;
+import io.jaegertracing.JaegerTracer;
 import io.jaegertracing.internal.reporters.InMemoryReporter;
 import io.jaegertracing.internal.samplers.ConstSampler;
 import io.jaegertracing.internal.utils.Utils;
+import io.opentracing.Tracer;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import org.junit.Test;
@@ -29,7 +30,7 @@ public class TracerTagsTest {
   @Test
   public void testTracerTags() throws Exception {
     InMemoryReporter spanReporter = new InMemoryReporter();
-    JaegerBaseTracer tracer = new JaegerTracerBuilder("x")
+    Tracer tracer = new JaegerTracer.Builder("x")
         .withReporter(spanReporter)
         .withSampler(new ConstSampler(true))
         .withZipkinSharedRpcSpan()
@@ -48,7 +49,7 @@ public class TracerTagsTest {
   @Test
   public void testDefaultHostTags() throws Exception {
     InMemoryReporter spanReporter = new InMemoryReporter();
-    JaegerBaseTracer tracer = new JaegerTracerBuilder("x")
+    JaegerTracer tracer = new JaegerTracer.Builder("x")
         .withReporter(spanReporter)
         .build();
     assertEquals(InetAddress.getLocalHost().getHostName(), tracer.tags().get(Constants.TRACER_HOSTNAME_TAG_KEY));
@@ -61,7 +62,7 @@ public class TracerTagsTest {
     InMemoryReporter spanReporter = new InMemoryReporter();
     String hostname = "myhost";
     String ip = "1.1.1.1";
-    JaegerBaseTracer tracer = new JaegerTracerBuilder("x")
+    JaegerTracer tracer = new JaegerTracer.Builder("x")
         .withReporter(spanReporter)
         .withTag(Constants.TRACER_HOSTNAME_TAG_KEY, hostname)
         .withTag(Constants.TRACER_IP_TAG_KEY, ip)
@@ -75,7 +76,7 @@ public class TracerTagsTest {
   public void testEmptyDeclaredIpTag() throws Exception {
     InMemoryReporter spanReporter = new InMemoryReporter();
     String ip = "";
-    JaegerBaseTracer tracer = new JaegerTracerBuilder("x")
+    JaegerTracer tracer = new JaegerTracer.Builder("x")
             .withReporter(spanReporter)
             .withTag(Constants.TRACER_IP_TAG_KEY, ip)
             .build();
@@ -86,7 +87,7 @@ public class TracerTagsTest {
   public void testShortDeclaredIpTag() throws Exception {
     InMemoryReporter spanReporter = new InMemoryReporter();
     String ip = ":19";
-    JaegerBaseTracer tracer = new JaegerTracerBuilder("x")
+    JaegerTracer tracer = new JaegerTracer.Builder("x")
             .withReporter(spanReporter)
             .withTag(Constants.TRACER_IP_TAG_KEY, ip)
             .build();

@@ -41,7 +41,7 @@ import zipkin.reporter.urlconnection.URLConnectionSender;
  *
  * <pre>{@code
  * reporter = new RemoteReporter(ZipkinSender.create("http://localhost:9411/api/v1/spans"));
- * tracer = new JaegerTracerBuilder(serviceName, reporter, sampler)
+ * tracer = new JaegerTracer.Builder(serviceName, reporter, sampler)
  *                    ...
  * }</pre>
  *

@@ -25,13 +25,13 @@ import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import com.twitter.zipkin.thriftjava.Annotation;
 import com.twitter.zipkin.thriftjava.BinaryAnnotation;
 import com.twitter.zipkin.thriftjava.zipkincoreConstants;
-import io.jaegertracing.JaegerTracerBuilder;
-import io.jaegertracing.internal.JaegerBaseTracer;
+import io.jaegertracing.JaegerTracer;
 import io.jaegertracing.internal.Span;
 import io.jaegertracing.internal.SpanContext;
 import io.jaegertracing.internal.reporters.InMemoryReporter;
 import io.jaegertracing.internal.samplers.ConstSampler;
 import io.jaegertracing.zipkin.ConverterUtil;
+import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
 import io.opentracing.propagation.TextMapExtractAdapter;
@@ -49,11 +49,11 @@ import org.junit.runner.RunWith;
 
 @RunWith(DataProviderRunner.class)
 public class ThriftSpanConverterTest {
-  JaegerBaseTracer tracer;
+  JaegerTracer tracer;
 
   @Before
   public void setUp() {
-    tracer = new JaegerTracerBuilder("test-service-name")
+    tracer = new JaegerTracer.Builder("test-service-name")
             .withReporter(new InMemoryReporter())
             .withSampler(new ConstSampler(true))
             .withZipkinSharedRpcSpan()
@@ -74,7 +74,7 @@ public class ThriftSpanConverterTest {
 
   @DataProvider
   public static Object[][] dataProviderTracerTags() {
-    JaegerBaseTracer tracer = new JaegerTracerBuilder("x")
+    JaegerTracer tracer = new JaegerTracer.Builder("x")
         .withReporter(null)
         .withSampler(null)
         .build();
@@ -117,7 +117,7 @@ public class ThriftSpanConverterTest {
   @UseDataProvider("dataProviderTracerTags")
   public void testTracerTags(SpanType spanType, Map<String, String> expectedTags) throws Exception {
     InMemoryReporter spanReporter = new InMemoryReporter();
-    JaegerBaseTracer tracer = new JaegerTracerBuilder("x")
+    JaegerTracer tracer = new JaegerTracer.Builder("x")
         .withReporter(spanReporter)
         .withSampler(new ConstSampler(true))
         .withZipkinSharedRpcSpan()

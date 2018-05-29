@@ -21,7 +21,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import io.jaegertracing.JaegerTracerBuilder;
+import io.jaegertracing.JaegerTracer;
 import io.jaegertracing.internal.baggage.DefaultBaggageRestrictionManager;
 import io.jaegertracing.internal.baggage.Restriction;
 import io.jaegertracing.internal.metrics.InMemoryMetricsFactory;
@@ -31,6 +31,7 @@ import io.jaegertracing.internal.samplers.ConstSampler;
 import io.jaegertracing.internal.utils.Clock;
 import io.jaegertracing.spi.BaggageRestrictionManager;
 import io.opentracing.References;
+import io.opentracing.Tracer;
 import io.opentracing.log.Fields;
 import io.opentracing.tag.Tags;
 import java.io.PrintWriter;
@@ -48,7 +49,7 @@ import org.mockito.Mockito;
 public class SpanTest {
   private Clock clock;
   private InMemoryReporter reporter;
-  private JaegerBaseTracer tracer;
+  private Tracer tracer;
   private Span span;
   private InMemoryMetricsFactory metricsFactory;
   private Metrics metrics;
@@ -59,7 +60,7 @@ public class SpanTest {
     reporter = new InMemoryReporter();
     clock = mock(Clock.class);
     metrics = new Metrics(metricsFactory);
-    tracer = new JaegerTracerBuilder("SamplerTest")
+    tracer = new JaegerTracer.Builder("SamplerTest")
             .withReporter(reporter)
             .withSampler(new ConstSampler(true))
             .withMetrics(metrics)
@@ -80,7 +81,7 @@ public class SpanTest {
   public void testSetAndGetBaggageItem() {
     final String service = "SamplerTest";
     final BaggageRestrictionManager mgr = Mockito.mock(DefaultBaggageRestrictionManager.class);
-    tracer = new JaegerTracerBuilder(service)
+    tracer = new JaegerTracer.Builder(service)
             .withReporter(reporter)
             .withSampler(new ConstSampler(true))
             .withClock(clock)
@@ -413,7 +414,7 @@ public class SpanTest {
 
   @Test
   public void testNoExpandExceptionLogs() {
-    JaegerBaseTracer tracer = new JaegerTracerBuilder("fo")
+    Tracer tracer = new JaegerTracer.Builder("fo")
         .withReporter(reporter)
         .withSampler(new ConstSampler(true))
         .build();
@@ -433,7 +434,7 @@ public class SpanTest {
 
   @Test
   public void testSpanNotSampled() {
-    JaegerBaseTracer tracer = new JaegerTracerBuilder("fo")
+    Tracer tracer = new JaegerTracer.Builder("fo")
         .withReporter(reporter)
         .withSampler(new ConstSampler(false))
         .build();

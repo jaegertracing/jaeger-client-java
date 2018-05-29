@@ -21,7 +21,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import io.jaegertracing.Configuration;
-import io.jaegertracing.internal.JaegerBaseTracer;
+import io.jaegertracing.JaegerTracer;
 import io.jaegertracing.internal.metrics.Metrics;
 import io.jaegertracing.internal.samplers.ConstSampler;
 import io.jaegertracing.spi.Sampler;
@@ -31,6 +31,8 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.opentracing.Span;
+import io.opentracing.Tracer;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -121,9 +123,9 @@ public class MicrometerTest {
 
 
   @Test
-  public void testExposedMetrics() {
+  public void testExposedMetrics() throws IOException {
     Configuration configuration = new Configuration("exposedmetrics");
-    final JaegerBaseTracer tracer = configuration
+    final JaegerTracer tracer = configuration
             .getTracerBuilder()
             .withMetrics(metrics)
             .build();
@@ -152,10 +154,10 @@ public class MicrometerTest {
   }
 
   @Test
-  public void validateMetricCounts() throws InterruptedException {
+  public void validateMetricCounts() throws InterruptedException, IOException {
     Sampler constantSampler = new ConstSampler(true);
     Configuration configuration = new Configuration("validateMetricCounts");
-    JaegerBaseTracer tracer = configuration
+    JaegerTracer tracer = configuration
             .getTracerBuilder()
             .withSampler(constantSampler)
             .withMetrics(metrics)
@@ -184,7 +186,7 @@ public class MicrometerTest {
     assertEquals("Wrong number of traces", 10.0, traces, assertDelta);
   }
 
-  private void createSomeSpans(JaegerBaseTracer tracer) {
+  private void createSomeSpans(Tracer tracer) {
     for (int i = 0; i < 10; i++) {
       Span span = tracer.buildSpan("metricstest")
               .withTag("foo", "bar" + i)

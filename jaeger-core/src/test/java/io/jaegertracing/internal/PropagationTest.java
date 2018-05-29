@@ -19,12 +19,13 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
-import io.jaegertracing.JaegerTracerBuilder;
+import io.jaegertracing.JaegerTracer;
 import io.jaegertracing.internal.reporters.InMemoryReporter;
 import io.jaegertracing.internal.samplers.ConstSampler;
 import io.opentracing.References;
 import io.opentracing.Scope;
 import io.opentracing.ScopeManager;
+import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
 import io.opentracing.propagation.TextMapExtractAdapter;
@@ -35,7 +36,7 @@ import org.junit.Test;
 public class PropagationTest {
   @Test
   public void testDebugCorrelationId() {
-    JaegerBaseTracer tracer = new JaegerTracerBuilder("test")
+    Tracer tracer = new JaegerTracer.Builder("test")
             .withReporter(new InMemoryReporter())
             .withSampler(new ConstSampler(true))
             .build();
@@ -54,7 +55,7 @@ public class PropagationTest {
 
   @Test
   public void testActiveSpanPropagation() {
-    JaegerBaseTracer tracer = new JaegerTracerBuilder("test")
+    Tracer tracer = new JaegerTracer.Builder("test")
             .withReporter(new InMemoryReporter())
             .withSampler(new ConstSampler(true))
             .build();
@@ -66,7 +67,7 @@ public class PropagationTest {
   @Test
   public void testActiveSpanAutoReference() {
     InMemoryReporter reporter = new InMemoryReporter();
-    JaegerBaseTracer tracer = new JaegerTracerBuilder("test")
+    Tracer tracer = new JaegerTracer.Builder("test")
             .withReporter(reporter)
             .withSampler(new ConstSampler(true))
             .build();
@@ -92,7 +93,7 @@ public class PropagationTest {
   @Test
   public void testActiveSpanAutoFinishOnClose() {
     InMemoryReporter reporter = new InMemoryReporter();
-    JaegerBaseTracer tracer = new JaegerTracerBuilder("test")
+    Tracer tracer = new JaegerTracer.Builder("test")
             .withReporter(reporter)
             .withSampler(new ConstSampler(true))
             .build();
@@ -103,7 +104,7 @@ public class PropagationTest {
   @Test
   public void testActiveSpanNotAutoFinishOnClose() {
     InMemoryReporter reporter = new InMemoryReporter();
-    JaegerBaseTracer tracer = new JaegerTracerBuilder("test")
+    Tracer tracer = new JaegerTracer.Builder("test")
             .withReporter(reporter)
             .withSampler(new ConstSampler(true))
             .build();
@@ -118,7 +119,7 @@ public class PropagationTest {
   @Test
   public void testIgnoreActiveSpan() {
     InMemoryReporter reporter = new InMemoryReporter();
-    JaegerBaseTracer tracer = new JaegerTracerBuilder("test")
+    Tracer tracer = new JaegerTracer.Builder("test")
             .withReporter(reporter)
             .withSampler(new ConstSampler(true))
             .build();
@@ -139,7 +140,7 @@ public class PropagationTest {
   @Test
   public void testNoAutoRefWithExistingRefs() {
     InMemoryReporter reporter = new InMemoryReporter();
-    JaegerBaseTracer tracer = new JaegerTracerBuilder("test")
+    Tracer tracer = new JaegerTracer.Builder("test")
             .withReporter(reporter)
             .withSampler(new ConstSampler(true))
             .build();
@@ -171,7 +172,7 @@ public class PropagationTest {
   @Test
   public void testCustomScopeManager() {
     Scope scope = mock(Scope.class);
-    JaegerBaseTracer tracer = new JaegerTracerBuilder("test")
+    Tracer tracer = new JaegerTracer.Builder("test")
         .withReporter(new InMemoryReporter())
         .withSampler(new ConstSampler(true))
         .withScopeManager(new ScopeManager() {
