@@ -14,9 +14,9 @@
 
 package io.jaegertracing.spi;
 
+import io.jaegertracing.codec.B3TextMapCodec;
+import io.jaegertracing.codec.TextMapCodec;
 import io.jaegertracing.internal.SpanContext;
-import io.jaegertracing.internal.propagation.B3TextMapCodec;
-import io.jaegertracing.internal.propagation.TextMapCodec;
 import io.opentracing.propagation.Format;
 
 /**

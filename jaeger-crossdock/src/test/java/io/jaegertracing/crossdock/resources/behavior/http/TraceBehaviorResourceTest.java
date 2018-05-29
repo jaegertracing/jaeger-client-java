@@ -30,7 +30,7 @@ import io.jaegertracing.crossdock.api.StartTraceRequest;
 import io.jaegertracing.crossdock.api.TraceResponse;
 import io.jaegertracing.crossdock.resources.behavior.TraceBehavior;
 import io.jaegertracing.internal.Span;
-import io.jaegertracing.internal.samplers.ConstSampler;
+import io.jaegertracing.sampler.ConstSampler;
 import io.opentracing.Scope;
 import io.opentracing.noop.NoopTracerFactory;
 import io.opentracing.tag.Tags;

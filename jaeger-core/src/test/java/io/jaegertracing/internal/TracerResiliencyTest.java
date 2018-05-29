@@ -17,8 +17,8 @@ package io.jaegertracing.internal;
 import static org.junit.Assert.assertNull;
 
 import io.jaegertracing.JaegerTracer;
-import io.jaegertracing.internal.reporters.InMemoryReporter;
-import io.jaegertracing.internal.samplers.ConstSampler;
+import io.jaegertracing.reporter.InMemoryReporter;
+import io.jaegertracing.sampler.ConstSampler;
 import io.jaegertracing.spi.Codec;
 import io.opentracing.Tracer;
 import io.opentracing.propagation.Format.Builtin;

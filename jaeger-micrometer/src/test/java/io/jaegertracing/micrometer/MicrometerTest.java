@@ -23,7 +23,7 @@ import static org.junit.Assert.assertTrue;
 import io.jaegertracing.Configuration;
 import io.jaegertracing.JaegerTracer;
 import io.jaegertracing.internal.metrics.Metrics;
-import io.jaegertracing.internal.samplers.ConstSampler;
+import io.jaegertracing.sampler.ConstSampler;
 import io.jaegertracing.spi.Sampler;
 import io.jaegertracing.spi.metrics.Timer;
 import io.micrometer.core.instrument.Meter;

@@ -15,12 +15,12 @@
 package io.jaegertracing.internal;
 
 import io.jaegertracing.JaegerTracer;
+import io.jaegertracing.SamplingStatus;
 import io.jaegertracing.internal.baggage.BaggageSetter;
 import io.jaegertracing.internal.exceptions.EmptyIpException;
 import io.jaegertracing.internal.exceptions.NotFourOctetsException;
 import io.jaegertracing.internal.exceptions.UnsupportedFormatException;
 import io.jaegertracing.internal.metrics.Metrics;
-import io.jaegertracing.internal.samplers.SamplingStatus;
 import io.jaegertracing.internal.utils.Clock;
 import io.jaegertracing.internal.utils.Utils;
 import io.jaegertracing.spi.BaggageRestrictionManager;

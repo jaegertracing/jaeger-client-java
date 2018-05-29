@@ -17,8 +17,8 @@ package io.jaegertracing.internal.metrics;
 import static org.junit.Assert.assertEquals;
 
 import io.jaegertracing.JaegerTracer;
-import io.jaegertracing.internal.reporters.InMemoryReporter;
-import io.jaegertracing.internal.samplers.ConstSampler;
+import io.jaegertracing.reporter.InMemoryReporter;
+import io.jaegertracing.sampler.ConstSampler;
 import io.jaegertracing.spi.metrics.Counter;
 import io.jaegertracing.spi.metrics.Gauge;
 import io.jaegertracing.spi.metrics.Timer;

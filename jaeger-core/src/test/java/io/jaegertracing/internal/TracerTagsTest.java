@@ -17,9 +17,9 @@ package io.jaegertracing.internal;
 import static org.junit.Assert.assertEquals;
 
 import io.jaegertracing.JaegerTracer;
-import io.jaegertracing.internal.reporters.InMemoryReporter;
-import io.jaegertracing.internal.samplers.ConstSampler;
 import io.jaegertracing.internal.utils.Utils;
+import io.jaegertracing.reporter.InMemoryReporter;
+import io.jaegertracing.sampler.ConstSampler;
 import io.opentracing.Tracer;
 import java.net.Inet4Address;
 import java.net.InetAddress;

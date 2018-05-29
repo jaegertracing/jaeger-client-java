@@ -93,8 +93,9 @@ public final class ZipkinSender implements Sender {
    * a single thread that calls this append function
    */
   @Override
-  public int append(io.jaegertracing.internal.Span span) throws SenderException {
-    byte[] next = encoder.encode(backFillHostOnAnnotations(ThriftSpanConverter.convertSpan(span)));
+  public int append(io.opentracing.Span span) throws SenderException {
+    byte[] next = encoder.encode(backFillHostOnAnnotations(ThriftSpanConverter
+        .convertSpan((io.jaegertracing.internal.Span)span)));
     int messageSizeOfNextSpan = delegate.messageSizeInBytes(Collections.singletonList(next));
     // don't enqueue something larger than we can drain
     if (messageSizeOfNextSpan > delegate.messageMaxBytes()) {

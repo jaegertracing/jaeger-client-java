@@ -20,8 +20,8 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import io.jaegertracing.JaegerTracer;
-import io.jaegertracing.internal.reporters.InMemoryReporter;
-import io.jaegertracing.internal.samplers.ConstSampler;
+import io.jaegertracing.reporter.InMemoryReporter;
+import io.jaegertracing.sampler.ConstSampler;
 import io.opentracing.References;
 import io.opentracing.Scope;
 import io.opentracing.ScopeManager;

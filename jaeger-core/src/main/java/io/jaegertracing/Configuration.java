@@ -14,22 +14,21 @@
 
 package io.jaegertracing;
 
-import io.jaegertracing.internal.JaegerBaseTracer;
+import io.jaegertracing.codec.B3TextMapCodec;
+import io.jaegertracing.codec.CompositeCodec;
+import io.jaegertracing.codec.TextMapCodec;
 import io.jaegertracing.internal.metrics.Metrics;
 import io.jaegertracing.internal.metrics.NoopMetricsFactory;
-import io.jaegertracing.internal.propagation.B3TextMapCodec;
-import io.jaegertracing.internal.propagation.CompositeCodec;
-import io.jaegertracing.internal.propagation.TextMapCodec;
-import io.jaegertracing.internal.reporters.CompositeReporter;
-import io.jaegertracing.internal.reporters.LoggingReporter;
-import io.jaegertracing.internal.reporters.RemoteReporter;
-import io.jaegertracing.internal.samplers.ConstSampler;
 import io.jaegertracing.internal.samplers.HttpSamplingManager;
-import io.jaegertracing.internal.samplers.ProbabilisticSampler;
-import io.jaegertracing.internal.samplers.RateLimitingSampler;
-import io.jaegertracing.internal.samplers.RemoteControlledSampler;
-import io.jaegertracing.internal.senders.HttpSender;
-import io.jaegertracing.internal.senders.UdpSender;
+import io.jaegertracing.reporter.CompositeReporter;
+import io.jaegertracing.reporter.LoggingReporter;
+import io.jaegertracing.reporter.RemoteReporter;
+import io.jaegertracing.sampler.ConstSampler;
+import io.jaegertracing.sampler.ProbabilisticSampler;
+import io.jaegertracing.sampler.RateLimitingSampler;
+import io.jaegertracing.sampler.RemoteControlledSampler;
+import io.jaegertracing.sender.HttpSender;
+import io.jaegertracing.sender.UdpSender;
 import io.jaegertracing.spi.Codec;
 import io.jaegertracing.spi.Reporter;
 import io.jaegertracing.spi.Sampler;

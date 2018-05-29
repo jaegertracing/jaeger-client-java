@@ -16,7 +16,7 @@ package io.jaegertracing.crossdock.api;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.jaegertracing.internal.samplers.RemoteControlledSampler;
+import io.jaegertracing.sampler.RemoteControlledSampler;
 import java.util.Map;
 import lombok.Getter;
 import lombok.ToString;

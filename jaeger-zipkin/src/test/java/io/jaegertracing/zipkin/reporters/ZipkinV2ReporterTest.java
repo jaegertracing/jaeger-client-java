@@ -19,7 +19,7 @@ import static org.junit.Assert.assertEquals;
 import io.jaegertracing.JaegerTracer;
 import io.jaegertracing.internal.Span;
 import io.jaegertracing.internal.metrics.InMemoryMetricsFactory;
-import io.jaegertracing.internal.samplers.ConstSampler;
+import io.jaegertracing.sampler.ConstSampler;
 import io.jaegertracing.spi.Reporter;
 import java.util.List;
 import java.util.concurrent.TimeUnit;

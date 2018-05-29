@@ -14,8 +14,8 @@
 
 package io.jaegertracing.spi;
 
-import io.jaegertracing.internal.Span;
 import io.jaegertracing.internal.exceptions.SenderException;
+import io.opentracing.Span;
 
 public interface Sender {
   int append(Span span) throws SenderException;

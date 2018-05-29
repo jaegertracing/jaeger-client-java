@@ -14,6 +14,7 @@
 
 package io.jaegertracing;
 
+import io.jaegertracing.codec.TextMapCodec;
 import io.jaegertracing.internal.JaegerBaseTracer;
 import io.jaegertracing.internal.PropagationRegistry;
 import io.jaegertracing.internal.Span;
@@ -21,11 +22,10 @@ import io.jaegertracing.internal.SpanContext;
 import io.jaegertracing.internal.baggage.DefaultBaggageRestrictionManager;
 import io.jaegertracing.internal.metrics.Metrics;
 import io.jaegertracing.internal.metrics.NoopMetricsFactory;
-import io.jaegertracing.internal.propagation.TextMapCodec;
-import io.jaegertracing.internal.reporters.RemoteReporter;
-import io.jaegertracing.internal.samplers.RemoteControlledSampler;
 import io.jaegertracing.internal.utils.Clock;
 import io.jaegertracing.internal.utils.SystemClock;
+import io.jaegertracing.reporter.RemoteReporter;
+import io.jaegertracing.sampler.RemoteControlledSampler;
 import io.jaegertracing.spi.BaggageRestrictionManager;
 import io.jaegertracing.spi.Extractor;
 import io.jaegertracing.spi.Injector;
