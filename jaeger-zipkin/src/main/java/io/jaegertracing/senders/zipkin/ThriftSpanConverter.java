@@ -20,11 +20,11 @@ import com.twitter.zipkin.thriftjava.AnnotationType;
 import com.twitter.zipkin.thriftjava.BinaryAnnotation;
 import com.twitter.zipkin.thriftjava.Endpoint;
 import com.twitter.zipkin.thriftjava.zipkincoreConstants;
-import io.jaegertracing.Constants;
-import io.jaegertracing.LogData;
-import io.jaegertracing.Span;
-import io.jaegertracing.SpanContext;
-import io.jaegertracing.Tracer;
+import io.jaegertracing.JaegerTracer;
+import io.jaegertracing.internal.Constants;
+import io.jaegertracing.internal.LogData;
+import io.jaegertracing.internal.Span;
+import io.jaegertracing.internal.SpanContext;
 import io.jaegertracing.zipkin.ConverterUtil;
 import io.opentracing.tag.Tags;
 import java.nio.charset.Charset;
@@ -38,7 +38,7 @@ public class ThriftSpanConverter {
   private static final Gson gson = new Gson();
 
   public static com.twitter.zipkin.thriftjava.Span convertSpan(Span span) {
-    Tracer tracer = span.getTracer();
+    JaegerTracer tracer = span.getTracer();
     Endpoint host = new Endpoint(tracer.getIpv4(), (short) 0, tracer.getServiceName());
 
     SpanContext context = span.context();

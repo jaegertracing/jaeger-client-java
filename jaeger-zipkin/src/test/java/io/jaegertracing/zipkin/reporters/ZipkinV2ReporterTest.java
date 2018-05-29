@@ -16,11 +16,11 @@ package io.jaegertracing.zipkin.reporters;
 
 import static org.junit.Assert.assertEquals;
 
-import io.jaegertracing.Span;
-import io.jaegertracing.Tracer;
-import io.jaegertracing.metrics.InMemoryMetricsFactory;
-import io.jaegertracing.reporters.Reporter;
-import io.jaegertracing.samplers.ConstSampler;
+import io.jaegertracing.JaegerTracer;
+import io.jaegertracing.internal.Span;
+import io.jaegertracing.internal.metrics.InMemoryMetricsFactory;
+import io.jaegertracing.sampler.ConstSampler;
+import io.jaegertracing.spi.Reporter;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.junit.Before;
@@ -38,7 +38,7 @@ public class ZipkinV2ReporterTest {
   Sender sender;
   zipkin2.reporter.AsyncReporter zipkinReporter;
   Reporter reporter;
-  Tracer tracer;
+  JaegerTracer tracer;
 
   @Before
   public void setup() throws Exception {
@@ -53,7 +53,7 @@ public class ZipkinV2ReporterTest {
 
     reporter = new ZipkinV2Reporter(zipkinReporter);
 
-    tracer = new Tracer.Builder("test-sender")
+    tracer = new JaegerTracer.Builder("test-sender")
             .withReporter(reporter)
             .withSampler(new ConstSampler(true))
             .withMetricsFactory(new InMemoryMetricsFactory())

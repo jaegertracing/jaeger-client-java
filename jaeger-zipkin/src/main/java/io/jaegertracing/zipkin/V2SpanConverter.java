@@ -15,11 +15,11 @@
 package io.jaegertracing.zipkin;
 
 import com.google.gson.Gson;
-import io.jaegertracing.Constants;
-import io.jaegertracing.LogData;
-import io.jaegertracing.Span;
-import io.jaegertracing.SpanContext;
-import io.jaegertracing.Tracer;
+import io.jaegertracing.internal.Constants;
+import io.jaegertracing.internal.JaegerBaseTracer;
+import io.jaegertracing.internal.LogData;
+import io.jaegertracing.internal.Span;
+import io.jaegertracing.internal.SpanContext;
 import io.opentracing.tag.Tags;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -37,7 +37,7 @@ public class V2SpanConverter {
   private static final Gson gson = new Gson();
 
   public static zipkin2.Span convertSpan(Span span) {
-    Tracer tracer = span.getTracer();
+    JaegerBaseTracer tracer = span.getTracer();
     zipkin2.Endpoint host = zipkin2.Endpoint.newBuilder()
         .ip(convertIp(tracer.getIpv4()))
         .serviceName(tracer.getServiceName())

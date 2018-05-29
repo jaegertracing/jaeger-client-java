@@ -25,12 +25,13 @@ import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import com.twitter.zipkin.thriftjava.Annotation;
 import com.twitter.zipkin.thriftjava.BinaryAnnotation;
 import com.twitter.zipkin.thriftjava.zipkincoreConstants;
-import io.jaegertracing.Span;
-import io.jaegertracing.SpanContext;
-import io.jaegertracing.Tracer;
-import io.jaegertracing.reporters.InMemoryReporter;
-import io.jaegertracing.samplers.ConstSampler;
+import io.jaegertracing.JaegerTracer;
+import io.jaegertracing.internal.Span;
+import io.jaegertracing.internal.SpanContext;
+import io.jaegertracing.reporter.InMemoryReporter;
+import io.jaegertracing.sampler.ConstSampler;
 import io.jaegertracing.zipkin.ConverterUtil;
+import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
 import io.opentracing.propagation.TextMapExtractAdapter;
@@ -48,11 +49,11 @@ import org.junit.runner.RunWith;
 
 @RunWith(DataProviderRunner.class)
 public class ThriftSpanConverterTest {
-  Tracer tracer;
+  JaegerTracer tracer;
 
   @Before
   public void setUp() {
-    tracer = new Tracer.Builder("test-service-name")
+    tracer = new JaegerTracer.Builder("test-service-name")
             .withReporter(new InMemoryReporter())
             .withSampler(new ConstSampler(true))
             .withZipkinSharedRpcSpan()
@@ -73,7 +74,7 @@ public class ThriftSpanConverterTest {
 
   @DataProvider
   public static Object[][] dataProviderTracerTags() {
-    Tracer tracer = new Tracer.Builder("x")
+    JaegerTracer tracer = new JaegerTracer.Builder("x")
         .withReporter(null)
         .withSampler(null)
         .build();
@@ -116,7 +117,7 @@ public class ThriftSpanConverterTest {
   @UseDataProvider("dataProviderTracerTags")
   public void testTracerTags(SpanType spanType, Map<String, String> expectedTags) throws Exception {
     InMemoryReporter spanReporter = new InMemoryReporter();
-    Tracer tracer = new Tracer.Builder("x")
+    JaegerTracer tracer = new JaegerTracer.Builder("x")
         .withReporter(spanReporter)
         .withSampler(new ConstSampler(true))
         .withZipkinSharedRpcSpan()
@@ -166,7 +167,7 @@ public class ThriftSpanConverterTest {
 
   @Test
   public void testSpanKindServerCreatesAnnotations() {
-    Span span = (io.jaegertracing.Span) tracer.buildSpan("operation-name").start();
+    Span span = (Span) tracer.buildSpan("operation-name").start();
     Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_SERVER);
 
     com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan(span);
@@ -188,7 +189,7 @@ public class ThriftSpanConverterTest {
 
   @Test
   public void testSpanKindClientCreatesAnnotations() {
-    Span span = (io.jaegertracing.Span) tracer.buildSpan("operation-name").start();
+    Span span = (Span) tracer.buildSpan("operation-name").start();
     Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
 
     com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan(span);
@@ -213,7 +214,7 @@ public class ThriftSpanConverterTest {
   @Test
   public void testExpectedLocalComponentNameUsed() {
     String expectedComponentName = "local-name";
-    Span span = (io.jaegertracing.Span) tracer.buildSpan("operation-name").start();
+    Span span = (Span) tracer.buildSpan("operation-name").start();
     Tags.COMPONENT.set(span, expectedComponentName);
 
     com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan(span);
@@ -281,7 +282,7 @@ public class ThriftSpanConverterTest {
 
   @Test
   public void testSpanLogsCreateAnnotations() {
-    Span span = (io.jaegertracing.Span) tracer.buildSpan("span-with-logs").start();
+    Span span = (Span) tracer.buildSpan("span-with-logs").start();
 
     span.log("event");
 

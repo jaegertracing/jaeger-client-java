@@ -15,12 +15,12 @@
 package io.jaegertracing.crossdock.resources.behavior.http;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.jaegertracing.Span;
 import io.jaegertracing.crossdock.Constants;
 import io.jaegertracing.crossdock.api.JoinTraceRequest;
 import io.jaegertracing.crossdock.api.StartTraceRequest;
 import io.jaegertracing.crossdock.api.TraceResponse;
 import io.jaegertracing.crossdock.resources.behavior.TraceBehavior;
+import io.jaegertracing.internal.Span;
 import io.opentracing.Tracer;
 import io.opentracing.tag.Tags;
 import javax.ws.rs.Consumes;

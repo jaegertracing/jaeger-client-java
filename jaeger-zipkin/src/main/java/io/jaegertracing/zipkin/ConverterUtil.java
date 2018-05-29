@@ -14,7 +14,7 @@
 
 package io.jaegertracing.zipkin;
 
-import io.jaegertracing.Span;
+import io.jaegertracing.internal.Span;
 import io.opentracing.tag.Tags;
 
 /**

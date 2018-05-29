@@ -1,6 +1,8 @@
 description = 'Integration library for Zipkin'
 
 dependencies {
+    compile group: 'io.opentracing', name: 'opentracing-api', version: opentracingVersion
+
     compile group: 'io.zipkin.reporter', name: 'zipkin-reporter', version: '1.1.2'
     compile group: 'io.zipkin.reporter', name: 'zipkin-sender-urlconnection', version: '1.1.2'
 

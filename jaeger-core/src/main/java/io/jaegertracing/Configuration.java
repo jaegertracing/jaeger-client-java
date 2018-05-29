@@ -14,28 +14,28 @@
 
 package io.jaegertracing;
 
-import io.jaegertracing.metrics.Metrics;
-import io.jaegertracing.metrics.MetricsFactory;
-import io.jaegertracing.metrics.NoopMetricsFactory;
-import io.jaegertracing.propagation.B3TextMapCodec;
-import io.jaegertracing.propagation.Codec;
-import io.jaegertracing.propagation.CompositeCodec;
-import io.jaegertracing.propagation.TextMapCodec;
-import io.jaegertracing.reporters.CompositeReporter;
-import io.jaegertracing.reporters.LoggingReporter;
-import io.jaegertracing.reporters.RemoteReporter;
-import io.jaegertracing.reporters.Reporter;
-import io.jaegertracing.samplers.ConstSampler;
-import io.jaegertracing.samplers.HttpSamplingManager;
-import io.jaegertracing.samplers.ProbabilisticSampler;
-import io.jaegertracing.samplers.RateLimitingSampler;
-import io.jaegertracing.samplers.RemoteControlledSampler;
-import io.jaegertracing.samplers.Sampler;
-import io.jaegertracing.senders.HttpSender;
-import io.jaegertracing.senders.Sender;
-import io.jaegertracing.senders.UdpSender;
+import io.jaegertracing.codec.B3TextMapCodec;
+import io.jaegertracing.codec.CompositeCodec;
+import io.jaegertracing.codec.TextMapCodec;
+import io.jaegertracing.internal.metrics.NoopMetricsFactory;
+import io.jaegertracing.internal.samplers.HttpSamplingManager;
+import io.jaegertracing.reporter.CompositeReporter;
+import io.jaegertracing.reporter.LoggingReporter;
+import io.jaegertracing.reporter.RemoteReporter;
+import io.jaegertracing.sampler.ConstSampler;
+import io.jaegertracing.sampler.ProbabilisticSampler;
+import io.jaegertracing.sampler.RateLimitingSampler;
+import io.jaegertracing.sampler.RemoteControlledSampler;
+import io.jaegertracing.sender.HttpSender;
+import io.jaegertracing.sender.UdpSender;
+import io.jaegertracing.spi.Codec;
+import io.jaegertracing.spi.Reporter;
+import io.jaegertracing.spi.Sampler;
+import io.jaegertracing.spi.Sender;
+import io.jaegertracing.spi.metrics.MetricsFactory;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
+import java.io.IOException;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Arrays;
@@ -48,7 +48,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * This class is designed to provide {@link Tracer} or {@link Tracer.Builder} when Jaeger client
+ * This class is designed to provide {@link JaegerTracer} or {@link JaegerTracer.Builder} when Jaeger client
  * configuration is provided in environmental or property variables. It also simplifies creation
  * of the client from configuration files.
  */
@@ -162,12 +162,12 @@ public class Configuration {
   private Map<String, String> tracerTags;
 
   /**
-   * lazy singleton Tracer initialized in getTracer() method.
+   * lazy singleton JaegerTracer initialized in getTracer() method.
    */
-  private Tracer tracer;
+  private JaegerTracer tracer;
 
   public Configuration(String serviceName) {
-    this.serviceName = Tracer.Builder.checkValidServiceName(serviceName);
+    this.serviceName = JaegerTracer.Builder.checkValidServiceName(serviceName);
   }
 
   /**
@@ -181,7 +181,7 @@ public class Configuration {
         .withCodec(CodecConfiguration.fromEnv());
   }
 
-  public Tracer.Builder getTracerBuilder() {
+  public JaegerTracer.Builder getTracerBuilder() {
     if (reporterConfig == null) {
       reporterConfig = new ReporterConfiguration();
     }
@@ -194,16 +194,17 @@ public class Configuration {
     if (metricsFactory == null) {
       metricsFactory = new NoopMetricsFactory();
     }
-    Metrics metrics = new Metrics(metricsFactory);
-    Reporter reporter = reporterConfig.getReporter(metrics);
-    Sampler sampler = samplerConfig.createSampler(serviceName, metrics);
-    Tracer.Builder builder = new Tracer.Builder(serviceName)
+
+    Reporter reporter = reporterConfig.getReporter(metricsFactory);
+    Sampler sampler = samplerConfig.createSampler(serviceName, metricsFactory);
+    JaegerTracer.Builder jaegerTracerBuilder = new JaegerTracer.Builder(serviceName)
         .withSampler(sampler)
         .withReporter(reporter)
-        .withMetrics(metrics)
+        .withMetricsFactory(metricsFactory)
         .withTags(tracerTags);
-    codecConfig.apply(builder);
-    return builder;
+
+    codecConfig.apply(jaegerTracerBuilder);
+    return jaegerTracerBuilder;
   }
 
   public synchronized io.opentracing.Tracer getTracer() {
@@ -219,12 +220,16 @@ public class Configuration {
 
   public synchronized void closeTracer() {
     if (tracer != null) {
-      tracer.close();
+      try {
+        tracer.close();
+      } catch (IOException e) {
+        log.error("Error closing the tracer", e);
+      }
     }
   }
 
   /**
-   * @param metricsFactory the MetricsFactory to use on the Tracer to be built
+   * @param metricsFactory the MetricsFactory to use on the JaegerBaseTracer to be built
    */
   public Configuration withMetricsFactory(MetricsFactory metricsFactory) {
     this.metricsFactory = metricsFactory;
@@ -232,7 +237,7 @@ public class Configuration {
   }
 
   public Configuration withServiceName(String serviceName) {
-    this.serviceName = Tracer.Builder.checkValidServiceName(serviceName);
+    this.serviceName = JaegerTracer.Builder.checkValidServiceName(serviceName);
     return this;
   }
 
@@ -313,8 +318,7 @@ public class Configuration {
           .withManagerHostPort(getProperty(JAEGER_SAMPLER_MANAGER_HOST_PORT));
     }
 
-    // for tests
-    Sampler createSampler(String serviceName, Metrics metrics) {
+    public Sampler createSampler(String serviceName, MetricsFactory metricsFactory) {
       String samplerType = stringOrDefault(this.getType(), RemoteControlledSampler.TYPE);
       Number samplerParam = numberOrDefault(this.getParam(), ProbabilisticSampler.DEFAULT_SAMPLING_PROBABILITY);
       String hostPort = stringOrDefault(this.getManagerHostPort(), HttpSamplingManager.DEFAULT_HOST_PORT);
@@ -335,7 +339,7 @@ public class Configuration {
         return new RemoteControlledSampler.Builder(serviceName)
             .withSamplingManager(new HttpSamplingManager(hostPort))
             .withInitialSampler(new ProbabilisticSampler(samplerParam.doubleValue()))
-            .withMetrics(metrics)
+            .withMetricsFactory(metricsFactory)
             .build();
       }
 
@@ -430,20 +434,20 @@ public class Configuration {
       codecList.add(codec);
     }
 
-    public void apply(Tracer.Builder builder) {
+    public void apply(JaegerTracer.Builder jaegerTracerBuilder) {
       // Replace existing TEXT_MAP and HTTP_HEADERS codec with one that represents the
       // configured propagation formats
-      registerCodec(builder, Format.Builtin.HTTP_HEADERS);
-      registerCodec(builder, Format.Builtin.TEXT_MAP);
+      registerCodec(jaegerTracerBuilder, Format.Builtin.HTTP_HEADERS);
+      registerCodec(jaegerTracerBuilder, Format.Builtin.TEXT_MAP);
     }
 
-    protected void registerCodec(Tracer.Builder builder, Format<TextMap> format) {
+    protected void registerCodec(JaegerTracer.Builder jaegerTracerBuilder, Format<TextMap> format) {
       if (codecs.containsKey(format)) {
         List<Codec<TextMap>> codecsForFormat = codecs.get(format);
         Codec<TextMap> codec = codecsForFormat.size() == 1
             ? codecsForFormat.get(0) : new CompositeCodec<TextMap>(codecsForFormat);
-        builder.registerInjector(format, codec);
-        builder.registerExtractor(format, codec);
+        jaegerTracerBuilder.registerInjector(format, codec);
+        jaegerTracerBuilder.registerExtractor(format, codec);
       }
     }
   }
@@ -485,9 +489,9 @@ public class Configuration {
       return this;
     }
 
-    private Reporter getReporter(Metrics metrics) {
+    private Reporter getReporter(MetricsFactory metricsFactory) {
       Reporter reporter = new RemoteReporter.Builder()
-          .withMetrics(metrics)
+          .withMetricsFactory(metricsFactory)
           .withSender(senderConfiguration.getSender())
           .withFlushInterval(numberOrDefault(this.flushIntervalMs, RemoteReporter.DEFAULT_FLUSH_INTERVAL_MS).intValue())
           .withMaxQueueSize(numberOrDefault(this.maxQueueSize, RemoteReporter.DEFAULT_MAX_QUEUE_SIZE).intValue())
