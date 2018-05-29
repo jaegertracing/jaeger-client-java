@@ -21,6 +21,7 @@ import io.jaegertracing.internal.metrics.Metrics;
 import io.jaegertracing.sender.UdpSender;
 import io.jaegertracing.spi.Reporter;
 import io.jaegertracing.spi.Sender;
+import io.jaegertracing.spi.metrics.MetricsFactory;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -48,9 +49,9 @@ public class RemoteReporter implements Reporter {
   private final Metrics metrics;
 
   private RemoteReporter(Sender sender, int flushInterval, int maxQueueSize, int closeEnqueueTimeout,
-      Metrics metrics) {
+      MetricsFactory metricsFactory) {
     this.sender = sender;
-    this.metrics = metrics;
+    this.metrics = Metrics.getOrCreateMetrics(metricsFactory);
     this.closeEnqueueTimeout = closeEnqueueTimeout;
     commandQueue = new ArrayBlockingQueue<Command>(maxQueueSize);
 
@@ -189,7 +190,7 @@ public class RemoteReporter implements Reporter {
     private int flushInterval = DEFAULT_FLUSH_INTERVAL_MS;
     private int maxQueueSize = DEFAULT_MAX_QUEUE_SIZE;
     private int closeEnqueTimeout = DEFAULT_CLOSE_ENQUEUE_TIMEOUT_MILLIS;
-    private Metrics metrics;
+    private MetricsFactory metricsFactory;
 
     public Builder withFlushInterval(int flushInterval) {
       this.flushInterval = flushInterval;
@@ -201,8 +202,8 @@ public class RemoteReporter implements Reporter {
       return this;
     }
 
-    public Builder withMetrics(Metrics metrics) {
-      this.metrics = metrics;
+    public Builder withMetricsFactory(MetricsFactory metricsFactory) {
+      this.metricsFactory = metricsFactory;
       return this;
     }
 
@@ -220,10 +221,10 @@ public class RemoteReporter implements Reporter {
       if (sender == null) {
         sender = new UdpSender();
       }
-      if (metrics == null) {
-        metrics = new Metrics(new InMemoryMetricsFactory());
+      if (metricsFactory == null) {
+        metricsFactory = new InMemoryMetricsFactory();
       }
-      return new RemoteReporter(sender, flushInterval, maxQueueSize, closeEnqueTimeout, metrics);
+      return new RemoteReporter(sender, flushInterval, maxQueueSize, closeEnqueTimeout, metricsFactory);
     }
   }
 }

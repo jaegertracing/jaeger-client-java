@@ -25,7 +25,6 @@ import io.jaegertracing.JaegerTracer;
 import io.jaegertracing.internal.baggage.DefaultBaggageRestrictionManager;
 import io.jaegertracing.internal.baggage.Restriction;
 import io.jaegertracing.internal.metrics.InMemoryMetricsFactory;
-import io.jaegertracing.internal.metrics.Metrics;
 import io.jaegertracing.internal.utils.Clock;
 import io.jaegertracing.reporter.InMemoryReporter;
 import io.jaegertracing.sampler.ConstSampler;
@@ -52,18 +51,16 @@ public class SpanTest {
   private Tracer tracer;
   private Span span;
   private InMemoryMetricsFactory metricsFactory;
-  private Metrics metrics;
 
   @Before
   public void setUp() {
     metricsFactory = new InMemoryMetricsFactory();
     reporter = new InMemoryReporter();
     clock = mock(Clock.class);
-    metrics = new Metrics(metricsFactory);
     tracer = new JaegerTracer.Builder("SamplerTest")
             .withReporter(reporter)
             .withSampler(new ConstSampler(true))
-            .withMetrics(metrics)
+            .withMetricsFactory(metricsFactory)
             .withClock(clock)
             .withBaggageRestrictionManager(new DefaultBaggageRestrictionManager())
             .withExpandExceptionLogs()

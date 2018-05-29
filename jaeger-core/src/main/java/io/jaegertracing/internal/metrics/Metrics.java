@@ -26,9 +26,18 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 public class Metrics {
+  private static final Map<MetricsFactory, Metrics> factories = new HashMap<MetricsFactory, Metrics>();
 
-  public Metrics(MetricsFactory factory) {
+  private Metrics(MetricsFactory factory) {
     createMetrics(factory);
+  }
+
+  public static Metrics getOrCreateMetrics(MetricsFactory factory) {
+    if (!factories.containsKey(factory)) {
+      factories.put(factory, new Metrics(factory));
+    }
+
+    return factories.get(factory);
   }
 
   private void createMetrics(MetricsFactory factory) {

@@ -28,6 +28,7 @@ import io.jaegertracing.spi.Extractor;
 import io.jaegertracing.spi.Injector;
 import io.jaegertracing.spi.Reporter;
 import io.jaegertracing.spi.Sampler;
+import io.jaegertracing.spi.metrics.MetricsFactory;
 import io.opentracing.References;
 import io.opentracing.Scope;
 import io.opentracing.ScopeManager;
@@ -71,7 +72,7 @@ public class JaegerBaseTracer implements JaegerTracer, Closeable {
       Sampler sampler,
       PropagationRegistry registry,
       Clock clock,
-      Metrics metrics,
+      MetricsFactory metricsFactory,
       Map<String, Object> tags,
       boolean zipkinSharedRpcSpan,
       ScopeManager scopeManager,
@@ -82,7 +83,7 @@ public class JaegerBaseTracer implements JaegerTracer, Closeable {
     this.sampler = sampler;
     this.registry = registry;
     this.clock = clock;
-    this.metrics = metrics;
+    this.metrics = Metrics.getOrCreateMetrics(metricsFactory);
     this.zipkinSharedRpcSpan = zipkinSharedRpcSpan;
     this.scopeManager = scopeManager;
     this.baggageSetter = new BaggageSetter(baggageRestrictionManager, metrics);

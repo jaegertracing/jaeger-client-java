@@ -40,7 +40,6 @@ public class BaggageSetterTest {
   private Tracer tracer;
   private Span span;
   private InMemoryMetricsFactory metricsFactory;
-  private Metrics metrics;
   private BaggageRestrictionManager mgr;
   private BaggageSetter setter;
 
@@ -51,14 +50,15 @@ public class BaggageSetterTest {
   public void setUp() throws Exception {
     metricsFactory = new InMemoryMetricsFactory();
     reporter = new InMemoryReporter();
-    metrics = new Metrics(metricsFactory);
     mgr = mock(DefaultBaggageRestrictionManager.class);
-    setter = new BaggageSetter(mgr, metrics);
     tracer = new JaegerTracer.Builder(SERVICE)
             .withReporter(reporter)
             .withSampler(new ConstSampler(true))
-            .withMetrics(metrics)
+            .withMetricsFactory(metricsFactory)
             .build();
+
+    setter = new BaggageSetter(mgr, Metrics.getOrCreateMetrics(metricsFactory));
+
     span = (Span) tracer.buildSpan("some-operation").start();
   }
 
@@ -108,7 +108,7 @@ public class BaggageSetterTest {
     tracer = new JaegerTracer.Builder(SERVICE)
             .withReporter(reporter)
             .withSampler(new ConstSampler(false))
-            .withMetrics(metrics)
+            .withMetricsFactory(metricsFactory)
             .build();
     span = (Span) tracer.buildSpan("some-operation").start();
 

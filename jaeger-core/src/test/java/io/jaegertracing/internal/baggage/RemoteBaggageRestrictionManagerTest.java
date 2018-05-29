@@ -49,7 +49,7 @@ public class RemoteBaggageRestrictionManagerTest {
   @Before
   public void setUp() throws Exception {
     metricsFactory = new InMemoryMetricsFactory();
-    metrics = new Metrics(metricsFactory);
+    metrics = Metrics.getOrCreateMetrics(metricsFactory);
     undertest = new RemoteBaggageRestrictionManager.Builder(SERVICE_NAME)
         .withProxy(baggageRestrictionProxy)
         .withMetrics(metrics)

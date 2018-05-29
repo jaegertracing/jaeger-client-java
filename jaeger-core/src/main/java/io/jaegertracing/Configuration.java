@@ -17,7 +17,6 @@ package io.jaegertracing;
 import io.jaegertracing.codec.B3TextMapCodec;
 import io.jaegertracing.codec.CompositeCodec;
 import io.jaegertracing.codec.TextMapCodec;
-import io.jaegertracing.internal.metrics.Metrics;
 import io.jaegertracing.internal.metrics.NoopMetricsFactory;
 import io.jaegertracing.internal.samplers.HttpSamplingManager;
 import io.jaegertracing.reporter.CompositeReporter;
@@ -195,14 +194,15 @@ public class Configuration {
     if (metricsFactory == null) {
       metricsFactory = new NoopMetricsFactory();
     }
-    Metrics metrics = new Metrics(metricsFactory);
-    Reporter reporter = reporterConfig.getReporter(metrics);
-    Sampler sampler = samplerConfig.createSampler(serviceName, metrics);
+
+    Reporter reporter = reporterConfig.getReporter(metricsFactory);
+    Sampler sampler = samplerConfig.createSampler(serviceName, metricsFactory);
     JaegerTracer.Builder jaegerTracerBuilder = new JaegerTracer.Builder(serviceName)
         .withSampler(sampler)
         .withReporter(reporter)
-        .withMetrics(metrics)
+        .withMetricsFactory(metricsFactory)
         .withTags(tracerTags);
+
     codecConfig.apply(jaegerTracerBuilder);
     return jaegerTracerBuilder;
   }
@@ -318,7 +318,7 @@ public class Configuration {
           .withManagerHostPort(getProperty(JAEGER_SAMPLER_MANAGER_HOST_PORT));
     }
 
-    public Sampler createSampler(String serviceName, Metrics metrics) {
+    public Sampler createSampler(String serviceName, MetricsFactory metricsFactory) {
       String samplerType = stringOrDefault(this.getType(), RemoteControlledSampler.TYPE);
       Number samplerParam = numberOrDefault(this.getParam(), ProbabilisticSampler.DEFAULT_SAMPLING_PROBABILITY);
       String hostPort = stringOrDefault(this.getManagerHostPort(), HttpSamplingManager.DEFAULT_HOST_PORT);
@@ -339,7 +339,7 @@ public class Configuration {
         return new RemoteControlledSampler.Builder(serviceName)
             .withSamplingManager(new HttpSamplingManager(hostPort))
             .withInitialSampler(new ProbabilisticSampler(samplerParam.doubleValue()))
-            .withMetrics(metrics)
+            .withMetricsFactory(metricsFactory)
             .build();
       }
 
@@ -489,9 +489,9 @@ public class Configuration {
       return this;
     }
 
-    private Reporter getReporter(Metrics metrics) {
+    private Reporter getReporter(MetricsFactory metricsFactory) {
       Reporter reporter = new RemoteReporter.Builder()
-          .withMetrics(metrics)
+          .withMetricsFactory(metricsFactory)
           .withSender(senderConfiguration.getSender())
           .withFlushInterval(numberOrDefault(this.flushIntervalMs, RemoteReporter.DEFAULT_FLUSH_INTERVAL_MS).intValue())
           .withMaxQueueSize(numberOrDefault(this.maxQueueSize, RemoteReporter.DEFAULT_MAX_QUEUE_SIZE).intValue())

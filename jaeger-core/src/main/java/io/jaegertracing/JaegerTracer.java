@@ -60,7 +60,7 @@ public interface JaegerTracer extends Tracer, Closeable {
     private Sampler sampler;
     private Reporter reporter;
     private final PropagationRegistry registry = new PropagationRegistry();
-    private Metrics metrics = new Metrics(new NoopMetricsFactory());
+    private MetricsFactory metricsFactory = new NoopMetricsFactory();
     private final String serviceName;
     private Clock clock = new SystemClock();
     private Map<String, Object> tags = new HashMap<String, Object>();
@@ -113,7 +113,7 @@ public interface JaegerTracer extends Tracer, Closeable {
      * @return this instance of the builder
      */
     public Builder withMetricsFactory(MetricsFactory metricsFactory) {
-      this.metrics = new Metrics(metricsFactory);
+      this.metricsFactory = metricsFactory;
       return this;
     }
 
@@ -134,11 +134,6 @@ public interface JaegerTracer extends Tracer, Closeable {
 
     public Builder withExpandExceptionLogs() {
       this.expandExceptionLogs = true;
-      return this;
-    }
-
-    public Builder withMetrics(Metrics metrics) {
-      this.metrics = metrics;
       return this;
     }
 
@@ -172,15 +167,15 @@ public interface JaegerTracer extends Tracer, Closeable {
     public JaegerTracer build() {
       if (reporter == null) {
         reporter = new RemoteReporter.Builder()
-            .withMetrics(metrics)
+            .withMetricsFactory(metricsFactory)
             .build();
       }
       if (sampler == null) {
         sampler = new RemoteControlledSampler.Builder(serviceName)
-            .withMetrics(metrics)
+            .withMetricsFactory(metricsFactory)
             .build();
       }
-      return new JaegerBaseTracer(serviceName, reporter, sampler, registry, clock, metrics, tags,
+      return new JaegerBaseTracer(serviceName, reporter, sampler, registry, clock, metricsFactory, tags,
           zipkinSharedRpcSpan, scopeManager, baggageRestrictionManager, expandExceptionLogs);
     }
 

@@ -48,25 +48,23 @@ public class RemoteReporterTest {
   private InMemorySender sender;
   private final int flushInterval = 1000; // in milliseconds
   private final int maxQueueSize = 500;
-  private Metrics metrics;
   private InMemoryMetricsFactory metricsFactory;
 
   @Before
   public void setUp() throws Exception {
     metricsFactory = new InMemoryMetricsFactory();
-    metrics = new Metrics(metricsFactory);
 
     sender = new InMemorySender();
     reporter = new RemoteReporter.Builder()
         .withSender(sender)
         .withFlushInterval(flushInterval)
         .withMaxQueueSize(maxQueueSize)
-        .withMetrics(metrics)
+        .withMetricsFactory(metricsFactory)
         .build();
     tracer = new JaegerTracer.Builder("test-remote-reporter")
             .withReporter(reporter)
             .withSampler(new ConstSampler(true))
-            .withMetrics(metrics)
+            .withMetricsFactory(metricsFactory)
             .build();
   }
 
@@ -184,12 +182,12 @@ public class RemoteReporterTest {
         .withFlushInterval(Integer.MAX_VALUE)
         .withMaxQueueSize(maxQueueSize)
         .withCloseEnqueueTimeout(closeTimeoutMillis)
-        .withMetrics(metrics)
+        .withMetricsFactory(metricsFactory)
         .build();
     tracer = new JaegerTracer.Builder("test-remote-reporter")
         .withReporter(reporter)
         .withSampler(new ConstSampler(true))
-        .withMetrics(metrics)
+        .withMetricsFactory(metricsFactory)
         .build();
     // change sender to blocking mode
     sender.permitAppend(0);
@@ -226,12 +224,12 @@ public class RemoteReporterTest {
         .withSender(sender)
         .withFlushInterval(neverFlushInterval)
         .withMaxQueueSize(maxQueueSize)
-        .withMetrics(metrics)
+        .withMetricsFactory(metricsFactory)
         .build();
     tracer = new JaegerTracer.Builder("test-remote-reporter")
         .withReporter(reporter)
         .withSampler(new ConstSampler(true))
-        .withMetrics(metrics)
+        .withMetricsFactory(metricsFactory)
         .build();
 
     // change sender to blocking mode
@@ -265,12 +263,12 @@ public class RemoteReporterTest {
         .withSender(sender)
         .withFlushInterval(flushInterval)
         .withMaxQueueSize(maxQueueSize)
-        .withMetrics(metrics)
+        .withMetricsFactory(metricsFactory)
         .build();
     tracer = new JaegerTracer.Builder("test-remote-reporter")
         .withReporter(remoteReporter)
         .withSampler(new ConstSampler(true))
-        .withMetrics(metrics)
+        .withMetricsFactory(metricsFactory)
         .build();
 
     tracer.buildSpan("mySpan").start().finish();

@@ -31,6 +31,7 @@ import io.jaegertracing.internal.samplers.http.ProbabilisticSamplingStrategy;
 import io.jaegertracing.internal.samplers.http.RateLimitingSamplingStrategy;
 import io.jaegertracing.internal.samplers.http.SamplingStrategyResponse;
 import io.jaegertracing.spi.Sampler;
+import io.jaegertracing.spi.metrics.MetricsFactory;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.After;
@@ -44,18 +45,19 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class RemoteControlledSamplerTest {
   @Mock private SamplingManager samplingManager;
   @Mock private Sampler initialSampler;
-  private Metrics metrics;
+
+  private MetricsFactory metricsFactory;
   private static final String SERVICE_NAME = "thachi mamu";
 
   private RemoteControlledSampler undertest;
 
   @Before
   public void setUp() throws Exception {
-    metrics = new Metrics(new InMemoryMetricsFactory());
+    metricsFactory = new InMemoryMetricsFactory();
     undertest = new RemoteControlledSampler.Builder(SERVICE_NAME)
         .withSamplingManager(samplingManager)
         .withInitialSampler(initialSampler)
-        .withMetrics(metrics)
+        .withMetricsFactory(metricsFactory)
         .build();
   }
 
@@ -114,7 +116,7 @@ public class RemoteControlledSamplerTest {
     undertest = new RemoteControlledSampler.Builder(SERVICE_NAME)
         .withSamplingManager(samplingManager)
         .withInitialSampler(perOperationSampler)
-        .withMetrics(metrics)
+        .withMetricsFactory(metricsFactory)
         .build();
 
 
@@ -149,7 +151,7 @@ public class RemoteControlledSamplerTest {
     RemoteControlledSampler i2 = new RemoteControlledSampler.Builder(SERVICE_NAME)
         .withSamplingManager(samplingManager)
         .withInitialSampler(mock(Sampler.class))
-        .withMetrics(metrics)
+        .withMetricsFactory(metricsFactory)
         .build();
 
     assertEquals(undertest, undertest);
@@ -163,7 +165,7 @@ public class RemoteControlledSamplerTest {
     undertest = new RemoteControlledSampler.Builder(SERVICE_NAME)
         .withSamplingManager(samplingManager)
         .withInitialSampler(null)
-        .withMetrics(metrics)
+        .withMetricsFactory(metricsFactory)
         .build();
 
 

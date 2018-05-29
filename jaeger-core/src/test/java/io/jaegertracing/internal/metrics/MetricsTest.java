@@ -28,7 +28,7 @@ public class MetricsTest {
   @Before
   public void setUp() {
     metricsFactory = new InMemoryMetricsFactory();
-    metrics = new Metrics(metricsFactory);
+    metrics = Metrics.getOrCreateMetrics(metricsFactory);
   }
 
   @Test

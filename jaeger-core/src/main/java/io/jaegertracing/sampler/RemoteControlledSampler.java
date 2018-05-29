@@ -25,6 +25,7 @@ import io.jaegertracing.internal.samplers.http.ProbabilisticSamplingStrategy;
 import io.jaegertracing.internal.samplers.http.RateLimitingSamplingStrategy;
 import io.jaegertracing.internal.samplers.http.SamplingStrategyResponse;
 import io.jaegertracing.spi.Sampler;
+import io.jaegertracing.spi.metrics.MetricsFactory;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -52,7 +53,7 @@ public class RemoteControlledSampler implements Sampler {
   private RemoteControlledSampler(Builder builder) {
     this.serviceName = builder.serviceName;
     this.manager = builder.samplingManager;
-    this.metrics = builder.metrics;
+    this.metrics = Metrics.getOrCreateMetrics(builder.metricsFactory);
 
     if (builder.initialSampler != null) {
       this.sampler = builder.initialSampler;
@@ -171,7 +172,7 @@ public class RemoteControlledSampler implements Sampler {
     private final String serviceName;
     private SamplingManager samplingManager;
     private Sampler initialSampler;
-    private Metrics metrics;
+    private MetricsFactory metricsFactory;
     private int poolingIntervalMs = DEFAULT_POLLING_INTERVAL_MS;
 
     public Builder(String serviceName) {
@@ -188,8 +189,8 @@ public class RemoteControlledSampler implements Sampler {
       return this;
     }
 
-    public Builder withMetrics(Metrics metrics) {
-      this.metrics = metrics;
+    public Builder withMetricsFactory(MetricsFactory metricsFactory) {
+      this.metricsFactory = metricsFactory;
       return this;
     }
 
@@ -205,8 +206,8 @@ public class RemoteControlledSampler implements Sampler {
       if (initialSampler == null) {
         initialSampler = new ProbabilisticSampler(0.001);
       }
-      if (metrics == null) {
-        metrics = new Metrics(new InMemoryMetricsFactory());
+      if (metricsFactory == null) {
+        metricsFactory = new InMemoryMetricsFactory();
       }
       return new RemoteControlledSampler(this);
     }

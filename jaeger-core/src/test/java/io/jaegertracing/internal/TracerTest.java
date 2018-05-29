@@ -23,7 +23,6 @@ import static org.mockito.Mockito.verify;
 
 import io.jaegertracing.JaegerTracer;
 import io.jaegertracing.internal.metrics.InMemoryMetricsFactory;
-import io.jaegertracing.internal.metrics.Metrics;
 import io.jaegertracing.reporter.InMemoryReporter;
 import io.jaegertracing.reporter.RemoteReporter;
 import io.jaegertracing.sampler.ConstSampler;
@@ -51,7 +50,7 @@ public class TracerTest {
     tracer = new JaegerTracer.Builder("TracerTestService")
             .withReporter(new InMemoryReporter())
             .withSampler(new ConstSampler(true))
-            .withMetrics(new Metrics(metricsFactory))
+            .withMetricsFactory(metricsFactory)
             .build();
   }
 
@@ -89,7 +88,7 @@ public class TracerTest {
     Tracer tracer = new JaegerTracer.Builder("TracerTestService")
             .withReporter(new InMemoryReporter())
             .withSampler(new ConstSampler(true))
-            .withMetrics(new Metrics(new InMemoryMetricsFactory()))
+            .withMetricsFactory(new InMemoryMetricsFactory())
             .registerInjector(Format.Builtin.TEXT_MAP, injector)
             .build();
     Span span = (Span) tracer.buildSpan("leela").start();
@@ -131,7 +130,7 @@ public class TracerTest {
     tracer = new JaegerTracer.Builder("TracerTestService")
             .withReporter(new InMemoryReporter())
             .withSampler(new ConstSampler(true))
-            .withMetrics(new Metrics(metricsFactory))
+            .withMetricsFactory(metricsFactory)
             .build();
     Span span = (Span) tracer.buildSpan("some-operation").start();
     final String key = "key";

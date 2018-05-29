@@ -25,6 +25,7 @@ import io.jaegertracing.JaegerTracer;
 import io.jaegertracing.internal.metrics.Metrics;
 import io.jaegertracing.sampler.ConstSampler;
 import io.jaegertracing.spi.Sampler;
+import io.jaegertracing.spi.metrics.MetricsFactory;
 import io.jaegertracing.spi.metrics.Timer;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -49,7 +50,7 @@ import org.junit.runners.MethodSorters;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)  //We need testExposedMetrics to run before testTimer
 public class MicrometerTest {
   PrometheusMeterRegistry prometheusRegistry;
-  Metrics metrics;
+  MetricsFactory metricsFactory;
   MeterRegistry registry;
   private static Map<String, Long> expectedMetricCounts = new HashMap<>();
   private final double assertDelta = 0.00001;
@@ -75,7 +76,8 @@ public class MicrometerTest {
     registry = io.micrometer.core.instrument.Metrics.globalRegistry;
     prometheusRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
     io.micrometer.core.instrument.Metrics.addRegistry(prometheusRegistry);
-    metrics = new Metrics(new MicrometerMetricsFactory());
+    metricsFactory = new MicrometerMetricsFactory();
+
   }
 
   @After
@@ -85,14 +87,14 @@ public class MicrometerTest {
 
   @Test
   public void testCounterWithoutExplicitTags() {
-    metrics.decodingErrors.inc(1);
+    Metrics.getOrCreateMetrics(metricsFactory).decodingErrors.inc(1);
     assertThat(registry.get("jaeger:span_context_decoding_errors").counter().count(), IsEqual.equalTo(1d));
     assertTrue(prometheusRegistry.scrape().contains("jaeger:span_context_decoding_errors"));
   }
 
   @Test
   public void testCounterWithExplicitTags() {
-    metrics.tracesJoinedSampled.inc(1);
+    Metrics.getOrCreateMetrics(metricsFactory).tracesJoinedSampled.inc(1);
     assertThat(registry.get("jaeger:traces").tags("sampled", "y", "state", "joined").counter().count(),
           IsEqual.equalTo(1d)
     );
@@ -104,7 +106,7 @@ public class MicrometerTest {
 
   @Test
   public void testGaugeWithoutExplicitTags() {
-    metrics.reporterQueueLength.update(1);
+    Metrics.getOrCreateMetrics(metricsFactory).reporterQueueLength.update(1);
     assertThat(registry.get("jaeger:reporter_queue_length").gauge().value(), IsEqual.equalTo(1d));
     assertTrue(prometheusRegistry.scrape().contains("jaeger:reporter_queue_length"));
   }
@@ -127,11 +129,11 @@ public class MicrometerTest {
     Configuration configuration = new Configuration("exposedmetrics");
     final JaegerTracer tracer = configuration
             .getTracerBuilder()
-            .withMetrics(metrics)
+            .withMetricsFactory(metricsFactory)
             .build();
 
     // This is a gauge, so it needs to be non-zero to come back from prometheus
-    metrics.reporterQueueLength.update(1);
+    Metrics.getOrCreateMetrics(metricsFactory).reporterQueueLength.update(1);
 
     List<Meter> meters = new ArrayList<>(prometheusRegistry.getMeters());
     Map<String, Long> metricCounts = meters
@@ -160,7 +162,7 @@ public class MicrometerTest {
     JaegerTracer tracer = configuration
             .getTracerBuilder()
             .withSampler(constantSampler)
-            .withMetrics(metrics)
+            .withMetricsFactory(metricsFactory)
             .build();
 
     createSomeSpans(tracer);

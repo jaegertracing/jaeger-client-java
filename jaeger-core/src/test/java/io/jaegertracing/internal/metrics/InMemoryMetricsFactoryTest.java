@@ -107,7 +107,7 @@ public class InMemoryMetricsFactoryTest {
     Tracer tracer =  new JaegerTracer.Builder("metricsFactoryTest")
             .withReporter(new InMemoryReporter())
             .withSampler(new ConstSampler(true))
-            .withMetrics(new Metrics(metricsFactory))
+            .withMetricsFactory(metricsFactory)
             .build();
 
     tracer.buildSpan("theoperation").start();
@@ -121,7 +121,7 @@ public class InMemoryMetricsFactoryTest {
     Tracer tracer = new JaegerTracer.Builder("metricsFactoryTest")
             .withReporter(new InMemoryReporter())
             .withSampler(new ConstSampler(true))
-            .withMetrics(new Metrics(metricsFactory))
+            .withMetricsFactory(metricsFactory)
             .build();
 
     tracer.buildSpan("theoperation").start();

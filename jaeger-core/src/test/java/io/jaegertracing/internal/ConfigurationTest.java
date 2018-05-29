@@ -339,28 +339,22 @@ public class ConfigurationTest {
 
   @Test
   public void testConstSampler() {
-    SamplerConfiguration samplerConfiguration = new SamplerConfiguration()
-        .withType(ConstSampler.TYPE);
-    Sampler sampler = samplerConfiguration.createSampler("name",
-        new Metrics(new InMemoryMetricsFactory()));
+    SamplerConfiguration samplerConfiguration = new SamplerConfiguration().withType(ConstSampler.TYPE);
+    Sampler sampler = samplerConfiguration.createSampler("name", new InMemoryMetricsFactory());
     assertTrue(sampler instanceof ConstSampler);
   }
 
   @Test
   public void testProbabilisticSampler() {
-    SamplerConfiguration samplerConfiguration = new SamplerConfiguration()
-        .withType(ProbabilisticSampler.TYPE);
-    Sampler sampler = samplerConfiguration.createSampler("name",
-        new Metrics(new InMemoryMetricsFactory()));
+    SamplerConfiguration samplerConfiguration = new SamplerConfiguration().withType(ProbabilisticSampler.TYPE);
+    Sampler sampler = samplerConfiguration.createSampler("name", new InMemoryMetricsFactory());
     assertTrue(sampler instanceof ProbabilisticSampler);
   }
 
   @Test
   public void testRateLimitingSampler() {
-    SamplerConfiguration samplerConfiguration = new SamplerConfiguration()
-        .withType(RateLimitingSampler.TYPE);
-    Sampler sampler = samplerConfiguration.createSampler("name",
-        new Metrics(new InMemoryMetricsFactory()));
+    SamplerConfiguration samplerConfiguration = new SamplerConfiguration().withType(RateLimitingSampler.TYPE);
+    Sampler sampler = samplerConfiguration.createSampler("name", new InMemoryMetricsFactory());
     assertTrue(sampler instanceof RateLimitingSampler);
   }
 
