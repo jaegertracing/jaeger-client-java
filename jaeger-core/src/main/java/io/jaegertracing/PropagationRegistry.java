@@ -52,7 +52,7 @@ class PropagationRegistry {
     private final Extractor<T> decorated;
 
     @Override
-    public SpanContext extract(T carrier) {
+    public JaegerSpanContext extract(T carrier) {
       try {
         return decorated.extract(carrier);
       } catch (RuntimeException ex) {
@@ -70,7 +70,7 @@ class PropagationRegistry {
     private final Injector<T> decorated;
 
     @Override
-    public void inject(SpanContext spanContext, T carrier) {
+    public void inject(JaegerSpanContext spanContext, T carrier) {
       try {
         decorated.inject(spanContext, carrier);
       } catch (RuntimeException ex) {

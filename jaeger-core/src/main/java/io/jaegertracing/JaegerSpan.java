@@ -14,6 +14,7 @@
 
 package io.jaegertracing;
 
+import io.opentracing.Span;
 import io.opentracing.log.Fields;
 import io.opentracing.tag.Tags;
 import java.io.PrintWriter;
@@ -23,12 +24,17 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
-public class Span implements io.opentracing.Span {
-  private static final Logger logger = LoggerFactory.getLogger(Span.class);
-  private final Tracer tracer;
+/**
+ * Represents a Span as seen from Jaeger's perspective. Builds on OpenTracing's {@link Span}, adding properties that
+ * are not part of the standard.
+ *
+ * Should be used wisely by instrumented applications: always prefer OpenTracing's approach when available.
+ */
+@Slf4j
+public class JaegerSpan implements Span {
+  private final JaegerTracer tracer;
   private final long startTimeMicroseconds;
   private final long startTimeNanoTicks;
   private final boolean computeDurationViaNanoTicks;
@@ -36,14 +42,14 @@ public class Span implements io.opentracing.Span {
   private long durationMicroseconds; // span durationMicroseconds
   private String operationName;
   private final List<Reference> references;
-  private SpanContext context;
+  private JaegerSpanContext context;
   private List<LogData> logs;
   private boolean finished = false; // to prevent the same span from getting reported multiple times
 
-  Span(
-      Tracer tracer,
+  JaegerSpan(
+      JaegerTracer tracer,
       String operationName,
-      SpanContext context,
+      JaegerSpanContext context,
       long startTimeMicroseconds,
       long startTimeNanoTicks,
       boolean computeDurationViaNanoTicks,
@@ -73,7 +79,7 @@ public class Span implements io.opentracing.Span {
     }
   }
 
-  public Tracer getTracer() {
+  public JaegerTracer getTracer() {
     return tracer;
   }
 
@@ -91,7 +97,7 @@ public class Span implements io.opentracing.Span {
   }
 
   @Override
-  public Span setOperationName(String operationName) {
+  public JaegerSpan setOperationName(String operationName) {
     synchronized (this) {
       this.operationName = operationName;
     }
@@ -120,7 +126,7 @@ public class Span implements io.opentracing.Span {
   }
 
   @Override
-  public Span setBaggageItem(String key, String value) {
+  public JaegerSpan setBaggageItem(String key, String value) {
     if (key == null || (value == null && context.getBaggageItem(key) == null)) {
       //Ignore attempts to add new baggage items with null values, they're not accessible anyway
       return this;
@@ -146,7 +152,7 @@ public class Span implements io.opentracing.Span {
   }
 
   @Override
-  public SpanContext context() {
+  public JaegerSpanContext context() {
     synchronized (this) {
       // doesn't need to be a copy since all fields are final
       return context;
@@ -171,7 +177,7 @@ public class Span implements io.opentracing.Span {
   private void finishWithDuration(long durationMicros) {
     synchronized (this) {
       if (finished) {
-        logger.warn("Span has already been finished; will not be reported again.");
+        log.warn("Span has already been finished; will not be reported again.");
         return;
       }
       finished = true;
@@ -185,28 +191,28 @@ public class Span implements io.opentracing.Span {
   }
 
   @Override
-  public synchronized Span setTag(String key, String value) {
+  public synchronized JaegerSpan setTag(String key, String value) {
     return setTagAsObject(key, value);
   }
 
   @Override
-  public synchronized Span setTag(String key, boolean value) {
+  public synchronized JaegerSpan setTag(String key, boolean value) {
     return setTagAsObject(key, value);
   }
 
   @Override
-  public synchronized Span setTag(String key, Number value) {
+  public synchronized JaegerSpan setTag(String key, Number value) {
     return setTagAsObject(key, value);
   }
 
-  private Span setTagAsObject(String key, Object value) {
+  private JaegerSpan setTagAsObject(String key, Object value) {
     if (key.equals(Tags.SAMPLING_PRIORITY.getKey()) && (value instanceof Number)) {
       int priority = ((Number) value).intValue();
       byte newFlags;
       if (priority > 0) {
-        newFlags = (byte) (context.getFlags() | SpanContext.flagSampled | SpanContext.flagDebug);
+        newFlags = (byte) (context.getFlags() | JaegerSpanContext.flagSampled | JaegerSpanContext.flagDebug);
       } else {
-        newFlags = (byte) (context.getFlags() & (~SpanContext.flagSampled));
+        newFlags = (byte) (context.getFlags() & (~JaegerSpanContext.flagSampled));
       }
 
       context = context.withFlags(newFlags);
@@ -220,12 +226,12 @@ public class Span implements io.opentracing.Span {
   }
 
   @Override
-  public Span log(Map<String, ?> fields) {
+  public JaegerSpan log(Map<String, ?> fields) {
     return log(tracer.clock().currentTimeMicros(), fields);
   }
 
   @Override
-  public Span log(long timestampMicroseconds, Map<String, ?> fields) {
+  public JaegerSpan log(long timestampMicroseconds, Map<String, ?> fields) {
     synchronized (this) {
       if (fields == null) {
         return this;
@@ -244,12 +250,12 @@ public class Span implements io.opentracing.Span {
   }
 
   @Override
-  public Span log(String event) {
+  public JaegerSpan log(String event) {
     return log(tracer.clock().currentTimeMicros(), event);
   }
 
   @Override
-  public Span log(long timestampMicroseconds, String event) {
+  public JaegerSpan log(long timestampMicroseconds, String event) {
     synchronized (this) {
       if (event == null) {
         return this;

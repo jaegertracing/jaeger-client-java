@@ -20,21 +20,21 @@ import io.jaegertracing.exceptions.EmptyTracerStateStringException;
 import io.jaegertracing.exceptions.MalformedTracerStateStringException;
 import org.junit.Test;
 
-public class SpanContextTest {
+public class JaegerSpanContextTest {
 
   @Test(expected = MalformedTracerStateStringException.class)
   public void testContextFromStringMalformedException() throws Exception {
-    SpanContext.contextFromString("ff:ff:ff");
+    JaegerSpanContext.contextFromString("ff:ff:ff");
   }
 
   @Test(expected = EmptyTracerStateStringException.class)
   public void testContextFromStringEmptyException() throws Exception {
-    SpanContext.contextFromString("");
+    JaegerSpanContext.contextFromString("");
   }
 
   @Test
   public void testContextFromString() throws Exception {
-    SpanContext context = SpanContext.contextFromString("ff:dd:cc:4");
+    JaegerSpanContext context = JaegerSpanContext.contextFromString("ff:dd:cc:4");
     assertEquals(context.getTraceId(), 255);
     assertEquals(context.getSpanId(), 221);
     assertEquals(context.getParentId(), 204);
@@ -50,13 +50,13 @@ public class SpanContextTest {
 
     // I use MIN_VALUE because the most significant bit, and thats when
     // we want to make sure the hex number is positive.
-    SpanContext context = new SpanContext(traceId, spanId, parentId, flags);
+    JaegerSpanContext context = new JaegerSpanContext(traceId, spanId, parentId, flags);
 
     context.contextAsString().split(":");
 
     assertEquals(
         "fffffffffffffff6:fffffffffffffff6:fffffffffffffff6:81", context.contextAsString());
-    SpanContext contextFromStr = SpanContext.contextFromString(context.contextAsString());
+    JaegerSpanContext contextFromStr = JaegerSpanContext.contextFromString(context.contextAsString());
     assertEquals(traceId, contextFromStr.getTraceId());
     assertEquals(spanId, contextFromStr.getSpanId());
     assertEquals(parentId, contextFromStr.getParentId());

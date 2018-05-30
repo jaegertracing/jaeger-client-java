@@ -19,7 +19,7 @@ sending data to a backend, like [`io.jaegertracing:jaeger-thrift`](../jaeger-thr
 
 ### Production
 
-Tracer can be created via `io.jaegertracing.Tracer.Builder` or `io.jaegertracing.Configuration`.
+Tracer can be created via `io.jaegertracing.JaegerTracer.Builder` or `io.jaegertracing.Configuration`.
 For production it is recommended to use both classes with default values.
 
 `Tracer.Builder` example:

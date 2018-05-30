@@ -20,9 +20,10 @@ import static org.junit.Assert.assertNotNull;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
+import io.jaegertracing.JaegerSpan;
+import io.jaegertracing.JaegerSpanContext;
 import io.jaegertracing.Reference;
-import io.jaegertracing.SpanContext;
-import io.jaegertracing.Tracer;
+import io.jaegertracing.JaegerTracer;
 import io.jaegertracing.reporters.InMemoryReporter;
 import io.jaegertracing.samplers.ConstSampler;
 import io.jaegertracing.thriftjava.Log;
@@ -42,11 +43,11 @@ import org.junit.runner.RunWith;
 
 @RunWith(DataProviderRunner.class)
 public class JaegerThriftSpanConverterTest {
-  Tracer tracer;
+  JaegerTracer tracer;
 
   @Before
   public void setUp() {
-    tracer = new Tracer.Builder("test-service-name")
+    tracer = new JaegerTracer.Builder("test-service-name")
             .withReporter(new InMemoryReporter())
             .withSampler(new ConstSampler(true))
             .build();
@@ -118,7 +119,7 @@ public class JaegerThriftSpanConverterTest {
     span = span.log(1, fields);
     span = span.setBaggageItem("foo", "bar");
 
-    io.jaegertracing.thriftjava.Span thriftSpan = JaegerThriftSpanConverter.convertSpan((io.jaegertracing.Span) span);
+    io.jaegertracing.thriftjava.Span thriftSpan = JaegerThriftSpanConverter.convertSpan((JaegerSpan) span);
 
     assertEquals("operation-name", thriftSpan.getOperationName());
     assertEquals(2, thriftSpan.getLogs().size());
@@ -150,9 +151,9 @@ public class JaegerThriftSpanConverterTest {
         .asChildOf(parent)
         .start();
 
-    io.jaegertracing.thriftjava.Span span = JaegerThriftSpanConverter.convertSpan((io.jaegertracing.Span) child);
+    io.jaegertracing.thriftjava.Span span = JaegerThriftSpanConverter.convertSpan((JaegerSpan) child);
 
-    assertEquals(((io.jaegertracing.SpanContext)child.context()).getParentId(), span.getParentSpanId());
+    assertEquals(((JaegerSpanContext)child.context()).getParentId(), span.getParentSpanId());
     assertEquals(0, span.getReferences().size());
   }
 
@@ -166,12 +167,16 @@ public class JaegerThriftSpanConverterTest {
         .asChildOf(parent2)
         .start();
 
-    io.jaegertracing.thriftjava.Span span = JaegerThriftSpanConverter.convertSpan((io.jaegertracing.Span) child);
+    io.jaegertracing.thriftjava.Span span = JaegerThriftSpanConverter.convertSpan((JaegerSpan) child);
 
     assertEquals(0, span.getParentSpanId());
     assertEquals(2, span.getReferences().size());
-    assertEquals(buildReference((SpanContext) parent.context(), References.CHILD_OF),span.getReferences().get(0));
-    assertEquals(buildReference((SpanContext) parent2.context(), References.CHILD_OF),span.getReferences().get(1));
+    assertEquals(
+        buildReference((JaegerSpanContext) parent.context(), References.CHILD_OF),span.getReferences().get(0)
+    );
+    assertEquals(
+        buildReference((JaegerSpanContext) parent2.context(), References.CHILD_OF),span.getReferences().get(1)
+    );
   }
 
   @Test
@@ -184,15 +189,19 @@ public class JaegerThriftSpanConverterTest {
         .asChildOf(parent2)
         .start();
 
-    io.jaegertracing.thriftjava.Span span = JaegerThriftSpanConverter.convertSpan((io.jaegertracing.Span) child);
+    io.jaegertracing.thriftjava.Span span = JaegerThriftSpanConverter.convertSpan((JaegerSpan) child);
 
     assertEquals(0, span.getParentSpanId());
     assertEquals(2, span.getReferences().size());
-    assertEquals(buildReference((SpanContext) parent.context(), References.FOLLOWS_FROM),span.getReferences().get(0));
-    assertEquals(buildReference((SpanContext) parent2.context(), References.CHILD_OF),span.getReferences().get(1));
+    assertEquals(
+        buildReference((JaegerSpanContext) parent.context(), References.FOLLOWS_FROM),span.getReferences().get(0)
+    );
+    assertEquals(
+        buildReference((JaegerSpanContext) parent2.context(), References.CHILD_OF),span.getReferences().get(1)
+    );
   }
 
-  private static SpanRef buildReference(SpanContext context, String referenceType) {
+  private static SpanRef buildReference(JaegerSpanContext context, String referenceType) {
     return JaegerThriftSpanConverter.buildReferences(
         Collections.singletonList(new Reference(context, referenceType)))
         .get(0);

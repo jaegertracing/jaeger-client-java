@@ -14,7 +14,7 @@
 
 package io.jaegertracing.reporters;
 
-import io.jaegertracing.Span;
+import io.jaegertracing.JaegerSpan;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.ToString;
@@ -31,7 +31,7 @@ public class CompositeReporter implements Reporter {
   }
 
   @Override
-  public void report(Span span) {
+  public void report(JaegerSpan span) {
     for (Reporter reporter : this.reporters) {
       reporter.report(span);
     }

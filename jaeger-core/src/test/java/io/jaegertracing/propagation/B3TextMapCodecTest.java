@@ -15,11 +15,10 @@
 package io.jaegertracing.propagation;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import io.jaegertracing.SpanContext;
+import io.jaegertracing.JaegerSpanContext;
 import io.opentracing.propagation.TextMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -53,7 +52,7 @@ public class B3TextMapCodecTest {
     textMap.put(B3TextMapCodec.BAGGAGE_PREFIX + "foo", "bar");
     textMap.put("random-foo", "bar");
 
-    SpanContext context = b3Codec.extract(textMap);
+    JaegerSpanContext context = (JaegerSpanContext) b3Codec.extract(textMap);
 
     assertNotNull(HexCodec.lowerHexToUnsignedLong(lower64Bits));
     assertEquals(HexCodec.lowerHexToUnsignedLong(lower64Bits).longValue(), context.getTraceId());
@@ -70,7 +69,7 @@ public class B3TextMapCodecTest {
         .build();
 
     DelegatingTextMap entries = new DelegatingTextMap();
-    SpanContext spanContext = new SpanContext(1, 2, 3, (byte)0)
+    JaegerSpanContext spanContext = new JaegerSpanContext(1, 2, 3, (byte)0)
         .withBaggageItem("foo", "bar");
 
     b3Codec.inject(spanContext, entries);
@@ -89,7 +88,7 @@ public class B3TextMapCodecTest {
         .build();
 
     DelegatingTextMap entries = new DelegatingTextMap();
-    SpanContext spanContext = new SpanContext(1, 2, 3, (byte)0)
+    JaegerSpanContext spanContext = new JaegerSpanContext(1, 2, 3, (byte)0)
         .withBaggageItem("foo", "bar");
 
     b3Codec.inject(spanContext, entries);
@@ -100,7 +99,7 @@ public class B3TextMapCodecTest {
   @Test
   public void testInject() throws Exception {
     DelegatingTextMap textMap = new DelegatingTextMap();
-    b3Codec.inject(new SpanContext(1, 1, 1, SAMPLED), textMap);
+    b3Codec.inject(new JaegerSpanContext(1, 1, 1, SAMPLED), textMap);
 
     assertTrue(textMap.containsKey(B3TextMapCodec.TRACE_ID_NAME));
     assertTrue(textMap.containsKey(B3TextMapCodec.SPAN_ID_NAME));

@@ -19,7 +19,7 @@ import static org.junit.Assert.assertNull;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
-import io.jaegertracing.SpanContext;
+import io.opentracing.SpanContext;
 import io.opentracing.propagation.TextMap;
 import org.junit.Test;
 import org.junit.runner.RunWith;

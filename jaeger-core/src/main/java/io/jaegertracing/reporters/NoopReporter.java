@@ -14,13 +14,13 @@
 
 package io.jaegertracing.reporters;
 
-import io.jaegertracing.Span;
+import io.jaegertracing.JaegerSpan;
 import lombok.ToString;
 
 @ToString
 public class NoopReporter implements Reporter {
   @Override
-  public void report(Span span) {}
+  public void report(JaegerSpan span) {}
 
   @Override
   public void close() {}

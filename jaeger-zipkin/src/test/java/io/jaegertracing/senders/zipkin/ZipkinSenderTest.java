@@ -18,9 +18,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
-import io.jaegertracing.Span;
-import io.jaegertracing.SpanContext;
-import io.jaegertracing.Tracer;
+import io.jaegertracing.JaegerSpan;
+import io.jaegertracing.JaegerSpanContext;
+import io.jaegertracing.JaegerTracer;
 import io.jaegertracing.exceptions.SenderException;
 import io.jaegertracing.metrics.InMemoryMetricsFactory;
 import io.jaegertracing.reporters.InMemoryReporter;
@@ -50,12 +50,12 @@ public class ZipkinSenderTest {
   ZipkinSender sender;
   Reporter reporter;
   ThriftSpanConverter converter;
-  Tracer tracer;
+  JaegerTracer tracer;
 
   @Before
   public void setUp() {
     reporter = new InMemoryReporter();
-    tracer = new Tracer.Builder("test-sender")
+    tracer = new JaegerTracer.Builder("test-sender")
             .withReporter(reporter)
             .withSampler(new ConstSampler(true))
             .withMetricsFactory(new InMemoryMetricsFactory())
@@ -78,7 +78,7 @@ public class ZipkinSenderTest {
 
   @Test
   public void testAppendSpanTooLarge() {
-    Span jaegerSpan = (Span) tracer.buildSpan("raza").start();
+    JaegerSpan jaegerSpan = (JaegerSpan) tracer.buildSpan("raza").start();
     String msg = "";
     for (int i = 0; i < 1001; i++) {
       msg += ".";
@@ -95,13 +95,13 @@ public class ZipkinSenderTest {
 
   @Test
   public void testAppend() throws Exception {
-    Span jaegerSpan = (Span) tracer.buildSpan("raza").start();
+    JaegerSpan jaegerSpan = (JaegerSpan) tracer.buildSpan("raza").start();
     com.twitter.zipkin.thriftjava.Span span = ThriftSpanConverter.convertSpan(jaegerSpan);
 
     int expectedNumSpans = 11;
     List<byte[]> spansToSend = new ArrayList<>(expectedNumSpans);
     for (int i = 0; i < expectedNumSpans; i++) {
-      spansToSend.add(new ThriftSpanEncoder().encode(sender.backFillHostOnAnnotations(span)));
+      spansToSend.add(new ThriftSpanEncoder().encode(ZipkinSender.backFillHostOnAnnotations(span)));
     }
 
     // create a sender thats a multiple of the span size (accounting for span overhead)
@@ -122,7 +122,7 @@ public class ZipkinSenderTest {
 
   @Test
   public void testFlushSendsSpan() throws Exception {
-    Span expectedSpan = (Span) tracer.buildSpan("raza").start();
+    JaegerSpan expectedSpan = (JaegerSpan) tracer.buildSpan("raza").start();
 
     assertEquals(0, sender.append(expectedSpan));
     assertEquals(1, sender.flush());
@@ -132,7 +132,7 @@ public class ZipkinSenderTest {
     assertEquals(traces.get(0).size(), 1);
 
     zipkin2.Span actualSpan = traces.get(0).get(0);
-    SpanContext context = expectedSpan.context();
+    JaegerSpanContext context = (JaegerSpanContext) expectedSpan.context();
 
     assertEquals(context.getTraceId(), HexCodec.lowerHexToUnsignedLong(actualSpan.traceId()));
     assertEquals(context.getSpanId(), HexCodec.lowerHexToUnsignedLong(actualSpan.id()));
@@ -144,9 +144,9 @@ public class ZipkinSenderTest {
 
   @Test
   public void testAppendSpanWithLogs() throws Exception {
-    Span span = (Span) tracer.buildSpan("span-with-logs").start();
+    JaegerSpan jaegerSpan = (JaegerSpan) tracer.buildSpan("jaegerSpan-with-logs").start();
 
-    span.log("event");
+    jaegerSpan.log("event");
 
     // use sorted map for consistent ordering in test
     Map<String, Object> fields = new TreeMap<String, Object>();
@@ -154,9 +154,9 @@ public class ZipkinSenderTest {
     fields.put("string", "something");
     fields.put("number", 42);
     fields.put("boolean", true);
-    span.log(fields);
+    jaegerSpan.log(fields);
 
-    sender.append(span);
+    sender.append(jaegerSpan);
     sender.flush();
 
     List<List<zipkin2.Span>> traces = zipkinRule.getTraces();

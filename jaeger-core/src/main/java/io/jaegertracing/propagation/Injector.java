@@ -14,12 +14,12 @@
 
 package io.jaegertracing.propagation;
 
-import io.jaegertracing.SpanContext;
+import io.jaegertracing.JaegerSpanContext;
 import io.opentracing.propagation.Format;
 
 /**
  * <p>You should implement this class if you want to add possibility to inject information about
- * SpanContext that is passed between services in your custom propagation scheme. Otherwise you
+ * JaegerSpanContext that is passed between services in your custom propagation scheme. Otherwise you
  * should probably use built-in {@link TextMapCodec} or {@link B3TextMapCodec}</p>
  *
  * @see TextMapCodec
@@ -29,8 +29,8 @@ import io.opentracing.propagation.Format;
 public interface Injector<T> {
 
   /**
-   * <p>Called when {@link io.opentracing.Tracer#inject(io.opentracing.SpanContext, Format, Object)
-   * Tracer.inject(...)} is used. It should handle the logic behind injecting propagation scheme
+   * <p>Called when {@link io.opentracing.Tracer#inject(io.opentracing.SpanContext, Format, Object)}
+   * is used. It should handle the logic behind injecting propagation scheme
    * specific information into the carrier (e.g. http request headers, amqp message headers,
    * etc.).</p>
    *
@@ -43,5 +43,5 @@ public interface Injector<T> {
    * @see B3TextMapCodec
    * @see TextMapCodec
    */
-  void inject(SpanContext spanContext, T carrier);
+  void inject(JaegerSpanContext spanContext, T carrier);
 }

@@ -2,7 +2,6 @@ description = 'Integration library for Zipkin'
 
 dependencies {
     compile group: 'io.zipkin.reporter2', name: 'zipkin-sender-urlconnection', version: '2.7.6'
-
     compile group: 'org.apache.thrift', name: 'libthrift', version: apacheThriftVersion
 
     compile project(':jaeger-core')

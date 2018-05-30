@@ -14,7 +14,7 @@
 
 package io.jaegertracing.reporters;
 
-import io.jaegertracing.Span;
+import io.jaegertracing.JaegerSpan;
 import lombok.ToString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +38,7 @@ public class LoggingReporter implements Reporter {
   }
 
   @Override
-  public void report(Span span) {
+  public void report(JaegerSpan span) {
     logger.info("Span reported: {}", span);
   }
 

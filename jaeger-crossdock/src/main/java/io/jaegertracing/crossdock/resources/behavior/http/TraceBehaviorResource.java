@@ -15,12 +15,12 @@
 package io.jaegertracing.crossdock.resources.behavior.http;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.jaegertracing.Span;
 import io.jaegertracing.crossdock.Constants;
 import io.jaegertracing.crossdock.api.JoinTraceRequest;
 import io.jaegertracing.crossdock.api.StartTraceRequest;
 import io.jaegertracing.crossdock.api.TraceResponse;
 import io.jaegertracing.crossdock.resources.behavior.TraceBehavior;
+import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.tag.Tags;
 import javax.ws.rs.Consumes;
@@ -52,7 +52,7 @@ public class TraceBehaviorResource {
     log.info("http:start_trace request: {}", mapper.writeValueAsString(startRequest));
     // TODO should be starting new root span
     String baggage = startRequest.getBaggage();
-    Span span = (Span)tracer.activeSpan();
+    Span span = tracer.activeSpan();
     span.setBaggageItem(Constants.BAGGAGE_KEY, baggage);
     if (startRequest.isSampled()) {
       Tags.SAMPLING_PRIORITY.set(span, 1);

@@ -14,7 +14,7 @@
 
 package io.jaegertracing.metrics;
 
-import io.jaegertracing.Tracer;
+import io.jaegertracing.JaegerTracer;
 import io.jaegertracing.reporters.InMemoryReporter;
 import io.jaegertracing.samplers.ConstSampler;
 import java.util.HashMap;
@@ -88,7 +88,7 @@ public class NoopMetricsFactoryTest {
   @Test
   public void canBeUsedWithMetrics() {
     NoopMetricsFactory metricsFactory = new NoopMetricsFactory();
-    Tracer tracer = new Tracer.Builder("metricsFactoryTest")
+    JaegerTracer tracer = new JaegerTracer.Builder("metricsFactoryTest")
             .withReporter(new InMemoryReporter())
             .withSampler(new ConstSampler(true))
             .withMetrics(new Metrics(metricsFactory))

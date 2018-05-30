@@ -21,7 +21,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-import io.jaegertracing.Tracer.Builder;
+import io.jaegertracing.JaegerTracer.Builder;
 import io.jaegertracing.metrics.InMemoryMetricsFactory;
 import io.jaegertracing.metrics.Metrics;
 import io.jaegertracing.propagation.Injector;
@@ -30,6 +30,8 @@ import io.jaegertracing.reporters.RemoteReporter;
 import io.jaegertracing.reporters.Reporter;
 import io.jaegertracing.samplers.ConstSampler;
 import io.jaegertracing.samplers.Sampler;
+import io.opentracing.Span;
+import io.opentracing.SpanContext;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
 import io.opentracing.tag.Tags;
@@ -38,16 +40,16 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-public class TracerTest {
+public class JaegerTracerTest {
 
-  Tracer tracer;
+  JaegerTracer tracer;
   InMemoryMetricsFactory metricsFactory;
 
   @Before
   public void setUp() throws Exception {
     metricsFactory = new InMemoryMetricsFactory();
     tracer =
-        new Tracer.Builder("TracerTestService")
+        new JaegerTracer.Builder("TracerTestService")
             .withReporter(new InMemoryReporter())
             .withSampler(new ConstSampler(true))
             .withMetrics(new Metrics(metricsFactory))
@@ -56,7 +58,7 @@ public class TracerTest {
 
   @Test
   public void testDefaultConstructor() {
-    Tracer tracer = new Builder("name").build();
+    JaegerTracer tracer = new Builder("name").build();
     assertTrue(tracer.getReporter() instanceof RemoteReporter);
     // no exception
     tracer.buildSpan("foo").start().finish();
@@ -65,9 +67,9 @@ public class TracerTest {
   @Test
   public void testBuildSpan() {
     String expectedOperation = "fry";
-    Span span = (Span) tracer.buildSpan(expectedOperation).start();
+    JaegerSpan jaegerSpan = (JaegerSpan) tracer.buildSpan(expectedOperation).start();
 
-    assertEquals(expectedOperation, span.getOperationName());
+    assertEquals(expectedOperation, jaegerSpan.getOperationName());
   }
 
   @Test
@@ -85,33 +87,33 @@ public class TracerTest {
     @SuppressWarnings("unchecked")
     Injector<TextMap> injector = mock(Injector.class);
 
-    Tracer tracer = new Tracer.Builder("TracerTestService")
+    JaegerTracer tracer = new JaegerTracer.Builder("TracerTestService")
             .withReporter(new InMemoryReporter())
             .withSampler(new ConstSampler(true))
             .withMetrics(new Metrics(new InMemoryMetricsFactory()))
             .registerInjector(Format.Builtin.TEXT_MAP, injector)
             .build();
-    Span span = (Span) tracer.buildSpan("leela").start();
+    Span span = tracer.buildSpan("leela").start();
 
     TextMap carrier = mock(TextMap.class);
     tracer.inject(span.context(), Format.Builtin.TEXT_MAP, carrier);
 
-    verify(injector).inject(any(SpanContext.class), any(TextMap.class));
+    verify(injector).inject(any(JaegerSpanContext.class), any(TextMap.class));
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testServiceNameNotNull() {
-    new Tracer.Builder(null);
+    new JaegerTracer.Builder(null);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testServiceNameNotEmptyNull() {
-    new Tracer.Builder("  ");
+    new JaegerTracer.Builder("  ");
   }
 
   @Test
   public void testBuilderIsServerRpc() {
-    Tracer.SpanBuilder spanBuilder = (Tracer.SpanBuilder) tracer.buildSpan("ndnd");
+    JaegerTracer.SpanBuilder spanBuilder = (JaegerTracer.SpanBuilder) tracer.buildSpan("ndnd");
     spanBuilder.withTag(Tags.SPAN_KIND.getKey(), "server");
 
     assertTrue(spanBuilder.isRpcServer());
@@ -119,7 +121,7 @@ public class TracerTest {
 
   @Test
   public void testBuilderIsNotServerRpc() {
-    Tracer.SpanBuilder spanBuilder = (Tracer.SpanBuilder) tracer.buildSpan("Lrrr");
+    JaegerTracer.SpanBuilder spanBuilder = (JaegerTracer.SpanBuilder) tracer.buildSpan("Lrrr");
     spanBuilder.withTag(Tags.SPAN_KIND.getKey(), "peachy");
 
     assertFalse(spanBuilder.isRpcServer());
@@ -127,28 +129,28 @@ public class TracerTest {
 
   @Test
   public void testWithBaggageRestrictionManager() {
-    tracer = new Tracer.Builder("TracerTestService")
+    tracer = new JaegerTracer.Builder("TracerTestService")
             .withReporter(new InMemoryReporter())
             .withSampler(new ConstSampler(true))
             .withMetrics(new Metrics(metricsFactory))
             .build();
-    Span span = (Span) tracer.buildSpan("some-operation").start();
+    Span span = tracer.buildSpan("some-operation").start();
     final String key = "key";
-    tracer.setBaggage(span, key, "value");
+    tracer.setBaggage((JaegerSpan) span, key, "value");
 
     assertEquals(1, metricsFactory.getCounter("jaeger:baggage_updates", "result=ok"));
   }
 
   @Test
   public void testTracerImplementsCloseable() {
-    assertTrue(Closeable.class.isAssignableFrom(Tracer.class));
+    assertTrue(Closeable.class.isAssignableFrom(JaegerTracer.class));
   }
 
   @Test
   public void testClose() {
     Reporter reporter = mock(Reporter.class);
     Sampler sampler = mock(Sampler.class);
-    tracer = new Tracer.Builder("bonda")
+    tracer = new JaegerTracer.Builder("bonda")
         .withReporter(reporter)
         .withSampler(sampler)
         .build();
@@ -159,23 +161,23 @@ public class TracerTest {
 
   @Test
   public void testAsChildOfAcceptNull() {
-    tracer = new Tracer.Builder("foo")
+    tracer = new JaegerTracer.Builder("foo")
         .withReporter(new InMemoryReporter())
         .withSampler(new ConstSampler(true))
         .build();
 
-    Span span = (Span)tracer.buildSpan("foo").asChildOf((Span) null).start();
-    span.finish();
-    assertTrue(span.getReferences().isEmpty());
+    JaegerSpan jaegerSpan = (JaegerSpan)tracer.buildSpan("foo").asChildOf((JaegerSpan) null).start();
+    jaegerSpan.finish();
+    assertTrue(jaegerSpan.getReferences().isEmpty());
 
-    span = (Span)tracer.buildSpan("foo").asChildOf((io.opentracing.SpanContext) null).start();
-    span.finish();
-    assertTrue(span.getReferences().isEmpty());
+    jaegerSpan = (JaegerSpan)tracer.buildSpan("foo").asChildOf((SpanContext) null).start();
+    jaegerSpan.finish();
+    assertTrue(jaegerSpan.getReferences().isEmpty());
   }
 
   @Test
   public void testActiveSpan() {
-    io.opentracing.Span mockSpan = Mockito.mock(io.opentracing.Span.class);
+    Span mockSpan = Mockito.mock(Span.class);
     tracer.scopeManager().activate(mockSpan, true);
     assertEquals(mockSpan, tracer.activeSpan());
   }
@@ -183,8 +185,10 @@ public class TracerTest {
   @Test
   public void testSpanContextNotSampled() {
     String expectedOperation = "fry";
-    Span first = (Span) tracer.buildSpan(expectedOperation).start();
-    tracer.buildSpan(expectedOperation).asChildOf(first.context().withFlags((byte) 0)).start();
+    JaegerSpan first = (JaegerSpan) tracer.buildSpan(expectedOperation).start();
+    tracer.buildSpan(expectedOperation).asChildOf(
+        ((JaegerSpanContext) first.context()).withFlags((byte) 0)
+    ).start();
 
     assertEquals(1, metricsFactory.getCounter("jaeger:started_spans", "sampled=y"));
     assertEquals(1, metricsFactory.getCounter("jaeger:started_spans", "sampled=n"));

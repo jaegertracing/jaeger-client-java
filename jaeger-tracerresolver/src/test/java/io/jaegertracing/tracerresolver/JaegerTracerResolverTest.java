@@ -19,6 +19,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import io.jaegertracing.Configuration;
+import io.jaegertracing.JaegerTracer;
 import io.opentracing.Tracer;
 import io.opentracing.contrib.tracerresolver.TracerResolver;
 import org.junit.After;
@@ -44,7 +45,7 @@ public class JaegerTracerResolverTest {
     System.setProperty(Configuration.JAEGER_SERVICE_NAME, "MyService");
     Tracer tracer = TracerResolver.resolveTracer();
     assertNotNull(tracer);
-    assertTrue(tracer instanceof io.jaegertracing.Tracer);
+    assertTrue(tracer instanceof JaegerTracer);
   }
 
 }

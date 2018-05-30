@@ -14,21 +14,24 @@
 
 package io.jaegertracing.zipkin.reporters;
 
+import io.jaegertracing.JaegerSpan;
 import io.jaegertracing.reporters.Reporter;
 import io.jaegertracing.zipkin.V2SpanConverter;
+import zipkin2.Span;
+import zipkin2.reporter.AsyncReporter;
 
 /**
- * Wrapper around a zipkin v2 AsyncReporter that reports spans using the newer v2 Span class
+ * Wrapper around a zipkin v2 AsyncReporter that reports spans using the newer v2 JaegerSpan class
  */
 public class ZipkinV2Reporter implements Reporter {
-  public final zipkin2.reporter.AsyncReporter<zipkin2.Span> reporter;
+  public final AsyncReporter<zipkin2.Span> reporter;
 
-  public ZipkinV2Reporter(zipkin2.reporter.AsyncReporter<zipkin2.Span> reporter) {
+  public ZipkinV2Reporter(AsyncReporter<Span> reporter) {
     this.reporter = reporter;
   }
 
   @Override
-  public void report(io.jaegertracing.Span span) {
+  public void report(JaegerSpan span) {
     reporter.report(V2SpanConverter.convertSpan(span));
   }
 

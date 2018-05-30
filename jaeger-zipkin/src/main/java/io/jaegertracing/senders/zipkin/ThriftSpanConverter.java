@@ -21,10 +21,10 @@ import com.twitter.zipkin.thriftjava.BinaryAnnotation;
 import com.twitter.zipkin.thriftjava.Endpoint;
 import com.twitter.zipkin.thriftjava.zipkincoreConstants;
 import io.jaegertracing.Constants;
+import io.jaegertracing.JaegerSpan;
+import io.jaegertracing.JaegerSpanContext;
+import io.jaegertracing.JaegerTracer;
 import io.jaegertracing.LogData;
-import io.jaegertracing.Span;
-import io.jaegertracing.SpanContext;
-import io.jaegertracing.Tracer;
 import io.jaegertracing.zipkin.ConverterUtil;
 import io.opentracing.tag.Tags;
 import java.nio.charset.Charset;
@@ -37,39 +37,39 @@ public class ThriftSpanConverter {
   private static final Charset UTF_8 = Charset.forName("UTF-8");
   private static final Gson gson = new Gson();
 
-  public static com.twitter.zipkin.thriftjava.Span convertSpan(Span span) {
-    Tracer tracer = span.getTracer();
+  public static com.twitter.zipkin.thriftjava.Span convertSpan(JaegerSpan jaegerSpan) {
+    JaegerTracer tracer = jaegerSpan.getTracer();
     Endpoint host = new Endpoint(tracer.getIpv4(), (short) 0, tracer.getServiceName());
 
-    SpanContext context = span.context();
+    JaegerSpanContext context = (JaegerSpanContext) jaegerSpan.context();
     return new com.twitter.zipkin.thriftjava.Span(
             context.getTraceId(),
-            span.getOperationName(),
+            jaegerSpan.getOperationName(),
             context.getSpanId(),
-            buildAnnotations(span, host),
-            buildBinaryAnnotations(span, host))
+            buildAnnotations(jaegerSpan, host),
+            buildBinaryAnnotations(jaegerSpan, host))
         .setParent_id(context.getParentId())
         .setDebug(context.isDebug())
-        .setTimestamp(span.getStart())
-        .setDuration(span.getDuration());
+        .setTimestamp(jaegerSpan.getStart())
+        .setDuration(jaegerSpan.getDuration());
   }
 
-  private static List<Annotation> buildAnnotations(Span span, Endpoint host) {
+  private static List<Annotation> buildAnnotations(JaegerSpan jaegerSpan, Endpoint host) {
     List<Annotation> annotations = new ArrayList<Annotation>();
 
-    if (ConverterUtil.isRpc(span)) {
+    if (ConverterUtil.isRpc(jaegerSpan)) {
       String startLabel = zipkincoreConstants.SERVER_RECV;
       String endLabel = zipkincoreConstants.SERVER_SEND;
-      if (ConverterUtil.isRpcClient(span)) {
+      if (ConverterUtil.isRpcClient(jaegerSpan)) {
         startLabel = zipkincoreConstants.CLIENT_SEND;
         endLabel = zipkincoreConstants.CLIENT_RECV;
       }
 
-      annotations.add(new Annotation(span.getStart(), startLabel).setHost(host));
-      annotations.add(new Annotation(span.getStart() + span.getDuration(), endLabel).setHost(host));
+      annotations.add(new Annotation(jaegerSpan.getStart(), startLabel).setHost(host));
+      annotations.add(new Annotation(jaegerSpan.getStart() + jaegerSpan.getDuration(), endLabel).setHost(host));
     }
 
-    List<LogData> logs = span.getLogs();
+    List<LogData> logs = jaegerSpan.getLogs();
     if (logs != null) {
       for (LogData logData : logs) {
         String logMessage = logData.getMessage();
@@ -85,16 +85,16 @@ public class ThriftSpanConverter {
     return annotations;
   }
 
-  private static List<BinaryAnnotation> buildBinaryAnnotations(Span span, Endpoint host) {
+  private static List<BinaryAnnotation> buildBinaryAnnotations(JaegerSpan jaegerSpan, Endpoint host) {
     List<BinaryAnnotation> binaryAnnotations = new ArrayList<BinaryAnnotation>();
-    Map<String, Object> tags = span.getTags();
-    boolean isRpc = ConverterUtil.isRpc(span);
-    boolean isClient = ConverterUtil.isRpcClient(span);
-    boolean firstSpanInProcess = span.getReferences().isEmpty() || ConverterUtil.isRpcServer(span);
+    Map<String, Object> tags = jaegerSpan.getTags();
+    boolean isRpc = ConverterUtil.isRpc(jaegerSpan);
+    boolean isClient = ConverterUtil.isRpcClient(jaegerSpan);
+    boolean firstSpanInProcess = jaegerSpan.getReferences().isEmpty() || ConverterUtil.isRpcServer(jaegerSpan);
 
     if (firstSpanInProcess) {
-      Map<String, ?> processTags = span.getTracer().tags();
-      // add tracer tags to first zipkin span in a process but remove "ip" tag as it is
+      Map<String, ?> processTags = jaegerSpan.getTracer().tags();
+      // add tracer tags to first zipkin jaegerSpan in a process but remove "ip" tag as it is
       // taken care of separately.
       for (Map.Entry<String, ?> entry : processTags.entrySet()) {
         String tagKey = entry.getKey();
@@ -126,7 +126,7 @@ public class ThriftSpanConverter {
         componentName = componentTag.toString().getBytes(UTF_8);
       } else {
         // spans always have associated tracers, and service names
-        componentName = span.getTracer().getServiceName().getBytes(UTF_8);
+        componentName = jaegerSpan.getTracer().getServiceName().getBytes(UTF_8);
       }
 
       binaryAnnotations.add(

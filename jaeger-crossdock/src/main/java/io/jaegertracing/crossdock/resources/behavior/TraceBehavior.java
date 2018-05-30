@@ -15,8 +15,8 @@
 package io.jaegertracing.crossdock.resources.behavior;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.jaegertracing.Span;
-import io.jaegertracing.SpanContext;
+import io.jaegertracing.JaegerSpan;
+import io.jaegertracing.JaegerSpanContext;
 import io.jaegertracing.crossdock.Constants;
 import io.jaegertracing.crossdock.JerseyServer;
 import io.jaegertracing.crossdock.api.Downstream;
@@ -87,13 +87,13 @@ public class TraceBehavior {
   }
 
   private ObservedSpan observeSpan() {
-    Span span = (Span)tracer.activeSpan();
+    JaegerSpan span = (JaegerSpan) tracer.activeSpan();
     if (tracer.activeSpan() == null) {
       log.error("No span found");
       return new ObservedSpan("no span found", false, "no span found");
     }
 
-    SpanContext context = span.context();
+    JaegerSpanContext context = (JaegerSpanContext) span.context();
     String traceId = String.format("%x", context.getTraceId());
     boolean sampled = context.isSampled();
     String baggage = span.getBaggageItem(Constants.BAGGAGE_KEY);

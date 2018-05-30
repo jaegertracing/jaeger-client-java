@@ -14,7 +14,7 @@
 
 package io.jaegertracing.reporters;
 
-import io.jaegertracing.Span;
+import io.jaegertracing.JaegerSpan;
 import io.jaegertracing.exceptions.SenderException;
 import io.jaegertracing.metrics.InMemoryMetricsFactory;
 import io.jaegertracing.metrics.Metrics;
@@ -72,7 +72,7 @@ public class RemoteReporter implements Reporter {
   }
 
   @Override
-  public void report(Span span) {
+  public void report(JaegerSpan span) {
     // Its better to drop spans, than to block here
     boolean added = commandQueue.offer(new AppendCommand(span));
 
@@ -126,9 +126,9 @@ public class RemoteReporter implements Reporter {
   }
 
   class AppendCommand implements Command {
-    private final Span span;
+    private final JaegerSpan span;
 
-    public AppendCommand(Span span) {
+    public AppendCommand(JaegerSpan span) {
       this.span = span;
     }
 

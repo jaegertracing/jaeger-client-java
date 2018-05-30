@@ -22,6 +22,6 @@ import lombok.Value;
 @Value
 public class Reference {
 
-  private final SpanContext spanContext;
+  private final JaegerSpanContext spanContext;
   private final String type;
 }

@@ -16,10 +16,10 @@ package io.jaegertracing.zipkin;
 
 import com.google.gson.Gson;
 import io.jaegertracing.Constants;
+import io.jaegertracing.JaegerSpan;
+import io.jaegertracing.JaegerSpanContext;
+import io.jaegertracing.JaegerTracer;
 import io.jaegertracing.LogData;
-import io.jaegertracing.Span;
-import io.jaegertracing.SpanContext;
-import io.jaegertracing.Tracer;
 import io.opentracing.tag.Tags;
 import java.util.List;
 import java.util.Map;
@@ -31,8 +31,8 @@ public class V2SpanConverter {
 
   private static final Gson gson = new Gson();
 
-  public static zipkin2.Span convertSpan(Span span) {
-    Tracer tracer = span.getTracer();
+  public static zipkin2.Span convertSpan(JaegerSpan span) {
+    JaegerTracer tracer = span.getTracer();
 
     zipkin2.Endpoint.Builder host = zipkin2.Endpoint.newBuilder()
         .serviceName(tracer.getServiceName());
@@ -42,7 +42,7 @@ public class V2SpanConverter {
 
     zipkin2.Endpoint peerEndpoint = extractPeerEndpoint(span.getTags());
 
-    SpanContext context = span.context();
+    JaegerSpanContext context = (JaegerSpanContext) span.context();
     zipkin2.Span.Builder builder = zipkin2.Span.newBuilder()
             .id(Long.toHexString(context.getSpanId()))
             .traceId(Long.toHexString(context.getTraceId()))
@@ -75,8 +75,8 @@ public class V2SpanConverter {
     }
   }
 
-  private static void buildAnnotations(Span span, zipkin2.Span.Builder builder) {
-    List<LogData> logs = span.getLogs();
+  private static void buildAnnotations(JaegerSpan jaegerSpan, zipkin2.Span.Builder builder) {
+    List<LogData> logs = jaegerSpan.getLogs();
     if (logs != null) {
       for (LogData logData : logs) {
         String logMessage = logData.getMessage();
@@ -90,12 +90,12 @@ public class V2SpanConverter {
     }
   }
 
-  private static void buildTags(Span span, zipkin2.Span.Builder builder) {
-    Map<String, Object> tags = span.getTags();
-    boolean firstSpanInProcess = span.getReferences().isEmpty() || ConverterUtil.isRpcServer(span);
+  private static void buildTags(JaegerSpan jaegerSpan, zipkin2.Span.Builder builder) {
+    Map<String, Object> tags = jaegerSpan.getTags();
+    boolean firstSpanInProcess = jaegerSpan.getReferences().isEmpty() || ConverterUtil.isRpcServer(jaegerSpan);
 
     if (firstSpanInProcess) {
-      Map<String, ?> processTags = span.getTracer().tags();
+      Map<String, ?> processTags = jaegerSpan.getTracer().tags();
       // add tracer tags to first zipkin span in a process but remove "ip" tag as it is
       // taken care of separately.
       for (Map.Entry<String, ?> entry : processTags.entrySet()) {

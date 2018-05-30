@@ -22,6 +22,11 @@ public class SenderException extends Exception {
     this.droppedSpans = droppedSpans;
   }
 
+  public SenderException(String msg, int droppedSpans) {
+    super(msg);
+    this.droppedSpans = droppedSpans;
+  }
+
   public int getDroppedSpanCount() {
     return droppedSpans;
   }

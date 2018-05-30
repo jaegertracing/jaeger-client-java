@@ -37,6 +37,9 @@ import io.jaegertracing.utils.Utils;
 import io.opentracing.References;
 import io.opentracing.Scope;
 import io.opentracing.ScopeManager;
+import io.opentracing.Span;
+import io.opentracing.SpanContext;
+import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
 import io.opentracing.tag.Tags;
 import io.opentracing.util.ThreadLocalScopeManager;
@@ -56,7 +59,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @ToString(exclude = {"registry", "clock", "metrics", "scopeManager"})
 @Slf4j
-public class Tracer implements io.opentracing.Tracer, Closeable {
+public class JaegerTracer implements Tracer, Closeable {
 
   private final String version;
   private final String serviceName;
@@ -72,7 +75,7 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
   private final BaggageSetter baggageSetter;
   private final boolean expandExceptionLogs;
 
-  private Tracer(
+  private JaegerTracer(
       String serviceName,
       Reporter reporter,
       Sampler sampler,
@@ -154,7 +157,7 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
     return reporter;
   }
 
-  void reportSpan(Span span) {
+  void reportSpan(JaegerSpan span) {
     reporter.report(span);
     metrics.spansFinished.inc(1);
   }
@@ -165,27 +168,27 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
   }
 
   @Override
-  public io.opentracing.Span activeSpan() {
+  public Span activeSpan() {
     Scope scope = this.scopeManager.active();
     return scope == null ? null : scope.span();
   }
 
   @Override
-  public io.opentracing.Tracer.SpanBuilder buildSpan(String operationName) {
+  public Tracer.SpanBuilder buildSpan(String operationName) {
     return new SpanBuilder(operationName);
   }
 
   @Override
-  public <T> void inject(io.opentracing.SpanContext spanContext, Format<T> format, T carrier) {
+  public <T> void inject(SpanContext spanContext, Format<T> format, T carrier) {
     Injector<T> injector = registry.getInjector(format);
     if (injector == null) {
       throw new UnsupportedFormatException(format);
     }
-    injector.inject((SpanContext) spanContext, carrier);
+    injector.inject((JaegerSpanContext) spanContext, carrier);
   }
 
   @Override
-  public <T> io.opentracing.SpanContext extract(Format<T> format, T carrier) {
+  public <T> JaegerSpanContext extract(Format<T> format, T carrier) {
     Extractor<T> extractor = registry.getExtractor(format);
     if (extractor == null) {
       throw new UnsupportedFormatException(format);
@@ -203,7 +206,7 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
   }
 
   //Visible for testing
-  class SpanBuilder implements io.opentracing.Tracer.SpanBuilder {
+  class SpanBuilder implements Tracer.SpanBuilder {
 
     private String operationName = null;
     private long startTimeMicroseconds;
@@ -220,22 +223,23 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
     }
 
     @Override
-    public io.opentracing.Tracer.SpanBuilder asChildOf(io.opentracing.SpanContext parent) {
+    public Tracer.SpanBuilder asChildOf(SpanContext parent) {
       return addReference(References.CHILD_OF, parent);
     }
 
     @Override
-    public io.opentracing.Tracer.SpanBuilder asChildOf(io.opentracing.Span parent) {
+    public Tracer.SpanBuilder asChildOf(Span parent) {
       return addReference(References.CHILD_OF, parent != null ? parent.context() : null);
     }
 
     @Override
-    public io.opentracing.Tracer.SpanBuilder addReference(
-        String referenceType, io.opentracing.SpanContext referencedContext) {
+    public Tracer.SpanBuilder addReference(String referenceType, SpanContext reference) {
 
-      if (!(referencedContext instanceof SpanContext)) {
+      if (!(reference instanceof JaegerSpanContext)) {
         return this;
       }
+
+      JaegerSpanContext referencedContext = (JaegerSpanContext) reference;
 
       // Jaeger thrift currently does not support other reference types
       if (!References.CHILD_OF.equals(referenceType)
@@ -245,54 +249,54 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
 
       if (references.isEmpty()) {
         // Optimization for 99% situations, when there is only one parent
-        references = Collections.singletonList(new Reference((SpanContext) referencedContext, referenceType));
+        references = Collections.singletonList(new Reference(referencedContext, referenceType));
       } else {
         if (references.size() == 1) {
           references = new ArrayList<Reference>(references);
         }
-        references.add(new Reference((SpanContext) referencedContext, referenceType));
+        references.add(new Reference(referencedContext, referenceType));
       }
 
       return this;
     }
 
     @Override
-    public io.opentracing.Tracer.SpanBuilder withTag(String key, String value) {
+    public Tracer.SpanBuilder withTag(String key, String value) {
       tags.put(key, value);
       return this;
     }
 
     @Override
-    public io.opentracing.Tracer.SpanBuilder withTag(String key, boolean value) {
+    public Tracer.SpanBuilder withTag(String key, boolean value) {
       tags.put(key, value);
       return this;
     }
 
     @Override
-    public io.opentracing.Tracer.SpanBuilder withTag(String key, Number value) {
+    public Tracer.SpanBuilder withTag(String key, Number value) {
       tags.put(key, value);
       return this;
     }
 
     @Override
-    public io.opentracing.Tracer.SpanBuilder withStartTimestamp(long microseconds) {
+    public Tracer.SpanBuilder withStartTimestamp(long microseconds) {
       this.startTimeMicroseconds = microseconds;
       return this;
     }
 
-    private SpanContext createNewContext(String debugId) {
+    private JaegerSpanContext createNewContext(String debugId) {
       long id = Utils.uniqueId();
 
       byte flags = 0;
       if (debugId != null) {
-        flags = (byte) (flags | SpanContext.flagSampled | SpanContext.flagDebug);
+        flags = (byte) (flags | JaegerSpanContext.flagSampled | JaegerSpanContext.flagDebug);
         tags.put(Constants.DEBUG_ID_HEADER_KEY, debugId);
         metrics.traceStartedSampled.inc(1);
       } else {
         //TODO(prithvi): Don't assume operationName is set on creation
         SamplingStatus samplingStatus = sampler.sample(operationName, id);
         if (samplingStatus.isSampled()) {
-          flags |= SpanContext.flagSampled;
+          flags |= JaegerSpanContext.flagSampled;
           tags.putAll(samplingStatus.getTags());
           metrics.traceStartedSampled.inc(1);
         } else {
@@ -300,7 +304,7 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
         }
       }
 
-      return new SpanContext(id, id, 0, flags);
+      return new JaegerSpanContext(id, id, 0, flags);
     }
 
     private Map<String, String> createChildBaggage() {
@@ -323,8 +327,8 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
       return baggage;
     }
 
-    private SpanContext createChildContext() {
-      SpanContext preferredReference = preferredReference();
+    private JaegerSpanContext createChildContext() {
+      JaegerSpanContext preferredReference = preferredReference();
 
       if (isRpcServer()) {
         if (isSampled()) {
@@ -339,7 +343,7 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
         }
       }
 
-      return new SpanContext(
+      return new JaegerSpanContext(
           preferredReference.getTraceId(),
           Utils.uniqueId(),
           preferredReference.getSpanId(),
@@ -354,7 +358,7 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
       return Tags.SPAN_KIND_SERVER.equals(tags.get(Tags.SPAN_KIND.getKey()));
     }
 
-    private SpanContext preferredReference() {
+    private JaegerSpanContext preferredReference() {
       Reference preferredReference = references.get(0);
       for (Reference reference: references) {
         // childOf takes precedence as a preferred parent
@@ -386,8 +390,8 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
     }
 
     @Override
-    public io.opentracing.Span start() {
-      SpanContext context;
+    public JaegerSpan start() {
+      JaegerSpanContext context;
 
       // Check if active span should be established as CHILD_OF relationship
       if (references.isEmpty() && !ignoreActiveSpan && null != scopeManager.active()) {
@@ -414,9 +418,8 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
         }
       }
 
-      Span span =
-          new Span(
-              Tracer.this,
+      JaegerSpan jaegerSpan = new JaegerSpan(
+              JaegerTracer.this,
               operationName,
               context,
               startTimeMicroseconds,
@@ -429,7 +432,7 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
       } else {
         metrics.spansStartedNotSampled.inc(1);
       }
-      return span;
+      return jaegerSpan;
     }
 
     @Override
@@ -438,20 +441,20 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
     }
 
     @Override
-    public io.opentracing.Tracer.SpanBuilder ignoreActiveSpan() {
+    public Tracer.SpanBuilder ignoreActiveSpan() {
       ignoreActiveSpan = true;
       return this;
     }
 
     @Override
     @Deprecated
-    public io.opentracing.Span startManual() {
+    public Span startManual() {
       return start();
     }
   }
 
   /**
-   * Builds Jaeger Tracer with options.
+   * Builds Jaeger JaegerTracer with options.
    */
   public static final class Builder {
     private Sampler sampler;
@@ -565,7 +568,7 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
       return this;
     }
 
-    public Tracer build() {
+    public JaegerTracer build() {
       if (reporter == null) {
         reporter = new RemoteReporter.Builder()
             .withMetrics(metrics)
@@ -576,7 +579,7 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
             .withMetrics(metrics)
             .build();
       }
-      return new Tracer(serviceName, reporter, sampler, registry, clock, metrics, tags,
+      return new JaegerTracer(serviceName, reporter, sampler, registry, clock, metrics, tags,
           zipkinSharedRpcSpan, scopeManager, baggageRestrictionManager, expandExceptionLogs);
     }
 
@@ -591,7 +594,7 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
   private static String loadVersion() {
     String version;
     try {
-      InputStream is = Tracer.class.getResourceAsStream("jaeger.properties");
+      InputStream is = JaegerTracer.class.getResourceAsStream("jaeger.properties");
       try {
         Properties prop = new Properties();
         prop.load(is);
@@ -617,8 +620,8 @@ public class Tracer implements io.opentracing.Tracer, Closeable {
     }
   }
 
-  SpanContext setBaggage(Span span, String key, String value) {
-    return baggageSetter.setBaggage(span, key, value);
+  JaegerSpanContext setBaggage(JaegerSpan jaegerSpan, String key, String value) {
+    return baggageSetter.setBaggage(jaegerSpan, key, value);
   }
 
   boolean isExpandExceptionLogs() {

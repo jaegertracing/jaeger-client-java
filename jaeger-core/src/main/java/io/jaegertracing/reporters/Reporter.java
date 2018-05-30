@@ -14,14 +14,14 @@
 
 package io.jaegertracing.reporters;
 
-import io.jaegertracing.Span;
+import io.jaegertracing.JaegerSpan;
 
 /**
- * Reporter is the interface Tracer uses to report finished span to something that collects those
+ * Reporter is the interface JaegerTracer uses to report finished span to something that collects those
  * spans. Default implementation is remote reporter that sends spans out of process.
  */
 public interface Reporter {
-  void report(Span span);
+  void report(JaegerSpan span);
 
   void close();
 }

@@ -17,8 +17,9 @@ package io.jaegertracing.thrift.senders;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import io.jaegertracing.Span;
-import io.jaegertracing.Tracer;
+import io.jaegertracing.JaegerSpan;
+import io.jaegertracing.JaegerSpanContext;
+import io.jaegertracing.JaegerTracer;
 import io.jaegertracing.exceptions.SenderException;
 import io.jaegertracing.metrics.InMemoryMetricsFactory;
 import io.jaegertracing.reporters.InMemoryReporter;
@@ -41,7 +42,7 @@ public class UdpSenderTest {
   int destPort;
   final int maxPacketSize = 1000;
 
-  Tracer tracer;
+  JaegerTracer tracer;
   Reporter reporter;
   UdpSender sender;
   TestTServer server;
@@ -67,7 +68,7 @@ public class UdpSenderTest {
     server = startServer();
     reporter = new InMemoryReporter();
     tracer =
-        new Tracer.Builder(SERVICE_NAME)
+        new JaegerTracer.Builder(SERVICE_NAME)
             .withReporter(reporter)
             .withSampler(new ConstSampler(true))
             .withMetricsFactory(new InMemoryMetricsFactory())
@@ -85,7 +86,7 @@ public class UdpSenderTest {
 
   @Test(expected = SenderException.class)
   public void testAppendSpanTooLarge() throws Exception {
-    Span jaegerSpan = (Span) tracer.buildSpan("raza").start();
+    JaegerSpan jaegerSpan = (JaegerSpan) tracer.buildSpan("raza").start();
     String msg = "";
     for (int i = 0; i < 10001; i++) {
       msg += ".";
@@ -103,9 +104,8 @@ public class UdpSenderTest {
   @Test
   public void testAppend() throws Exception {
     // find size of the initial span
-    Span jaegerSpan = (Span)tracer.buildSpan("raza").start();
-    io.jaegertracing.thriftjava.Span span =
-            JaegerThriftSpanConverter.convertSpan(jaegerSpan);
+    JaegerSpan jaegerSpan = (JaegerSpan) tracer.buildSpan("raza").start();
+    io.jaegertracing.thriftjava.Span span = JaegerThriftSpanConverter.convertSpan((JaegerSpan) jaegerSpan);
 
     Process process = new Process(tracer.getServiceName())
         .setTags(JaegerThriftSpanConverter.buildTags(tracer.tags()));
@@ -135,7 +135,7 @@ public class UdpSenderTest {
   public void testFlushSendsSpan() throws Exception {
     int timeout = 50; // in milliseconds
     int expectedNumSpans = 1;
-    Span expectedSpan = (Span) tracer.buildSpan("raza").start();
+    JaegerSpan expectedSpan = (JaegerSpan) tracer.buildSpan("raza").start();
     int appendNum = sender.append(expectedSpan);
     int flushNum = sender.flush();
     assertEquals(appendNum, 0);
@@ -145,9 +145,9 @@ public class UdpSenderTest {
     assertEquals(expectedNumSpans, batch.getSpans().size());
 
     io.jaegertracing.thriftjava.Span actualSpan = batch.getSpans().get(0);
-    assertEquals(expectedSpan.context().getTraceId(), actualSpan.getTraceIdLow());
+    assertEquals(((JaegerSpanContext) expectedSpan.context()).getTraceId(), actualSpan.getTraceIdLow());
     assertEquals(0, actualSpan.getTraceIdHigh());
-    assertEquals(expectedSpan.context().getSpanId(), actualSpan.getSpanId());
+    assertEquals(((JaegerSpanContext) expectedSpan.context()).getSpanId(), actualSpan.getSpanId());
     assertEquals(0, actualSpan.getParentSpanId());
     assertTrue(actualSpan.references.isEmpty());
     assertEquals(expectedSpan.getOperationName(), actualSpan.getOperationName());

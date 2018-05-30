@@ -14,10 +14,10 @@
 
 package io.jaegertracing.thrift.senders;
 
-import io.jaegertracing.Span;
+import io.jaegertracing.JaegerSpan;
 import io.jaegertracing.exceptions.SenderException;
-import io.jaegertracing.thrift.reporters.protocols.JaegerThriftSpanConverter;
 import io.jaegertracing.senders.Sender;
+import io.jaegertracing.thrift.reporters.protocols.JaegerThriftSpanConverter;
 import io.jaegertracing.thrift.reporters.protocols.ThriftUdpTransport;
 import io.jaegertracing.thriftjava.Process;
 import java.util.ArrayList;
@@ -43,7 +43,7 @@ public abstract class ThriftSender extends ThriftSenderBase implements Sender {
   }
 
   @Override
-  public int append(Span span) throws SenderException {
+  public int append(JaegerSpan span) throws SenderException {
     if (process == null) {
       process = new Process(span.getTracer().getServiceName());
       process.setTags(JaegerThriftSpanConverter.buildTags(span.getTracer().tags()));

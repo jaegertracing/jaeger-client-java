@@ -14,10 +14,10 @@
 
 package io.jaegertracing.thrift.reporters.protocols;
 
+import io.jaegertracing.JaegerSpan;
+import io.jaegertracing.JaegerSpanContext;
 import io.jaegertracing.LogData;
 import io.jaegertracing.Reference;
-import io.jaegertracing.Span;
-import io.jaegertracing.SpanContext;
 import io.jaegertracing.thriftjava.Log;
 import io.jaegertracing.thriftjava.SpanRef;
 import io.jaegertracing.thriftjava.SpanRefType;
@@ -33,24 +33,29 @@ public class JaegerThriftSpanConverter {
 
   private JaegerThriftSpanConverter() {}
 
-  public static io.jaegertracing.thriftjava.Span convertSpan(Span span) {
-    SpanContext context = span.context();
+  public static io.jaegertracing.thriftjava.Span convertSpan(JaegerSpan jaegerSpan) {
+    JaegerSpanContext context = (JaegerSpanContext) jaegerSpan.context();
 
-    boolean oneChildOfParent = span.getReferences().size() == 1
-        && References.CHILD_OF.equals(span.getReferences().get(0).getType());
+    boolean oneChildOfParent = jaegerSpan.getReferences().size() == 1
+        && References.CHILD_OF.equals(jaegerSpan.getReferences().get(0).getType());
+
+    List<SpanRef> references = oneChildOfParent
+        ? Collections.<SpanRef>emptyList()
+        : buildReferences(jaegerSpan.getReferences());
 
     return new io.jaegertracing.thriftjava.Span(
-            context.getTraceId(),
-            0, // TraceIdHigh is currently not supported
-            context.getSpanId(),
-            oneChildOfParent ? context.getParentId() : 0,
-            span.getOperationName(),
-            context.getFlags(),
-            span.getStart(),
-            span.getDuration())
-            .setReferences(oneChildOfParent ? Collections.<SpanRef>emptyList() : buildReferences(span.getReferences()))
-        .setTags(buildTags(span.getTags()))
-        .setLogs(buildLogs(span.getLogs()));
+        context.getTraceId(),
+        0, // TraceIdHigh is currently not supported
+        context.getSpanId(),
+        oneChildOfParent ? context.getParentId() : 0,
+        jaegerSpan.getOperationName(),
+        context.getFlags(),
+        jaegerSpan.getStart(),
+        jaegerSpan.getDuration()
+    )
+        .setReferences(references)
+        .setTags(buildTags(jaegerSpan.getTags()))
+        .setLogs(buildLogs(jaegerSpan.getLogs()));
   }
 
   static List<SpanRef> buildReferences(List<Reference> references) {

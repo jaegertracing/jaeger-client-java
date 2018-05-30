@@ -14,11 +14,11 @@
 
 package io.jaegertracing.propagation;
 
-import io.jaegertracing.SpanContext;
+import io.jaegertracing.JaegerSpanContext;
 
 /**
  * <p>You should implement this class if you want to add possibility to extract information about
- * SpanContext that is provided in your custom propagation scheme. Otherwise you should probably use
+ * JaegerSpanContext that is provided in your custom propagation scheme. Otherwise you should probably use
  * built-in {@link TextMapCodec} or {@link B3TextMapCodec}</p>
  *
  * @see B3TextMapCodec
@@ -28,8 +28,8 @@ import io.jaegertracing.SpanContext;
 public interface Extractor<T> {
 
   /**
-   * <p>Called when {@link io.opentracing.Tracer#extract(io.opentracing.propagation.Format, Object)
-   * Tracer.extract(...)} is used. It should handle the logic behind extracting propagation-scheme
+   * <p>Called when {@link io.opentracing.Tracer#extract(io.opentracing.propagation.Format, Object)}
+   * is used. It should handle the logic behind extracting propagation-scheme
    * specific information from carrier (e.g. http request headers, amqp message headers, etc.).</p>
    *
    * <p>This method must not modify the carrier</p>
@@ -40,10 +40,10 @@ public interface Extractor<T> {
    *
    * @param carrier input that you extract Span information from, usually {@link
    * io.opentracing.propagation.TextMap}.
-   * @return {@link SpanContext} or {@code null} if carrier doesn't contain tracing information, it
+   * @return {@link JaegerSpanContext} or {@code null} if carrier doesn't contain tracing information, it
    * is not valid or is incomplete
    * @see B3TextMapCodec
    * @see TextMapCodec
    */
-  SpanContext extract(T carrier);
+  JaegerSpanContext extract(T carrier);
 }

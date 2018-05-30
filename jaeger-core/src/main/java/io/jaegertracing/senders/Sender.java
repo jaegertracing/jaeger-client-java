@@ -14,11 +14,11 @@
 
 package io.jaegertracing.senders;
 
-import io.jaegertracing.Span;
+import io.jaegertracing.JaegerSpan;
 import io.jaegertracing.exceptions.SenderException;
 
 public interface Sender {
-  int append(Span span) throws SenderException;
+  int append(JaegerSpan span) throws SenderException;
 
   int flush() throws SenderException;
 

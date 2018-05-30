@@ -25,12 +25,13 @@ import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import com.twitter.zipkin.thriftjava.Annotation;
 import com.twitter.zipkin.thriftjava.BinaryAnnotation;
 import com.twitter.zipkin.thriftjava.zipkincoreConstants;
-import io.jaegertracing.Span;
-import io.jaegertracing.SpanContext;
-import io.jaegertracing.Tracer;
+import io.jaegertracing.JaegerSpan;
+import io.jaegertracing.JaegerSpanContext;
+import io.jaegertracing.JaegerTracer;
 import io.jaegertracing.reporters.InMemoryReporter;
 import io.jaegertracing.samplers.ConstSampler;
 import io.jaegertracing.zipkin.ConverterUtil;
+import io.opentracing.Span;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
 import io.opentracing.propagation.TextMapExtractAdapter;
@@ -48,11 +49,11 @@ import org.junit.runner.RunWith;
 
 @RunWith(DataProviderRunner.class)
 public class ThriftSpanConverterTest {
-  Tracer tracer;
+  JaegerTracer tracer;
 
   @Before
   public void setUp() {
-    tracer = new Tracer.Builder("test-service-name")
+    tracer = new JaegerTracer.Builder("test-service-name")
             .withReporter(new InMemoryReporter())
             .withSampler(new ConstSampler(true))
             .withZipkinSharedRpcSpan()
@@ -73,7 +74,7 @@ public class ThriftSpanConverterTest {
 
   @DataProvider
   public static Object[][] dataProviderTracerTags() {
-    Tracer tracer = new Tracer.Builder("x")
+    JaegerTracer tracer = new JaegerTracer.Builder("x")
         .withReporter(null)
         .withSampler(null)
         .build();
@@ -116,7 +117,7 @@ public class ThriftSpanConverterTest {
   @UseDataProvider("dataProviderTracerTags")
   public void testTracerTags(SpanType spanType, Map<String, String> expectedTags) throws Exception {
     InMemoryReporter spanReporter = new InMemoryReporter();
-    Tracer tracer = new Tracer.Builder("x")
+    JaegerTracer tracer = new JaegerTracer.Builder("x")
         .withReporter(spanReporter)
         .withSampler(new ConstSampler(true))
         .withZipkinSharedRpcSpan()
@@ -125,19 +126,16 @@ public class ThriftSpanConverterTest {
         .withTag("tag.num", 1)
         .build();
 
-    Span span = (Span) tracer.buildSpan("root").start();
+    Span span = tracer.buildSpan("root").start();
     if (spanType == SpanType.CHILD) {
-      span = (Span) tracer.buildSpan("child").asChildOf(span).start();
+      span = tracer.buildSpan("child").asChildOf(span).start();
     } else if (spanType == SpanType.RPC_SERVER) {
-      span =
-          (Span)
-              tracer
-                  .buildSpan("rpc-server")
+      span = tracer.buildSpan("rpc-server")
                   .asChildOf(span)
                   .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
                   .start();
     }
-    com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan(span);
+    com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan((JaegerSpan) span);
 
     List<BinaryAnnotation> annotations = zipkinSpan.getBinary_annotations();
     for (Map.Entry<String, String> entry : expectedTags.entrySet()) {
@@ -166,10 +164,10 @@ public class ThriftSpanConverterTest {
 
   @Test
   public void testSpanKindServerCreatesAnnotations() {
-    Span span = (io.jaegertracing.Span) tracer.buildSpan("operation-name").start();
+    Span span = tracer.buildSpan("operation-name").start();
     Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_SERVER);
 
-    com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan(span);
+    com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan((JaegerSpan) span);
 
     List<Annotation> annotations = zipkinSpan.getAnnotations();
     boolean serverReceiveFound = false;
@@ -188,10 +186,10 @@ public class ThriftSpanConverterTest {
 
   @Test
   public void testSpanKindClientCreatesAnnotations() {
-    Span span = (io.jaegertracing.Span) tracer.buildSpan("operation-name").start();
+    Span span = tracer.buildSpan("operation-name").start();
     Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
 
-    com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan(span);
+    com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan((JaegerSpan) span);
 
     List<Annotation> annotations = zipkinSpan.getAnnotations();
     boolean clientReceiveFound = false;
@@ -213,10 +211,10 @@ public class ThriftSpanConverterTest {
   @Test
   public void testExpectedLocalComponentNameUsed() {
     String expectedComponentName = "local-name";
-    Span span = (io.jaegertracing.Span) tracer.buildSpan("operation-name").start();
+    Span span = tracer.buildSpan("operation-name").start();
     Tags.COMPONENT.set(span, expectedComponentName);
 
-    com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan(span);
+    com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan((JaegerSpan) span);
     String actualComponent =
         new String(zipkinSpan.getBinary_annotations().get(3).getValue(), StandardCharsets.UTF_8);
     assertEquals(expectedComponentName, actualComponent);
@@ -227,7 +225,7 @@ public class ThriftSpanConverterTest {
     int expectedIp = (127 << 24) | 1;
     int expectedPort = 8080;
     String expectedServiceName = "some-peer-service";
-    Span span = (Span) tracer.buildSpan("test-service-operation").start();
+    JaegerSpan span = (JaegerSpan) tracer.buildSpan("test-service-operation").start();
     Tags.PEER_HOST_IPV4.set(span, expectedIp);
     Tags.PEER_PORT.set(span, expectedPort);
     Tags.PEER_SERVICE.set(span, expectedServiceName);
@@ -239,7 +237,7 @@ public class ThriftSpanConverterTest {
 
   @Test
   public void testSpanDetectsIsClient() {
-    Span span = (Span) tracer.buildSpan("test-service-operation").start();
+    JaegerSpan span = (JaegerSpan) tracer.buildSpan("test-service-operation").start();
     Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
 
     assertTrue(ConverterUtil.isRpc(span));
@@ -248,7 +246,7 @@ public class ThriftSpanConverterTest {
 
   @Test
   public void testSpanDetectsIsServer() {
-    Span span = (Span) tracer.buildSpan("test-service-operation").start();
+    JaegerSpan span = (JaegerSpan) tracer.buildSpan("test-service-operation").start();
     Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_SERVER);
 
     assertTrue(ConverterUtil.isRpc(span));
@@ -258,7 +256,7 @@ public class ThriftSpanConverterTest {
   @Test
   public void testRpcChildSpanHasTheSameId() {
     String expectedOperation = "parent";
-    Span client = (Span) tracer.buildSpan(expectedOperation)
+    JaegerSpan client = (JaegerSpan) tracer.buildSpan(expectedOperation)
         .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT)
         .start();
 
@@ -267,21 +265,22 @@ public class ThriftSpanConverterTest {
     tracer.inject(client.context(), Format.Builtin.TEXT_MAP, carrier);
 
     carrier = new TextMapExtractAdapter(map);
-    SpanContext ctx = (SpanContext) tracer.extract(Format.Builtin.TEXT_MAP, carrier);
-    assertEquals(client.context().getSpanId(), ctx.getSpanId());
+    JaegerSpanContext ctx = (JaegerSpanContext) tracer.extract(Format.Builtin.TEXT_MAP, carrier);
+    JaegerSpanContext clientCtx = (JaegerSpanContext)client.context();
+    assertEquals(clientCtx.getSpanId(), ctx.getSpanId());
 
-    Span server = (Span)tracer.buildSpan("child")
+    JaegerSpan server = (JaegerSpan) tracer.buildSpan("child")
         .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
         .asChildOf(ctx)
         .start();
 
-    assertEquals("client and server must have the same span ID",
-        client.context().getSpanId(), server.context().getSpanId());
+    JaegerSpanContext serverCtx = (JaegerSpanContext) server.context();
+    assertEquals("client and server must have the same span ID", clientCtx.getSpanId(), serverCtx.getSpanId());
   }
 
   @Test
   public void testSpanLogsCreateAnnotations() {
-    Span span = (io.jaegertracing.Span) tracer.buildSpan("span-with-logs").start();
+    Span span = tracer.buildSpan("span-with-logs").start();
 
     span.log("event");
 
@@ -293,7 +292,7 @@ public class ThriftSpanConverterTest {
     fields.put("boolean", true);
     span.log(fields);
 
-    com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan(span);
+    com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan((JaegerSpan) span);
 
     List<String> annotationValues = new ArrayList<String>();
     for (Annotation annotation : zipkinSpan.getAnnotations()) {

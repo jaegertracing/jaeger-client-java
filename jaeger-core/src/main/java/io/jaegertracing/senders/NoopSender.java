@@ -14,7 +14,7 @@
 
 package io.jaegertracing.senders;
 
-import io.jaegertracing.Span;
+import io.jaegertracing.JaegerSpan;
 import lombok.ToString;
 
 /**
@@ -24,7 +24,7 @@ import lombok.ToString;
 @ToString
 public class NoopSender implements Sender {
   @Override
-  public int append(Span span) {
+  public int append(JaegerSpan span) {
     return 1;
   }
 

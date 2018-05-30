@@ -42,7 +42,7 @@ public interface Clock {
 
   /**
    * @return true if the time returned by {@link #currentTimeMicros()} is accurate enough to
-   * calculate span duration as (end-start). If this method returns false, the {@code Tracer} will
+   * calculate span duration as (end-start). If this method returns false, the {@code JaegerTracer} will
    * use {@link #currentNanoTicks()} for calculating duration instead.
    */
   boolean isMicrosAccurate();

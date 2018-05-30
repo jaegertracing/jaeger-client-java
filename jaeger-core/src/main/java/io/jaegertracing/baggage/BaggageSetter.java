@@ -14,15 +14,15 @@
 
 package io.jaegertracing.baggage;
 
-import io.jaegertracing.Span;
-import io.jaegertracing.SpanContext;
+import io.jaegertracing.JaegerSpan;
+import io.jaegertracing.JaegerSpanContext;
 import io.jaegertracing.metrics.Metrics;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * BaggageSetter is a class that sets baggage and the logs associated
- * with the baggage on a given {@link Span}.
+ * with the baggage on a given {@link JaegerSpan}.
  */
 public class BaggageSetter {
 
@@ -35,41 +35,42 @@ public class BaggageSetter {
   }
 
   /**
-   * Sets the baggage key:value on the {@link Span} and the corresponding
+   * Sets the baggage key:value on the {@link JaegerSpan} and the corresponding
    * logs. Whether the baggage is set on the span depends on if the key
    * is allowed to be set by this service.
    * <p>
-   * A {@link SpanContext} is returned with the new baggage key:value set
-   * if key is valid, else returns the existing {@link SpanContext}
-   * on the {@link Span}.
+   * A {@link JaegerSpanContext} is returned with the new baggage key:value set
+   * if key is valid, else returns the existing {@link JaegerSpanContext}
+   * on the {@link JaegerSpan}.
    *
-   * @param  span  the span to set the baggage on
-   * @param  key   the baggage key to set
-   * @param  value the baggage value to set
-   * @return       the SpanContext with the baggage set
+   * @param  jaegerSpan  the span to set the baggage on
+   * @param  key         the baggage key to set
+   * @param  value       the baggage value to set
+   * @return             the JaegerSpanContext with the baggage set
    */
-  public SpanContext setBaggage(Span span, String key, String value) {
-    Restriction restriction = restrictionManager.getRestriction(span.getServiceName(), key);
+  public JaegerSpanContext setBaggage(JaegerSpan jaegerSpan, String key, String value) {
+    Restriction restriction = restrictionManager.getRestriction(jaegerSpan.getServiceName(), key);
     boolean truncated = false;
     String prevItem = null;
     if (!restriction.isKeyAllowed()) {
       metrics.baggageUpdateFailure.inc(1);
-      logFields(span, key, value, prevItem, truncated, restriction.isKeyAllowed());
-      return span.context();
+      logFields(jaegerSpan, key, value, prevItem, truncated, restriction.isKeyAllowed());
+      return jaegerSpan.context();
     }
     if (value != null && value.length() > restriction.getMaxValueLength()) {
       truncated = true;
       value = value.substring(0, restriction.getMaxValueLength());
       metrics.baggageTruncate.inc(1);
     }
-    prevItem = span.getBaggageItem(key);
-    logFields(span, key, value, prevItem, truncated, restriction.isKeyAllowed());
+    prevItem = jaegerSpan.getBaggageItem(key);
+    logFields(jaegerSpan, key, value, prevItem, truncated, restriction.isKeyAllowed());
     metrics.baggageUpdateSuccess.inc(1);
-    return span.context().withBaggageItem(key, value);
+    return jaegerSpan.context().withBaggageItem(key, value);
   }
 
-  private void logFields(Span span, String key, String value, String prevItem, boolean truncated, boolean valid) {
-    if (!span.context().isSampled()) {
+  private void logFields(JaegerSpan jaegerSpan, String key, String value, String prevItem,
+                         boolean truncated, boolean valid) {
+    if (!jaegerSpan.context().isSampled()) {
       return;
     }
     Map<String, String> fields = new HashMap<String, String>();
@@ -85,6 +86,6 @@ public class BaggageSetter {
     if (!valid) {
       fields.put("invalid", "true");
     }
-    span.log(fields);
+    jaegerSpan.log(fields);
   }
 }

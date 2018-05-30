@@ -14,21 +14,21 @@
 
 package io.jaegertracing.reporters;
 
-import io.jaegertracing.Span;
+import io.jaegertracing.JaegerSpan;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.ToString;
 
 @ToString
 public class InMemoryReporter implements Reporter {
-  private final List<Span> spans;
+  private final List<JaegerSpan> spans;
 
   public InMemoryReporter() {
-    this.spans = new ArrayList<Span>();
+    this.spans = new ArrayList<JaegerSpan>();
   }
 
   @Override
-  public void report(Span span) {
+  public void report(JaegerSpan span) {
     synchronized (this) {
       spans.add(span);
     }
@@ -37,7 +37,7 @@ public class InMemoryReporter implements Reporter {
   @Override
   public void close() {}
 
-  public List<Span> getSpans() {
+  public List<JaegerSpan> getSpans() {
     synchronized (this) {
       return spans;
     }

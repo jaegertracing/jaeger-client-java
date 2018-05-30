@@ -14,7 +14,7 @@
 
 package io.jaegertracing.senders;
 
-import io.jaegertracing.Span;
+import io.jaegertracing.JaegerSpan;
 import io.jaegertracing.exceptions.SenderException;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,9 +26,9 @@ import java.util.concurrent.Semaphore;
  */
 public class InMemorySender implements Sender {
 
-  private List<Span> appended;
-  private List<Span> flushed;
-  private List<Span> received;
+  private List<JaegerSpan> appended;
+  private List<JaegerSpan> flushed;
+  private List<JaegerSpan> received;
   private Semaphore semaphore = new Semaphore(Integer.MAX_VALUE);
 
   public InMemorySender() {
@@ -37,27 +37,29 @@ public class InMemorySender implements Sender {
     received = new ArrayList<>();
   }
 
-  public List<Span> getAppended() {
+  public List<JaegerSpan> getAppended() {
     return new ArrayList<>(appended);
   }
 
-  public List<Span> getFlushed() {
+  public List<JaegerSpan> getFlushed() {
     return new ArrayList<>(flushed);
   }
 
-  public List<Span> getReceived() {
+  public List<JaegerSpan> getReceived() {
     return new ArrayList<>(received);
   }
 
   @Override
-  public int append(Span span) {
+  public int append(JaegerSpan span) {
     try {
       semaphore.acquire();
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
+
     appended.add(span);
     received.add(span);
+
     return 0;
   }
 

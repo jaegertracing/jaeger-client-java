@@ -20,7 +20,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import io.jaegertracing.SpanContext;
+import io.jaegertracing.JaegerSpanContext;
 import io.opentracing.propagation.TextMap;
 import java.util.Arrays;
 import org.junit.Test;
@@ -32,7 +32,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class CompositeCodecTest {
 
   @Mock
-  private SpanContext mockContext;
+  private JaegerSpanContext mockContext;
 
   @Mock
   private TextMap mockCarrier;

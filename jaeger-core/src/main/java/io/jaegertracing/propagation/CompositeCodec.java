@@ -14,7 +14,7 @@
 
 package io.jaegertracing.propagation;
 
-import io.jaegertracing.SpanContext;
+import io.jaegertracing.JaegerSpanContext;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -27,16 +27,16 @@ public class CompositeCodec<T> implements Codec<T> {
   }
 
   @Override
-  public void inject(SpanContext spanContext, T carrier) {
+  public void inject(JaegerSpanContext spanContext, T carrier) {
     for (Codec<T> codec : codecs) {
       codec.inject(spanContext, carrier);
     }
   }
 
   @Override
-  public SpanContext extract(T carrier) {
+  public JaegerSpanContext extract(T carrier) {
     for (Codec<T> codec : codecs) {
-      SpanContext context = codec.extract(carrier);
+      JaegerSpanContext context = codec.extract(carrier);
       if (context != null) {
         return context;
       }

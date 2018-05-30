@@ -21,7 +21,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import io.jaegertracing.Configuration;
-import io.jaegertracing.Tracer;
+import io.jaegertracing.JaegerTracer;
 import io.jaegertracing.metrics.Metrics;
 import io.jaegertracing.metrics.Timer;
 import io.jaegertracing.samplers.ConstSampler;
@@ -125,7 +125,7 @@ public class MicrometerTest {
   @Test
   public void testExposedMetrics() {
     Configuration configuration = new Configuration("exposedmetrics");
-    final Tracer tracer = configuration
+    final JaegerTracer tracer = configuration
             .getTracerBuilder()
             .withMetrics(metrics)
             .build();
@@ -157,7 +157,7 @@ public class MicrometerTest {
   public void validateMetricCounts() throws InterruptedException {
     Sampler constantSampler = new ConstSampler(true);
     Configuration configuration = new Configuration("validateMetricCounts");
-    Tracer tracer = configuration
+    JaegerTracer tracer = configuration
             .getTracerBuilder()
             .withSampler(constantSampler)
             .withMetrics(metrics)
@@ -209,7 +209,7 @@ public class MicrometerTest {
     assertEquals(1, registry.find("jaeger:started_spans").counter().count(), 0);
   }
 
-  private void createSomeSpans(Tracer tracer) {
+  private void createSomeSpans(JaegerTracer tracer) {
     for (int i = 0; i < 10; i++) {
       Span span = tracer.buildSpan("metricstest")
               .withTag("foo", "bar" + i)

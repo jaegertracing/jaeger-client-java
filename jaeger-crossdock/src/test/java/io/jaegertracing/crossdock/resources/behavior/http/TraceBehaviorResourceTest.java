@@ -21,7 +21,7 @@ import static org.junit.Assert.assertNull;
 import io.jaegertracing.Configuration;
 import io.jaegertracing.Configuration.ReporterConfiguration;
 import io.jaegertracing.Configuration.SamplerConfiguration;
-import io.jaegertracing.Span;
+import io.jaegertracing.JaegerSpanContext;
 import io.jaegertracing.crossdock.Constants;
 import io.jaegertracing.crossdock.JerseyServer;
 import io.jaegertracing.crossdock.api.Downstream;
@@ -104,7 +104,7 @@ public class TraceBehaviorResourceTest {
   @Test
   public void testStartTraceHttp() throws Exception {
     Scope scope = server.getTracer().buildSpan("root").startActive(true);
-    String expectedTraceId = String.format("%x", ((Span)scope.span()).context().getTraceId());
+    String expectedTraceId = String.format("%x", ((JaegerSpanContext)scope.span().context()).getTraceId());
     String expectedBaggage = "baggage-example";
 
     Downstream downstream =
@@ -153,7 +153,7 @@ public class TraceBehaviorResourceTest {
 
     assertNotNull(traceResponse.getDownstream());
     validateTraceResponse(traceResponse, String.format("%x",
-        ((Span)scope.span()).context().getTraceId()), expectedBaggage, 2);
+        ((JaegerSpanContext)scope.span().context()).getTraceId()), expectedBaggage, 2);
     scope.close();
   }
 

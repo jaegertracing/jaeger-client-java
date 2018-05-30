@@ -19,6 +19,7 @@ import static org.junit.Assert.assertNull;
 import io.jaegertracing.propagation.Codec;
 import io.jaegertracing.reporters.InMemoryReporter;
 import io.jaegertracing.samplers.ConstSampler;
+import io.opentracing.SpanContext;
 import io.opentracing.propagation.Format.Builtin;
 import io.opentracing.propagation.TextMap;
 import java.util.Iterator;
@@ -26,13 +27,13 @@ import java.util.Map.Entry;
 import org.junit.Before;
 import org.junit.Test;
 
-public class TracerResiliencyTest {
+public class JaegerTracerResiliencyTest {
 
-  private Tracer tracer;
+  private JaegerTracer tracer;
 
   @Before
   public void setUpTracer() {
-    tracer = new Tracer.Builder("TracerResiliencyTestService")
+    tracer = new JaegerTracer.Builder("TracerResiliencyTestService")
         .withReporter(new InMemoryReporter())
         .withSampler(new ConstSampler(true))
         .registerExtractor(Builtin.TEXT_MAP, new FaultyCodec())
@@ -42,13 +43,13 @@ public class TracerResiliencyTest {
 
   @Test
   public void shouldFallbackWhenExtractingWithFaultyCodec() {
-    io.opentracing.SpanContext span = tracer.extract(Builtin.TEXT_MAP, new NoopTextMap());
+    SpanContext span = tracer.extract(Builtin.TEXT_MAP, new NoopTextMap());
     assertNull(span);
   }
 
   @Test
   public void shouldFallbackWhenInjectingWithFaultyCodec() {
-    io.opentracing.SpanContext context = tracer.buildSpan("test-span").start().context();
+    SpanContext context = tracer.buildSpan("test-span").start().context();
     tracer.inject(context, Builtin.TEXT_MAP, new NoopTextMap());
   }
 
@@ -56,12 +57,12 @@ public class TracerResiliencyTest {
   private static class FaultyCodec implements Codec<TextMap> {
 
     @Override
-    public SpanContext extract(TextMap carrier) {
+    public JaegerSpanContext extract(TextMap carrier) {
       throw new RuntimeException("Some Codecs can be faulty, this one is.");
     }
 
     @Override
-    public void inject(SpanContext spanContext, TextMap carrier) {
+    public void inject(JaegerSpanContext spanContext, TextMap carrier) {
       throw new RuntimeException("Some Codecs can be faulty, this one is.");
     }
   }

@@ -14,9 +14,8 @@
 
 package io.jaegertracing.propagation;
 
-import io.jaegertracing.SpanContext;
-import io.jaegertracing.Tracer;
-import io.jaegertracing.baggage.BaggageRestrictionManager;
+import io.jaegertracing.JaegerSpanContext;
+import io.jaegertracing.JaegerTracer;
 import io.opentracing.propagation.TextMap;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,7 +28,7 @@ import java.util.Map;
  *
  * <pre>{@code
  * b3Codec = new B3TextMapCodec();
- * tracer = new Tracer.Builder(serviceName, reporter, sampler)
+ * tracer = new JaegerTracer.Builder(serviceName, reporter, sampler)
  *                    .registerInjector(Format.Builtin.HTTP_HEADERS, b3Codec)
  *                    .registerExtractor(Format.Builtin.HTTP_HEADERS, b3Codec)
  *                    ...
@@ -40,8 +39,8 @@ import java.util.Map;
  *
  * Note that this codec automatically propagates baggage
  * (with {@value io.jaegertracing.propagation.B3TextMapCodec#BAGGAGE_PREFIX} prefix).
- * Baggage whitelisting can be configured in {@link BaggageRestrictionManager} and then
- * passed to {@link Tracer.Builder#baggageRestrictionManager}
+ * Baggage whitelisting can be configured in {@link io.jaegertracing.baggage.BaggageRestrictionManager} and then
+ * passed to {@link JaegerTracer.Builder#baggageRestrictionManager}
  */
 public class B3TextMapCodec implements Codec<TextMap> {
   protected static final String TRACE_ID_NAME = "X-B3-TraceId";
@@ -70,7 +69,7 @@ public class B3TextMapCodec implements Codec<TextMap> {
   }
 
   @Override
-  public void inject(SpanContext spanContext, TextMap carrier) {
+  public void inject(JaegerSpanContext spanContext, TextMap carrier) {
     carrier.put(TRACE_ID_NAME, HexCodec.toLowerHex(spanContext.getTraceId()));
     if (spanContext.getParentId() != 0L) { // Conventionally, parent id == 0 means the root span
       carrier.put(PARENT_SPAN_ID_NAME, HexCodec.toLowerHex(spanContext.getParentId()));
@@ -86,7 +85,7 @@ public class B3TextMapCodec implements Codec<TextMap> {
   }
 
   @Override
-  public SpanContext extract(TextMap carrier) {
+  public JaegerSpanContext extract(TextMap carrier) {
     Long traceId = null;
     Long spanId = null;
     Long parentId = 0L; // Conventionally, parent id == 0 means the root span
@@ -117,7 +116,7 @@ public class B3TextMapCodec implements Codec<TextMap> {
     }
 
     if (null != traceId && null != parentId && null != spanId) {
-      SpanContext spanContext = new SpanContext(traceId, spanId, parentId, flags);
+      JaegerSpanContext spanContext = new JaegerSpanContext(traceId, spanId, parentId, flags);
       if (baggage != null) {
         spanContext = spanContext.withBaggage(baggage);
       }

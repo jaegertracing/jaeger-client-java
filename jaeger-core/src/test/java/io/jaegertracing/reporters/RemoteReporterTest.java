@@ -22,8 +22,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
-import io.jaegertracing.Span;
-import io.jaegertracing.Tracer;
+import io.jaegertracing.JaegerSpan;
+import io.jaegertracing.JaegerTracer;
 import io.jaegertracing.exceptions.SenderException;
 import io.jaegertracing.metrics.InMemoryMetricsFactory;
 import io.jaegertracing.metrics.Metrics;
@@ -42,7 +42,7 @@ import org.junit.Test;
 
 public class RemoteReporterTest {
   private Reporter reporter;
-  private Tracer tracer;
+  private JaegerTracer tracer;
   private InMemorySender sender;
   private final int flushInterval = 1000; // in milliseconds
   private final int maxQueueSize = 500;
@@ -61,7 +61,7 @@ public class RemoteReporterTest {
         .withMaxQueueSize(maxQueueSize)
         .withMetrics(metrics)
         .build();
-    tracer = new Tracer.Builder("test-remote-reporter")
+    tracer = new JaegerTracer.Builder("test-remote-reporter")
             .withReporter(reporter)
             .withSampler(new ConstSampler(true))
             .withMetrics(metrics)
@@ -70,7 +70,7 @@ public class RemoteReporterTest {
 
   @Test
   public void testRemoteReporterReport() throws Exception {
-    Span span = (Span) tracer.buildSpan("raza").start();
+    JaegerSpan span = (JaegerSpan) tracer.buildSpan("raza").start();
     reporter.report(span);
     // do sleep until automatic flush happens on 'reporter'
     // added 20ms on top of 'flushInterval' to avoid corner cases
@@ -79,7 +79,7 @@ public class RemoteReporterTest {
         .pollInterval(1, TimeUnit.MILLISECONDS)
         .atMost(flushInterval + 20, TimeUnit.MILLISECONDS)
         .until(() -> sender.getReceived().size() > 0);
-    List<Span> received = sender.getReceived();
+    List<JaegerSpan> received = sender.getReceived();
 
     assertEquals(1, received.size());
   }
@@ -88,7 +88,7 @@ public class RemoteReporterTest {
   public void testRemoteReporterFlushesOnClose() throws Exception {
     int numberOfSpans = 100;
     for (int i = 0; i < numberOfSpans; i++) {
-      Span span = (Span) tracer.buildSpan("raza").start();
+      JaegerSpan span = (JaegerSpan) tracer.buildSpan("raza").start();
       reporter.report(span);
     }
     reporter.close();
@@ -184,7 +184,7 @@ public class RemoteReporterTest {
         .withCloseEnqueueTimeout(closeTimeoutMillis)
         .withMetrics(metrics)
         .build();
-    tracer = new Tracer.Builder("test-remote-reporter")
+    tracer = new JaegerTracer.Builder("test-remote-reporter")
         .withReporter(reporter)
         .withSampler(new ConstSampler(true))
         .withMetrics(metrics)
@@ -226,7 +226,7 @@ public class RemoteReporterTest {
         .withMaxQueueSize(maxQueueSize)
         .withMetrics(metrics)
         .build();
-    tracer = new Tracer.Builder("test-remote-reporter")
+    tracer = new JaegerTracer.Builder("test-remote-reporter")
         .withReporter(reporter)
         .withSampler(new ConstSampler(true))
         .withMetrics(metrics)
@@ -265,7 +265,7 @@ public class RemoteReporterTest {
         .withMaxQueueSize(maxQueueSize)
         .withMetrics(metrics)
         .build();
-    tracer = new Tracer.Builder("test-remote-reporter")
+    tracer = new JaegerTracer.Builder("test-remote-reporter")
         .withReporter(remoteReporter)
         .withSampler(new ConstSampler(true))
         .withMetrics(metrics)
@@ -275,10 +275,10 @@ public class RemoteReporterTest {
     remoteReporter.flush();
     latch.await();
     assertEquals("Should have called the custom sender flush", 0, latch.getCount());
-    assertEquals("mySpan", sender.getReceived().get(0).getOperationName());
+    assertEquals("mySpan", ((JaegerSpan) sender.getReceived().get(0)).getOperationName());
   }
 
-  private Span newSpan() {
-    return (Span) tracer.buildSpan("x").start();
+  private JaegerSpan newSpan() {
+    return (JaegerSpan) tracer.buildSpan("x").start();
   }
 }

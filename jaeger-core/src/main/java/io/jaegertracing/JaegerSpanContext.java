@@ -16,12 +16,13 @@ package io.jaegertracing;
 
 import io.jaegertracing.exceptions.EmptyTracerStateStringException;
 import io.jaegertracing.exceptions.MalformedTracerStateStringException;
+import io.opentracing.SpanContext;
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SpanContext implements io.opentracing.SpanContext {
+public class JaegerSpanContext implements SpanContext {
   protected static final byte flagSampled = 1;
   protected static final byte flagDebug = 2;
 
@@ -32,11 +33,11 @@ public class SpanContext implements io.opentracing.SpanContext {
   private final Map<String, String> baggage;
   private final String debugId;
 
-  public SpanContext(long traceId, long spanId, long parentId, byte flags) {
+  public JaegerSpanContext(long traceId, long spanId, long parentId, byte flags) {
     this(traceId, spanId, parentId, flags, Collections.<String, String>emptyMap(), null);
   }
 
-  SpanContext(
+  JaegerSpanContext(
       long traceId,
       long spanId,
       long parentId,
@@ -106,7 +107,7 @@ public class SpanContext implements io.opentracing.SpanContext {
     return contextAsString();
   }
 
-  public static SpanContext contextFromString(String value)
+  public static JaegerSpanContext contextFromString(String value)
       throws MalformedTracerStateStringException, EmptyTracerStateStringException {
     if (value == null || value.equals("")) {
       throw new EmptyTracerStateStringException();
@@ -121,29 +122,29 @@ public class SpanContext implements io.opentracing.SpanContext {
       TODO(oibe) because java doesn't like to convert large hex strings to longs
       we should write this manually instead of using BigInteger.
     */
-    return new SpanContext(
+    return new JaegerSpanContext(
         new BigInteger(parts[0], 16).longValue(),
         new BigInteger(parts[1], 16).longValue(),
         new BigInteger(parts[2], 16).longValue(),
         new BigInteger(parts[3], 16).byteValue());
   }
 
-  public SpanContext withBaggageItem(String key, String val) {
+  public JaegerSpanContext withBaggageItem(String key, String val) {
     Map<String, String> newBaggage = new HashMap<String, String>(this.baggage);
     if (val == null) {
       newBaggage.remove(key);
     } else {
       newBaggage.put(key, val);
     }
-    return new SpanContext(traceId, spanId, parentId, flags, newBaggage, debugId);
+    return new JaegerSpanContext(traceId, spanId, parentId, flags, newBaggage, debugId);
   }
 
-  public SpanContext withBaggage(Map<String, String> newBaggage) {
-    return new SpanContext(traceId, spanId, parentId, flags, newBaggage, debugId);
+  public JaegerSpanContext withBaggage(Map<String, String> newBaggage) {
+    return new JaegerSpanContext(traceId, spanId, parentId, flags, newBaggage, debugId);
   }
 
-  public SpanContext withFlags(byte flags) {
-    return new SpanContext(traceId, spanId, parentId, flags, baggage, debugId);
+  public JaegerSpanContext withFlags(byte flags) {
+    return new JaegerSpanContext(traceId, spanId, parentId, flags, baggage, debugId);
   }
 
   /**
@@ -160,19 +161,19 @@ public class SpanContext implements io.opentracing.SpanContext {
   }
 
   /**
-   * Create a new dummy SpanContext as a container for debugId string. This is used when
+   * Create a new dummy JaegerSpanContext as a container for debugId string. This is used when
    * "jaeger-debug-id" header is passed in the request headers and forces the trace to be sampled as
    * debug trace, and the value of header recorded as a span tag to serve as a searchable
    * correlation ID.
    *
    * @param debugId arbitrary string used as correlation ID
    *
-   * @return new dummy SpanContext that serves as a container for debugId only.
+   * @return new dummy JaegerSpanContext that serves as a container for debugId only.
    *
    * @see Constants#DEBUG_ID_HEADER_KEY
    */
-  public static SpanContext withDebugId(String debugId) {
-    return new SpanContext(0, 0, 0, (byte) 0, Collections.<String, String>emptyMap(), debugId);
+  public static JaegerSpanContext withDebugId(String debugId) {
+    return new JaegerSpanContext(0, 0, 0, (byte) 0, Collections.<String, String>emptyMap(), debugId);
   }
 
   String getDebugId() {

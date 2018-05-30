@@ -34,6 +34,7 @@ import io.jaegertracing.samplers.Sampler;
 import io.jaegertracing.senders.Sender;
 import io.jaegertracing.senders.SenderFactory;
 import io.jaegertracing.senders.SenderResolver;
+import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
 import java.text.NumberFormat;
@@ -50,7 +51,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * This class is designed to provide {@link Tracer} or {@link Tracer.Builder} when Jaeger client
+ * This class is designed to provide {@link JaegerTracer} or {@link JaegerTracer.Builder} when Jaeger client
  * configuration is provided in environmental or property variables. It also simplifies creation
  * of the client from configuration files.
  */
@@ -172,12 +173,12 @@ public class Configuration {
   private Map<String, String> tracerTags;
 
   /**
-   * lazy singleton Tracer initialized in getTracer() method.
+   * lazy singleton JaegerTracer initialized in getTracer() method.
    */
-  private Tracer tracer;
+  private JaegerTracer tracer;
 
   public Configuration(String serviceName) {
-    this.serviceName = Tracer.Builder.checkValidServiceName(serviceName);
+    this.serviceName = JaegerTracer.Builder.checkValidServiceName(serviceName);
   }
 
 
@@ -192,7 +193,7 @@ public class Configuration {
         .withCodec(CodecConfiguration.fromEnv());
   }
 
-  public Tracer.Builder getTracerBuilder() {
+  public JaegerTracer.Builder getTracerBuilder() {
     if (reporterConfig == null) {
       reporterConfig = new ReporterConfiguration();
     }
@@ -208,7 +209,7 @@ public class Configuration {
     Metrics metrics = new Metrics(metricsFactory);
     Reporter reporter = reporterConfig.getReporter(metrics);
     Sampler sampler = samplerConfig.createSampler(serviceName, metrics);
-    Tracer.Builder builder = new Tracer.Builder(serviceName)
+    JaegerTracer.Builder builder = new JaegerTracer.Builder(serviceName)
         .withSampler(sampler)
         .withReporter(reporter)
         .withMetrics(metrics)
@@ -217,7 +218,7 @@ public class Configuration {
     return builder;
   }
 
-  public synchronized io.opentracing.Tracer getTracer() {
+  public synchronized Tracer getTracer() {
     if (tracer != null) {
       return tracer;
     }
@@ -248,7 +249,7 @@ public class Configuration {
   }
 
   /**
-   * @param metricsFactory the MetricsFactory to use on the Tracer to be built
+   * @param metricsFactory the MetricsFactory to use on the JaegerTracer to be built
    */
   public Configuration withMetricsFactory(MetricsFactory metricsFactory) {
     this.metricsFactory = metricsFactory;
@@ -256,7 +257,7 @@ public class Configuration {
   }
 
   public Configuration withServiceName(String serviceName) {
-    this.serviceName = Tracer.Builder.checkValidServiceName(serviceName);
+    this.serviceName = JaegerTracer.Builder.checkValidServiceName(serviceName);
     return this;
   }
 
@@ -454,14 +455,14 @@ public class Configuration {
       codecList.add(codec);
     }
 
-    public void apply(Tracer.Builder builder) {
+    public void apply(JaegerTracer.Builder builder) {
       // Replace existing TEXT_MAP and HTTP_HEADERS codec with one that represents the
       // configured propagation formats
       registerCodec(builder, Format.Builtin.HTTP_HEADERS);
       registerCodec(builder, Format.Builtin.TEXT_MAP);
     }
 
-    protected void registerCodec(Tracer.Builder builder, Format<TextMap> format) {
+    protected void registerCodec(JaegerTracer.Builder builder, Format<TextMap> format) {
       if (codecs.containsKey(format)) {
         List<Codec<TextMap>> codecsForFormat = codecs.get(format);
         Codec<TextMap> codec = codecsForFormat.size() == 1

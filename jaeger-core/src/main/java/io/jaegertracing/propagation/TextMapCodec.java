@@ -15,7 +15,7 @@
 package io.jaegertracing.propagation;
 
 import io.jaegertracing.Constants;
-import io.jaegertracing.SpanContext;
+import io.jaegertracing.JaegerSpanContext;
 import io.opentracing.propagation.TextMap;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -54,7 +54,7 @@ public class TextMapCodec implements Codec<TextMap> {
   }
 
   @Override
-  public void inject(SpanContext spanContext, TextMap carrier) {
+  public void inject(JaegerSpanContext spanContext, TextMap carrier) {
     carrier.put(contextKey, encodedValue(spanContext.contextAsString()));
     for (Map.Entry<String, String> entry : spanContext.baggageItems()) {
       carrier.put(keys.prefixedKey(entry.getKey(), baggagePrefix), encodedValue(entry.getValue()));
@@ -62,15 +62,15 @@ public class TextMapCodec implements Codec<TextMap> {
   }
 
   @Override
-  public SpanContext extract(TextMap carrier) {
-    SpanContext context = null;
+  public JaegerSpanContext extract(TextMap carrier) {
+    JaegerSpanContext context = null;
     Map<String, String> baggage = null;
     String debugId = null;
     for (Map.Entry<String, String> entry : carrier) {
       // TODO there should be no lower-case here
       String key = entry.getKey().toLowerCase(Locale.ROOT);
       if (key.equals(contextKey)) {
-        context = SpanContext.contextFromString(decodedValue(entry.getValue()));
+        context = JaegerSpanContext.contextFromString(decodedValue(entry.getValue()));
       } else if (key.equals(Constants.DEBUG_ID_HEADER_KEY)) {
         debugId = decodedValue(entry.getValue());
       } else if (key.startsWith(baggagePrefix)) {
@@ -82,7 +82,7 @@ public class TextMapCodec implements Codec<TextMap> {
     }
     if (context == null) {
       if (debugId != null) {
-        return SpanContext.withDebugId(debugId);
+        return JaegerSpanContext.withDebugId(debugId);
       }
       return null;
     }

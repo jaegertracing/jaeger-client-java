@@ -30,6 +30,7 @@ import io.jaegertracing.reporters.InMemoryReporter;
 import io.jaegertracing.samplers.ConstSampler;
 import io.jaegertracing.utils.Clock;
 import io.opentracing.References;
+import io.opentracing.Span;
 import io.opentracing.log.Fields;
 import io.opentracing.tag.Tags;
 import java.io.PrintWriter;
@@ -44,11 +45,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-public class SpanTest {
+public class JaegerSpanTest {
   private Clock clock;
   private InMemoryReporter reporter;
-  private Tracer tracer;
-  private Span span;
+  private JaegerTracer tracer;
+  private JaegerSpan jaegerSpan;
   private InMemoryMetricsFactory metricsFactory;
   private Metrics metrics;
 
@@ -58,7 +59,7 @@ public class SpanTest {
     reporter = new InMemoryReporter();
     clock = mock(Clock.class);
     metrics = new Metrics(metricsFactory);
-    tracer = new Tracer.Builder("SamplerTest")
+    tracer = new JaegerTracer.Builder("SamplerTest")
             .withReporter(reporter)
             .withSampler(new ConstSampler(true))
             .withMetrics(metrics)
@@ -66,7 +67,7 @@ public class SpanTest {
             .withBaggageRestrictionManager(new DefaultBaggageRestrictionManager())
             .withExpandExceptionLogs()
             .build();
-    span = (Span) tracer.buildSpan("some-operation").start();
+    jaegerSpan = (JaegerSpan) tracer.buildSpan("some-operation").start();
   }
 
   @Test
@@ -79,20 +80,20 @@ public class SpanTest {
   public void testSetAndGetBaggageItem() {
     final String service = "SamplerTest";
     final BaggageRestrictionManager mgr = Mockito.mock(DefaultBaggageRestrictionManager.class);
-    tracer = new Tracer.Builder(service)
+    tracer = new JaegerTracer.Builder(service)
             .withReporter(reporter)
             .withSampler(new ConstSampler(true))
             .withClock(clock)
             .withBaggageRestrictionManager(mgr)
             .build();
-    span = (Span) tracer.buildSpan("some-operation").start();
+    jaegerSpan = (JaegerSpan) tracer.buildSpan("some-operation").start();
 
     final String key = "key";
     final String value = "value";
     when(mgr.getRestriction(service, key)).thenReturn(Restriction.of(true, 10));
-    span.setBaggageItem(key, "value");
+    jaegerSpan.setBaggageItem(key, "value");
     verify(mgr).getRestriction(service, key);
-    assertEquals(value, span.getBaggageItem(key));
+    assertEquals(value, jaegerSpan.getBaggageItem(key));
   }
 
   @Test
@@ -100,17 +101,17 @@ public class SpanTest {
     Boolean expected = true;
     String key = "tag.key";
 
-    span.setTag(key, expected);
-    assertEquals(expected, span.getTags().get(key));
+    jaegerSpan.setTag(key, expected);
+    assertEquals(expected, jaegerSpan.getTags().get(key));
   }
 
   @Test
   public void testSetOperationName() {
     String expected = "modified.operation";
 
-    assertEquals("some-operation", span.getOperationName());
-    span.setOperationName(expected);
-    assertEquals(expected, span.getOperationName());
+    assertEquals("some-operation", jaegerSpan.getOperationName());
+    jaegerSpan.setOperationName(expected);
+    assertEquals(expected, jaegerSpan.getOperationName());
   }
 
   @Test
@@ -118,8 +119,8 @@ public class SpanTest {
     String expected = "expected.value";
     String key = "tag.key";
 
-    span.setTag(key, expected);
-    assertEquals(expected, span.getTags().get(key));
+    jaegerSpan.setTag(key, expected);
+    assertEquals(expected, jaegerSpan.getTags().get(key));
   }
 
   @Test
@@ -127,8 +128,8 @@ public class SpanTest {
     Integer expected = 5;
     String key = "tag.key";
 
-    span.setTag(key, expected);
-    assertEquals(expected, span.getTags().get(key));
+    jaegerSpan.setTag(key, expected);
+    assertEquals(expected, jaegerSpan.getTags().get(key));
   }
 
   @Test
@@ -148,28 +149,28 @@ public class SpanTest {
     when(clock.currentNanoTicks())
         .thenThrow(new IllegalStateException("currentNanoTicks() called"));
 
-    Span span = (Span) tracer.buildSpan("test-service-name").withStartTimestamp(567).start();
-    span.finish(999);
+    JaegerSpan jaegerSpan = (JaegerSpan) tracer.buildSpan("test-service-name").withStartTimestamp(567).start();
+    jaegerSpan.finish(999);
 
     assertEquals(1, reporter.getSpans().size());
-    assertEquals(567, span.getStart());
-    assertEquals(999 - 567, span.getDuration());
+    assertEquals(567, jaegerSpan.getStart());
+    assertEquals(999 - 567, jaegerSpan.getDuration());
   }
 
   @Test
   public void testMultipleSpanFinishDoesNotCauseMultipleReportCalls() {
-    Span span = (Span) tracer.buildSpan("test-service-name").start();
-    span.finish();
+    JaegerSpan jaegerSpan = (JaegerSpan) tracer.buildSpan("test-service-name").start();
+    jaegerSpan.finish();
 
     assertEquals(1, reporter.getSpans().size());
 
-    Span reportedSpan = reporter.getSpans().get(0);
+    JaegerSpan reportedJaegerSpan = (JaegerSpan) reporter.getSpans().get(0);
 
-    // new finish calls will not affect size of reporter.getSpans()
-    span.finish();
+    // new finish calls will not affect size of reporter.getJaegerSpans()
+    jaegerSpan.finish();
 
     assertEquals(1, reporter.getSpans().size());
-    assertEquals(reportedSpan, reporter.getSpans().get(0));
+    assertEquals(reportedJaegerSpan, reporter.getSpans().get(0));
   }
 
   @Test
@@ -179,12 +180,12 @@ public class SpanTest {
     when(clock.currentNanoTicks())
         .thenThrow(new IllegalStateException("currentNanoTicks() called"));
 
-    Span span = (Span) tracer.buildSpan("test-service-name").start();
-    span.finish();
+    JaegerSpan jaegerSpan = (JaegerSpan) tracer.buildSpan("test-service-name").start();
+    jaegerSpan.finish();
 
     assertEquals(1, reporter.getSpans().size());
-    assertEquals(1, span.getStart());
-    assertEquals(4, span.getDuration());
+    assertEquals(1, jaegerSpan.getStart());
+    assertEquals(4, jaegerSpan.getDuration());
   }
 
   @Test
@@ -195,19 +196,19 @@ public class SpanTest {
         .thenThrow(new IllegalStateException("currentTimeMicros() called 2nd time"));
     when(clock.currentNanoTicks()).thenReturn(20000L).thenReturn(30000L);
 
-    Span span = (Span) tracer.buildSpan("test-service-name").start();
-    span.finish();
+    JaegerSpan jaegerSpan = (JaegerSpan) tracer.buildSpan("test-service-name").start();
+    jaegerSpan.finish();
 
     assertEquals(1, reporter.getSpans().size());
-    assertEquals(100, span.getStart());
-    assertEquals(10, span.getDuration());
+    assertEquals(100, jaegerSpan.getStart());
+    assertEquals(10, jaegerSpan.getDuration());
   }
 
   @Test
   public void testSpanToString() {
-    Span span = (Span) tracer.buildSpan("test-operation").start();
-    SpanContext expectedContext = span.context();
-    SpanContext actualContext = SpanContext.contextFromString(span.context().contextAsString());
+    JaegerSpan jaegerSpan = (JaegerSpan) tracer.buildSpan("test-operation").start();
+    JaegerSpanContext expectedContext = (JaegerSpanContext) jaegerSpan.context();
+    JaegerSpanContext actualContext = JaegerSpanContext.contextFromString(expectedContext.contextAsString());
 
     assertEquals(expectedContext.getTraceId(), actualContext.getTraceId());
     assertEquals(expectedContext.getSpanId(), actualContext.getSpanId());
@@ -218,8 +219,8 @@ public class SpanTest {
   @Test
   public void testOperationName() {
     String expectedOperation = "leela";
-    Span span = (Span) tracer.buildSpan(expectedOperation).start();
-    assertEquals(expectedOperation, span.getOperationName());
+    JaegerSpan jaegerSpan = (JaegerSpan) tracer.buildSpan(expectedOperation).start();
+    assertEquals(expectedOperation, jaegerSpan.getOperationName());
   }
 
   @Test
@@ -233,17 +234,17 @@ public class SpanTest {
       }
     };
 
-    span.log(expectedTimestamp, expectedEvent);
-    span.log(expectedTimestamp, expectedFields);
-    span.log(expectedTimestamp, (String) null);
-    span.log(expectedTimestamp, (Map<String, ?>) null);
+    jaegerSpan.log(expectedTimestamp, expectedEvent);
+    jaegerSpan.log(expectedTimestamp, expectedFields);
+    jaegerSpan.log(expectedTimestamp, (String) null);
+    jaegerSpan.log(expectedTimestamp, (Map<String, ?>) null);
 
-    LogData actualLogData = span.getLogs().get(0);
+    LogData actualLogData = jaegerSpan.getLogs().get(0);
 
     assertEquals(expectedTimestamp, actualLogData.getTime());
     assertEquals(expectedEvent, actualLogData.getMessage());
 
-    actualLogData = span.getLogs().get(1);
+    actualLogData = jaegerSpan.getLogs().get(1);
 
     assertEquals(expectedTimestamp, actualLogData.getTime());
     assertNull(actualLogData.getMessage());
@@ -258,23 +259,23 @@ public class SpanTest {
 
     when(clock.currentTimeMicros()).thenReturn(expectedTimestamp);
 
-    span.log(expectedEvent);
+    jaegerSpan.log(expectedEvent);
 
     Map<String, String> expectedFields = new HashMap<String, String>() {
       {
         put(expectedEvent, expectedLog);
       }
     };
-    span.log(expectedFields);
-    span.log((String) null);
-    span.log((Map<String, ?>) null);
+    jaegerSpan.log(expectedFields);
+    jaegerSpan.log((String) null);
+    jaegerSpan.log((Map<String, ?>) null);
 
-    LogData actualLogData = span.getLogs().get(0);
+    LogData actualLogData = jaegerSpan.getLogs().get(0);
 
     assertEquals(expectedTimestamp, actualLogData.getTime());
     assertEquals(expectedEvent, actualLogData.getMessage());
 
-    actualLogData = span.getLogs().get(1);
+    actualLogData = jaegerSpan.getLogs().get(1);
 
     assertEquals(expectedTimestamp, actualLogData.getTime());
     assertNull(actualLogData.getMessage());
@@ -283,28 +284,41 @@ public class SpanTest {
 
   @Test
   public void testSpanDetectsSamplingPriorityGreaterThanZero() {
-    Span span = (Span) tracer.buildSpan("test-service-operation").start();
-    Tags.SAMPLING_PRIORITY.set(span, 1);
+    JaegerSpan jaegerSpan = (JaegerSpan) tracer.buildSpan("test-service-operation").start();
+    Tags.SAMPLING_PRIORITY.set(jaegerSpan, 1);
 
-    assertEquals(span.context().getFlags() & SpanContext.flagSampled, SpanContext.flagSampled);
-    assertEquals(span.context().getFlags() & SpanContext.flagDebug, SpanContext.flagDebug);
+    JaegerSpanContext context = (JaegerSpanContext) jaegerSpan.context();
+    assertEquals(context.getFlags() & JaegerSpanContext.flagSampled, JaegerSpanContext.flagSampled);
+    assertEquals(context.getFlags() & JaegerSpanContext.flagDebug, JaegerSpanContext.flagDebug);
   }
 
   @Test
   public void testSpanDetectsSamplingPriorityLessThanZero() {
-    Span span = (Span) tracer.buildSpan("test-service-operation").start();
+    // setup
+    JaegerSpan jaegerSpan = (JaegerSpan) tracer.buildSpan("test-service-operation").start();
 
-    assertEquals(span.context().getFlags() & SpanContext.flagSampled, SpanContext.flagSampled);
-    Tags.SAMPLING_PRIORITY.set(span, -1);
-    assertEquals(span.context().getFlags() & SpanContext.flagSampled, 0);
+    // sanity check
+    assertEquals(
+        JaegerSpanContext.flagSampled,
+        ((JaegerSpanContext) jaegerSpan.context()).getFlags() & JaegerSpanContext.flagSampled
+    );
+
+    // test
+    Tags.SAMPLING_PRIORITY.set(jaegerSpan, -1);
+
+    // verify
+    assertEquals(
+        0,
+        ((JaegerSpanContext) jaegerSpan.context()).getFlags() & JaegerSpanContext.flagSampled
+    );
   }
 
   @Test
   public void testBaggageOneReference() {
-    io.opentracing.Span parent = tracer.buildSpan("foo").start();
+    Span parent = tracer.buildSpan("foo").start();
     parent.setBaggageItem("foo", "bar");
 
-    io.opentracing.Span child = tracer.buildSpan("foo")
+    Span child = tracer.buildSpan("foo")
         .asChildOf(parent)
         .start();
 
@@ -317,12 +331,12 @@ public class SpanTest {
 
   @Test
   public void testBaggageMultipleReferences() {
-    io.opentracing.Span parent1 = tracer.buildSpan("foo").start();
+    Span parent1 = tracer.buildSpan("foo").start();
     parent1.setBaggageItem("foo", "bar");
-    io.opentracing.Span parent2 = tracer.buildSpan("foo").start();
+    Span parent2 = tracer.buildSpan("foo").start();
     parent2.setBaggageItem("foo2", "bar");
 
-    io.opentracing.Span child = tracer.buildSpan("foo")
+    Span child = tracer.buildSpan("foo")
         .asChildOf(parent1)
         .addReference(References.FOLLOWS_FROM, parent2.context())
         .start();
@@ -339,7 +353,7 @@ public class SpanTest {
 
   @Test
   public void testImmutableBaggage() {
-    io.opentracing.Span span = tracer.buildSpan("foo").start();
+    Span span = tracer.buildSpan("foo").start();
     span.setBaggageItem("foo", "bar");
     {
       Iterator<Entry<String, String>> baggageIter = span.context().baggageItems().iterator();
@@ -357,10 +371,10 @@ public class SpanTest {
     RuntimeException ex = new RuntimeException(new NullPointerException("npe"));
     Map<String, Object> logs = new HashMap<>();
     logs.put(Fields.ERROR_OBJECT, ex);
-    Span span = (Span)tracer.buildSpan("foo").start();
-    span.log(logs);
+    JaegerSpan jaegerSpan = (JaegerSpan)tracer.buildSpan("foo").start();
+    jaegerSpan.log(logs);
 
-    List<LogData> logData = span.getLogs();
+    List<LogData> logData = jaegerSpan.getLogs();
     assertEquals(1, logData.size());
     assertEquals(4, logData.get(0).getFields().size());
 
@@ -382,10 +396,10 @@ public class SpanTest {
     StringWriter sw = new StringWriter();
     ex.printStackTrace(new PrintWriter(sw));
     logs.put(Fields.STACK, sw.toString());
-    Span span = (Span)tracer.buildSpan("foo").start();
-    span.log(logs);
+    JaegerSpan jaegerSpan = (JaegerSpan)tracer.buildSpan("foo").start();
+    jaegerSpan.log(logs);
 
-    List<LogData> logData = span.getLogs();
+    List<LogData> logData = jaegerSpan.getLogs();
     assertEquals(1, logData.size());
     assertEquals(4, logData.get(0).getFields().size());
 
@@ -397,14 +411,14 @@ public class SpanTest {
 
   @Test
   public void testExpandExceptionLogsLoggedNoException() {
-    Span span = (Span)tracer.buildSpan("foo").start();
+    JaegerSpan jaegerSpan = (JaegerSpan)tracer.buildSpan("foo").start();
 
     Object object = new Object();
     Map<String, Object> logs = new HashMap<>();
     logs.put(Fields.ERROR_OBJECT, object);
-    span.log(logs);
+    jaegerSpan.log(logs);
 
-    List<LogData> logData = span.getLogs();
+    List<LogData> logData = jaegerSpan.getLogs();
     assertEquals(1, logData.size());
     assertEquals(1, logData.get(0).getFields().size());
     assertEquals(object, logData.get(0).getFields().get(Fields.ERROR_OBJECT));
@@ -412,19 +426,19 @@ public class SpanTest {
 
   @Test
   public void testNoExpandExceptionLogs() {
-    Tracer tracer = new Tracer.Builder("fo")
+    JaegerTracer tracer = new JaegerTracer.Builder("fo")
         .withReporter(reporter)
         .withSampler(new ConstSampler(true))
         .build();
 
-    Span span = (Span)tracer.buildSpan("foo").start();
+    JaegerSpan jaegerSpan = (JaegerSpan)tracer.buildSpan("foo").start();
 
     RuntimeException ex = new RuntimeException();
     Map<String, Object> logs = new HashMap<>();
     logs.put(Fields.ERROR_OBJECT, ex);
-    span.log(logs);
+    jaegerSpan.log(logs);
 
-    List<LogData> logData = span.getLogs();
+    List<LogData> logData = jaegerSpan.getLogs();
     assertEquals(1, logData.size());
     assertEquals(1, logData.get(0).getFields().size());
     assertEquals(ex, logData.get(0).getFields().get(Fields.ERROR_OBJECT));
@@ -432,11 +446,11 @@ public class SpanTest {
 
   @Test
   public void testSpanNotSampled() {
-    Tracer tracer = new Tracer.Builder("fo")
+    JaegerTracer tracer = new JaegerTracer.Builder("fo")
         .withReporter(reporter)
         .withSampler(new ConstSampler(false))
         .build();
-    io.opentracing.Span foo = tracer.buildSpan("foo")
+    Span foo = tracer.buildSpan("foo")
         .start();
     foo.log(Collections.emptyMap())
         .finish();

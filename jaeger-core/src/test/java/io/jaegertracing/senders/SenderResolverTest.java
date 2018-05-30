@@ -19,7 +19,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import io.jaegertracing.Configuration;
-import io.jaegertracing.Span;
+import io.jaegertracing.JaegerSpan;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -108,7 +108,7 @@ public class SenderResolverTest {
   static class CustomSender implements Sender {
 
     @Override
-    public int append(Span span) {
+    public int append(JaegerSpan span) {
       return 0;
     }
 

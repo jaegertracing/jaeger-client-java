@@ -17,7 +17,8 @@ package io.jaegertracing.crossdock.resources.behavior.http;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import io.jaegertracing.Span;
+import io.jaegertracing.JaegerSpan;
+import io.jaegertracing.JaegerTracer;
 import io.jaegertracing.crossdock.api.CreateTracesRequest;
 import io.jaegertracing.crossdock.resources.behavior.EndToEndBehavior;
 import io.jaegertracing.reporters.InMemoryReporter;
@@ -37,7 +38,7 @@ public class EndToEndBehaviorResourceTest {
   public void setUp() throws Exception {
     reporter = new InMemoryReporter();
     Tracer tracer =
-        new io.jaegertracing.Tracer.Builder("crossdock-java")
+        new JaegerTracer.Builder("crossdock-java")
             .withReporter(reporter)
             .withSampler(new ConstSampler(true))
             .build();
@@ -57,9 +58,9 @@ public class EndToEndBehaviorResourceTest {
     validateSpans(reporter.getSpans(), request);
   }
 
-  private void validateSpans(List<Span> spans, CreateTracesRequest request) {
+  private void validateSpans(List<JaegerSpan> spans, CreateTracesRequest request) {
     assertEquals(request.getCount(), spans.size());
-    for (Span s : spans) {
+    for (JaegerSpan s : spans) {
       assertEquals(request.getOperation(), s.getOperationName());
       Map<String, Object> tags = s.getTags();
       for (Map.Entry<String, String> entry : request.getTags().entrySet()) {

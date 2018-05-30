@@ -14,6 +14,7 @@
 
 package io.jaegertracing.crossdock.resources.behavior;
 
+import io.jaegertracing.JaegerTracer;
 import io.jaegertracing.crossdock.api.CreateTracesRequest;
 import io.jaegertracing.metrics.Metrics;
 import io.jaegertracing.metrics.NoopMetricsFactory;
@@ -52,7 +53,7 @@ public class EndToEndBehavior {
     tracers = new HashMap<>();
     tracers.put(RemoteControlledSampler.TYPE, getRemoteTracer(metrics, reporter, serviceName, samplingHostPort));
     tracers.put(ConstSampler.TYPE,
-        new io.jaegertracing.Tracer.Builder(serviceName).withReporter(reporter).withSampler(constSampler).build());
+        new JaegerTracer.Builder(serviceName).withReporter(reporter).withSampler(constSampler).build());
   }
 
   private Tracer getRemoteTracer(Metrics metrics, Reporter reporter, String serviceName, String samplingHostPort) {
@@ -66,7 +67,7 @@ public class EndToEndBehavior {
         .withPollingInterval(5000)
         .build();
 
-    return new io.jaegertracing.Tracer.Builder(serviceName)
+    return new JaegerTracer.Builder(serviceName)
         .withReporter(reporter)
         .withSampler(remoteSampler)
         .build();
