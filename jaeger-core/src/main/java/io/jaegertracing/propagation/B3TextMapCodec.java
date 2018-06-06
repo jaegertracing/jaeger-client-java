@@ -39,7 +39,7 @@ import java.util.Map;
  * See <a href="http://zipkin.io/pages/instrumenting.html">Instrumenting a Library</a>
  *
  * Note that this codec automatically propagates baggage
- * (with {@value io.jaegertracing.propagation.B3TextMapCodec#BAGGAGE_NAME} prefix).
+ * (with {@value io.jaegertracing.propagation.B3TextMapCodec#BAGGAGE_PREFIX} prefix).
  * Baggage whitelisting can be configured in {@link BaggageRestrictionManager} and then
  * passed to {@link Tracer.Builder#baggageRestrictionManager}
  */
@@ -49,20 +49,20 @@ public class B3TextMapCodec implements Codec<TextMap> {
   protected static final String PARENT_SPAN_ID_NAME = "X-B3-ParentSpanId";
   protected static final String SAMPLED_NAME = "X-B3-Sampled";
   protected static final String FLAGS_NAME = "X-B3-Flags";
-  protected static final String BAGGAGE_NAME = "baggage-";
+  protected static final String BAGGAGE_PREFIX = "baggage-";
   // NOTE: uber's flags aren't the same as B3/Finagle ones
   protected static final byte SAMPLED_FLAG = 1;
   protected static final byte DEBUG_FLAG = 2;
 
   private static final PrefixedKeys keys = new PrefixedKeys();
-  private final String baggageName;
+  private final String baggagePrefix;
 
   public B3TextMapCodec() {
     this(new Builder());
   }
 
   private B3TextMapCodec(Builder builder) {
-    this.baggageName = builder.baggagePrefix;
+    this.baggagePrefix = builder.baggagePrefix;
   }
 
   @Override
@@ -77,7 +77,7 @@ public class B3TextMapCodec implements Codec<TextMap> {
       carrier.put(FLAGS_NAME, "1");
     }
     for (Map.Entry<String, String> entry : spanContext.baggageItems()) {
-      carrier.put(keys.prefixedKey(entry.getKey(), baggageName), entry.getValue());
+      carrier.put(keys.prefixedKey(entry.getKey(), baggagePrefix), entry.getValue());
     }
   }
 
@@ -104,11 +104,11 @@ public class B3TextMapCodec implements Codec<TextMap> {
         if (entry.getValue().equals("1")) {
           flags |= DEBUG_FLAG;
         }
-      } else if (entry.getKey().startsWith(BAGGAGE_NAME)) {
+      } else if (entry.getKey().startsWith(baggagePrefix)) {
         if (baggage == null) {
           baggage = new HashMap<String, String>();
         }
-        baggage.put(keys.unprefixedKey(entry.getKey(), BAGGAGE_NAME), entry.getValue());
+        baggage.put(keys.unprefixedKey(entry.getKey(), baggagePrefix), entry.getValue());
       }
     }
 
@@ -123,10 +123,10 @@ public class B3TextMapCodec implements Codec<TextMap> {
   }
 
   public static class Builder {
-    private String baggagePrefix = BAGGAGE_NAME;
+    private String baggagePrefix = BAGGAGE_PREFIX;
 
     /**
-     * Specify baggage prefix. The default is {@value B3TextMapCodec#BAGGAGE_NAME}
+     * Specify baggage prefix. The default is {@value B3TextMapCodec#BAGGAGE_PREFIX}
      */
     public Builder withBaggagePrefix(String baggagePrefix) {
       this.baggagePrefix = baggagePrefix;

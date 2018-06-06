@@ -21,12 +21,9 @@ import static org.junit.Assert.assertTrue;
 
 import io.jaegertracing.SpanContext;
 import io.opentracing.propagation.TextMap;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import org.junit.Test;
 
@@ -53,7 +50,7 @@ public class B3TextMapCodecTest {
     textMap.put(B3TextMapCodec.PARENT_SPAN_ID_NAME, "0");
     textMap.put(B3TextMapCodec.SAMPLED_NAME, "1");
     textMap.put(B3TextMapCodec.FLAGS_NAME, "1");
-    textMap.put(B3TextMapCodec.BAGGAGE_NAME + "foo", "bar");
+    textMap.put(B3TextMapCodec.BAGGAGE_PREFIX + "foo", "bar");
     textMap.put("random-foo", "bar");
 
     SpanContext context = b3Codec.extract(textMap);
