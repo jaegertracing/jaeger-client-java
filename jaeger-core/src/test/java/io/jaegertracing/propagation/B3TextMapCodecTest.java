@@ -15,6 +15,7 @@
 package io.jaegertracing.propagation;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -23,6 +24,7 @@ import io.opentracing.propagation.TextMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import org.junit.Test;
 
 /**
@@ -48,6 +50,8 @@ public class B3TextMapCodecTest {
     textMap.put(B3TextMapCodec.PARENT_SPAN_ID_NAME, "0");
     textMap.put(B3TextMapCodec.SAMPLED_NAME, "1");
     textMap.put(B3TextMapCodec.FLAGS_NAME, "1");
+    textMap.put(B3TextMapCodec.BAGGAGE_PREFIX + "foo", "bar");
+    textMap.put("random-foo", "bar");
 
     SpanContext context = b3Codec.extract(textMap);
 
@@ -56,6 +60,41 @@ public class B3TextMapCodecTest {
     assertEquals(HexCodec.lowerHexToUnsignedLong(lower64Bits).longValue(), context.getSpanId());
     assertEquals(0, context.getParentId());
     assertEquals(B3TextMapCodec.SAMPLED_FLAG | B3TextMapCodec.DEBUG_FLAG, context.getFlags());
+    assertEquals(1, ((Set)context.baggageItems()).size());
+    assertEquals("bar", context.getBaggageItem("foo"));
+  }
+
+  @Test
+  public void testDefault() {
+    B3TextMapCodec b3Codec = new B3TextMapCodec.Builder()
+        .build();
+
+    DelegatingTextMap entries = new DelegatingTextMap();
+    SpanContext spanContext = new SpanContext(1, 2, 3, (byte)0)
+        .withBaggageItem("foo", "bar");
+
+    b3Codec.inject(spanContext, entries);
+    assertEquals(5, entries.delegate.size());
+    assertNotNull(entries.delegate.get(B3TextMapCodec.TRACE_ID_NAME));
+    assertNotNull(entries.delegate.get(B3TextMapCodec.SPAN_ID_NAME));
+    assertNotNull(entries.delegate.get(B3TextMapCodec.PARENT_SPAN_ID_NAME));
+    assertNotNull(entries.delegate.get(B3TextMapCodec.SAMPLED_NAME));
+    assertEquals("bar", entries.delegate.get("baggage-foo"));
+  }
+
+  @Test
+  public void testChangeBaggagePrefix() {
+    B3TextMapCodec b3Codec = new B3TextMapCodec.Builder()
+        .withBaggagePrefix("foo")
+        .build();
+
+    DelegatingTextMap entries = new DelegatingTextMap();
+    SpanContext spanContext = new SpanContext(1, 2, 3, (byte)0)
+        .withBaggageItem("foo", "bar");
+
+    b3Codec.inject(spanContext, entries);
+    assertEquals(5, entries.delegate.size());
+    assertEquals("bar", entries.delegate.get("foofoo"));
   }
 
   @Test

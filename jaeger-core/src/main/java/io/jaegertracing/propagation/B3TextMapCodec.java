@@ -15,7 +15,10 @@
 package io.jaegertracing.propagation;
 
 import io.jaegertracing.SpanContext;
+import io.jaegertracing.Tracer;
+import io.jaegertracing.baggage.BaggageRestrictionManager;
 import io.opentracing.propagation.TextMap;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -34,6 +37,11 @@ import java.util.Map;
  *
  * <p>
  * See <a href="http://zipkin.io/pages/instrumenting.html">Instrumenting a Library</a>
+ *
+ * Note that this codec automatically propagates baggage
+ * (with {@value io.jaegertracing.propagation.B3TextMapCodec#BAGGAGE_PREFIX} prefix).
+ * Baggage whitelisting can be configured in {@link BaggageRestrictionManager} and then
+ * passed to {@link Tracer.Builder#baggageRestrictionManager}
  */
 public class B3TextMapCodec implements Codec<TextMap> {
   protected static final String TRACE_ID_NAME = "X-B3-TraceId";
@@ -41,9 +49,21 @@ public class B3TextMapCodec implements Codec<TextMap> {
   protected static final String PARENT_SPAN_ID_NAME = "X-B3-ParentSpanId";
   protected static final String SAMPLED_NAME = "X-B3-Sampled";
   protected static final String FLAGS_NAME = "X-B3-Flags";
+  protected static final String BAGGAGE_PREFIX = "baggage-";
   // NOTE: uber's flags aren't the same as B3/Finagle ones
   protected static final byte SAMPLED_FLAG = 1;
   protected static final byte DEBUG_FLAG = 2;
+
+  private static final PrefixedKeys keys = new PrefixedKeys();
+  private final String baggagePrefix;
+
+  public B3TextMapCodec() {
+    this(new Builder());
+  }
+
+  private B3TextMapCodec(Builder builder) {
+    this.baggagePrefix = builder.baggagePrefix;
+  }
 
   @Override
   public void inject(SpanContext spanContext, TextMap carrier) {
@@ -56,6 +76,9 @@ public class B3TextMapCodec implements Codec<TextMap> {
     if (spanContext.isDebug()) {
       carrier.put(FLAGS_NAME, "1");
     }
+    for (Map.Entry<String, String> entry : spanContext.baggageItems()) {
+      carrier.put(keys.prefixedKey(entry.getKey(), baggagePrefix), entry.getValue());
+    }
   }
 
   @Override
@@ -64,6 +87,7 @@ public class B3TextMapCodec implements Codec<TextMap> {
     Long spanId = null;
     Long parentId = 0L; // Conventionally, parent id == 0 means the root span
     byte flags = 0;
+    Map<String, String> baggage = null;
     for (Map.Entry<String, String> entry : carrier) {
       if (entry.getKey().equalsIgnoreCase(SAMPLED_NAME)) {
         String value = entry.getValue();
@@ -80,12 +104,37 @@ public class B3TextMapCodec implements Codec<TextMap> {
         if (entry.getValue().equals("1")) {
           flags |= DEBUG_FLAG;
         }
+      } else if (entry.getKey().startsWith(baggagePrefix)) {
+        if (baggage == null) {
+          baggage = new HashMap<String, String>();
+        }
+        baggage.put(keys.unprefixedKey(entry.getKey(), baggagePrefix), entry.getValue());
       }
     }
 
     if (null != traceId && null != parentId && null != spanId) {
-      return new SpanContext(traceId, spanId, parentId, flags);
+      SpanContext spanContext = new SpanContext(traceId, spanId, parentId, flags);
+      if (baggage != null) {
+        spanContext = spanContext.withBaggage(baggage);
+      }
+      return spanContext;
     }
     return null;
+  }
+
+  public static class Builder {
+    private String baggagePrefix = BAGGAGE_PREFIX;
+
+    /**
+     * Specify baggage prefix. The default is {@value B3TextMapCodec#BAGGAGE_PREFIX}
+     */
+    public Builder withBaggagePrefix(String baggagePrefix) {
+      this.baggagePrefix = baggagePrefix;
+      return this;
+    }
+
+    public B3TextMapCodec build() {
+      return new B3TextMapCodec(this);
+    }
   }
 }
