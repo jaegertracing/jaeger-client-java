@@ -40,7 +40,8 @@ The `config` objects lazily builds and configures Jaeger Tracer. Multiple calls 
 Jaeger tracer can also work in the environment where B3 propagation is used. This is mostly related 
 to systems instrumented with Zipkin. Once you register `B3TextMapCodec`, Jaeger can join traces 
 started by other Zipkin instrumented applications. This includes reading headers 
-like "X-B3-TraceId".
+like "X-B3-TraceId". Jaeger B3 implementation automatically propagates baggage and by default it
+uses `baggage-` prefix.
 
 Example configuration:
 ```java
