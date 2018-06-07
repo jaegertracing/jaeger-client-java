@@ -9,10 +9,10 @@ Changes by Version
 0.29.0 (2018-06-7)
 -------------------
 
-- Deprecate B3 codec contructor ([#440](https://github.com/jaegertracing/jaeger-client-java/pull/440), [pavolloffay](https://github.com/pavolloffay))
-- Add baggage to B3 codec ([#438](https://github.com/jaegertracing/jaeger-client-java/pull/438), [pavolloffay](https://github.com/pavolloffay))
-- Remove deprecated API - HttpSender and RemoteBaggageManager ([#431](https://github.com/jaegertracing/jaeger-client-java/pull/431), [pavolloffay](https://github.com/pavolloffay))
-- Load metrics factory service from classpath if available ([#433](https://github.com/jaegertracing/jaeger-client-java/pull/433), [jpkrohling](https://github.com/jpkrohling))
+- Deprecate B3 codec contructor ([#440](https://github.com/jaegertracing/jaeger-client-java/pull/440), [@pavolloffay](https://github.com/pavolloffay))
+- Add baggage to B3 codec ([#438](https://github.com/jaegertracing/jaeger-client-java/pull/438), [@pavolloffay](https://github.com/pavolloffay))
+- Remove deprecated API - HttpSender and RemoteBaggageManager ([#431](https://github.com/jaegertracing/jaeger-client-java/pull/431), [@pavolloffay](https://github.com/pavolloffay))
+- Load metrics factory service from classpath if available ([#433](https://github.com/jaegertracing/jaeger-client-java/pull/433), [@jpkrohling](https://github.com/jpkrohling))
 
 0.28.0 (2018-05-24)
 -------------------
