@@ -39,8 +39,8 @@ public class UdpSender extends ThriftSender {
   }
 
   /**
-   * @param host host
-   * @param port port
+   * @param host host e.g. {@value DEFAULT_AGENT_UDP_HOST}
+   * @param port port e.g. {@value DEFAULT_AGENT_UDP_COMPACT_PORT}
    * @param maxPacketSize if 0 it will use {@value ThriftUdpTransport#MAX_PACKET_SIZE}
    */
   public UdpSender(String host, int port, int maxPacketSize) {

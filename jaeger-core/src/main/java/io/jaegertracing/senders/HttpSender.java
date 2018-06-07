@@ -88,6 +88,9 @@ public class HttpSender extends ThriftSender {
     private Interceptor authInterceptor;
     private OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder();
 
+    /**
+     * @param endpoint jaeger-collector HTTP endpoint e.g. http://localhost:14268/api/traces
+     */
     public Builder(String endpoint) {
       this.endpoint = endpoint;
     }
