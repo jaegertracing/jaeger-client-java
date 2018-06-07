@@ -57,6 +57,10 @@ public class B3TextMapCodec implements Codec<TextMap> {
   private static final PrefixedKeys keys = new PrefixedKeys();
   private final String baggagePrefix;
 
+  /**
+   * @deprecated use {@link Builder} instead
+   */
+  @Deprecated
   public B3TextMapCodec() {
     this(new Builder());
   }
