@@ -106,7 +106,7 @@ public class RemoteReporter implements Reporter {
     }
   }
 
-  void flush() {
+  public void flush() {
     // to reduce the number of updateGauge stats, we only emit queue length on flush
     metrics.reporterQueueLength.update(commandQueue.size());
 
