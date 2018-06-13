@@ -14,12 +14,19 @@
 
 package io.jaegertracing.senders;
 
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import io.jaegertracing.Configuration;
 import io.jaegertracing.Span;
-import io.jaegertracing.exceptions.SenderException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Scanner;
 import org.junit.After;
 import org.junit.Test;
 
@@ -48,6 +55,22 @@ public class SenderResolverTest {
   }
 
   @Test
+  public void testClassExistsButNotSenderFactory() {
+    System.setProperty(Configuration.JAEGER_SENDER_FACTORY, InMemorySender.class.getName());
+    Sender sender = SenderResolver.resolve();
+    assertTrue("Expected to have sender as instance of NoopSender, but was " + sender.getClass(),
+        sender instanceof NoopSender);
+  }
+
+  @Test
+  public void testFaultySenderFactory() {
+    System.setProperty(Configuration.JAEGER_SENDER_FACTORY, FaultySenderFactory.class.getName());
+    Sender sender = SenderResolver.resolve();
+    assertTrue("Expected to have sender as instance of NoopSender, but was " + sender.getClass(),
+        sender instanceof NoopSender);
+  }
+
+  @Test
   public void testFromServiceLoader() {
     CustomSender customSender = new CustomSender();
     SenderFactoryToBeLoaded.sender = customSender;
@@ -55,26 +78,86 @@ public class SenderResolverTest {
     assertEquals(customSender, sender);
   }
 
+  @Test
+  public void testMultipleImplementations() throws Exception {
+    CustomSender customSender = new CustomSender();
+    SenderFactoryToBeLoaded.sender = customSender;
+    Sender sender = getSenderForServiceFileContents("\nio.jaegertracing.senders.InMemorySenderFactory", true);
+    assertEquals(customSender, sender);
+  }
+
+  @Test
+  public void testNoImplementations() throws Exception {
+    SenderFactoryToBeLoaded.sender = new CustomSender();
+    Sender sender = getSenderForServiceFileContents("", false);
+    assertTrue(sender instanceof NoopSender);
+  }
+
+  @Test
+  public void testEmptyEnvVar() {
+    System.setProperty(Configuration.JAEGER_SENDER_FACTORY, "");
+    CustomSender customSender = new CustomSender();
+    SenderFactoryToBeLoaded.sender = customSender;
+    Sender sender = SenderResolver.resolve();
+    assertEquals(customSender, sender);
+  }
+
+  private Sender getSenderForServiceFileContents(String contents, boolean append) throws Exception {
+    String serviceFilePath = "/META-INF/services/io.jaegertracing.senders.SenderFactory";
+    File original = new File(this.getClass().getResource(serviceFilePath).toURI());
+
+    String newContent;
+    if (append) {
+      Scanner s = new Scanner(
+          new FileInputStream(original), Charset.defaultCharset().name()
+      ).useDelimiter("\\A");
+      String originalContents = s.hasNext() ? s.next() : "";
+      newContent = originalContents + contents;
+    } else {
+      newContent = contents;
+    }
+
+    Path copy = original.toPath().resolveSibling("io.jaegertracing.senders.SenderFactory-copy");
+    Files.move(original.toPath(), copy, REPLACE_EXISTING);
+
+    try {
+      FileOutputStream os = new FileOutputStream(original);
+      os.write(newContent.getBytes(Charset.defaultCharset()));
+      os.close();
+
+      return SenderResolver.resolve();
+    } finally {
+      Files.move(copy, original.toPath(), REPLACE_EXISTING);
+    }
+  }
+
   static class CustomSender implements Sender {
 
     @Override
-    public int append(Span span) throws SenderException {
+    public int append(Span span) {
       return 0;
     }
 
     @Override
-    public int flush() throws SenderException {
+    public int flush() {
       return 0;
     }
 
     @Override
-    public int close() throws SenderException {
+    public int close() {
       return 0;
     }
 
     @Override
     public String toString() {
       return "CustomSender{}";
+    }
+  }
+
+  static class FaultySenderFactory implements SenderFactory {
+    @Override
+    public Sender getSender(Configuration.SenderConfiguration senderConfiguration) {
+      throw new RuntimeException("boo");
     }
   }
 }
