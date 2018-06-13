@@ -1,9 +1,7 @@
 apply plugin: 'org.jruyi.thrift'
 apply plugin: 'com.github.johnrengelman.shadow'
 
-//This is in a separate subproject so that we can use 
-//standard javac instead of the error prone compiler
-description = 'Generated thrift code'
+description = 'Library to send data to Jaeger backend components via Thrift'
 
 dependencies {
     compile project(':jaeger-core')
