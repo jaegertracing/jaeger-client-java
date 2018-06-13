@@ -85,6 +85,7 @@ public class SenderResolver {
       return sender;
     }
 
+    log.warn("No suitable sender found. Using NoopSender, meaning that data will not be sent anywhere!");
     return new NoopSender();
   }
 }

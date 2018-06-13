@@ -45,12 +45,8 @@ checkstyleTest.enabled = false
 shadowJar {
     baseName = 'jaeger-thrift'
     relocate 'org.apache.thrift', 'org.shadow.apache.thrift92'
-    classifier 'thrift92'
-}
-
-shadowJar {
     relocate 'okhttp', 'jaeger.okhttp'
-    classifier 'okhttp381'
+    classifier 'shadow'
 }
 
 task testJar(type: Jar, dependsOn: testClasses) {

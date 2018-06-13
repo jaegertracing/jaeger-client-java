@@ -19,12 +19,6 @@ dependencies {
     signature 'org.codehaus.mojo.signature:java16:1.1@signature'
 }
 
-apply plugin: 'com.github.johnrengelman.shadow'
-shadowJar {
-    relocate 'okhttp', 'jaeger.okhttp'
-    classifier 'okhttp381'
-}
-
 task testJar(type: Jar, dependsOn: testClasses) {
     baseName = "test-${project.archivesBaseName}"
     from sourceSets.test.output
@@ -32,13 +26,6 @@ task testJar(type: Jar, dependsOn: testClasses) {
 
 configurations {
     tests
-}
-
-artifacts {
-    archives(shadowJar.archivePath) {
-        builtBy shadowJar
-    }
-    tests testJar
 }
 
 task jaegerVersion {

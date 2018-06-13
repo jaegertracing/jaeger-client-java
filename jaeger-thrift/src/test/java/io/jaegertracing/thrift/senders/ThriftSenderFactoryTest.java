@@ -20,9 +20,21 @@ import static org.junit.Assert.fail;
 import io.jaegertracing.Configuration;
 import io.jaegertracing.senders.Sender;
 import java.net.SocketException;
+import org.junit.Before;
 import org.junit.Test;
 
 public class ThriftSenderFactoryTest {
+
+  @Before
+  public void setup() {
+    System.clearProperty(Configuration.JAEGER_ENDPOINT);
+    System.clearProperty(Configuration.JAEGER_AUTH_TOKEN);
+    System.clearProperty(Configuration.JAEGER_USER);
+    System.clearProperty(Configuration.JAEGER_PASSWORD);
+
+    System.clearProperty(Configuration.JAEGER_AGENT_HOST);
+    System.clearProperty(Configuration.JAEGER_AGENT_PORT);
+  }
 
   @Test
   public void testSenderWithEndpointWithoutAuthData() {
@@ -69,6 +81,11 @@ public class ThriftSenderFactoryTest {
     System.setProperty(Configuration.JAEGER_AGENT_PORT, "6832");
 
     assertTrue(Configuration.SenderConfiguration.fromEnv().getSender() instanceof HttpSender);
+  }
+
+  @Test
+  public void testDefaultConfigurationReturnsUdpSender() {
+    assertTrue(Configuration.SenderConfiguration.fromEnv().getSender() instanceof UdpSender);
   }
 
 }
