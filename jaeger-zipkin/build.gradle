@@ -8,6 +8,7 @@ dependencies {
     compile group: 'io.zipkin.reporter2', name: 'zipkin-reporter', version: '2.6.0'
 
     compile project(path: ':jaeger-core', configuration: 'shadow')
+    compile project(':jaeger-thrift')
 
     testCompile group: 'io.zipkin.reporter2', name: 'zipkin-sender-urlconnection', version: '2.6.0'
     testCompile group: 'junit', name: 'junit', version: junitVersion

@@ -12,6 +12,7 @@ compileJava {
 
 dependencies {
     compile project(':jaeger-core')
+    compile project(':jaeger-thrift')
 
     compile group: 'io.opentracing.contrib', name: 'opentracing-jaxrs2', version: '0.1.4'
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
