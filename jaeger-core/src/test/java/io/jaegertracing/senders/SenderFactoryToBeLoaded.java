@@ -25,6 +25,11 @@ public class SenderFactoryToBeLoaded implements SenderFactory {
   }
 
   @Override
+  public String getType() {
+    return "to-be-loaded";
+  }
+
+  @Override
   public String toString() {
     return "SenderFactoryToBeLoaded{}";
   }

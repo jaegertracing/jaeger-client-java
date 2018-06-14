@@ -37,6 +37,11 @@ public class ThriftSenderFactory implements SenderFactory {
         0 /* max packet size */);
   }
 
+  @Override
+  public String getType() {
+    return "thrift";
+  }
+
   private static String stringOrDefault(String value, String defaultValue) {
     return value != null && value.length() > 0 ? value : defaultValue;
   }

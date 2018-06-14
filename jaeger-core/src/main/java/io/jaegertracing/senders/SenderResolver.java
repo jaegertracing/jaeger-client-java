@@ -32,20 +32,22 @@ public class SenderResolver {
    * @see #resolve(Configuration.SenderConfiguration)
    * @return the resolved Sender, or NoopSender
    */
-  public static final Sender resolve() {
+  public static Sender resolve() {
     return resolve(Configuration.SenderConfiguration.fromEnv());
   }
 
   /**
-   * Resolves a sender by passing the given {@link io.jaegertracing.Configuration.SenderConfiguration} down to the
+   * Resolves a sender by passing the given {@link Configuration.SenderConfiguration} down to the
    * {@link SenderFactory}. The factory is loaded either based on the value from the environment variable
    * JAEGER_SENDER_FACTORY or, in its absence or failure to deliver a {@link Sender}, via the {@link ServiceLoader}.
-   * If no factories are found, a {@link NoopSender} is returned.
+   * If no factories are found, a {@link NoopSender} is returned. If multiple factories are available, the
+   * factory whose {@link SenderFactory#getType()} matches the JAEGER_SENDER_FACTORY env var is selected.
+   * If none matches, {@link NoopSender} is returned.
    *
    * @param senderConfiguration the configuration to pass down to the factory
    * @return the resolved Sender, or NoopSender
    */
-  public static final Sender resolve(Configuration.SenderConfiguration senderConfiguration) {
+  public static Sender resolve(Configuration.SenderConfiguration senderConfiguration) {
     String senderFactoryClass = System.getProperty(Configuration.JAEGER_SENDER_FACTORY);
 
     if (senderFactoryClass == null || senderFactoryClass.isEmpty()) {
@@ -60,6 +62,8 @@ public class SenderResolver {
         log.warn(String.format("The class specified via JAEGER_SENDER_FACTORY (%s) should be a SenderFactory.",
             senderFactoryClass));
       }
+    } catch (ClassNotFoundException e) {
+      log.info("The property JAEGER_SENDER_FACTORY doesn't seem to relate to an existing class. Skipping.");
     } catch (Exception e) {
       log.warn(String.format("Exception while trying to get a sender from the factory %s. Falling back to loading via "
           + "the service loader", senderFactoryClass), e);
@@ -71,18 +75,36 @@ public class SenderResolver {
   private static Sender loadViaServiceLoader(Configuration.SenderConfiguration senderConfiguration) {
     ServiceLoader<SenderFactory> senderFactoryServiceLoader = ServiceLoader.load(SenderFactory.class);
     Iterator<SenderFactory> senderFactoryIterator = senderFactoryServiceLoader.iterator();
+
+    boolean hasMultipleFactories = false;
     if (senderFactoryIterator.hasNext()) {
       SenderFactory senderFactory = senderFactoryIterator.next();
 
       if (senderFactoryIterator.hasNext()) {
-        log.warn("More than one sender factory found! Using only the first one, but make sure to explicitly"
-            + " set one by passing the fully qualified class name via JAEGER_SENDER_FACTORY");
+        log.debug("There are multiple factories available via the service loader.");
+        hasMultipleFactories = true;
       }
 
-      log.info(String.format("Found a sender factory: %s", senderFactory));
-      Sender sender = senderFactory.getSender(senderConfiguration);
-      log.info(String.format("Using sender %s", sender));
-      return sender;
+      if (hasMultipleFactories) {
+        // we compare the factory name with JAEGER_SENDER_FACTORY, as a way to know which
+        // factory the user wants:
+        String requestedFactory = System.getProperty(Configuration.JAEGER_SENDER_FACTORY);
+        if (senderFactory.getType().equals(requestedFactory)) {
+          log.info(
+              String.format("Found the requested (%s) sender factory: %s",
+                  requestedFactory,
+                  senderFactory)
+          );
+          Sender sender = senderFactory.getSender(senderConfiguration);
+          log.info(String.format("Using sender %s", sender));
+          return sender;
+        }
+      } else {
+        log.info(String.format("Found a sender factory: %s", senderFactory));
+        Sender sender = senderFactory.getSender(senderConfiguration);
+        log.info(String.format("Using sender %s", sender));
+        return sender;
+      }
     }
 
     log.warn("No suitable sender found. Using NoopSender, meaning that data will not be sent anywhere!");

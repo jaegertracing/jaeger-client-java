@@ -27,4 +27,11 @@ public interface SenderFactory {
    * @return an appropriate sender based on the configuration, or {@link NoopSender}.
    */
   Sender getSender(Configuration.SenderConfiguration senderConfiguration);
+
+  /**
+   * The Factory's name. Can specified via {@link Configuration#JAEGER_SENDER_FACTORY} to disambiguate
+   * the resolution, in case multiple senders are available via the service loader.
+   * @return a simple factory name
+   */
+  String getType();
 }

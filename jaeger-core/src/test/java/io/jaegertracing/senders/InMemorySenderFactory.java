@@ -23,6 +23,11 @@ public class InMemorySenderFactory implements SenderFactory {
   }
 
   @Override
+  public String getType() {
+    return "in-memory";
+  }
+
+  @Override
   public String toString() {
     return "InMemorySenderFactory{}";
   }

@@ -79,7 +79,15 @@ public class SenderResolverTest {
   }
 
   @Test
-  public void testMultipleImplementations() throws Exception {
+  public void testMultipleImplementationsAmbiguous() throws Exception {
+    SenderFactoryToBeLoaded.sender = new CustomSender();
+    Sender sender = getSenderForServiceFileContents("\nio.jaegertracing.senders.InMemorySenderFactory", true);
+    assertTrue(sender instanceof NoopSender);
+  }
+
+  @Test
+  public void testMultipleImplementationsNotAmbiguous() throws Exception {
+    System.setProperty(Configuration.JAEGER_SENDER_FACTORY, "to-be-loaded");
     CustomSender customSender = new CustomSender();
     SenderFactoryToBeLoaded.sender = customSender;
     Sender sender = getSenderForServiceFileContents("\nio.jaegertracing.senders.InMemorySenderFactory", true);
@@ -158,6 +166,11 @@ public class SenderResolverTest {
     @Override
     public Sender getSender(Configuration.SenderConfiguration senderConfiguration) {
       throw new RuntimeException("boo");
+    }
+
+    @Override
+    public String getType() {
+      return "faulty";
     }
   }
 }

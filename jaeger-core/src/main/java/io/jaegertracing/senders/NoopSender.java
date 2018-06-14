@@ -30,11 +30,11 @@ public class NoopSender implements Sender {
 
   @Override
   public int flush() {
-    return 1;
+    return 0;
   }
 
   @Override
   public int close() {
-    return 1;
+    return 0;
   }
 }
