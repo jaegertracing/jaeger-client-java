@@ -18,7 +18,9 @@ import io.jaegertracing.Configuration;
 
 /**
  * Represents a class that knows how to select and build the appropriate {@link Sender} based on the given
- * {@link Configuration.SenderConfiguration}
+ * {@link Configuration.SenderConfiguration}. This factory is usually used in conjunction with the
+ * {@link SenderResolver}, so that the appropriate factory will be loaded via
+ * {@link java.util.ServiceLoader}.
  */
 public interface SenderFactory {
   /**
