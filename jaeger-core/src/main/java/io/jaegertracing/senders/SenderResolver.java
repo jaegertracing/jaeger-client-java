@@ -39,10 +39,10 @@ public class SenderResolver {
   /**
    * Resolves a sender by passing the given {@link Configuration.SenderConfiguration} down to the
    * {@link SenderFactory}. The factory is loaded either based on the value from the environment variable
-   * JAEGER_SENDER_FACTORY or, in its absence or failure to deliver a {@link Sender}, via the {@link ServiceLoader}.
-   * If no factories are found, a {@link NoopSender} is returned. If multiple factories are available, the
-   * factory whose {@link SenderFactory#getType()} matches the JAEGER_SENDER_FACTORY env var is selected.
-   * If none matches, {@link NoopSender} is returned.
+   * {@link Configuration#JAEGER_SENDER_FACTORY} or, in its absence or failure to deliver a {@link Sender},
+   * via the {@link ServiceLoader}. If no factories are found, a {@link NoopSender} is returned. If multiple factories
+   * are available, the factory whose {@link SenderFactory#getType()} matches the JAEGER_SENDER_FACTORY env var is
+   * selected. If none matches, {@link NoopSender} is returned.
    *
    * @param senderConfiguration the configuration to pass down to the factory
    * @return the resolved Sender, or NoopSender
