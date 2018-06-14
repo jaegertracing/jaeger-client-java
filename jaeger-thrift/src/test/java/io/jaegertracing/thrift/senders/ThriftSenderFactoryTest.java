@@ -15,11 +15,10 @@
 package io.jaegertracing.thrift.senders;
 
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import io.jaegertracing.Configuration;
+import io.jaegertracing.senders.NoopSender;
 import io.jaegertracing.senders.Sender;
-import java.net.SocketException;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -47,14 +46,8 @@ public class ThriftSenderFactoryTest {
   public void testSenderWithAgentDataFromEnv() {
     System.setProperty(Configuration.JAEGER_AGENT_HOST, "jaeger-agent");
     System.setProperty(Configuration.JAEGER_AGENT_PORT, "6832");
-    try {
-      Configuration.SenderConfiguration.fromEnv().getSender();
-      fail("expecting exception");
-    } catch (RuntimeException re) {
-      // we need to catch it here instead of using @Test(expected = ...) because the SocketException is
-      // wrapped into a runtime exception
-      assertTrue(re.getCause() instanceof SocketException);
-    }
+    Sender sender = Configuration.SenderConfiguration.fromEnv().getSender();
+    assertTrue(sender instanceof NoopSender);
   }
 
   @Test

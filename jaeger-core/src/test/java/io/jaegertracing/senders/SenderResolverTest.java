@@ -39,33 +39,15 @@ public class SenderResolverTest {
   }
 
   @Test
-  public void testBasedOnEnvVar() {
-    System.setProperty(Configuration.JAEGER_SENDER_FACTORY, InMemorySenderFactory.class.getName());
-    Sender sender = SenderResolver.resolve();
-    assertTrue("Expected to have sender as instance of InMemorySender, but was " + sender.getClass(),
-        sender instanceof InMemorySender);
-  }
-
-  @Test
-  public void testFallbackToNoopSender() {
-    System.setProperty(Configuration.JAEGER_SENDER_FACTORY, "non-existing-sender-factory");
-    Sender sender = SenderResolver.resolve();
+  public void testNoImplementations() throws Exception {
+    Sender sender = getSenderForServiceFileContents("", false);
     assertTrue("Expected to have sender as instance of NoopSender, but was " + sender.getClass(),
         sender instanceof NoopSender);
   }
 
   @Test
-  public void testClassExistsButNotSenderFactory() {
-    System.setProperty(Configuration.JAEGER_SENDER_FACTORY, InMemorySender.class.getName());
-    Sender sender = SenderResolver.resolve();
-    assertTrue("Expected to have sender as instance of NoopSender, but was " + sender.getClass(),
-        sender instanceof NoopSender);
-  }
-
-  @Test
-  public void testFaultySenderFactory() {
-    System.setProperty(Configuration.JAEGER_SENDER_FACTORY, FaultySenderFactory.class.getName());
-    Sender sender = SenderResolver.resolve();
+  public void testFaultySenderFactory() throws Exception {
+    Sender sender = getSenderForServiceFileContents(FaultySenderFactory.class.getName(), false);
     assertTrue("Expected to have sender as instance of NoopSender, but was " + sender.getClass(),
         sender instanceof NoopSender);
   }
@@ -91,22 +73,6 @@ public class SenderResolverTest {
     CustomSender customSender = new CustomSender();
     SenderFactoryToBeLoaded.sender = customSender;
     Sender sender = getSenderForServiceFileContents("\nio.jaegertracing.senders.InMemorySenderFactory", true);
-    assertEquals(customSender, sender);
-  }
-
-  @Test
-  public void testNoImplementations() throws Exception {
-    SenderFactoryToBeLoaded.sender = new CustomSender();
-    Sender sender = getSenderForServiceFileContents("", false);
-    assertTrue(sender instanceof NoopSender);
-  }
-
-  @Test
-  public void testEmptyEnvVar() {
-    System.setProperty(Configuration.JAEGER_SENDER_FACTORY, "");
-    CustomSender customSender = new CustomSender();
-    SenderFactoryToBeLoaded.sender = customSender;
-    Sender sender = SenderResolver.resolve();
     assertEquals(customSender, sender);
   }
 
@@ -159,18 +125,6 @@ public class SenderResolverTest {
     @Override
     public String toString() {
       return "CustomSender{}";
-    }
-  }
-
-  static class FaultySenderFactory implements SenderFactory {
-    @Override
-    public Sender getSender(Configuration.SenderConfiguration senderConfiguration) {
-      throw new RuntimeException("boo");
-    }
-
-    @Override
-    public String getType() {
-      return "faulty";
     }
   }
 }

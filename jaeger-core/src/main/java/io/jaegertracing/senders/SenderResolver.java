@@ -48,31 +48,7 @@ public class SenderResolver {
    * @return the resolved Sender, or NoopSender
    */
   public static Sender resolve(Configuration.SenderConfiguration senderConfiguration) {
-    String senderFactoryClass = System.getProperty(Configuration.JAEGER_SENDER_FACTORY);
-
-    if (senderFactoryClass == null || senderFactoryClass.isEmpty()) {
-      return loadViaServiceLoader(senderConfiguration);
-    }
-
-    try {
-      Object factoryObject = Class.forName(senderFactoryClass).getDeclaredConstructor().newInstance();
-      if (factoryObject instanceof SenderFactory) {
-        return ((SenderFactory) factoryObject).getSender(senderConfiguration);
-      } else {
-        log.warn(String.format("The class specified via JAEGER_SENDER_FACTORY (%s) should be a SenderFactory.",
-            senderFactoryClass));
-      }
-    } catch (ClassNotFoundException e) {
-      log.info("The property JAEGER_SENDER_FACTORY doesn't seem to relate to an existing class. Skipping.");
-    } catch (Exception e) {
-      log.warn(String.format("Exception while trying to get a sender from the factory %s. Falling back to loading via "
-          + "the service loader", senderFactoryClass), e);
-    }
-
-    return loadViaServiceLoader(senderConfiguration);
-  }
-
-  private static Sender loadViaServiceLoader(Configuration.SenderConfiguration senderConfiguration) {
+    Sender sender = null;
     ServiceLoader<SenderFactory> senderFactoryServiceLoader = ServiceLoader.load(SenderFactory.class);
     Iterator<SenderFactory> senderFactoryIterator = senderFactoryServiceLoader.iterator();
 
@@ -95,19 +71,30 @@ public class SenderResolver {
                   requestedFactory,
                   senderFactory)
           );
-          Sender sender = senderFactory.getSender(senderConfiguration);
-          log.info(String.format("Using sender %s", sender));
-          return sender;
+
+          sender = getSenderFromFactory(senderFactory, senderConfiguration);
         }
       } else {
-        log.info(String.format("Found a sender factory: %s", senderFactory));
-        Sender sender = senderFactory.getSender(senderConfiguration);
-        log.info(String.format("Using sender %s", sender));
-        return sender;
+        sender = getSenderFromFactory(senderFactory, senderConfiguration);
       }
     }
 
-    log.warn("No suitable sender found. Using NoopSender, meaning that data will not be sent anywhere!");
-    return new NoopSender();
+    if (null != sender) {
+      log.info(String.format("Using sender %s", sender));
+      return sender;
+    } else {
+      log.warn("No suitable sender found. Using NoopSender, meaning that data will not be sent anywhere!");
+      return new NoopSender();
+    }
+  }
+
+  private static Sender getSenderFromFactory(SenderFactory senderFactory,
+                                             Configuration.SenderConfiguration configuration) {
+    try {
+      return senderFactory.getSender(configuration);
+    } catch (Exception e) {
+      log.warn("Failed to get a sender from the sender factory.", e);
+      return null;
+    }
   }
 }

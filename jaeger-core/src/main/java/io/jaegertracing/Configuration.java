@@ -138,11 +138,9 @@ public class Configuration {
   public static final String JAEGER_PROPAGATION = JAEGER_PREFIX + "PROPAGATION";
 
   /**
-   * The fully qualified class name for the sender factory.
-   *
-   * If this value is not a class name and there are multiple service providers for the
-   * {@link SenderFactory} available, this var is used to select a {@link SenderFactory} by matching
-   * it with {@link SenderFactory#getType()}.
+   * When there are multiple service providers for the {@link SenderFactory} available,
+   * this var is used to select a {@link SenderFactory} by matching it with
+   * {@link SenderFactory#getType()}.
    *
    */
   public static final String JAEGER_SENDER_FACTORY = JAEGER_PREFIX + "SENDER_FACTORY";
