@@ -12,12 +12,10 @@
  * the License.
  */
 
-package io.jaegertracing.reporters;
+package io.jaegertracing.senders;
 
+import io.jaegertracing.Span;
 import io.jaegertracing.exceptions.SenderException;
-import io.jaegertracing.reporters.protocols.JaegerThriftSpanConverter;
-import io.jaegertracing.senders.Sender;
-import io.jaegertracing.thriftjava.Span;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Semaphore;
@@ -34,33 +32,32 @@ public class InMemorySender implements Sender {
   private Semaphore semaphore = new Semaphore(Integer.MAX_VALUE);
 
   public InMemorySender() {
-    appended = new ArrayList<Span>();
-    flushed = new ArrayList<Span>();
-    received = new ArrayList<Span>();
+    appended = new ArrayList<>();
+    flushed = new ArrayList<>();
+    received = new ArrayList<>();
   }
 
   public List<Span> getAppended() {
-    return new ArrayList<Span>(appended);
+    return new ArrayList<>(appended);
   }
 
   public List<Span> getFlushed() {
-    return new ArrayList<Span>(flushed);
+    return new ArrayList<>(flushed);
   }
 
   public List<Span> getReceived() {
-    return new ArrayList<Span>(received);
+    return new ArrayList<>(received);
   }
 
   @Override
-  public int append(io.jaegertracing.Span span) throws SenderException {
+  public int append(Span span) {
     try {
       semaphore.acquire();
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
-    io.jaegertracing.thriftjava.Span thriftSpan = JaegerThriftSpanConverter.convertSpan(span);
-    appended.add(thriftSpan);
-    received.add(thriftSpan);
+    appended.add(span);
+    received.add(span);
     return 0;
   }
 

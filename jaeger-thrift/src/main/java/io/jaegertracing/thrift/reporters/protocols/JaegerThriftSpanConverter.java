@@ -12,7 +12,7 @@
  * the License.
  */
 
-package io.jaegertracing.reporters.protocols;
+package io.jaegertracing.thrift.reporters.protocols;
 
 import io.jaegertracing.LogData;
 import io.jaegertracing.Reference;

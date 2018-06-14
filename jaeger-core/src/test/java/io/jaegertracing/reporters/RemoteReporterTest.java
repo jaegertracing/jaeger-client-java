@@ -29,6 +29,7 @@ import io.jaegertracing.metrics.InMemoryMetricsFactory;
 import io.jaegertracing.metrics.Metrics;
 import io.jaegertracing.reporters.RemoteReporter.Builder;
 import io.jaegertracing.samplers.ConstSampler;
+import io.jaegertracing.senders.InMemorySender;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -78,7 +79,7 @@ public class RemoteReporterTest {
         .pollInterval(1, TimeUnit.MILLISECONDS)
         .atMost(flushInterval + 20, TimeUnit.MILLISECONDS)
         .until(() -> sender.getReceived().size() > 0);
-    List<io.jaegertracing.thriftjava.Span> received = sender.getReceived();
+    List<Span> received = sender.getReceived();
 
     assertEquals(1, received.size());
   }
@@ -274,7 +275,7 @@ public class RemoteReporterTest {
     remoteReporter.flush();
     latch.await();
     assertEquals("Should have called the custom sender flush", 0, latch.getCount());
-    assertEquals("mySpan", sender.getReceived().get(0).operationName);
+    assertEquals("mySpan", sender.getReceived().get(0).getOperationName());
   }
 
   private Span newSpan() {

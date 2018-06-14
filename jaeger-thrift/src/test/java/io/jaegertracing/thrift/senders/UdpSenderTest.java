@@ -12,9 +12,8 @@
  * the License.
  */
 
-package io.jaegertracing.senders;
+package io.jaegertracing.thrift.senders;
 
-import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -24,13 +23,14 @@ import io.jaegertracing.exceptions.SenderException;
 import io.jaegertracing.metrics.InMemoryMetricsFactory;
 import io.jaegertracing.reporters.InMemoryReporter;
 import io.jaegertracing.reporters.Reporter;
-import io.jaegertracing.reporters.protocols.JaegerThriftSpanConverter;
 import io.jaegertracing.samplers.ConstSampler;
+import io.jaegertracing.thrift.reporters.protocols.JaegerThriftSpanConverter;
 import io.jaegertracing.thrift.reporters.protocols.TestTServer;
 import io.jaegertracing.thriftjava.Batch;
 import io.jaegertracing.thriftjava.Process;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
+import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -54,7 +54,7 @@ public class UdpSenderTest {
     t.start();
 
     // wait up to 5 seconds to get this thread started
-    await()
+    Awaitility.await()
         .with()
         .pollInterval(1, TimeUnit.MILLISECONDS)
         .atMost(5, TimeUnit.SECONDS)

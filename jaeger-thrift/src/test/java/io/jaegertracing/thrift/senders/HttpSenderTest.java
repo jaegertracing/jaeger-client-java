@@ -12,7 +12,7 @@
  * the License.
  */
 
-package io.jaegertracing.senders;
+package io.jaegertracing.thrift.senders;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -40,7 +40,7 @@ import org.junit.Test;
 /**
  * This class tests that HttpSender can be configured to make requests
  * and that exceptions are handled correctly.
- * See  {@link io.jaegertracing.crossdock.JerseyServer} for integration tests.
+ * See {@link io.jaegertracing.crossdock.JerseyServer} for integration tests.
  */
 public class HttpSenderTest extends JerseyTest {
 

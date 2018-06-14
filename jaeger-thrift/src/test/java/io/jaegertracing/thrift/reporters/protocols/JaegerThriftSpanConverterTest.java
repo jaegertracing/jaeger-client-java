@@ -12,7 +12,7 @@
  * the License.
  */
 
-package io.jaegertracing.reporters.protocols;
+package io.jaegertracing.thrift.reporters.protocols;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;

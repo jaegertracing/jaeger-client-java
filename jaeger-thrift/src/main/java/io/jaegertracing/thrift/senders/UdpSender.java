@@ -12,7 +12,7 @@
  * the License.
  */
 
-package io.jaegertracing.senders;
+package io.jaegertracing.thrift.senders;
 
 import io.jaegertracing.agent.thrift.Agent;
 import io.jaegertracing.exceptions.SenderException;

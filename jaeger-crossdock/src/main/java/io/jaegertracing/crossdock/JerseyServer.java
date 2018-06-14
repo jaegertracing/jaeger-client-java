@@ -23,9 +23,9 @@ import io.jaegertracing.crossdock.resources.behavior.http.EndToEndBehaviorResour
 import io.jaegertracing.crossdock.resources.behavior.http.TraceBehaviorResource;
 import io.jaegertracing.crossdock.resources.health.HealthResource;
 import io.jaegertracing.samplers.ConstSampler;
-import io.jaegertracing.senders.HttpSender;
 import io.jaegertracing.senders.Sender;
-import io.jaegertracing.senders.UdpSender;
+import io.jaegertracing.thrift.senders.HttpSender;
+import io.jaegertracing.thrift.senders.UdpSender;
 import io.opentracing.Tracer;
 import io.opentracing.contrib.jaxrs2.client.ClientTracingFeature;
 import io.opentracing.contrib.jaxrs2.server.ServerTracingDynamicFeature;

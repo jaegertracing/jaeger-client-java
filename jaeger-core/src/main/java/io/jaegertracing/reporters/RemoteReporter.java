@@ -19,7 +19,7 @@ import io.jaegertracing.exceptions.SenderException;
 import io.jaegertracing.metrics.InMemoryMetricsFactory;
 import io.jaegertracing.metrics.Metrics;
 import io.jaegertracing.senders.Sender;
-import io.jaegertracing.senders.UdpSender;
+import io.jaegertracing.senders.SenderResolver;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -217,7 +217,7 @@ public class RemoteReporter implements Reporter {
 
     public RemoteReporter build() {
       if (sender == null) {
-        sender = new UdpSender();
+        sender = SenderResolver.resolve();
       }
       if (metrics == null) {
         metrics = new Metrics(new InMemoryMetricsFactory());

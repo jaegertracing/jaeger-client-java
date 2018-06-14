@@ -31,9 +31,9 @@ import io.jaegertracing.samplers.ProbabilisticSampler;
 import io.jaegertracing.samplers.RateLimitingSampler;
 import io.jaegertracing.samplers.RemoteControlledSampler;
 import io.jaegertracing.samplers.Sampler;
-import io.jaegertracing.senders.HttpSender;
 import io.jaegertracing.senders.Sender;
-import io.jaegertracing.senders.UdpSender;
+import io.jaegertracing.senders.SenderFactory;
+import io.jaegertracing.senders.SenderResolver;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
 import java.text.NumberFormat;
@@ -136,6 +136,14 @@ public class Configuration {
    * standard Jaeger format. Valid values are jaeger and b3.
    */
   public static final String JAEGER_PROPAGATION = JAEGER_PREFIX + "PROPAGATION";
+
+  /**
+   * When there are multiple service providers for the {@link SenderFactory} available,
+   * this var is used to select a {@link SenderFactory} by matching it with
+   * {@link SenderFactory#getType()}.
+   *
+   */
+  public static final String JAEGER_SENDER_FACTORY = JAEGER_PREFIX + "SENDER_FACTORY";
 
   /**
    * The supported trace context propagation formats.
@@ -534,7 +542,7 @@ public class Configuration {
   }
 
   /**
-   * Holds the configuration related to the sender. A sender can be a {@link HttpSender} or {@link UdpSender}
+   * Holds the configuration related to the sender. A sender is resolved using a {@link SenderResolver}.
    *
    */
   @Getter
@@ -618,26 +626,7 @@ public class Configuration {
         return sender;
       }
 
-      if (null != endpoint && !endpoint.isEmpty()) {
-        HttpSender.Builder httpSenderBuilder = new HttpSender.Builder(endpoint);
-        if (null != authUsername && !authUsername.isEmpty()
-                && null != authPassword && !authPassword.isEmpty()) {
-          log.debug("Using HTTP Basic authentication with data from the environment variables.");
-          httpSenderBuilder.withAuth(authUsername, authPassword);
-        } else if (null != authToken && !authToken.isEmpty()) {
-          log.debug("Auth Token environment variable found.");
-          httpSenderBuilder.withAuth(authToken);
-        }
-
-        log.debug("Using the HTTP Sender to send spans directly to the endpoint.");
-        return httpSenderBuilder.build();
-      }
-
-      log.debug("Using the UDP Sender to send spans to the agent.");
-      return new UdpSender(
-              stringOrDefault(this.agentHost, UdpSender.DEFAULT_AGENT_UDP_HOST),
-              numberOrDefault(this.agentPort, UdpSender.DEFAULT_AGENT_UDP_COMPACT_PORT).intValue(),
-              0 /* max packet size */);
+      return SenderResolver.resolve(this);
     }
 
     /**

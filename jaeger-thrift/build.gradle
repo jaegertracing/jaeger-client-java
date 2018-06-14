@@ -1,14 +1,17 @@
 apply plugin: 'org.jruyi.thrift'
 apply plugin: 'com.github.johnrengelman.shadow'
 
-//This is in a separate subproject so that we can use 
-//standard javac instead of the error prone compiler
-description = 'Generated thrift code'
+description = 'Library to send data to Jaeger backend components via Thrift'
 
 dependencies {
+    compile project(':jaeger-core')
     compile group: 'org.apache.thrift', name: 'libthrift', version: apacheThriftVersion
+    compile group: 'com.squareup.okhttp3', name: 'okhttp', version: okhttpVersion
 
     testCompile group: 'junit', name: 'junit', version: junitVersion
+    testCompile group: 'com.tngtech.java', name: 'junit-dataprovider', version: junitDataProviderVersion
+    testCompile group: 'org.awaitility', name: 'awaitility', version: awaitilityVersion
+    testCompile group: 'org.glassfish.jersey.test-framework.providers', name: 'jersey-test-framework-provider-grizzly2', version: jerseyVersion
 
     signature 'org.codehaus.mojo.signature:java16:1.1@signature'
 }
@@ -40,7 +43,8 @@ checkstyleTest.enabled = false
 shadowJar {
     baseName = 'jaeger-thrift'
     relocate 'org.apache.thrift', 'org.shadow.apache.thrift92'
-    classifier 'thrift92'
+    relocate 'okhttp', 'jaeger.okhttp'
+    classifier 'shadow'
 }
 
 task testJar(type: Jar, dependsOn: testClasses) {

@@ -19,7 +19,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import io.jaegertracing.Configuration.CodecConfiguration;
 import io.jaegertracing.Configuration.ReporterConfiguration;
@@ -32,8 +31,6 @@ import io.jaegertracing.samplers.ConstSampler;
 import io.jaegertracing.samplers.ProbabilisticSampler;
 import io.jaegertracing.samplers.RateLimitingSampler;
 import io.jaegertracing.samplers.Sampler;
-import io.jaegertracing.senders.HttpSender;
-import io.jaegertracing.senders.Sender;
 import io.opentracing.noop.NoopTracerFactory;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.Format.Builtin;
@@ -42,7 +39,6 @@ import io.opentracing.propagation.TextMapExtractAdapter;
 import io.opentracing.propagation.TextMapInjectAdapter;
 import io.opentracing.util.GlobalTracer;
 import java.lang.reflect.Field;
-import java.net.SocketException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -172,27 +168,6 @@ public class ConfigurationTest {
   }
 
   @Test
-  public void testSenderWithEndpointWithoutAuthData() {
-    System.setProperty(Configuration.JAEGER_ENDPOINT, "https://jaeger-collector:14268/api/traces");
-    Sender sender = Configuration.SenderConfiguration.fromEnv().getSender();
-    assertTrue(sender instanceof HttpSender);
-  }
-
-  @Test
-  public void testSenderWithAgentDataFromEnv() {
-    System.setProperty(Configuration.JAEGER_AGENT_HOST, "jaeger-agent");
-    System.setProperty(Configuration.JAEGER_AGENT_PORT, "6832");
-    try {
-      Configuration.SenderConfiguration.fromEnv().getSender();
-      fail("expecting exception");
-    } catch (RuntimeException re) {
-      // we need to catch it here instead of using @Test(expected = ...) because the SocketException is
-      // wrapped into a runtime exception
-      assertTrue(re.getCause() instanceof SocketException);
-    }
-  }
-
-  @Test
   public void testSenderBackwardsCompatibilityGettingAgentHostAndPort() {
     System.setProperty(Configuration.JAEGER_AGENT_HOST, "jaeger-agent");
     System.setProperty(Configuration.JAEGER_AGENT_PORT, "6832");
@@ -200,32 +175,6 @@ public class ConfigurationTest {
         .getSenderConfiguration().getAgentHost());
     assertEquals(Integer.valueOf(6832), Configuration.ReporterConfiguration.fromEnv()
         .getSenderConfiguration().getAgentPort());
-  }
-
-  @Test
-  public void testSenderWithBasicAuthUsesHttpSender() {
-    Configuration.SenderConfiguration senderConfiguration = new Configuration.SenderConfiguration()
-            .withEndpoint("https://jaeger-collector:14268/api/traces")
-            .withAuthUsername("username")
-            .withAuthPassword("password");
-    assertTrue(senderConfiguration.getSender() instanceof HttpSender);
-  }
-
-  @Test
-  public void testSenderWithAuthTokenUsesHttpSender() {
-    Configuration.SenderConfiguration senderConfiguration = new Configuration.SenderConfiguration()
-            .withEndpoint("https://jaeger-collector:14268/api/traces")
-            .withAuthToken("authToken");
-    assertTrue(senderConfiguration.getSender() instanceof HttpSender);
-  }
-
-  @Test
-  public void testSenderWithAllPropertiesReturnsHttpSender() {
-    System.setProperty(Configuration.JAEGER_ENDPOINT, "https://jaeger-collector:14268/api/traces");
-    System.setProperty(Configuration.JAEGER_AGENT_HOST, "jaeger-agent");
-    System.setProperty(Configuration.JAEGER_AGENT_PORT, "6832");
-
-    assertTrue(Configuration.SenderConfiguration.fromEnv().getSender() instanceof HttpSender);
   }
 
   @Test
