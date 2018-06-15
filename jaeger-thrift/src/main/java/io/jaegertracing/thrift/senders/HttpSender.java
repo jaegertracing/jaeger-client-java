@@ -75,9 +75,9 @@ public class HttpSender extends ThriftSender {
       try {
         responseBody = response.body() != null ? response.body().string() : "null";
       } catch (IOException e) {
-          responseBody = String.format("Unable to read response: %s", e.getMessage());
+        responseBody = String.format("Unable to read response: %s", e.getMessage());
 
-          log.error(responseBody, e);
+        log.error(responseBody, e);
       }
 
       String exceptionMessage = String.format("Could not send %d spans, response %d: %s",
