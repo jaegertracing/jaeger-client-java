@@ -21,6 +21,7 @@ import io.jaegertracing.thriftjava.Span;
 import java.io.IOException;
 import java.util.List;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import okhttp3.Credentials;
 import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
@@ -31,6 +32,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 @ToString(exclude = {"httpClient", "requestBuilder"})
+@Slf4j
 public class HttpSender extends ThriftSender {
   private static final String HTTP_COLLECTOR_JAEGER_THRIFT_FORMAT_PARAM = "format=jaeger.thrift";
   private static final int ONE_MB_IN_BYTES = 1048576;
@@ -73,7 +75,9 @@ public class HttpSender extends ThriftSender {
       try {
         responseBody = response.body() != null ? response.body().string() : "null";
       } catch (IOException e) {
-        responseBody = "unable to read response";
+          responseBody = String.format("Unable to read response: %s", e.getMessage());
+
+          log.error(responseBody, e);
       }
 
       String exceptionMessage = String.format("Could not send %d spans, response %d: %s",
