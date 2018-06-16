@@ -169,6 +169,8 @@ public class RemoteReporter implements Reporter {
           try {
             command.execute();
           } catch (SenderException e) {
+            log.error("Sender exception error: ", e);
+            
             metrics.reporterFailure.inc(e.getDroppedSpanCount());
           }
         } catch (InterruptedException e) {
