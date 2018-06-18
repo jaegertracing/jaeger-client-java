@@ -37,7 +37,7 @@ import org.junit.Test;
 public class B3TextMapCodecTest {
   static final byte SAMPLED = 1;
 
-  B3TextMapCodec b3Codec = new B3TextMapCodec();
+  B3TextMapCodec b3Codec = new B3TextMapCodec.Builder().build();
 
   @Test
   public void downgrades128BitTraceIdToLower64Bits() throws Exception {

@@ -421,8 +421,8 @@ public class Configuration {
                 addCodec(codecs, Format.Builtin.TEXT_MAP, new TextMapCodec(false));
                 break;
               case B3:
-                addCodec(codecs, Format.Builtin.HTTP_HEADERS, new B3TextMapCodec());
-                addCodec(codecs, Format.Builtin.TEXT_MAP, new B3TextMapCodec());
+                addCodec(codecs, Format.Builtin.HTTP_HEADERS, new B3TextMapCodec.Builder().build());
+                addCodec(codecs, Format.Builtin.TEXT_MAP, new B3TextMapCodec.Builder().build());
                 break;
               default:
                 log.error("Unhandled propagation format '" + format + "'");

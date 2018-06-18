@@ -368,8 +368,9 @@ public class ConfigurationTest {
     assertInjectExtract(configuration.getTracer(), Builtin.HTTP_HEADERS, spanContext, false);
   }
 
+  @SuppressWarnings("unchecked")
   private <C> void assertInjectExtract(io.opentracing.Tracer tracer, Format<C> format, SpanContext contextToInject,
-      boolean injectMapIsEmpty) {
+                                       boolean injectMapIsEmpty) {
     HashMap<String, String> injectMap = new HashMap<>();
     tracer.inject(contextToInject, format, (C)new TextMapInjectAdapter(injectMap));
     assertEquals(injectMapIsEmpty, injectMap.isEmpty());
