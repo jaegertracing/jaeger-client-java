@@ -28,6 +28,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import zipkin.junit.ZipkinRule;
 import zipkin2.codec.Encoding;
+import zipkin2.reporter.AsyncReporter;
 import zipkin2.reporter.Sender;
 import zipkin2.reporter.urlconnection.URLConnectionSender;
 
@@ -36,7 +37,7 @@ public class ZipkinV2ReporterTest {
   @Rule public ZipkinRule zipkinRule = new ZipkinRule();
 
   Sender sender;
-  zipkin2.reporter.AsyncReporter zipkinReporter;
+  AsyncReporter<zipkin2.Span> zipkinReporter;
   Reporter reporter;
   Tracer tracer;
 

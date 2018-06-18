@@ -27,7 +27,7 @@ import org.junit.runner.RunWith;
 @RunWith(DataProviderRunner.class)
 public class B3TextMapCodecResiliencyTest {
 
-  private B3TextMapCodec sut = new B3TextMapCodec();
+  private B3TextMapCodec sut = new B3TextMapCodec.Builder().build();
 
   @DataProvider
   public static Object[][] maliciousInputs() {
