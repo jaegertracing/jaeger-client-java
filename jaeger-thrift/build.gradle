@@ -42,8 +42,11 @@ checkstyleTest.enabled = false
 
 shadowJar {
     baseName = 'jaeger-thrift'
-    relocate 'org.apache.thrift', 'org.shadow.apache.thrift92'
-    relocate 'okhttp', 'jaeger.okhttp'
+    relocate 'com.google.gson'  , 'jaeger.com.google.gson'
+    relocate 'com.twitter'      , 'jaeger.com.twitter'
+    relocate 'okhttp'           , 'jaeger.okhttp'
+    relocate 'okio'             , 'jaeger.okio'
+    relocate 'org.apache'       , 'jaeger.org.apache'
     classifier 'shadow'
 }
 
