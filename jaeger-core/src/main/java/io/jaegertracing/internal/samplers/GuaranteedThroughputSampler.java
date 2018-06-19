@@ -18,8 +18,6 @@ import io.jaegertracing.internal.Constants;
 import io.jaegertracing.spi.Sampler;
 import java.util.HashMap;
 import java.util.Map;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
@@ -32,7 +30,6 @@ import lombok.ToString;
  */
 @ToString
 @EqualsAndHashCode
-@AllArgsConstructor (access = AccessLevel.PACKAGE) // Visible for testing
 public final class GuaranteedThroughputSampler implements Sampler {
   public static final String TYPE = "lowerbound";
 
@@ -40,7 +37,7 @@ public final class GuaranteedThroughputSampler implements Sampler {
   private RateLimitingSampler lowerBoundSampler;
   private Map<String, Object> tags;
 
-  GuaranteedThroughputSampler(double samplingRate, double lowerBound) {
+  public GuaranteedThroughputSampler(double samplingRate, double lowerBound) {
     tags = new HashMap<String, Object>();
     tags.put(Constants.SAMPLER_TYPE_TAG_KEY, TYPE);
     tags.put(Constants.SAMPLER_PARAM_TAG_KEY, samplingRate);
