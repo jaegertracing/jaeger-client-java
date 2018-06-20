@@ -1,3 +1,5 @@
+[![Java Docs][javadoc-badge]][javadoc]
+
 # Core
 This module provides core tracing functionality for custom instrumentation. 
 
@@ -135,3 +137,6 @@ Tracer tracer = new Tracer.Builder(serviceName)
 ```
 
 See also: [opentracing-java](https://github.com/opentracing/opentracing-java)
+
+[javadoc]: http://javadoc.io/doc/io.jaegertracing/jaeger-core
+[javadoc-badge]: http://javadoc.io/badge/io.jaegertracing/jaeger-core.svg

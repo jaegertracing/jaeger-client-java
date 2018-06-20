@@ -19,7 +19,7 @@ Please see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Click through for more detailed docs on specific modules.
 
- * [jaeger-core](./jaeger-core): the core implementation of the OpenTracing API
+ * [jaeger-core](./jaeger-core): the core implementation of the OpenTracing API [![Java Docs][javadoc-badge]][javadoc]
  * [jaeger-thrift](./jaeger-thrift): the main dependency to include in your project, sending data to the backend using Thrift (default)
  
 ## Add-on Modules
@@ -128,3 +128,5 @@ This allows using Jaeger UI to find the trace by this tag.
 [sonatype-snapshot-instructions]: http://stackoverflow.com/questions/7715321/how-to-download-snapshot-version-from-maven-snapshot-repository
 [tracerresolver]: https://github.com/opentracing-contrib/java-tracerresolver
 [legacy-client-java]: https://github.com/jaegertracing/legacy-client-java
+[javadoc]: http://javadoc.io/doc/io.jaegertracing/jaeger-core
+[javadoc-badge]: http://javadoc.io/badge/io.jaegertracing/jaeger-core.svg
