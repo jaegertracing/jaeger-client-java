@@ -5,13 +5,18 @@ description = 'Library to send data to Jaeger backend components via Thrift'
 
 dependencies {
     compile project(':jaeger-core')
-    compile group: 'org.apache.thrift', name: 'libthrift', version: apacheThriftVersion
-    compile group: 'com.squareup.okhttp3', name: 'okhttp', version: okhttpVersion
+
+    compileOnly group: 'org.apache.thrift', name: 'libthrift', version: apacheThriftVersion
+    compileOnly group: 'com.squareup.okhttp3', name: 'okhttp', version: okhttpVersion
 
     testCompile group: 'junit', name: 'junit', version: junitVersion
     testCompile group: 'com.tngtech.java', name: 'junit-dataprovider', version: junitDataProviderVersion
     testCompile group: 'org.awaitility', name: 'awaitility', version: awaitilityVersion
     testCompile group: 'org.glassfish.jersey.test-framework.providers', name: 'jersey-test-framework-provider-grizzly2', version: jerseyVersion
+
+    // compileOnly dependencies aren't visible to tests
+    testCompile group: 'com.squareup.okhttp3', name: 'okhttp', version: okhttpVersion
+    testCompile group: 'org.apache.thrift', name: 'libthrift', version: apacheThriftVersion
 
     signature 'org.codehaus.mojo.signature:java16:1.1@signature'
 }
@@ -40,6 +45,10 @@ licenseMain.enabled = false
 checkstyleMain.enabled = false
 checkstyleTest.enabled = false
 
+jar {
+    classifier 'no-shadow'
+}
+
 shadowJar {
     baseName = 'jaeger-thrift'
     relocate 'com.google.gson'  , 'jaeger.com.google.gson'
@@ -47,7 +56,8 @@ shadowJar {
     relocate 'okhttp'           , 'jaeger.okhttp'
     relocate 'okio'             , 'jaeger.okio'
     relocate 'org.apache'       , 'jaeger.org.apache'
-    classifier 'shadow'
+    classifier null
+    configurations = [project.configurations.compileOnly]
 }
 
 task testJar(type: Jar, dependsOn: testClasses) {

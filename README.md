@@ -3,12 +3,13 @@
 # Jaeger's Tracing Instrumentation Library for Java
 
  * Intended to be used with [Jaeger](https://github.com/jaegertracing/jaeger) backend, but can also be configured to send traces to Zipkin.
- * Implement [Java OpenTracing API](https://github.com/opentracing/opentracing-java).
+ * Implements [OpenTracing Java API](https://github.com/opentracing/opentracing-java).
  * Supports Java 1.6 and above
 
-#### Package rename to io.jaegertracing
-Groupid `com.uber.jaeger` has been deprecated and moved to a different [repository](https://github.com/jaegertracing/legacy-client-java).
-Please switch to `io.jaegertracing`. Old groupid will be maintained only for bug fixes.
+#### Package rename to `io.jaegertracing`
+
+The group ID `com.uber.jaeger` has been deprecated and moved to a different [repository][legacy-client-java].
+Please switch to `io.jaegertracing`, as the old group ID will be maintained only for bug fixes.
 
 # Contributing and Developing
 
@@ -19,51 +20,35 @@ Please see [CONTRIBUTING.md](CONTRIBUTING.md).
 Click through for more detailed docs on specific modules.
 
  * [jaeger-core](./jaeger-core): the core implementation of the OpenTracing API
+ * [jaeger-thrift](./jaeger-thrift): the main dependency to include in your project, sending data to the backend using Thrift (default)
  
 ## Add-on Modules
 
- * [jaeger-zipkin](./jaeger-zipkin): compatibility layer for using Jaeger tracer as Zipkin-compatible implementation
- * [jaeger-micrometer](./jaeger-micrometer): a metrics provider, to report internal Jaeger metrics to third-party backends, such as Prometheus
- * [jaeger-tracerresolver](./jaeger-tracerresolver): a tracer resolver for Jaeger tracer.
+ * [jaeger-zipkin](./jaeger-zipkin): compatibility layer for using the Jaeger Tracer to Zipkin-compatible backends
+ * [jaeger-micrometer](./jaeger-micrometer): a metrics provider, to report internal Jaeger Client metrics to third-party backends, such as Prometheus
+ * [jaeger-tracerresolver](./jaeger-tracerresolver): an [OpenTracing `TracingResolver`][tracerresolver] for the Jaeger Tracer.
 
 ## Importing Dependencies
-All artifacts are published to Maven Central. 
-Snapshot artifacts are also published to
-[Sonatype](https://oss.sonatype.org/content/repositories/snapshots/io/jaegertracing/).
-Follow these [instructions](http://stackoverflow.com/questions/7715321/how-to-download-snapshot-version-from-maven-snapshot-repository)
-to add the snapshot repository to your build system. 
+All artifacts are published to Maven Central. Snapshot artifacts are also published to [Sonatype][sonatype].
+Follow these [instructions][sonatype-snapshot-instructions] to add the snapshot repository to your build system.
 
-Add the required dependencies to your project. Usually, this would only be the add-ons you require.
 **Please use the latest version:** [![Released Version][maven-img]][maven]
 
-For e.g, to depend on the core jaeger library, you'd include the following
+In the usual case, you just need to include the dependency with the concrete components sending data to the backend. Currently,
+the only such dependency is `jaeger-thrift`. It transitively brings the `jaeger-core` dependency.
 ```xml
 <dependency>
     <groupId>io.jaegertracing</groupId>
-    <artifactId>jaeger-core</artifactId>
+    <artifactId>jaeger-thrift</artifactId>
     <version>$jaegerVersion</version>
 </dependency>
 ```
 
 ### Thrift version conflicts
-Jaeger client uses `org.apache.thrift:libthrift:0.9.2`. If your project depends on a different
-version of `libthrift`, it is recommended that you use the shaded `jaeger-thrift` jar we publish
-which packages it's own `libthrift`.
-
-To depend on the shaded jar, add the following to your maven build.
-Note that this is only supported for a jaeger version >= 0.15.0
-```xml
-<dependencyManagement>
-  <dependencies>
-    <dependency>
-      <groupId>io.jaegertracing</groupId>
-      <artifactId>jaeger-thrift</artifactId>
-      <classifier>thrift92</classifier>
-      <version>$jaegerVersion</version>
-    </dependency>
-  </dependencies>
-</dependencyManagement>
-```
+The Jaeger Java Client uses `org.apache.thrift:libthrift:0.11.0`. By default, declaring a dependency on the
+`jaeger-thrift` module will bring a shaded version of Thrift (and others), making it safe to use your own versions of
+such dependencies. A non-shaded version of the dependency is available with the classifier `no-shadow`, but the
+transitive dependencies (Thrift included) will have to be added manually to your project.
 
 ## Instantiating the Tracer
 
@@ -131,7 +116,6 @@ This allows using Jaeger UI to find the trace by this tag.
 [Apache 2.0 License](./LICENSE).
 
 
-
 [ci-img]: https://travis-ci.org/jaegertracing/jaeger-client-java.svg?branch=master
 [ci]: https://travis-ci.org/jaegertracing/jaeger-client-java
 [cov-img]: https://codecov.io/gh/jaegertracing/jaeger-client-java/branch/master/graph/badge.svg
@@ -140,3 +124,7 @@ This allows using Jaeger UI to find the trace by this tag.
 [maven]: http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22io.jaegertracing%22
 [fossa-img]: https://app.fossa.io/api/projects/git%2Bgithub.com%2Fjaegertracing%2Fjaeger-client-java.svg?type=shield
 [fossa]: https://app.fossa.io/projects/git%2Bgithub.com%2Fjaegertracing%2Fjaeger-client-java?ref=badge_shield
+[sonatype]: https://oss.sonatype.org/content/repositories/snapshots/io/jaegertracing/
+[sonatype-snapshot-instructions]: http://stackoverflow.com/questions/7715321/how-to-download-snapshot-version-from-maven-snapshot-repository
+[tracerresolver]: https://github.com/opentracing-contrib/java-tracerresolver
+[legacy-client-java]: https://github.com/jaegertracing/legacy-client-java

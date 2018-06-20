@@ -10,6 +10,9 @@ This module provides core tracing functionality for custom instrumentation.
 </dependency>
 ```
 
+Note that you'll most likely want to include a higher-level dependency that includes components
+sending data to a backend, like [`io.jaegertracing:jaeger-thrift`](../jaeger-thrift).
+
 ## Usage
 
 ### Production
@@ -20,8 +23,7 @@ For production it is recommended to use both classes with default values.
 `Tracer.Builder` example:
 
 ```java
-Tracer tracer = new Tracer.Builder("myServiceName")
-  .build()
+Tracer tracer = new Tracer.Builder("myServiceName").build()
 ```
 
 `Configuration` holds only primitive values and it is designed to be used with configuration
@@ -37,10 +39,10 @@ Tracer tracer = config.getTracer();
 The `config` objects lazily builds and configures Jaeger Tracer. Multiple calls to `getTracer()` return the same instance.
 
 ##### B3 propagation
-Jaeger tracer can also work in the environment where B3 propagation is used. This is mostly related 
+Jaeger Tracer can also work in the environment where B3 propagation is used. This is mostly related
 to systems instrumented with Zipkin. Once you register `B3TextMapCodec`, Jaeger can join traces 
 started by other Zipkin instrumented applications. This includes reading headers 
-like "X-B3-TraceId". Jaeger B3 implementation automatically propagates baggage and by default it
+like `X-B3-TraceId`. Jaeger B3 implementation automatically propagates baggage and by default it
 uses `baggage-` prefix.
 
 Example configuration:
