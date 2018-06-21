@@ -85,7 +85,7 @@ public class InMemoryMetricsFactoryTest {
   }
 
   @Test
-  public void gaugeValueIsIncreased() {
+  public void gaugeValueIsUpdated() {
     Map<String, String> tags = Collections.singletonMap("foo", "bar");
 
     InMemoryMetricsFactory inMemoryMetricsFactory = new InMemoryMetricsFactory();
@@ -93,8 +93,10 @@ public class InMemoryMetricsFactoryTest {
     assertEquals(0, inMemoryMetricsFactory.getGauge("thegauge", tags));
 
     gauge.update(1);
-
     assertEquals(1, inMemoryMetricsFactory.getGauge("thegauge", tags));
+
+    gauge.update(2);
+    assertEquals(2, inMemoryMetricsFactory.getGauge("thegauge", tags));
   }
 
   @Test
