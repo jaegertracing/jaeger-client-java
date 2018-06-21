@@ -14,15 +14,16 @@
 
 package io.jaegertracing.zipkin;
 
-import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
+import io.jaegertracing.Constants;
 import io.jaegertracing.Span;
 import io.jaegertracing.SpanContext;
 import io.jaegertracing.Tracer;
@@ -105,6 +106,40 @@ public class V2SpanConverterTest {
         { SpanType.CHILD, childTags },
         { SpanType.RPC_SERVER, rpcTags },
     };
+  }
+
+  @Test
+  public void testAddsTracerIpAsLocalIpV4() {
+    tracer =
+        new Tracer.Builder("test-service-name")
+            .withReporter(new InMemoryReporter())
+            .withSampler(new ConstSampler(true))
+            .withZipkinSharedRpcSpan()
+            .withTag(Constants.TRACER_IP_TAG_KEY, "1.2.3.4")
+            .build();
+
+    Span span = (Span) tracer.buildSpan("operation-name").start();
+
+    zipkin2.Span zipkinSpan = V2SpanConverter.convertSpan(span);
+
+    assertEquals(zipkinSpan.localEndpoint().ipv4(), "1.2.3.4");
+  }
+
+  @Test
+  public void testDoesntAddUnknownTracerIpAsLocalIpV4() {
+    tracer =
+        new Tracer.Builder("test-service-name")
+            .withReporter(new InMemoryReporter())
+            .withSampler(new ConstSampler(true))
+            .withZipkinSharedRpcSpan()
+            .withTag(Constants.TRACER_IP_TAG_KEY, "")
+            .build();
+
+    Span span = (Span) tracer.buildSpan("operation-name").start();
+
+    zipkin2.Span zipkinSpan = V2SpanConverter.convertSpan(span);
+
+    assertNull(zipkinSpan.localEndpoint().ipv4());
   }
 
   @Test

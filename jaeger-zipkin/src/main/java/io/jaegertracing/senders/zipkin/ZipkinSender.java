@@ -14,6 +14,11 @@
 
 package io.jaegertracing.senders.zipkin;
 
+import static com.twitter.zipkin.thriftjava.zipkincoreConstants.CLIENT_RECV;
+import static com.twitter.zipkin.thriftjava.zipkincoreConstants.CLIENT_SEND;
+import static com.twitter.zipkin.thriftjava.zipkincoreConstants.SERVER_RECV;
+import static com.twitter.zipkin.thriftjava.zipkincoreConstants.SERVER_SEND;
+
 import com.twitter.zipkin.thriftjava.Annotation;
 import com.twitter.zipkin.thriftjava.BinaryAnnotation;
 import com.twitter.zipkin.thriftjava.Endpoint;
@@ -23,13 +28,14 @@ import io.jaegertracing.exceptions.SenderException;
 import io.jaegertracing.senders.Sender;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.ToString;
-import zipkin.Constants;
-import zipkin.reporter.Encoding;
-import zipkin.reporter.internal.AwaitableCallback;
-import zipkin.reporter.urlconnection.URLConnectionSender;
+import zipkin2.codec.Encoding;
+import zipkin2.reporter.urlconnection.URLConnectionSender;
 
 /**
  * This sends (TBinaryProtocol big-endian) encoded spans to a Zipkin Collector (usually a
@@ -48,8 +54,10 @@ import zipkin.reporter.urlconnection.URLConnectionSender;
  * <p>
  * See https://github.com/openzipkin/zipkin/tree/master/zipkin-server
  */
-@ToString(exclude = "spanBuffer")
+@ToString(exclude = {"spanBuffer", "encoder"})
 public final class ZipkinSender implements Sender {
+  static final Set<String> CORE_ANNOTATIONS = new LinkedHashSet<String>(
+      Arrays.asList(CLIENT_SEND, CLIENT_RECV, SERVER_SEND, SERVER_RECV));
 
   /**
    * @param endpoint The POST URL for zipkin's <a href="http://zipkin.io/zipkin-api/#/">v1 api</a>,
@@ -57,7 +65,8 @@ public final class ZipkinSender implements Sender {
    * @return new sender
    */
   public static ZipkinSender create(String endpoint) {
-    return new ZipkinSender(URLConnectionSender.create(endpoint));
+    return new ZipkinSender(
+        URLConnectionSender.newBuilder().encoding(Encoding.THRIFT).endpoint(endpoint).build());
   }
 
   /**
@@ -65,24 +74,32 @@ public final class ZipkinSender implements Sender {
    * {@link Encoding#THRIFT thrift encoding}.
    *
    * <p>
-   * Ex. for Kafka ("io.zipkin.reporter:zipkin-sender-kafka08")
+   * Ex. for Kafka ("io.zipkin2.reporter:zipkin-sender-kafka11")
    *
    * <pre>{@code
-   * sender = ZipkinSender.create(KafkaSender.create("192.168.99.100:9092"));
+   * sender = ZipkinSender.create(
+   *     KafkaSender.newBuilder()
+   *                .encoding(Encoding.THRIFT)
+   *                .bootstrapServers("192.168.99.100:9092")
+   *                .build()
+   * );
    * }</pre>
    *
    * @param delegate indicates an alternate sender library than {@link URLConnectionSender}
    * @return new sender
    */
-  public static ZipkinSender create(zipkin.reporter.Sender delegate) {
+  public static ZipkinSender create(zipkin2.reporter.Sender delegate) {
+    if (delegate.encoding() != Encoding.THRIFT) {
+      throw new IllegalArgumentException("Sender.encoding != THRIFT");
+    }
     return new ZipkinSender(delegate);
   }
 
   final ThriftSpanEncoder encoder = new ThriftSpanEncoder();
-  final zipkin.reporter.Sender delegate;
+  final zipkin2.reporter.Sender delegate;
   final List<byte[]> spanBuffer;
 
-  ZipkinSender(zipkin.reporter.Sender delegate) {
+  ZipkinSender(zipkin2.reporter.Sender delegate) {
     this.delegate = delegate;
     this.spanBuffer = new ArrayList<byte[]>();
   }
@@ -136,12 +153,12 @@ public final class ZipkinSender implements Sender {
       return 0;
     }
 
-    AwaitableCallback captor = new AwaitableCallback();
     int n = spanBuffer.size();
     try {
-      delegate.sendSpans(spanBuffer, captor);
-      captor.await();
+      delegate.sendSpans(spanBuffer).execute();
     } catch (RuntimeException e) {
+      throw new SenderException("Failed to flush spans.", e, n);
+    } catch (IOException e) {
       throw new SenderException("Failed to flush spans.", e, n);
     } finally {
       spanBuffer.clear();
@@ -162,7 +179,7 @@ public final class ZipkinSender implements Sender {
 
   // serviceName/host is needed on annotations so zipkin can query
   // see https://github.com/jaegertracing/jaeger-client-java/pull/75 for more info
-  Span backFillHostOnAnnotations(Span span) {
+  static Span backFillHostOnAnnotations(Span span) {
     Endpoint host = getServiceEndpoint(span);
 
     if (host != null) {
@@ -182,9 +199,9 @@ public final class ZipkinSender implements Sender {
     return span;
   }
 
-  private Endpoint getServiceEndpoint(Span span) {
+  static Endpoint getServiceEndpoint(Span span) {
     for (Annotation annotation : span.getAnnotations()) {
-      if (Constants.CORE_ANNOTATIONS.contains(annotation.getValue()) && annotation.isSetHost()) {
+      if (CORE_ANNOTATIONS.contains(annotation.getValue()) && annotation.isSetHost()) {
         return annotation.getHost();
       }
     }

@@ -15,6 +15,7 @@
 package io.jaegertracing.senders.zipkin;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 import io.jaegertracing.Span;
@@ -31,15 +32,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import org.apache.thrift.transport.AutoExpandingBufferWriteTransport;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import zipkin.Annotation;
-import zipkin.BinaryAnnotation;
-import zipkin.junit.ZipkinRule;
-import zipkin.reporter.urlconnection.URLConnectionSender;
+import zipkin2.Annotation;
+import zipkin2.codec.Encoding;
+import zipkin2.internal.HexCodec;
+import zipkin2.junit.ZipkinRule;
+import zipkin2.reporter.urlconnection.URLConnectionSender;
 
 public class ZipkinSenderTest {
   final int messageMaxBytes = 1000;
@@ -52,7 +53,7 @@ public class ZipkinSenderTest {
   Tracer tracer;
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     reporter = new InMemoryReporter();
     tracer = new Tracer.Builder("test-sender")
             .withReporter(reporter)
@@ -69,8 +70,14 @@ public class ZipkinSenderTest {
     reporter.close();
   }
 
+  /** This sender uses jaeger thrifts, so json (default for v2 senders) isn't ok */
+  @Test(expected = IllegalArgumentException.class)
+  public void testJsonNotAllowed() {
+    ZipkinSender.create(URLConnectionSender.create("http://localhost:9411/api/v2/spans"));
+  }
+
   @Test
-  public void testAppendSpanTooLarge() throws Exception {
+  public void testAppendSpanTooLarge() {
     Span jaegerSpan = (Span) tracer.buildSpan("raza").start();
     String msg = "";
     for (int i = 0; i < 1001; i++) {
@@ -88,9 +95,6 @@ public class ZipkinSenderTest {
 
   @Test
   public void testAppend() throws Exception {
-    // find size of the initial span
-    AutoExpandingBufferWriteTransport memoryTransport =
-        new AutoExpandingBufferWriteTransport(messageMaxBytes, 2);
     Span jaegerSpan = (Span) tracer.buildSpan("raza").start();
     com.twitter.zipkin.thriftjava.Span span = ThriftSpanConverter.convertSpan(jaegerSpan);
 
@@ -123,23 +127,19 @@ public class ZipkinSenderTest {
     assertEquals(0, sender.append(expectedSpan));
     assertEquals(1, sender.flush());
 
-    List<List<zipkin.Span>> traces = zipkinRule.getTraces();
+    List<List<zipkin2.Span>> traces = zipkinRule.getTraces();
     assertEquals(traces.size(), 1);
     assertEquals(traces.get(0).size(), 1);
 
-    zipkin.Span actualSpan = traces.get(0).get(0);
+    zipkin2.Span actualSpan = traces.get(0).get(0);
     SpanContext context = expectedSpan.context();
 
-    assertEquals(context.getTraceId(), actualSpan.traceId);
-    assertEquals(context.getSpanId(), actualSpan.id);
-    assertEquals(context.getParentId(), (long) actualSpan.parentId);
-    assertEquals(expectedSpan.getOperationName(), actualSpan.name);
-    for (BinaryAnnotation binaryAnnotation : actualSpan.binaryAnnotations) {
-      assertEquals(tracer.getServiceName(), binaryAnnotation.endpoint.serviceName);
-    }
-    for (Annotation annotation : actualSpan.annotations) {
-      assertEquals(tracer.getServiceName(), annotation.endpoint.serviceName);
-    }
+    assertEquals(context.getTraceId(), HexCodec.lowerHexToUnsignedLong(actualSpan.traceId()));
+    assertEquals(context.getSpanId(), HexCodec.lowerHexToUnsignedLong(actualSpan.id()));
+    assertEquals(context.getParentId(), 0L);
+    assertNull(actualSpan.parentId());
+    assertEquals(expectedSpan.getOperationName(), actualSpan.name());
+    assertEquals(tracer.getServiceName(), actualSpan.localServiceName());
   }
 
   @Test
@@ -159,17 +159,17 @@ public class ZipkinSenderTest {
     sender.append(span);
     sender.flush();
 
-    List<List<zipkin.Span>> traces = zipkinRule.getTraces();
+    List<List<zipkin2.Span>> traces = zipkinRule.getTraces();
     assertEquals(1, traces.size());
     assertEquals(1, traces.get(0).size());
 
-    zipkin.Span zipkinSpan = traces.get(0).get(0);
-    assertEquals(2, zipkinSpan.annotations.size());
+    zipkin2.Span zipkinSpan = traces.get(0).get(0);
+    assertEquals(2, zipkinSpan.annotations().size());
 
     // ignore order by using set
     Set<String> annotationValues = new HashSet<String>();
-    for (Annotation annotation : zipkinSpan.annotations) {
-      annotationValues.add(annotation.value);
+    for (Annotation annotation : zipkinSpan.annotations()) {
+      annotationValues.add(annotation.value());
     }
 
     Set<String> expectedValues = new HashSet<String>();
@@ -181,7 +181,8 @@ public class ZipkinSenderTest {
 
   private ZipkinSender newSender(int messageMaxBytes) {
     return ZipkinSender.create(
-        URLConnectionSender.builder()
+        URLConnectionSender.newBuilder()
+            .encoding(Encoding.THRIFT)
             .messageMaxBytes(messageMaxBytes)
             .endpoint(zipkinRule.httpUrl() + "/api/v1/spans")
             .build());

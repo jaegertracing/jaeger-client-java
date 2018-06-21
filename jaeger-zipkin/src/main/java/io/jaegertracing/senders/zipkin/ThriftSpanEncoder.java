@@ -16,17 +16,22 @@ package io.jaegertracing.senders.zipkin;
 
 import com.twitter.zipkin.thriftjava.Span;
 import java.io.ByteArrayOutputStream;
+import java.util.List;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TIOStreamTransport;
-import zipkin.reporter.Encoder;
-import zipkin.reporter.Encoding;
+import zipkin2.codec.BytesEncoder;
+import zipkin2.codec.Encoding;
 
-final class ThriftSpanEncoder implements Encoder<Span> {
+final class ThriftSpanEncoder implements BytesEncoder<Span> {
 
   @Override
   public Encoding encoding() {
     return Encoding.THRIFT;
+  }
+
+  @Override public int sizeInBytes(Span input) {
+    throw new UnsupportedOperationException("unused by internal code");
   }
 
   @Override
@@ -39,6 +44,10 @@ final class ThriftSpanEncoder implements Encoder<Span> {
     } catch (TException e) {
       throw new AssertionError(e);
     }
+  }
+
+  @Override public byte[] encodeList(List<Span> input) {
+    throw new UnsupportedOperationException("unused by internal code");
   }
 
   static class ReusableTBinaryProtocol extends TBinaryProtocol {
