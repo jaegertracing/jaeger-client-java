@@ -62,7 +62,7 @@ public class InMemoryMetricsFactory implements MetricsFactory {
     return new Gauge() {
       @Override
       public void update(long amount) {
-        value.addAndGet(amount);
+        value.getAndSet(amount);
       }
     };
   }
