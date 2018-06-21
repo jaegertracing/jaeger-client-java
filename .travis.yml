@@ -1,8 +1,10 @@
 sudo: required
 language: java
 dist: trusty
+
 services:
 - docker
+
 env:
   global:
   - DOCKER_VERSION=1.11.1-0~trusty
@@ -20,18 +22,24 @@ env:
   - secure: XGYGC10lwUY0n9fYW49iCEeFaN06/m/yAJOAwJgYXORxcqsr1mEBwpvgnulWBk++J+xu+cgtHdqkA46+GcCV+xAz7jMnRv9kef9Xqz+4z4hNmsgl62IyL059kXVOG2i1UTkTIdYMoCQAnl0UGH9blZjx1lL9bOzbuCDvxi9IjNqUuWD53NySTOkKP15ScZBDi0nA0yOPTyE5SS2X7ymPy7brd7DzIvhIj0MqWt7LxzrmzWKKou5CSIe4Tme+3wh7VI9cOPz4HI1N9HNGz913Yam+YpNi3avkSXXvfxFirivwTbguNKNCWynsse22xCkbdussCQkJyGheyWJnIGfP79bwBzk5wHiao5pVPDSdgwhLQh20z8XrHeAKUhv/f8C1V1TeY09iXxxTfEWgO4b59mlAlNYdUjmgkrWPJWJUQgRqWW8q+yuwsvLMt/QFN0SRUOWqdPAUIEKjzcWU1mZShceD5QRe6KJXQgneX+RxqZk1GzvKUtwTBCkKFVMU8wykL6kxxf9H/iyggruKSNwSzia6suMTyM6INRubrQ1/a0GO650g1uFd07uZlH0I+DXQJYg5FRQJDnT8WBQvhstf6hfIkvNpdBVWIVtXH1nFoJfdyOLMfZDcZf4zuguN4RQR1JId7I8BDsoEbyvsaZlE1yKRw05CkfmQZk2qgHmJjUg=
   # SIGNING_KEY_PASSPHRASE
   - secure: D+ELI5AuDmE+9lul7t/wDXZPk4dec94B8n0ShSFRSpmiclJiabdwUk8zI74cEWdBoheGeYTkrl1I/5l+XlvLhZYxUS0CWkxtLUcd8n3SE+J+VjiyAbWUBaguMJpKWo/9+W2Jm5v79oY96kEeGvyW0e8PnABdRTnvB7aNz6oRe/EAUQmYHepyzP4s33rgdcN522eu81Z2Cxkcjm1nh+JV1v2Y7iRxXzsoorMLxp1aYO+GV30rHMDb70A1WKW6LImG2JgQnXuYUJCsIDeVpgHTTWqPScGU07HjjGmLHsdZubLp7OFHjlGOlisUNjQ8QZ0EpEYDZTF7VaiXLbypyrVfuYsOrp9utBJRHkHsxyRCfJENzCMWX27tTFjmihxp1H6MHdiWgrklkJXaLSX82T8/j3RYQUA0SCGFHiV5uCIRtVZf5LkUaO86uySymsfCmSA9BdIRET9stra5YNYxuQ8zzY8KGNI+jcjpe0STWUG/ZNGBOHJ7Viw1S4TpXLRz4jbmjC4jJXjjR2Sa0C2NLNOKchO+aOP1a+6+ODuyrjBwDhIohSh39rIYjmt5v14RKj7k/C5Bz5QfXejw8JVp49zLaLF1lksCaP8BVhOu5xOuttgOoXA7LV+tKmyovg1Ka9DXLaQNd5vAfPnqVXaZXKYP8AIJXrCUT/Z280brNZOfLxg=
+
 before_cache:
 - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
 - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
 cache:
   directories:
   - "$HOME/.gradle/caches/"
   - "$HOME/.gradle/wrapper/"
+  - '$HOME/.sonar/cache'
+
 before_install:
 - ./travis/prepare-signing.sh $encrypted_677f232983c0_key $encrypted_677f232983c0_iv
 
 stages:
   - name: test
+  - name: sonar
+    if: NOT (type IN (pull_request))
   - name: deploy
     if: NOT (type IN (pull_request))
 
@@ -44,6 +52,14 @@ jobs:
     - stage: test
       env: [ NAME=crossdock ]
       script: make crossdock-fresh
+
+    - stage: sonar
+      addons:
+        sonarcloud:
+          organization: "jaegertracing"
+          token:
+            secure: "rVchqUocABJz3IrfvKHRiQnNVKw9KhJ1LzZMmWBups4omTK1IcyWM/uehaYEnWbLC8XUrDkWU5B32lzTYyKiRzqXN+xoBWbmvq42+6kISG9HPiLKTatswRAiIlOxoSGADExUQSrcs9RBlXUeEIS3INuGynn2+J9gLhNix8JQXu3bJAYgsCg1BlTlqceU9nMJUMu9i8IEdeLw5I+95+FD2ocobNxrP/V4MBz5TioqhAuwlIy/DdEgIReBDv+BpUvhojaosnBC2VjQIIpMQo+sFeTkaiuVTHarmWEdVn0PCalPJ3xdz2ffQxttS+x33I1eRa2BDuKfgGLGS/0pyp0lEGtPzCpNK5kPh3Ecjm59CYjd6Guw0QGoajGWSfxPFBrHp37A1BV1QGAPUvR+Gb3W1yFI93d3TZqWe8iZOS+P0QRBwdG0732KzgaQmd+LVewh8cEwTtcqVa7+knaVUT9scCiAhFtBzbFGikKexfc+eaCbob2o7naI6sdwRFedofwwG1SVcbYdXdC+TcmESHo6J7q0Fd6f5nJHU5cQKEkPJkDqAiPuybRFMIG5FOFMjl29MEzQ6l2s4+GEEPqHF1HI0U1rzJ3sX/Yr3J3RUoIPfnAT1TP0723GRqwRnfyII2CaoMeCjPjwzBYRw5abUSMbHiSGf320mOX3RFTwGSJ663c="
+      script: ./gradlew sonarqube -Dsonar.login=${SONAR_TOKEN}
 
     - stage: deploy
       env: [ NAME=deploy-to-maven ]
