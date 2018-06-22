@@ -21,27 +21,24 @@ import io.jaegertracing.Span;
 import io.jaegertracing.SpanContext;
 import io.jaegertracing.Tracer;
 import io.opentracing.tag.Tags;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Converts a Jaeger span to a Zipkin2 span.
  */
-@Slf4j
 public class V2SpanConverter {
 
   private static final Gson gson = new Gson();
 
   public static zipkin2.Span convertSpan(Span span) {
     Tracer tracer = span.getTracer();
-    zipkin2.Endpoint host = zipkin2.Endpoint.newBuilder()
-        .ip(convertIp(tracer.getIpv4()))
-        .serviceName(tracer.getServiceName())
-        .build();
+
+    zipkin2.Endpoint.Builder host = zipkin2.Endpoint.newBuilder()
+        .serviceName(tracer.getServiceName());
+    if (tracer.getIpv4() != 0) {
+      host.parseIp(convertIp(tracer.getIpv4()));
+    }
 
     zipkin2.Endpoint peerEndpoint = extractPeerEndpoint(span.getTags());
 
@@ -52,7 +49,7 @@ public class V2SpanConverter {
             .name(span.getOperationName())
             .parentId(Long.toHexString(context.getParentId()))
             .debug(context.isDebug())
-            .localEndpoint(host)
+            .localEndpoint(host.build())
             .remoteEndpoint(peerEndpoint)
             .kind(convertKind(span.getTags().get(Tags.SPAN_KIND.getKey())))
             .timestamp(span.getStart())
@@ -122,14 +119,13 @@ public class V2SpanConverter {
     }
   }
 
-  private static InetAddress convertIp(int ip) {
-    byte[] bytes = ByteBuffer.allocate(4).putInt(ip).array();
-    try {
-      return InetAddress.getByAddress(bytes);
-    } catch (UnknownHostException e) {
-      log.error("Jaeger span IP " + ip + " could not be converted", e);
-      return null;
-    }
+  private static byte[] convertIp(int ipv4) {
+    return new byte[] {
+        (byte) (ipv4 >> 24 & 0xff),
+        (byte) (ipv4 >> 16 & 0xff),
+        (byte) (ipv4 >> 8 & 0xff),
+        (byte) (ipv4 & 0xff)
+    };
   }
 
   /**

@@ -26,12 +26,11 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import zipkin.junit.ZipkinRule;
 import zipkin2.codec.Encoding;
+import zipkin2.junit.ZipkinRule;
 import zipkin2.reporter.AsyncReporter;
 import zipkin2.reporter.Sender;
 import zipkin2.reporter.urlconnection.URLConnectionSender;
-
 
 public class ZipkinV2ReporterTest {
   @Rule public ZipkinRule zipkinRule = new ZipkinRule();
@@ -69,7 +68,7 @@ public class ZipkinV2ReporterTest {
     reporter.report(jaegerSpan);
     zipkinReporter.flush();
 
-    List<List<zipkin.Span>> spans = zipkinRule.getTraces();
-    assertEquals(spans.get(0).get(0).name, "raza");
+    List<List<zipkin2.Span>> spans = zipkinRule.getTraces();
+    assertEquals(spans.get(0).get(0).name(), "raza");
   }
 }
