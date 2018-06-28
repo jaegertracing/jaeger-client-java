@@ -21,6 +21,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import io.jaegertracing.Configuration;
+import io.jaegertracing.JaegerSpan;
 import io.jaegertracing.JaegerTracer;
 import io.jaegertracing.metrics.Metrics;
 import io.jaegertracing.metrics.Timer;
@@ -30,14 +31,11 @@ import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
-import io.opentracing.Span;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
 import org.hamcrest.core.IsEqual;
 import org.junit.After;
 import org.junit.Before;
@@ -211,7 +209,7 @@ public class MicrometerTest {
 
   private void createSomeSpans(JaegerTracer tracer) {
     for (int i = 0; i < 10; i++) {
-      Span span = tracer.buildSpan("metricstest")
+      JaegerSpan span = tracer.buildSpan("metricstest")
               .withTag("foo", "bar" + i)
               .start();
       // Only finish every 3rd span so jaeger:started_spans and finished_spans counts are different

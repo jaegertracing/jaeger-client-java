@@ -30,6 +30,7 @@ import io.jaegertracing.reporters.RemoteReporter;
 import io.jaegertracing.reporters.Reporter;
 import io.jaegertracing.samplers.ConstSampler;
 import io.jaegertracing.samplers.Sampler;
+import io.opentracing.ScopeManager;
 import io.opentracing.Span;
 import io.opentracing.SpanContext;
 import io.opentracing.propagation.Format;
@@ -46,7 +47,7 @@ public class JaegerTracerTest {
   InMemoryMetricsFactory metricsFactory;
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     metricsFactory = new InMemoryMetricsFactory();
     tracer =
         new JaegerTracer.Builder("TracerTestService")
@@ -67,7 +68,7 @@ public class JaegerTracerTest {
   @Test
   public void testBuildSpan() {
     String expectedOperation = "fry";
-    JaegerSpan jaegerSpan = (JaegerSpan) tracer.buildSpan(expectedOperation).start();
+    JaegerSpan jaegerSpan = tracer.buildSpan(expectedOperation).start();
 
     assertEquals(expectedOperation, jaegerSpan.getOperationName());
   }
@@ -93,7 +94,7 @@ public class JaegerTracerTest {
             .withMetrics(new Metrics(new InMemoryMetricsFactory()))
             .registerInjector(Format.Builtin.TEXT_MAP, injector)
             .build();
-    Span span = tracer.buildSpan("leela").start();
+    JaegerSpan span = tracer.buildSpan("leela").start();
 
     TextMap carrier = mock(TextMap.class);
     tracer.inject(span.context(), Format.Builtin.TEXT_MAP, carrier);
@@ -113,7 +114,7 @@ public class JaegerTracerTest {
 
   @Test
   public void testBuilderIsServerRpc() {
-    JaegerTracer.SpanBuilder spanBuilder = (JaegerTracer.SpanBuilder) tracer.buildSpan("ndnd");
+    JaegerTracer.SpanBuilder spanBuilder = tracer.buildSpan("ndnd");
     spanBuilder.withTag(Tags.SPAN_KIND.getKey(), "server");
 
     assertTrue(spanBuilder.isRpcServer());
@@ -121,7 +122,7 @@ public class JaegerTracerTest {
 
   @Test
   public void testBuilderIsNotServerRpc() {
-    JaegerTracer.SpanBuilder spanBuilder = (JaegerTracer.SpanBuilder) tracer.buildSpan("Lrrr");
+    JaegerTracer.SpanBuilder spanBuilder = tracer.buildSpan("Lrrr");
     spanBuilder.withTag(Tags.SPAN_KIND.getKey(), "peachy");
 
     assertFalse(spanBuilder.isRpcServer());
@@ -134,9 +135,9 @@ public class JaegerTracerTest {
             .withSampler(new ConstSampler(true))
             .withMetrics(new Metrics(metricsFactory))
             .build();
-    Span span = tracer.buildSpan("some-operation").start();
+    JaegerSpan span = tracer.buildSpan("some-operation").start();
     final String key = "key";
-    tracer.setBaggage((JaegerSpan) span, key, "value");
+    tracer.setBaggage(span, key, "value");
 
     assertEquals(1, metricsFactory.getCounter("jaeger:baggage_updates", "result=ok"));
   }
@@ -166,18 +167,18 @@ public class JaegerTracerTest {
         .withSampler(new ConstSampler(true))
         .build();
 
-    JaegerSpan jaegerSpan = (JaegerSpan)tracer.buildSpan("foo").asChildOf((JaegerSpan) null).start();
+    JaegerSpan jaegerSpan = tracer.buildSpan("foo").asChildOf((Span) null).start();
     jaegerSpan.finish();
     assertTrue(jaegerSpan.getReferences().isEmpty());
 
-    jaegerSpan = (JaegerSpan)tracer.buildSpan("foo").asChildOf((SpanContext) null).start();
+    jaegerSpan = tracer.buildSpan("foo").asChildOf((SpanContext) null).start();
     jaegerSpan.finish();
     assertTrue(jaegerSpan.getReferences().isEmpty());
   }
 
   @Test
   public void testActiveSpan() {
-    Span mockSpan = Mockito.mock(Span.class);
+    JaegerSpan mockSpan = Mockito.mock(JaegerSpan.class);
     tracer.scopeManager().activate(mockSpan, true);
     assertEquals(mockSpan, tracer.activeSpan());
   }
@@ -185,14 +186,25 @@ public class JaegerTracerTest {
   @Test
   public void testSpanContextNotSampled() {
     String expectedOperation = "fry";
-    JaegerSpan first = (JaegerSpan) tracer.buildSpan(expectedOperation).start();
-    tracer.buildSpan(expectedOperation).asChildOf(
-        ((JaegerSpanContext) first.context()).withFlags((byte) 0)
-    ).start();
+    JaegerSpan first = tracer.buildSpan(expectedOperation).start();
+    tracer.buildSpan(expectedOperation).asChildOf((first.context()).withFlags((byte) 0)).start();
 
     assertEquals(1, metricsFactory.getCounter("jaeger:started_spans", "sampled=y"));
     assertEquals(1, metricsFactory.getCounter("jaeger:started_spans", "sampled=n"));
     assertEquals(1, metricsFactory.getCounter("jaeger:traces", "sampled=y,state=started"));
     assertEquals(0, metricsFactory.getCounter("jaeger:traces", "sampled=n,state=started"));
+  }
+
+  @Test
+  public void testCustomSpanOnSpanManager() {
+    // prepare
+    Span activeSpan = mock(Span.class);
+    ScopeManager scopeManager = tracer.scopeManager();
+
+    // test
+    scopeManager.activate(activeSpan, false);
+
+    // check
+    assertEquals(activeSpan, tracer.activeSpan());
   }
 }

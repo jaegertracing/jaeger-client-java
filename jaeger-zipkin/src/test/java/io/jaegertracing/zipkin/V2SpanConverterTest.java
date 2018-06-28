@@ -29,7 +29,6 @@ import io.jaegertracing.JaegerSpanContext;
 import io.jaegertracing.JaegerTracer;
 import io.jaegertracing.reporters.InMemoryReporter;
 import io.jaegertracing.samplers.ConstSampler;
-import io.opentracing.Span;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
 import io.opentracing.propagation.TextMapExtractAdapter;
@@ -119,7 +118,7 @@ public class V2SpanConverterTest {
             .withTag(Constants.TRACER_IP_TAG_KEY, "1.2.3.4")
             .build();
 
-    JaegerSpan span = (JaegerSpan) tracer.buildSpan("operation-name").start();
+    JaegerSpan span = tracer.buildSpan("operation-name").start();
 
     zipkin2.Span zipkinSpan = V2SpanConverter.convertSpan(span);
 
@@ -136,7 +135,7 @@ public class V2SpanConverterTest {
             .withTag(Constants.TRACER_IP_TAG_KEY, "")
             .build();
 
-    JaegerSpan span = (JaegerSpan) tracer.buildSpan("operation-name").start();
+    JaegerSpan span = tracer.buildSpan("operation-name").start();
 
     zipkin2.Span zipkinSpan = V2SpanConverter.convertSpan(span);
 
@@ -145,7 +144,7 @@ public class V2SpanConverterTest {
 
   @Test
   @UseDataProvider("dataProviderTracerTags")
-  public void testTracerTags(SpanType spanType, Map<String, String> expectedTags) throws Exception {
+  public void testTracerTags(SpanType spanType, Map<String, String> expectedTags) {
     InMemoryReporter spanReporter = new InMemoryReporter();
     JaegerTracer tracer = new JaegerTracer.Builder("x")
         .withReporter(spanReporter)
@@ -156,7 +155,7 @@ public class V2SpanConverterTest {
         .withTag("tag.num", 1)
         .build();
 
-    Span span = tracer.buildSpan("root").start();
+    JaegerSpan span = tracer.buildSpan("root").start();
     if (spanType == SpanType.CHILD) {
       span = tracer.buildSpan("child").asChildOf(span).start();
     } else if (spanType == SpanType.RPC_SERVER) {
@@ -165,7 +164,7 @@ public class V2SpanConverterTest {
                   .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
                   .start();
     }
-    zipkin2.Span zipkinSpan = V2SpanConverter.convertSpan((JaegerSpan) span);
+    zipkin2.Span zipkinSpan = V2SpanConverter.convertSpan(span);
 
     Map<String, String> zipkinTags = zipkinSpan.tags();
     for (Map.Entry<String, String> entry : expectedTags.entrySet()) {
@@ -184,32 +183,30 @@ public class V2SpanConverterTest {
 
   @Test
   public void testSpanKindConsumerHasCorrectKind() {
-    Span span = (Span) tracer.buildSpan("operation-name").start();
+    JaegerSpan span = tracer.buildSpan("operation-name").start();
     Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CONSUMER);
 
-    zipkin2.Span zipkinSpan = V2SpanConverter.convertSpan((JaegerSpan) span);
+    zipkin2.Span zipkinSpan = V2SpanConverter.convertSpan(span);
 
     assertEquals(zipkinSpan.kind(), zipkin2.Span.Kind.CONSUMER);
   }
 
   @Test
   public void testSpanKindProducerHasCorrectKind() {
-    Span span = (Span) tracer.buildSpan("operation-name").start();
+    JaegerSpan span = tracer.buildSpan("operation-name").start();
     Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_PRODUCER);
 
-    zipkin2.Span zipkinSpan = V2SpanConverter.convertSpan((JaegerSpan) span);
-
+    zipkin2.Span zipkinSpan = V2SpanConverter.convertSpan(span);
     assertEquals(zipkinSpan.kind(), zipkin2.Span.Kind.PRODUCER);
   }
 
   @Test
   public void testExpectedLocalComponentNameUsed() {
     String expectedComponentName = "local-name";
-    Span span = (Span) tracer.buildSpan("operation-name").start();
+    JaegerSpan span = tracer.buildSpan("operation-name").start();
     Tags.COMPONENT.set(span, expectedComponentName);
 
-    zipkin2.Span zipkinSpan = V2SpanConverter.convertSpan((JaegerSpan) span);
-
+    zipkin2.Span zipkinSpan = V2SpanConverter.convertSpan(span);
     String actualComponent = zipkinSpan.tags().get(Tags.COMPONENT.getKey());
     assertEquals(expectedComponentName, actualComponent);
   }
@@ -219,7 +216,7 @@ public class V2SpanConverterTest {
     String expectedIp = "127.0.0.1";
     Integer expectedPort = 8080;
     String expectedServiceName = "some-peer-service";
-    JaegerSpan span = (JaegerSpan) tracer.buildSpan("test-service-operation").start();
+    JaegerSpan span = tracer.buildSpan("test-service-operation").start();
     Tags.PEER_HOST_IPV4.set(span, expectedIp);
     Tags.PEER_PORT.set(span, expectedPort);
     Tags.PEER_SERVICE.set(span, expectedServiceName);
@@ -231,7 +228,7 @@ public class V2SpanConverterTest {
 
   @Test
   public void testSpanDetectsIsClient() {
-    JaegerSpan span = (JaegerSpan) tracer.buildSpan("test-service-operation").start();
+    JaegerSpan span = tracer.buildSpan("test-service-operation").start();
     Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
 
     assertTrue(ConverterUtil.isRpc(span));
@@ -240,7 +237,7 @@ public class V2SpanConverterTest {
 
   @Test
   public void testSpanDetectsIsServer() {
-    JaegerSpan span = (JaegerSpan) tracer.buildSpan("test-service-operation").start();
+    JaegerSpan span = tracer.buildSpan("test-service-operation").start();
     Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_SERVER);
 
     assertTrue(ConverterUtil.isRpc(span));
@@ -251,7 +248,7 @@ public class V2SpanConverterTest {
   @SuppressWarnings("Duplicates")
   public void testRpcChildSpanHasTheSameId() {
     String expectedOperation = "parent";
-    JaegerSpan client = (JaegerSpan) tracer.buildSpan(expectedOperation)
+    JaegerSpan client = tracer.buildSpan(expectedOperation)
         .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT)
         .start();
 
@@ -260,23 +257,23 @@ public class V2SpanConverterTest {
     tracer.inject(client.context(), Format.Builtin.TEXT_MAP, carrier);
 
     carrier = new TextMapExtractAdapter(map);
-    JaegerSpanContext ctx = (JaegerSpanContext) tracer.extract(Format.Builtin.TEXT_MAP, carrier);
+    JaegerSpanContext ctx = tracer.extract(Format.Builtin.TEXT_MAP, carrier);
 
-    JaegerSpanContext clientCtx = (JaegerSpanContext) client.context();
+    JaegerSpanContext clientCtx = client.context();
     assertEquals(clientCtx.getSpanId(), ctx.getSpanId());
 
-    JaegerSpan server = (JaegerSpan) tracer.buildSpan("child")
+    JaegerSpan server = tracer.buildSpan("child")
         .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
         .asChildOf(ctx)
         .start();
 
-    JaegerSpanContext serverCtx = (JaegerSpanContext) server.context();
+    JaegerSpanContext serverCtx = server.context();
     assertEquals("client and server must have the same span ID", clientCtx.getSpanId(), serverCtx.getSpanId());
   }
 
   @Test
   public void testSpanLogsCreateAnnotations() {
-    Span span = tracer.buildSpan("span-with-logs").start();
+    JaegerSpan span = tracer.buildSpan("span-with-logs").start();
 
     span.log("event");
 
@@ -288,7 +285,7 @@ public class V2SpanConverterTest {
     fields.put("boolean", true);
     span.log(fields);
 
-    zipkin2.Span zipkinSpan = V2SpanConverter.convertSpan((JaegerSpan) span);
+    zipkin2.Span zipkinSpan = V2SpanConverter.convertSpan(span);
 
     List<String> annotationValues = new ArrayList<String>();
     for (Annotation annotation : zipkinSpan.annotations()) {

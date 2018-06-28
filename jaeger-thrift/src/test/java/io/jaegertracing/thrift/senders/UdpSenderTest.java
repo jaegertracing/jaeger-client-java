@@ -18,7 +18,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import io.jaegertracing.JaegerSpan;
-import io.jaegertracing.JaegerSpanContext;
 import io.jaegertracing.JaegerTracer;
 import io.jaegertracing.exceptions.SenderException;
 import io.jaegertracing.metrics.InMemoryMetricsFactory;
@@ -86,7 +85,7 @@ public class UdpSenderTest {
 
   @Test(expected = SenderException.class)
   public void testAppendSpanTooLarge() throws Exception {
-    JaegerSpan jaegerSpan = (JaegerSpan) tracer.buildSpan("raza").start();
+    JaegerSpan jaegerSpan = tracer.buildSpan("raza").start();
     String msg = "";
     for (int i = 0; i < 10001; i++) {
       msg += ".";
@@ -104,8 +103,8 @@ public class UdpSenderTest {
   @Test
   public void testAppend() throws Exception {
     // find size of the initial span
-    JaegerSpan jaegerSpan = (JaegerSpan) tracer.buildSpan("raza").start();
-    io.jaegertracing.thriftjava.Span span = JaegerThriftSpanConverter.convertSpan((JaegerSpan) jaegerSpan);
+    JaegerSpan jaegerSpan = tracer.buildSpan("raza").start();
+    io.jaegertracing.thriftjava.Span span = JaegerThriftSpanConverter.convertSpan(jaegerSpan);
 
     Process process = new Process(tracer.getServiceName())
         .setTags(JaegerThriftSpanConverter.buildTags(tracer.tags()));
@@ -135,7 +134,7 @@ public class UdpSenderTest {
   public void testFlushSendsSpan() throws Exception {
     int timeout = 50; // in milliseconds
     int expectedNumSpans = 1;
-    JaegerSpan expectedSpan = (JaegerSpan) tracer.buildSpan("raza").start();
+    JaegerSpan expectedSpan = tracer.buildSpan("raza").start();
     int appendNum = sender.append(expectedSpan);
     int flushNum = sender.flush();
     assertEquals(appendNum, 0);
@@ -145,9 +144,9 @@ public class UdpSenderTest {
     assertEquals(expectedNumSpans, batch.getSpans().size());
 
     io.jaegertracing.thriftjava.Span actualSpan = batch.getSpans().get(0);
-    assertEquals(((JaegerSpanContext) expectedSpan.context()).getTraceId(), actualSpan.getTraceIdLow());
+    assertEquals(expectedSpan.context().getTraceId(), actualSpan.getTraceIdLow());
     assertEquals(0, actualSpan.getTraceIdHigh());
-    assertEquals(((JaegerSpanContext) expectedSpan.context()).getSpanId(), actualSpan.getSpanId());
+    assertEquals(expectedSpan.context().getSpanId(), actualSpan.getSpanId());
     assertEquals(0, actualSpan.getParentSpanId());
     assertTrue(actualSpan.references.isEmpty());
     assertEquals(expectedSpan.getOperationName(), actualSpan.getOperationName());

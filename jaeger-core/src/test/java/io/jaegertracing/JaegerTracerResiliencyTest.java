@@ -19,7 +19,6 @@ import static org.junit.Assert.assertNull;
 import io.jaegertracing.propagation.Codec;
 import io.jaegertracing.reporters.InMemoryReporter;
 import io.jaegertracing.samplers.ConstSampler;
-import io.opentracing.SpanContext;
 import io.opentracing.propagation.Format.Builtin;
 import io.opentracing.propagation.TextMap;
 import java.util.Iterator;
@@ -43,13 +42,13 @@ public class JaegerTracerResiliencyTest {
 
   @Test
   public void shouldFallbackWhenExtractingWithFaultyCodec() {
-    SpanContext span = tracer.extract(Builtin.TEXT_MAP, new NoopTextMap());
+    JaegerSpanContext span = tracer.extract(Builtin.TEXT_MAP, new NoopTextMap());
     assertNull(span);
   }
 
   @Test
   public void shouldFallbackWhenInjectingWithFaultyCodec() {
-    SpanContext context = tracer.buildSpan("test-span").start().context();
+    JaegerSpanContext context = tracer.buildSpan("test-span").start().context();
     tracer.inject(context, Builtin.TEXT_MAP, new NoopTextMap());
   }
 

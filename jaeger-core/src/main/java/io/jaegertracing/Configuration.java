@@ -218,7 +218,7 @@ public class Configuration {
     return builder;
   }
 
-  public synchronized Tracer getTracer() {
+  public synchronized JaegerTracer getTracer() {
     if (tracer != null) {
       return tracer;
     }

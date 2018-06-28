@@ -28,8 +28,7 @@ import io.opentracing.Span;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
 import io.opentracing.propagation.TextMapExtractAdapter;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Collections;
 import org.junit.Test;
 
 public class PropagationTest {
@@ -39,17 +38,17 @@ public class PropagationTest {
             .withReporter(new InMemoryReporter())
             .withSampler(new ConstSampler(true))
             .build();
-    Map<String, String> headers = new HashMap<>();
-    headers.put(Constants.DEBUG_ID_HEADER_KEY, "Coraline");
-    TextMap carrier = new TextMapExtractAdapter(headers);
-    JaegerSpanContext jaegerSpanContext = (JaegerSpanContext) tracer.extract(Format.Builtin.TEXT_MAP, carrier);
+    TextMap carrier = new TextMapExtractAdapter(Collections.singletonMap(Constants.DEBUG_ID_HEADER_KEY, "Coraline"));
+
+    JaegerSpanContext jaegerSpanContext = tracer.extract(Format.Builtin.TEXT_MAP, carrier);
     assertTrue(jaegerSpanContext.isDebugIdContainerOnly());
     assertEquals("Coraline", jaegerSpanContext.getDebugId());
-    Span span = tracer.buildSpan("span").asChildOf(jaegerSpanContext).start();
-    jaegerSpanContext = (JaegerSpanContext) span.context();
+
+    JaegerSpan span = tracer.buildSpan("span").asChildOf(jaegerSpanContext).start();
+    jaegerSpanContext = span.context();
     assertTrue(jaegerSpanContext.isSampled());
     assertTrue(jaegerSpanContext.isDebug());
-    assertEquals("Coraline", ((JaegerSpan) span).getTags().get(Constants.DEBUG_ID_HEADER_KEY));
+    assertEquals("Coraline", span.getTags().get(Constants.DEBUG_ID_HEADER_KEY));
   }
 
   @Test
@@ -70,22 +69,22 @@ public class PropagationTest {
             .withReporter(reporter)
             .withSampler(new ConstSampler(true))
             .build();
-    try (Scope parent = tracer.buildSpan("parent").startActive(true)) {
+    try (Scope ignored = tracer.buildSpan("parent").startActive(true)) {
       tracer.buildSpan("child").startActive(true).close();
     }
     assertEquals(2, reporter.getSpans().size());
 
-    JaegerSpan childSpan = (JaegerSpan) reporter.getSpans().get(0);
+    JaegerSpan childSpan = reporter.getSpans().get(0);
     assertEquals("child", childSpan.getOperationName());
     assertEquals(1, childSpan.getReferences().size());
     assertEquals(References.CHILD_OF, childSpan.getReferences().get(0).getType());
 
-    JaegerSpan parentSpan = (JaegerSpan) reporter.getSpans().get(1);
+    JaegerSpan parentSpan = reporter.getSpans().get(1);
     assertEquals("parent", parentSpan.getOperationName());
     assertTrue(parentSpan.getReferences().isEmpty());
 
-    JaegerSpanContext childSpanContext = (JaegerSpanContext) childSpan.context();
-    JaegerSpanContext parentSpanContext = (JaegerSpanContext) parentSpan.context();
+    JaegerSpanContext childSpanContext = childSpan.context();
+    JaegerSpanContext parentSpanContext = parentSpan.context();
     assertEquals(parentSpan.context(), childSpan.getReferences().get(0).getSpanContext());
     assertEquals(parentSpanContext.getTraceId(), childSpanContext.getTraceId());
     assertEquals(parentSpanContext.getSpanId(), childSpanContext.getParentId());
@@ -124,18 +123,18 @@ public class PropagationTest {
             .withReporter(reporter)
             .withSampler(new ConstSampler(true))
             .build();
-    try (Scope parent = tracer.buildSpan("parent").startActive(true)) {
+    try (Scope ignored = tracer.buildSpan("parent").startActive(true)) {
       tracer.buildSpan("child").ignoreActiveSpan().startActive(true).close();
     }
     assertEquals(2, reporter.getSpans().size());
 
-    JaegerSpan childSpan = (JaegerSpan) reporter.getSpans().get(0);
-    JaegerSpan parentSpan = (JaegerSpan) reporter.getSpans().get(1);
-    JaegerSpanContext parentSpanContext = (JaegerSpanContext) parentSpan.context();
-    JaegerSpanContext childSpanContext = (JaegerSpanContext) childSpan.context();
+    JaegerSpan childSpan = reporter.getSpans().get(0);
+    JaegerSpan parentSpan = reporter.getSpans().get(1);
+    JaegerSpanContext parentSpanContext = parentSpan.context();
+    JaegerSpanContext childSpanContext = childSpan.context();
 
-    assertTrue(((JaegerSpan) reporter.getSpans().get(0)).getReferences().isEmpty());
-    assertTrue(((JaegerSpan) reporter.getSpans().get(1)).getReferences().isEmpty());
+    assertTrue((reporter.getSpans().get(0)).getReferences().isEmpty());
+    assertTrue((reporter.getSpans().get(1)).getReferences().isEmpty());
     assertNotEquals(parentSpanContext.getTraceId(), childSpanContext.getTraceId());
     assertEquals(0, childSpanContext.getParentId());
   }
@@ -148,9 +147,9 @@ public class PropagationTest {
         .withSampler(new ConstSampler(true))
         .build();
 
-    Span initialSpan = tracer.buildSpan("initial").start();
+    JaegerSpan initialSpan = tracer.buildSpan("initial").start();
 
-    try (Scope parent = tracer.buildSpan("parent").startActive(true)) {
+    try (Scope ignored = tracer.buildSpan("parent").startActive(true)) {
       tracer.buildSpan("child").asChildOf(initialSpan.context()).startActive(true).close();
     }
 
@@ -158,21 +157,21 @@ public class PropagationTest {
 
     assertEquals(3, reporter.getSpans().size());
 
-    JaegerSpan parentSpan = (JaegerSpan) reporter.getSpans().get(1);
+    JaegerSpan parentSpan = reporter.getSpans().get(1);
     assertTrue(parentSpan.getReferences().isEmpty());
 
-    JaegerSpan initSpan = (JaegerSpan) reporter.getSpans().get(2);
+    JaegerSpan initSpan = reporter.getSpans().get(2);
     assertTrue(initSpan.getReferences().isEmpty());
 
-    JaegerSpanContext initialSpanContext = (JaegerSpanContext) initSpan.context();
+    JaegerSpanContext initialSpanContext = initSpan.context();
     assertEquals(0, initialSpanContext.getParentId());
 
-    JaegerSpan childSpan = (JaegerSpan) reporter.getSpans().get(0);
-    JaegerSpanContext childSpanContext = (JaegerSpanContext) childSpan.context();
+    JaegerSpan childSpan = reporter.getSpans().get(0);
+    JaegerSpanContext childSpanContext = childSpan.context();
     assertEquals(initialSpanContext.getTraceId(), childSpanContext.getTraceId());
     assertEquals(initialSpanContext.getSpanId(), childSpanContext.getParentId());
 
-    JaegerSpanContext parentSpanContext = (JaegerSpanContext) parentSpan.context();
+    JaegerSpanContext parentSpanContext = parentSpan.context();
     assertEquals(0, parentSpanContext.getParentId());
   }
 

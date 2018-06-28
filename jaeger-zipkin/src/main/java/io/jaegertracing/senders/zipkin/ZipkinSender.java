@@ -112,7 +112,7 @@ public final class ZipkinSender implements Sender {
    */
   @Override
   public int append(JaegerSpan span) throws SenderException {
-    byte[] next = encoder.encode(backFillHostOnAnnotations(ThriftSpanConverter.convertSpan((JaegerSpan) span)));
+    byte[] next = encoder.encode(backFillHostOnAnnotations(ThriftSpanConverter.convertSpan(span)));
     int messageSizeOfNextSpan = delegate.messageSizeInBytes(Collections.singletonList(next));
     // don't enqueue something larger than we can drain
     if (messageSizeOfNextSpan > delegate.messageMaxBytes()) {

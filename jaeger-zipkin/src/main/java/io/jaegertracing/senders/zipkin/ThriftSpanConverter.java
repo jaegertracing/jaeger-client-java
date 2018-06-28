@@ -41,7 +41,7 @@ public class ThriftSpanConverter {
     JaegerTracer tracer = jaegerSpan.getTracer();
     Endpoint host = new Endpoint(tracer.getIpv4(), (short) 0, tracer.getServiceName());
 
-    JaegerSpanContext context = (JaegerSpanContext) jaegerSpan.context();
+    JaegerSpanContext context = jaegerSpan.context();
     return new com.twitter.zipkin.thriftjava.Span(
             context.getTraceId(),
             jaegerSpan.getOperationName(),

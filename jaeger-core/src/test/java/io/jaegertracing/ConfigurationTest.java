@@ -31,8 +31,6 @@ import io.jaegertracing.samplers.ConstSampler;
 import io.jaegertracing.samplers.ProbabilisticSampler;
 import io.jaegertracing.samplers.RateLimitingSampler;
 import io.jaegertracing.samplers.Sampler;
-import io.opentracing.SpanContext;
-import io.opentracing.Tracer;
 import io.opentracing.noop.NoopTracerFactory;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.Format.Builtin;
@@ -139,7 +137,7 @@ public class ConfigurationTest {
   public void testTracerTagslist() {
     System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
     System.setProperty(Configuration.JAEGER_TAGS, "testTag1=testValue1, testTag2 = testValue2");
-    JaegerTracer tracer = (JaegerTracer) Configuration.fromEnv().getTracer();
+    JaegerTracer tracer = Configuration.fromEnv().getTracer();
     assertEquals("testValue1", tracer.tags().get("testTag1"));
     assertEquals("testValue2", tracer.tags().get("testTag2"));
   }
@@ -148,7 +146,7 @@ public class ConfigurationTest {
   public void testTracerTagslistFormatError() {
     System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
     System.setProperty(Configuration.JAEGER_TAGS, "testTag1, testTag2 = testValue2");
-    JaegerTracer tracer = (JaegerTracer) Configuration.fromEnv().getTracer();
+    JaegerTracer tracer = Configuration.fromEnv().getTracer();
     assertEquals("testValue2", tracer.tags().get("testTag2"));
   }
 
@@ -156,7 +154,7 @@ public class ConfigurationTest {
   public void testTracerTagsSubstitutionDefault() {
     System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
     System.setProperty(Configuration.JAEGER_TAGS, "testTag1=${" + TEST_PROPERTY + ":hello}");
-    JaegerTracer tracer = (JaegerTracer) Configuration.fromEnv().getTracer();
+    JaegerTracer tracer = Configuration.fromEnv().getTracer();
     assertEquals("hello", tracer.tags().get("testTag1"));
   }
 
@@ -165,7 +163,7 @@ public class ConfigurationTest {
     System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
     System.setProperty(TEST_PROPERTY, "goodbye");
     System.setProperty(Configuration.JAEGER_TAGS, "testTag1=${" + TEST_PROPERTY + ":hello}");
-    JaegerTracer tracer = (JaegerTracer) Configuration.fromEnv().getTracer();
+    JaegerTracer tracer = Configuration.fromEnv().getTracer();
     assertEquals("goodbye", tracer.tags().get("testTag1"));
   }
 
@@ -188,16 +186,16 @@ public class ConfigurationTest {
     long spanId = 5678;
 
     TestTextMap textMap = new TestTextMap();
-    SpanContext spanContext = new JaegerSpanContext(traceId, spanId, 0, (byte)0);
+    JaegerSpanContext spanContext = new JaegerSpanContext(traceId, spanId, 0, (byte)0);
 
-    Tracer tracer = Configuration.fromEnv().getTracer();
+    JaegerTracer tracer = Configuration.fromEnv().getTracer();
     tracer.inject(spanContext, Format.Builtin.TEXT_MAP, textMap);
 
     assertNotNull(textMap.get("X-B3-TraceId"));
     assertNotNull(textMap.get("X-B3-SpanId"));
     assertNull(textMap.get("uber-trace-id"));
 
-    JaegerSpanContext extractedContext = (JaegerSpanContext)tracer.extract(Format.Builtin.TEXT_MAP, textMap);
+    JaegerSpanContext extractedContext = tracer.extract(Format.Builtin.TEXT_MAP, textMap);
     assertEquals(traceId, extractedContext.getTraceId());
     assertEquals(spanId, extractedContext.getSpanId());
   }
@@ -211,16 +209,16 @@ public class ConfigurationTest {
     long spanId = 5678;
 
     TestTextMap textMap = new TestTextMap();
-    SpanContext spanContext = new JaegerSpanContext(traceId, spanId, 0, (byte)0);
+    JaegerSpanContext spanContext = new JaegerSpanContext(traceId, spanId, 0, (byte)0);
 
-    Tracer tracer = Configuration.fromEnv().getTracer();
+    JaegerTracer tracer = Configuration.fromEnv().getTracer();
     tracer.inject(spanContext, Format.Builtin.TEXT_MAP, textMap);
 
     assertNotNull(textMap.get("uber-trace-id"));
     assertNotNull(textMap.get("X-B3-TraceId"));
     assertNotNull(textMap.get("X-B3-SpanId"));
 
-    JaegerSpanContext extractedContext = (JaegerSpanContext)tracer.extract(Format.Builtin.TEXT_MAP, textMap);
+    JaegerSpanContext extractedContext = tracer.extract(Format.Builtin.TEXT_MAP, textMap);
     assertEquals(traceId, extractedContext.getTraceId());
     assertEquals(spanId, extractedContext.getSpanId());
   }
@@ -230,7 +228,7 @@ public class ConfigurationTest {
     System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
 
     TestTextMap textMap = new TestTextMap();
-    SpanContext spanContext = new JaegerSpanContext(1234, 5678, 0, (byte)0);
+    JaegerSpanContext spanContext = new JaegerSpanContext(1234, 5678, 0, (byte)0);
 
     Configuration.fromEnv().getTracer().inject(spanContext, Format.Builtin.TEXT_MAP, textMap);
 
@@ -245,7 +243,7 @@ public class ConfigurationTest {
     System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
 
     TestTextMap textMap = new TestTextMap();
-    SpanContext spanContext = new JaegerSpanContext(1234, 5678, 0, (byte)0);
+    JaegerSpanContext spanContext = new JaegerSpanContext(1234, 5678, 0, (byte)0);
 
     Configuration.fromEnv().getTracer().inject(spanContext, Format.Builtin.TEXT_MAP, textMap);
 
@@ -356,7 +354,7 @@ public class ConfigurationTest {
 
     Configuration configuration = new Configuration("foo")
         .withCodec(codecConfiguration);
-    SpanContext spanContext = new JaegerSpanContext(2L, 11L, 22L, (byte) 0);
+    JaegerSpanContext spanContext = new JaegerSpanContext(2L, 11L, 22L, (byte) 0);
     assertInjectExtract(configuration.getTracer(), Builtin.TEXT_MAP, spanContext, false);
     // added codecs above overrides the default implementation
     assertInjectExtract(configuration.getTracer(), Builtin.HTTP_HEADERS, spanContext, true);
@@ -365,26 +363,24 @@ public class ConfigurationTest {
   @Test
   public void testDefaultCodecs() {
     Configuration configuration = new Configuration("foo");
-    SpanContext spanContext = new JaegerSpanContext(2L, 11L, 22L, (byte) 0);
+    JaegerSpanContext spanContext = new JaegerSpanContext(2L, 11L, 22L, (byte) 0);
     assertInjectExtract(configuration.getTracer(), Builtin.TEXT_MAP, spanContext, false);
     assertInjectExtract(configuration.getTracer(), Builtin.HTTP_HEADERS, spanContext, false);
   }
 
   @SuppressWarnings("unchecked")
-  private <C> void assertInjectExtract(Tracer tracer, Format<C> format, SpanContext contextToInject,
+  private <C> void assertInjectExtract(JaegerTracer tracer, Format<C> format, JaegerSpanContext contextToInject,
                                        boolean injectMapIsEmpty) {
     HashMap<String, String> injectMap = new HashMap<>();
-    tracer.inject(contextToInject, format, (C)new TextMapInjectAdapter(injectMap));
+    tracer.inject(contextToInject, format, (C) new TextMapInjectAdapter(injectMap));
     assertEquals(injectMapIsEmpty, injectMap.isEmpty());
     if (injectMapIsEmpty) {
       return;
     }
-    JaegerSpanContext extractedContext = (JaegerSpanContext) tracer.extract(format,
-        (C)new TextMapExtractAdapter(injectMap));
 
-    JaegerSpanContext spanContextToInject = (JaegerSpanContext) contextToInject;
-    assertEquals(spanContextToInject.getTraceId(), extractedContext.getTraceId());
-    assertEquals(spanContextToInject.getSpanId(), extractedContext.getSpanId());
+    JaegerSpanContext extractedContext = tracer.extract(format, (C) new TextMapExtractAdapter(injectMap));
+    assertEquals(contextToInject.getTraceId(), extractedContext.getTraceId());
+    assertEquals(contextToInject.getSpanId(), extractedContext.getSpanId());
   }
 
   @Test

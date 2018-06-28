@@ -167,14 +167,23 @@ public class JaegerTracer implements Tracer, Closeable {
     return scopeManager;
   }
 
+  /**
+   * Retrieves the currently active span from the {@link ScopeManager}. It cannot be guaranteed that this span
+   * will be a {@link JaegerSpan}, as other libraries might have set this active span there. Consumers expecting
+   * this to return a {@link JaegerSpan} should always check the type of the return and act accordingly.
+   *
+   * @return the currently active span from the {@link ScopeManager}
+   */
   @Override
   public Span activeSpan() {
+    // the active scope might have been added there through an API extension, similar to what the OT java-metrics
+    // library does -- therefore, we can't guarantee that we are returning a JaegerSpan here.
     Scope scope = this.scopeManager.active();
     return scope == null ? null : scope.span();
   }
 
   @Override
-  public Tracer.SpanBuilder buildSpan(String operationName) {
+  public JaegerTracer.SpanBuilder buildSpan(String operationName) {
     return new SpanBuilder(operationName);
   }
 
@@ -205,10 +214,9 @@ public class JaegerTracer implements Tracer, Closeable {
     sampler.close();
   }
 
-  //Visible for testing
-  class SpanBuilder implements Tracer.SpanBuilder {
+  public class SpanBuilder implements Tracer.SpanBuilder {
 
-    private String operationName = null;
+    private String operationName;
     private long startTimeMicroseconds;
     /**
      * In 99% situations there is only one parent (childOf), so we do not want to allocate
@@ -223,19 +231,19 @@ public class JaegerTracer implements Tracer, Closeable {
     }
 
     @Override
-    public Tracer.SpanBuilder asChildOf(SpanContext parent) {
+    public JaegerTracer.SpanBuilder asChildOf(SpanContext parent) {
       return addReference(References.CHILD_OF, parent);
     }
 
     @Override
-    public Tracer.SpanBuilder asChildOf(Span parent) {
+    public JaegerTracer.SpanBuilder asChildOf(Span parent) {
       return addReference(References.CHILD_OF, parent != null ? parent.context() : null);
     }
 
     @Override
-    public Tracer.SpanBuilder addReference(String referenceType, SpanContext reference) {
-
+    public JaegerTracer.SpanBuilder addReference(String referenceType, SpanContext reference) {
       if (!(reference instanceof JaegerSpanContext)) {
+        log.warn("Expected to have a JaegerSpanContext but got " + referenceType.getClass().getName());
         return this;
       }
 
@@ -261,25 +269,25 @@ public class JaegerTracer implements Tracer, Closeable {
     }
 
     @Override
-    public Tracer.SpanBuilder withTag(String key, String value) {
+    public JaegerTracer.SpanBuilder withTag(String key, String value) {
       tags.put(key, value);
       return this;
     }
 
     @Override
-    public Tracer.SpanBuilder withTag(String key, boolean value) {
+    public JaegerTracer.SpanBuilder withTag(String key, boolean value) {
       tags.put(key, value);
       return this;
     }
 
     @Override
-    public Tracer.SpanBuilder withTag(String key, Number value) {
+    public JaegerTracer.SpanBuilder withTag(String key, Number value) {
       tags.put(key, value);
       return this;
     }
 
     @Override
-    public Tracer.SpanBuilder withStartTimestamp(long microseconds) {
+    public JaegerTracer.SpanBuilder withStartTimestamp(long microseconds) {
       this.startTimeMicroseconds = microseconds;
       return this;
     }
@@ -441,20 +449,20 @@ public class JaegerTracer implements Tracer, Closeable {
     }
 
     @Override
-    public Tracer.SpanBuilder ignoreActiveSpan() {
+    public JaegerTracer.SpanBuilder ignoreActiveSpan() {
       ignoreActiveSpan = true;
       return this;
     }
 
     @Override
     @Deprecated
-    public Span startManual() {
+    public JaegerSpan startManual() {
       return start();
     }
   }
 
   /**
-   * Builds Jaeger JaegerTracer with options.
+   * Builds a {@link JaegerTracer} with options.
    */
   public static final class Builder {
     private Sampler sampler;

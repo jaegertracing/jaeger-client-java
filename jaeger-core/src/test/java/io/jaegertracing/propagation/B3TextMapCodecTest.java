@@ -39,7 +39,7 @@ public class B3TextMapCodecTest {
   B3TextMapCodec b3Codec = new B3TextMapCodec.Builder().build();
 
   @Test
-  public void downgrades128BitTraceIdToLower64Bits() throws Exception {
+  public void downgrades128BitTraceIdToLower64Bits() {
     String hex128Bits = "463ac35c9f6413ad48485a3953bb6124";
     String lower64Bits = "48485a3953bb6124";
 
@@ -52,7 +52,7 @@ public class B3TextMapCodecTest {
     textMap.put(B3TextMapCodec.BAGGAGE_PREFIX + "foo", "bar");
     textMap.put("random-foo", "bar");
 
-    JaegerSpanContext context = (JaegerSpanContext) b3Codec.extract(textMap);
+    JaegerSpanContext context = b3Codec.extract(textMap);
 
     assertNotNull(HexCodec.lowerHexToUnsignedLong(lower64Bits));
     assertEquals(HexCodec.lowerHexToUnsignedLong(lower64Bits).longValue(), context.getTraceId());
@@ -97,7 +97,7 @@ public class B3TextMapCodecTest {
   }
 
   @Test
-  public void testInject() throws Exception {
+  public void testInject() {
     DelegatingTextMap textMap = new DelegatingTextMap();
     b3Codec.inject(new JaegerSpanContext(1, 1, 1, SAMPLED), textMap);
 

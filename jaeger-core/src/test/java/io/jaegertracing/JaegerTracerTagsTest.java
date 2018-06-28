@@ -26,7 +26,7 @@ import org.junit.Test;
 public class JaegerTracerTagsTest {
 
   @Test
-  public void testTracerTags() throws Exception {
+  public void testTracerTags() {
     InMemoryReporter spanReporter = new InMemoryReporter();
     JaegerTracer tracer = new JaegerTracer.Builder("x")
         .withReporter(spanReporter)
@@ -35,7 +35,7 @@ public class JaegerTracerTagsTest {
         .withTag("tracer.tag.str", "y")
         .build();
 
-    JaegerSpan jaegerSpan = (JaegerSpan) tracer.buildSpan("root").start();
+    JaegerSpan jaegerSpan = tracer.buildSpan("root").start();
 
     // span should only contain sampler tags and no tracer tags
     assertEquals(2, jaegerSpan.getTags().size());
@@ -56,7 +56,7 @@ public class JaegerTracerTagsTest {
   }
 
   @Test
-  public void testDeclaredHostTags() throws Exception {
+  public void testDeclaredHostTags() {
     InMemoryReporter spanReporter = new InMemoryReporter();
     String hostname = "myhost";
     String ip = "1.1.1.1";
@@ -71,7 +71,7 @@ public class JaegerTracerTagsTest {
   }
 
   @Test
-  public void testEmptyDeclaredIpTag() throws Exception {
+  public void testEmptyDeclaredIpTag() {
     InMemoryReporter spanReporter = new InMemoryReporter();
     String ip = "";
     JaegerTracer tracer = new JaegerTracer.Builder("x")
@@ -82,7 +82,7 @@ public class JaegerTracerTagsTest {
   }
 
   @Test
-  public void testShortDeclaredIpTag() throws Exception {
+  public void testShortDeclaredIpTag() {
     InMemoryReporter spanReporter = new InMemoryReporter();
     String ip = ":19";
     JaegerTracer tracer = new JaegerTracer.Builder("x")

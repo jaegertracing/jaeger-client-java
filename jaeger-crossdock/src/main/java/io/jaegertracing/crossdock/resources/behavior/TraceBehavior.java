@@ -93,7 +93,7 @@ public class TraceBehavior {
       return new ObservedSpan("no span found", false, "no span found");
     }
 
-    JaegerSpanContext context = (JaegerSpanContext) span.context();
+    JaegerSpanContext context = span.context();
     String traceId = String.format("%x", context.getTraceId());
     boolean sampled = context.isSampled();
     String baggage = span.getBaggageItem(Constants.BAGGAGE_KEY);

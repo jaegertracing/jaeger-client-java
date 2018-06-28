@@ -19,7 +19,7 @@ import static org.junit.Assert.assertNull;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
-import io.opentracing.SpanContext;
+import io.jaegertracing.JaegerSpanContext;
 import io.opentracing.propagation.TextMap;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -50,7 +50,7 @@ public class B3TextMapCodecResiliencyTest {
     TextMap maliciousCarrier = validHeaders();
     maliciousCarrier.put(headerName, maliciousInput);
     //when
-    SpanContext extract = sut.extract(maliciousCarrier);
+    JaegerSpanContext extract = sut.extract(maliciousCarrier);
     //then
     assertNull(extract);
   }

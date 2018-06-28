@@ -42,7 +42,7 @@ public class V2SpanConverter {
 
     zipkin2.Endpoint peerEndpoint = extractPeerEndpoint(span.getTags());
 
-    JaegerSpanContext context = (JaegerSpanContext) span.context();
+    JaegerSpanContext context = span.context();
     zipkin2.Span.Builder builder = zipkin2.Span.newBuilder()
             .id(Long.toHexString(context.getSpanId()))
             .traceId(Long.toHexString(context.getTraceId()))

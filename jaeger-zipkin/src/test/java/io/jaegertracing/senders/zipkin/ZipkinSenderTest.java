@@ -78,7 +78,7 @@ public class ZipkinSenderTest {
 
   @Test
   public void testAppendSpanTooLarge() {
-    JaegerSpan jaegerSpan = (JaegerSpan) tracer.buildSpan("raza").start();
+    JaegerSpan jaegerSpan = tracer.buildSpan("raza").start();
     String msg = "";
     for (int i = 0; i < 1001; i++) {
       msg += ".";
@@ -95,7 +95,7 @@ public class ZipkinSenderTest {
 
   @Test
   public void testAppend() throws Exception {
-    JaegerSpan jaegerSpan = (JaegerSpan) tracer.buildSpan("raza").start();
+    JaegerSpan jaegerSpan = tracer.buildSpan("raza").start();
     com.twitter.zipkin.thriftjava.Span span = ThriftSpanConverter.convertSpan(jaegerSpan);
 
     int expectedNumSpans = 11;
@@ -104,7 +104,7 @@ public class ZipkinSenderTest {
       spansToSend.add(new ThriftSpanEncoder().encode(ZipkinSender.backFillHostOnAnnotations(span)));
     }
 
-    // create a sender thats a multiple of the span size (accounting for span overhead)
+    // create a sender that's a multiple of the span size (accounting for span overhead)
     // this allows us to test the boundary conditions of writing spans.
     int messageMaxBytes = sender.delegate.messageSizeInBytes(spansToSend);
     sender.close();
@@ -122,7 +122,7 @@ public class ZipkinSenderTest {
 
   @Test
   public void testFlushSendsSpan() throws Exception {
-    JaegerSpan expectedSpan = (JaegerSpan) tracer.buildSpan("raza").start();
+    JaegerSpan expectedSpan = tracer.buildSpan("raza").start();
 
     assertEquals(0, sender.append(expectedSpan));
     assertEquals(1, sender.flush());
@@ -132,7 +132,7 @@ public class ZipkinSenderTest {
     assertEquals(traces.get(0).size(), 1);
 
     zipkin2.Span actualSpan = traces.get(0).get(0);
-    JaegerSpanContext context = (JaegerSpanContext) expectedSpan.context();
+    JaegerSpanContext context = expectedSpan.context();
 
     assertEquals(context.getTraceId(), HexCodec.lowerHexToUnsignedLong(actualSpan.traceId()));
     assertEquals(context.getSpanId(), HexCodec.lowerHexToUnsignedLong(actualSpan.id()));
@@ -144,7 +144,7 @@ public class ZipkinSenderTest {
 
   @Test
   public void testAppendSpanWithLogs() throws Exception {
-    JaegerSpan jaegerSpan = (JaegerSpan) tracer.buildSpan("jaegerSpan-with-logs").start();
+    JaegerSpan jaegerSpan = tracer.buildSpan("jaegerSpan-with-logs").start();
 
     jaegerSpan.log("event");
 

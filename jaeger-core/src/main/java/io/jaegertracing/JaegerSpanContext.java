@@ -119,7 +119,7 @@ public class JaegerSpanContext implements SpanContext {
     }
 
     /*
-      TODO(oibe) because java doesn't like to convert large hex strings to longs
+      oibe: because java doesn't like to convert large hex strings to longs
       we should write this manually instead of using BigInteger.
     */
     return new JaegerSpanContext(

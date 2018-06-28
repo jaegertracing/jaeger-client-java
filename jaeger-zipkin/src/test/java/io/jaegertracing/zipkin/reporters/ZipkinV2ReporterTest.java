@@ -41,7 +41,7 @@ public class ZipkinV2ReporterTest {
   JaegerTracer tracer;
 
   @Before
-  public void setup() throws Exception {
+  public void setup() {
     sender = URLConnectionSender.newBuilder()
         .encoding(Encoding.JSON)
         .endpoint(zipkinRule.httpUrl() + "/api/v2/spans")
@@ -61,8 +61,8 @@ public class ZipkinV2ReporterTest {
   }
 
   @Test
-  public void testConvertsAndSendsSpan() throws Exception {
-    JaegerSpan span = (JaegerSpan) tracer.buildSpan("raza").start();
+  public void testConvertsAndSendsSpan() {
+    JaegerSpan span = tracer.buildSpan("raza").start();
     span.finish();
 
     reporter.report(span);

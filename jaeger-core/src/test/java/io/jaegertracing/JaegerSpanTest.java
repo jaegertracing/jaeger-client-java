@@ -30,7 +30,6 @@ import io.jaegertracing.reporters.InMemoryReporter;
 import io.jaegertracing.samplers.ConstSampler;
 import io.jaegertracing.utils.Clock;
 import io.opentracing.References;
-import io.opentracing.Span;
 import io.opentracing.log.Fields;
 import io.opentracing.tag.Tags;
 import java.io.PrintWriter;
@@ -67,7 +66,7 @@ public class JaegerSpanTest {
             .withBaggageRestrictionManager(new DefaultBaggageRestrictionManager())
             .withExpandExceptionLogs()
             .build();
-    jaegerSpan = (JaegerSpan) tracer.buildSpan("some-operation").start();
+    jaegerSpan = tracer.buildSpan("some-operation").start();
   }
 
   @Test
@@ -86,7 +85,7 @@ public class JaegerSpanTest {
             .withClock(clock)
             .withBaggageRestrictionManager(mgr)
             .build();
-    jaegerSpan = (JaegerSpan) tracer.buildSpan("some-operation").start();
+    jaegerSpan = tracer.buildSpan("some-operation").start();
 
     final String key = "key";
     final String value = "value";
@@ -149,7 +148,7 @@ public class JaegerSpanTest {
     when(clock.currentNanoTicks())
         .thenThrow(new IllegalStateException("currentNanoTicks() called"));
 
-    JaegerSpan jaegerSpan = (JaegerSpan) tracer.buildSpan("test-service-name").withStartTimestamp(567).start();
+    JaegerSpan jaegerSpan = tracer.buildSpan("test-service-name").withStartTimestamp(567).start();
     jaegerSpan.finish(999);
 
     assertEquals(1, reporter.getSpans().size());
@@ -159,12 +158,12 @@ public class JaegerSpanTest {
 
   @Test
   public void testMultipleSpanFinishDoesNotCauseMultipleReportCalls() {
-    JaegerSpan jaegerSpan = (JaegerSpan) tracer.buildSpan("test-service-name").start();
+    JaegerSpan jaegerSpan = tracer.buildSpan("test-service-name").start();
     jaegerSpan.finish();
 
     assertEquals(1, reporter.getSpans().size());
 
-    JaegerSpan reportedJaegerSpan = (JaegerSpan) reporter.getSpans().get(0);
+    JaegerSpan reportedJaegerSpan = reporter.getSpans().get(0);
 
     // new finish calls will not affect size of reporter.getJaegerSpans()
     jaegerSpan.finish();
@@ -180,7 +179,7 @@ public class JaegerSpanTest {
     when(clock.currentNanoTicks())
         .thenThrow(new IllegalStateException("currentNanoTicks() called"));
 
-    JaegerSpan jaegerSpan = (JaegerSpan) tracer.buildSpan("test-service-name").start();
+    JaegerSpan jaegerSpan = tracer.buildSpan("test-service-name").start();
     jaegerSpan.finish();
 
     assertEquals(1, reporter.getSpans().size());
@@ -196,7 +195,7 @@ public class JaegerSpanTest {
         .thenThrow(new IllegalStateException("currentTimeMicros() called 2nd time"));
     when(clock.currentNanoTicks()).thenReturn(20000L).thenReturn(30000L);
 
-    JaegerSpan jaegerSpan = (JaegerSpan) tracer.buildSpan("test-service-name").start();
+    JaegerSpan jaegerSpan = tracer.buildSpan("test-service-name").start();
     jaegerSpan.finish();
 
     assertEquals(1, reporter.getSpans().size());
@@ -206,8 +205,8 @@ public class JaegerSpanTest {
 
   @Test
   public void testSpanToString() {
-    JaegerSpan jaegerSpan = (JaegerSpan) tracer.buildSpan("test-operation").start();
-    JaegerSpanContext expectedContext = (JaegerSpanContext) jaegerSpan.context();
+    JaegerSpan jaegerSpan = tracer.buildSpan("test-operation").start();
+    JaegerSpanContext expectedContext =  jaegerSpan.context();
     JaegerSpanContext actualContext = JaegerSpanContext.contextFromString(expectedContext.contextAsString());
 
     assertEquals(expectedContext.getTraceId(), actualContext.getTraceId());
@@ -219,7 +218,7 @@ public class JaegerSpanTest {
   @Test
   public void testOperationName() {
     String expectedOperation = "leela";
-    JaegerSpan jaegerSpan = (JaegerSpan) tracer.buildSpan(expectedOperation).start();
+    JaegerSpan jaegerSpan = tracer.buildSpan(expectedOperation).start();
     assertEquals(expectedOperation, jaegerSpan.getOperationName());
   }
 
@@ -261,11 +260,7 @@ public class JaegerSpanTest {
 
     jaegerSpan.log(expectedEvent);
 
-    Map<String, String> expectedFields = new HashMap<String, String>() {
-      {
-        put(expectedEvent, expectedLog);
-      }
-    };
+    Map<String, String> expectedFields = Collections.singletonMap(expectedEvent, expectedLog);
     jaegerSpan.log(expectedFields);
     jaegerSpan.log((String) null);
     jaegerSpan.log((Map<String, ?>) null);
@@ -284,10 +279,10 @@ public class JaegerSpanTest {
 
   @Test
   public void testSpanDetectsSamplingPriorityGreaterThanZero() {
-    JaegerSpan jaegerSpan = (JaegerSpan) tracer.buildSpan("test-service-operation").start();
+    JaegerSpan jaegerSpan = tracer.buildSpan("test-service-operation").start();
     Tags.SAMPLING_PRIORITY.set(jaegerSpan, 1);
 
-    JaegerSpanContext context = (JaegerSpanContext) jaegerSpan.context();
+    JaegerSpanContext context = jaegerSpan.context();
     assertEquals(context.getFlags() & JaegerSpanContext.flagSampled, JaegerSpanContext.flagSampled);
     assertEquals(context.getFlags() & JaegerSpanContext.flagDebug, JaegerSpanContext.flagDebug);
   }
@@ -295,12 +290,12 @@ public class JaegerSpanTest {
   @Test
   public void testSpanDetectsSamplingPriorityLessThanZero() {
     // setup
-    JaegerSpan jaegerSpan = (JaegerSpan) tracer.buildSpan("test-service-operation").start();
+    JaegerSpan jaegerSpan = tracer.buildSpan("test-service-operation").start();
 
     // sanity check
     assertEquals(
         JaegerSpanContext.flagSampled,
-        ((JaegerSpanContext) jaegerSpan.context()).getFlags() & JaegerSpanContext.flagSampled
+        jaegerSpan.context().getFlags() & JaegerSpanContext.flagSampled
     );
 
     // test
@@ -309,16 +304,16 @@ public class JaegerSpanTest {
     // verify
     assertEquals(
         0,
-        ((JaegerSpanContext) jaegerSpan.context()).getFlags() & JaegerSpanContext.flagSampled
+        jaegerSpan.context().getFlags() & JaegerSpanContext.flagSampled
     );
   }
 
   @Test
   public void testBaggageOneReference() {
-    Span parent = tracer.buildSpan("foo").start();
+    JaegerSpan parent = tracer.buildSpan("foo").start();
     parent.setBaggageItem("foo", "bar");
 
-    Span child = tracer.buildSpan("foo")
+    JaegerSpan child = tracer.buildSpan("foo")
         .asChildOf(parent)
         .start();
 
@@ -331,12 +326,12 @@ public class JaegerSpanTest {
 
   @Test
   public void testBaggageMultipleReferences() {
-    Span parent1 = tracer.buildSpan("foo").start();
+    JaegerSpan parent1 = tracer.buildSpan("foo").start();
     parent1.setBaggageItem("foo", "bar");
-    Span parent2 = tracer.buildSpan("foo").start();
+    JaegerSpan parent2 = tracer.buildSpan("foo").start();
     parent2.setBaggageItem("foo2", "bar");
 
-    Span child = tracer.buildSpan("foo")
+    JaegerSpan child = tracer.buildSpan("foo")
         .asChildOf(parent1)
         .addReference(References.FOLLOWS_FROM, parent2.context())
         .start();
@@ -353,7 +348,7 @@ public class JaegerSpanTest {
 
   @Test
   public void testImmutableBaggage() {
-    Span span = tracer.buildSpan("foo").start();
+    JaegerSpan span = tracer.buildSpan("foo").start();
     span.setBaggageItem("foo", "bar");
     {
       Iterator<Entry<String, String>> baggageIter = span.context().baggageItems().iterator();
@@ -371,7 +366,7 @@ public class JaegerSpanTest {
     RuntimeException ex = new RuntimeException(new NullPointerException("npe"));
     Map<String, Object> logs = new HashMap<>();
     logs.put(Fields.ERROR_OBJECT, ex);
-    JaegerSpan jaegerSpan = (JaegerSpan)tracer.buildSpan("foo").start();
+    JaegerSpan jaegerSpan = tracer.buildSpan("foo").start();
     jaegerSpan.log(logs);
 
     List<LogData> logData = jaegerSpan.getLogs();
@@ -396,7 +391,7 @@ public class JaegerSpanTest {
     StringWriter sw = new StringWriter();
     ex.printStackTrace(new PrintWriter(sw));
     logs.put(Fields.STACK, sw.toString());
-    JaegerSpan jaegerSpan = (JaegerSpan)tracer.buildSpan("foo").start();
+    JaegerSpan jaegerSpan = tracer.buildSpan("foo").start();
     jaegerSpan.log(logs);
 
     List<LogData> logData = jaegerSpan.getLogs();
@@ -411,7 +406,7 @@ public class JaegerSpanTest {
 
   @Test
   public void testExpandExceptionLogsLoggedNoException() {
-    JaegerSpan jaegerSpan = (JaegerSpan)tracer.buildSpan("foo").start();
+    JaegerSpan jaegerSpan = tracer.buildSpan("foo").start();
 
     Object object = new Object();
     Map<String, Object> logs = new HashMap<>();
@@ -431,7 +426,7 @@ public class JaegerSpanTest {
         .withSampler(new ConstSampler(true))
         .build();
 
-    JaegerSpan jaegerSpan = (JaegerSpan)tracer.buildSpan("foo").start();
+    JaegerSpan jaegerSpan = tracer.buildSpan("foo").start();
 
     RuntimeException ex = new RuntimeException();
     Map<String, Object> logs = new HashMap<>();
@@ -450,7 +445,7 @@ public class JaegerSpanTest {
         .withReporter(reporter)
         .withSampler(new ConstSampler(false))
         .build();
-    Span foo = tracer.buildSpan("foo")
+    JaegerSpan foo = tracer.buildSpan("foo")
         .start();
     foo.log(Collections.emptyMap())
         .finish();

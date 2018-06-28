@@ -50,7 +50,7 @@ public class RemoteReporterTest {
   private InMemoryMetricsFactory metricsFactory;
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     metricsFactory = new InMemoryMetricsFactory();
     metrics = new Metrics(metricsFactory);
 
@@ -69,8 +69,8 @@ public class RemoteReporterTest {
   }
 
   @Test
-  public void testRemoteReporterReport() throws Exception {
-    JaegerSpan span = (JaegerSpan) tracer.buildSpan("raza").start();
+  public void testRemoteReporterReport() {
+    JaegerSpan span = tracer.buildSpan("raza").start();
     reporter.report(span);
     // do sleep until automatic flush happens on 'reporter'
     // added 20ms on top of 'flushInterval' to avoid corner cases
@@ -85,10 +85,10 @@ public class RemoteReporterTest {
   }
 
   @Test
-  public void testRemoteReporterFlushesOnClose() throws Exception {
+  public void testRemoteReporterFlushesOnClose() {
     int numberOfSpans = 100;
     for (int i = 0; i < numberOfSpans; i++) {
-      JaegerSpan span = (JaegerSpan) tracer.buildSpan("raza").start();
+      JaegerSpan span = tracer.buildSpan("raza").start();
       reporter.report(span);
     }
     reporter.close();
@@ -102,7 +102,7 @@ public class RemoteReporterTest {
   }
 
   @Test
-  public void testRemoteReporterFlushTimerThread() throws Exception {
+  public void testRemoteReporterFlushTimerThread() {
     int flushTimerThreadCount = 0;
     for (Thread thread : Thread.getAllStackTraces().keySet()) {
       if (!thread.getName().equals("jaeger.RemoteReporter-FlushTimer")) {
@@ -218,7 +218,7 @@ public class RemoteReporterTest {
   }
 
   @Test
-  public void testFlushUpdatesQueueLength() throws Exception {
+  public void testFlushUpdatesQueueLength() {
     int neverFlushInterval = Integer.MAX_VALUE;
     reporter = new RemoteReporter.Builder()
         .withSender(sender)
@@ -275,10 +275,10 @@ public class RemoteReporterTest {
     remoteReporter.flush();
     latch.await();
     assertEquals("Should have called the custom sender flush", 0, latch.getCount());
-    assertEquals("mySpan", ((JaegerSpan) sender.getReceived().get(0)).getOperationName());
+    assertEquals("mySpan", (sender.getReceived().get(0)).getOperationName());
   }
 
   private JaegerSpan newSpan() {
-    return (JaegerSpan) tracer.buildSpan("x").start();
+    return tracer.buildSpan("x").start();
   }
 }

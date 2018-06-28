@@ -34,7 +34,7 @@ public class JaegerThriftSpanConverter {
   private JaegerThriftSpanConverter() {}
 
   public static io.jaegertracing.thriftjava.Span convertSpan(JaegerSpan jaegerSpan) {
-    JaegerSpanContext context = (JaegerSpanContext) jaegerSpan.context();
+    JaegerSpanContext context = jaegerSpan.context();
 
     boolean oneChildOfParent = jaegerSpan.getReferences().size() == 1
         && References.CHILD_OF.equals(jaegerSpan.getReferences().get(0).getType());
