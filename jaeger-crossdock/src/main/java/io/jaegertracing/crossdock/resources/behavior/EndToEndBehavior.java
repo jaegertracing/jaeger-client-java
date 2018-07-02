@@ -14,18 +14,18 @@
 
 package io.jaegertracing.crossdock.resources.behavior;
 
-import io.jaegertracing.JaegerTracer;
 import io.jaegertracing.crossdock.api.CreateTracesRequest;
-import io.jaegertracing.metrics.Metrics;
-import io.jaegertracing.metrics.NoopMetricsFactory;
-import io.jaegertracing.reporters.RemoteReporter;
-import io.jaegertracing.reporters.Reporter;
-import io.jaegertracing.samplers.ConstSampler;
-import io.jaegertracing.samplers.HttpSamplingManager;
-import io.jaegertracing.samplers.ProbabilisticSampler;
-import io.jaegertracing.samplers.RemoteControlledSampler;
-import io.jaegertracing.samplers.Sampler;
-import io.jaegertracing.senders.Sender;
+import io.jaegertracing.internal.JaegerTracer;
+import io.jaegertracing.internal.metrics.Metrics;
+import io.jaegertracing.internal.metrics.NoopMetricsFactory;
+import io.jaegertracing.internal.reporters.RemoteReporter;
+import io.jaegertracing.internal.samplers.ConstSampler;
+import io.jaegertracing.internal.samplers.HttpSamplingManager;
+import io.jaegertracing.internal.samplers.ProbabilisticSampler;
+import io.jaegertracing.internal.samplers.RemoteControlledSampler;
+import io.jaegertracing.spi.Reporter;
+import io.jaegertracing.spi.Sampler;
+import io.jaegertracing.spi.Sender;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
 import java.util.HashMap;

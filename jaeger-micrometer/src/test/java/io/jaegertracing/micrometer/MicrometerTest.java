@@ -21,12 +21,12 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import io.jaegertracing.Configuration;
-import io.jaegertracing.JaegerSpan;
-import io.jaegertracing.JaegerTracer;
-import io.jaegertracing.metrics.Metrics;
-import io.jaegertracing.metrics.Timer;
-import io.jaegertracing.samplers.ConstSampler;
-import io.jaegertracing.samplers.Sampler;
+import io.jaegertracing.internal.JaegerSpan;
+import io.jaegertracing.internal.JaegerTracer;
+import io.jaegertracing.internal.metrics.Metrics;
+import io.jaegertracing.internal.metrics.Timer;
+import io.jaegertracing.internal.samplers.ConstSampler;
+import io.jaegertracing.spi.Sampler;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.prometheus.PrometheusConfig;

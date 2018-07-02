@@ -15,14 +15,14 @@
 package io.jaegertracing.crossdock.resources.behavior;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.jaegertracing.JaegerSpan;
-import io.jaegertracing.JaegerSpanContext;
 import io.jaegertracing.crossdock.Constants;
 import io.jaegertracing.crossdock.JerseyServer;
 import io.jaegertracing.crossdock.api.Downstream;
 import io.jaegertracing.crossdock.api.JoinTraceRequest;
 import io.jaegertracing.crossdock.api.ObservedSpan;
 import io.jaegertracing.crossdock.api.TraceResponse;
+import io.jaegertracing.internal.JaegerSpan;
+import io.jaegertracing.internal.JaegerSpanContext;
 import io.opentracing.Tracer;
 import java.io.IOException;
 import java.net.InetAddress;

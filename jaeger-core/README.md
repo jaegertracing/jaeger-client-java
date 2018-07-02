@@ -19,26 +19,36 @@ sending data to a backend, like [`io.jaegertracing:jaeger-thrift`](../jaeger-thr
 
 ### Production
 
-Tracer can be created via `io.jaegertracing.JaegerTracer.Builder` or `io.jaegertracing.Configuration`.
-For production it is recommended to use both classes with default values.
-
-`Tracer.Builder` example:
+A tracer instance can be obtained via the `io.jaegertracing.Configuration` object. In the general
+case, the most appropriate way is to get a tracer that is configured based on environment variables, like:
 
 ```java
-Tracer tracer = new Tracer.Builder("myServiceName").build()
+Tracer tracer = Configuration.fromEnv().getTracer();
 ```
 
-`Configuration` holds only primitive values and it is designed to be used with configuration
-files or when configuration is provided in environmental variables.
+If a more complex customization is required, the builder pattern can be used, like:
 
 ```java
-Configuration config = new Configuration("myServiceName")
-  .withReporter(...); // optional if you want to get metrics about tracer behavior
+CodecConfiguration codecConfiguration = new CodecConfiguration()
+    .withCodec(Builtin.HTTP_HEADERS, codec1)
+    .withCodec(Builtin.HTTP_HEADERS, codec2);
 
-Tracer tracer = config.getTracer();
+Configuration configuration = new Configuration("foo")
+    .withCodec(codecConfiguration);
+
+Tracer tracer = configuration.getTracer();
 ```
 
-The `config` objects lazily builds and configures Jaeger Tracer. Multiple calls to `getTracer()` return the same instance.
+Multiple calls to `Configuration#getTracer()` result in the same tracer instance.
+
+For more advanced cases, direct access to `io.jaegertracing.internal.JaegerTracer.Builder` might
+be required. Note that this class is not part of the public API and its usage should be avoided.
+
+A tracer instance can be obtained from `JaegerTracer.Builder` like:
+
+```java
+Tracer tracer = new JaegerTracer.Builder("myServiceName").build()
+```
 
 ##### B3 propagation
 Jaeger Tracer can also work in the environment where B3 propagation is used. This is mostly related
@@ -50,7 +60,7 @@ uses `baggage-` prefix.
 Example configuration:
 ```java
 b3Codec = new B3TextMapCodec();
-tracer = new Tracer.Builder(serviceName)
+tracer = new JaegerTracer.Builder(serviceName)
   .registerInjector(Format.Builtin.HTTP_HEADERS, b3Codec)
   .registerExtractor(Format.Builtin.HTTP_HEADERS, b3Codec)
   ...
@@ -58,15 +68,10 @@ tracer = new Tracer.Builder(serviceName)
 
 #### Configuration via Environment
 
-It is also possible to obtain a `io.jaegertracing.Configuration` object configured using properties specified
-as environment variables or system properties. A value specified as a system property will override a value
-specified as an environment variable for the same property name.
+When obtaining a tracer instance using the `io.jaegertracing.Configuration#fromEnv()` method, values specified
+via system properties (`-DJAEGER_SERVICE_NAME=foo`) will override values specified via environment variables.
 
-```java
-Configuration config = Configuration.fromEnv();
-```
-
-The property names are:
+The following property names are available:
 
 Property | Required | Description
 --- | --- | ---
@@ -107,7 +112,7 @@ More information about using the `TracerResolver` can be found [here](../jaeger-
 
 #### Reporting internal metrics via Micrometer
 
-The Jaeger Java Client collects internal metrics and is able to report them via [Micrometer](http://micrometer.io).
+The Jaeger Java Client collects *internal* metrics and is able to report them via [Micrometer](http://micrometer.io).
 To accomplish that, include the artifact `io.jaegertracing:jaeger-micrometer` as a dependency to your project. The
 integration should be done automatically via the service loader.
 
@@ -117,9 +122,9 @@ If you prefer a manual configuration, it can be done with a code similar to this
 MicrometerMetricsFactory metricsReporter = new MicrometerMetricsFactory();
 Configuration configuration = new Configuration("myServiceName");
 Tracer tracer = configuration
-  .getTracerBuilder()
-  .withMetrics(new io.jaegertracing.metrics.Metrics(metricsReporter))
-  .build();
+    .getTracerBuilder()
+    .withMetricsFactory(metricsReporter)
+    .build();
 ```
 
 ### Development
@@ -130,7 +135,7 @@ spans in memory:
 ```java
 Reporter reporter = new InMemoryReporter();
 Sampler sampler = new ConstSampler(true);
-Tracer tracer = new Tracer.Builder(serviceName)
+Tracer tracer = new JaegerTracer.Builder(serviceName)
   .withReporter(reporter)
   .withSampler(sampler)
   .build();

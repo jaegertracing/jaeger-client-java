@@ -1,1 +1,1 @@
-io.jaegertracing.tracerresolver.JaegerTracerResolver
+io.jaegertracing.tracerresolver.internal.JaegerTracerResolver

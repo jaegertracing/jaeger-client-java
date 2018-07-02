@@ -17,12 +17,12 @@ package io.jaegertracing.crossdock.resources.behavior.http;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import io.jaegertracing.JaegerSpan;
-import io.jaegertracing.JaegerTracer;
 import io.jaegertracing.crossdock.api.CreateTracesRequest;
 import io.jaegertracing.crossdock.resources.behavior.EndToEndBehavior;
-import io.jaegertracing.reporters.InMemoryReporter;
-import io.jaegertracing.samplers.ConstSampler;
+import io.jaegertracing.internal.JaegerSpan;
+import io.jaegertracing.internal.JaegerTracer;
+import io.jaegertracing.internal.reporters.InMemoryReporter;
+import io.jaegertracing.internal.samplers.ConstSampler;
 import io.opentracing.Tracer;
 import java.util.HashMap;
 import java.util.List;
