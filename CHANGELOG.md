@@ -1,12 +1,41 @@
 Changes by Version
 ==================
 
-0.29.1 (unreleased)
+0.30.0 (2018-07-04)
 -------------------
 
-- Nothing yet
+WARNING: this release breaks compatibility with previous versions.
 
-0.29.0 (2018-06-7)
+The most disruptive changes are:
+
+1. The module `jaeger-core` is not bringing Thrift senders anymore. Instead, client applications
+should now depend on the `jaeger-thrift` module, which will bring the `jaeger-core` transitively
+
+1. The first step in establishing the public API was made: all classes were moved to an `internal` package,
+to signal that they are not supposed to be used directly. Classes *not* in the `internal` package are part of the
+new public API and compatibility should follow `semver`. Clients currently using the `Tracer.Builder` mechanism
+are encouraged to switch over to the `Configuration` approach. If you face a situation that *cannot* be done with this
+approach, do let us know.
+
+1. Related to the point above: we now have also a SPI package, intended to be consumed by service providers (components
+implementing `Sender`s, `Reporter`s, `Sampler`s). If you are implementing a service, do let us know! We need your
+feedback before moving forward with this API.
+
+1. Jaeger types related to the OpenTracing standard were renamed, to avoid name clashes: `io.jaegertracing.Tracer`
+is now `JaegerTracer`.
+
+Complete list of changes:
+
+- Define some classes internal (#470, [@jpkrohling](https://github.com/jpkrohling))
+- Change return types from Jaeger Span/Tracer/Context to Jaeger types (#469, [@jpkrohling](https://github.com/jpkrohling))
+- Rename Jaeger's Span to JaegerSpan (#454, [@jpkrohling](https://github.com/jpkrohling))
+- Upgrades internals to Zipkin v2 library (#456, [@adriancole](https://github.com/adriancole))
+- Make jaeger-thrift's shaded JAR the default one (#461, [@jpkrohling](https://github.com/jpkrohling))
+- Treat gauge.update() parameter as new value, not delta (#463, [@mdouaihy](https://github.com/mdouaihy)) 
+- Adjust thrift shadow configuration and version (#458, [@jpkrohling](https://github.com/jpkrohling))
+- Remove dependency from jaeger-core to jaeger-thrift (#449, [@jpkrohling](https://github.com/jpkrohling))
+
+0.29.0 (2018-06-07)
 -------------------
 
 - Deprecate B3 codec contructor ([#440](https://github.com/jaegertracing/jaeger-client-java/pull/440), [@pavolloffay](https://github.com/pavolloffay))
