@@ -1,5 +1,5 @@
 gen-java/
-jaeger-core/src/main/resources/io/jaegertracing/jaeger.properties
+jaeger-core/src/main/resources/io/jaegertracing/internal/jaeger.properties
 
 ### Eclipse ###
 

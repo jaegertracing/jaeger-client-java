@@ -30,7 +30,7 @@ configurations {
 
 task jaegerVersion {
     doLast {
-        def dirPath = 'src/main/resources/io/jaegertracing/'
+        def dirPath = 'src/main/resources/io/jaegertracing/internal/'
         new File(projectDir, dirPath).mkdirs()
         def propFile = new File(projectDir, "${dirPath}jaeger.properties").getAbsolutePath()
         new File(propFile).write("jaeger.version=${project.version}")
