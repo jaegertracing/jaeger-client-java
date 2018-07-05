@@ -600,6 +600,10 @@ public class JaegerTracer implements Tracer, Closeable {
   }
 
   private static String loadVersion() {
+    return "Java-" + getVersionFromProperties();
+  }
+
+  public static String getVersionFromProperties() {
     String version;
     try {
       InputStream is = JaegerTracer.class.getResourceAsStream("jaeger.properties");
@@ -616,7 +620,7 @@ public class JaegerTracer implements Tracer, Closeable {
     if (version == null) {
       throw new RuntimeException("Cannot read " + Constants.JAEGER_CLIENT_VERSION_TAG_KEY + " from jaeger.properties");
     }
-    return "Java-" + version;
+    return version;
   }
 
   String getHostName() {

@@ -19,8 +19,9 @@ Please see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Click through for more detailed docs on specific modules.
 
+ * [jaeger-client](./jaeger-client): the module that instrumented applications should usually include
  * [jaeger-core](./jaeger-core): the core implementation of the OpenTracing API [![Java Docs][javadoc-badge]][javadoc]
- * [jaeger-thrift](./jaeger-thrift): the main dependency to include in your project, sending data to the backend using Thrift (default)
+ * [jaeger-thrift](./jaeger-thrift): set of components that send data to the backend
  
 ## Add-on Modules
 
@@ -34,15 +35,16 @@ Follow these [instructions][sonatype-snapshot-instructions] to add the snapshot 
 
 **Please use the latest version:** [![Released Version][maven-img]][maven]
 
-In the usual case, you just need to include the dependency with the concrete components sending data to the backend. Currently,
-the only such dependency is `jaeger-thrift`. It transitively brings the `jaeger-core` dependency.
+In the usual case, you just need to include the following dependency to your project:
 ```xml
 <dependency>
     <groupId>io.jaegertracing</groupId>
-    <artifactId>jaeger-thrift</artifactId>
+    <artifactId>jaeger-client</artifactId>
     <version>$jaegerVersion</version>
 </dependency>
 ```
+
+This will bring a concrete sender, such as `jaeger-thrift`, as well as the `jaeger-tracerresolver` and `jaeger-core`.
 
 ### Thrift version conflicts
 The Jaeger Java Client uses `org.apache.thrift:libthrift:0.11.0`. By default, declaring a dependency on the

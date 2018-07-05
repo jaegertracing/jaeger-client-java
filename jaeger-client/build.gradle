@@ -1,0 +1,15 @@
+description = 'Convenience module to be used by instrumented applications'
+
+dependencies {
+    // otherwise, we get the non-shaded version, which will fail at runtime due to missing classes
+    compile group: 'io.jaegertracing', name: 'jaeger-thrift', version: developmentVersion
+
+    // for the other projects, we can add the dependency on the projects themselves
+    compile project(':jaeger-core')
+    compile project(':jaeger-thrift')
+    compile project(':jaeger-tracerresolver')
+
+    testCompile group: 'junit', name: 'junit', version: junitVersion
+    testCompile group: 'org.apache.thrift', name: 'libthrift', version: apacheThriftVersion
+    testCompile group: 'com.squareup.okhttp3', name: 'okhttp', version: okhttpVersion
+}
