@@ -31,14 +31,14 @@ is now `JaegerTracer`.
 
 Complete list of changes:
 
-- Define some classes internal (#470, [@jpkrohling](https://github.com/jpkrohling))
-- Change return types from Jaeger Span/Tracer/Context to Jaeger types (#469, [@jpkrohling](https://github.com/jpkrohling))
-- Rename Jaeger's Span to JaegerSpan (#454, [@jpkrohling](https://github.com/jpkrohling))
-- Upgrades internals to Zipkin v2 library (#456, [@adriancole](https://github.com/adriancole))
-- Make jaeger-thrift's shaded JAR the default one (#461, [@jpkrohling](https://github.com/jpkrohling))
-- Treat gauge.update() parameter as new value, not delta (#463, [@mdouaihy](https://github.com/mdouaihy)) 
-- Adjust thrift shadow configuration and version (#458, [@jpkrohling](https://github.com/jpkrohling))
-- Remove dependency from jaeger-core to jaeger-thrift (#449, [@jpkrohling](https://github.com/jpkrohling))
+- Define some classes internal ([#470](https://github.com/jaegertracing/jaeger-client-java/pull/470), [@jpkrohling](https://github.com/jpkrohling))
+- Change return types from Jaeger Span/Tracer/Context to Jaeger types ([#469](https://github.com/jaegertracing/jaeger-client-java/pull/469), [@jpkrohling](https://github.com/jpkrohling))
+- Rename Jaeger's Span to JaegerSpan ([#454](https://github.com/jaegertracing/jaeger-client-java/pull/454), [@jpkrohling](https://github.com/jpkrohling))
+- Upgrades internals to Zipkin v2 library ([#456](https://github.com/jaegertracing/jaeger-client-java/pull/456), [@adriancole](https://github.com/adriancole))
+- Make jaeger-thrift's shaded JAR the default one ([#461](https://github.com/jaegertracing/jaeger-client-java/pull/461), [@jpkrohling](https://github.com/jpkrohling))
+- Treat gauge.update() parameter as new value, not delta ([#463](https://github.com/jaegertracing/jaeger-client-java/pull/463), [@mdouaihy](https://github.com/mdouaihy)) 
+- Adjust thrift shadow configuration and version ([#458](https://github.com/jaegertracing/jaeger-client-java/pull/458), [@jpkrohling](https://github.com/jpkrohling))
+- Remove dependency from jaeger-core to jaeger-thrift ([#449](https://github.com/jaegertracing/jaeger-client-java/pull/449), [@jpkrohling](https://github.com/jpkrohling))
 
 0.29.0 (2018-06-07)
 -------------------
