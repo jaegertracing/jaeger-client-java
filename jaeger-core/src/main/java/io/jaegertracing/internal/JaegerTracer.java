@@ -16,6 +16,8 @@ package io.jaegertracing.internal;
 
 import io.jaegertracing.internal.baggage.BaggageSetter;
 import io.jaegertracing.internal.baggage.DefaultBaggageRestrictionManager;
+import io.jaegertracing.internal.clock.Clock;
+import io.jaegertracing.internal.clock.SystemClock;
 import io.jaegertracing.internal.exceptions.EmptyIpException;
 import io.jaegertracing.internal.exceptions.NotFourOctetsException;
 import io.jaegertracing.internal.exceptions.UnsupportedFormatException;
@@ -25,8 +27,6 @@ import io.jaegertracing.internal.propagation.TextMapCodec;
 import io.jaegertracing.internal.reporters.RemoteReporter;
 import io.jaegertracing.internal.samplers.RemoteControlledSampler;
 import io.jaegertracing.internal.samplers.SamplingStatus;
-import io.jaegertracing.internal.utils.Clock;
-import io.jaegertracing.internal.utils.SystemClock;
 import io.jaegertracing.internal.utils.Utils;
 import io.jaegertracing.spi.BaggageRestrictionManager;
 import io.jaegertracing.spi.Extractor;
