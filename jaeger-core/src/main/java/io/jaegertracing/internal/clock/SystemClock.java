@@ -12,7 +12,7 @@
  * the License.
  */
 
-package io.jaegertracing.internal.utils;
+package io.jaegertracing.internal.clock;
 
 /**
  * Default implementation of a clock that delegates its calls to the system clock. The

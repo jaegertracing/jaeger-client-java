@@ -12,7 +12,7 @@
  * the License.
  */
 
-package io.jaegertracing.internal.utils;
+package io.jaegertracing.internal.clock;
 
 /**
  * A small abstraction around system clock that aims to provide microsecond precision with the best

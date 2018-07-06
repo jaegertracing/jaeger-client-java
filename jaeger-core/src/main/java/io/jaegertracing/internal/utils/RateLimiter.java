@@ -14,6 +14,9 @@
 
 package io.jaegertracing.internal.utils;
 
+import io.jaegertracing.internal.clock.Clock;
+import io.jaegertracing.internal.clock.SystemClock;
+
 public class RateLimiter {
   private final double creditsPerNanosecond;
   private final Clock clock;
