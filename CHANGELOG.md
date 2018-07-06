@@ -1,10 +1,14 @@
 Changes by Version
 ==================
 
-0.30.1 (unreleased)
+0.30.1 (2018-07-10)
 -------------------
 
-- Nothing yet
+- Add "serialVersionUID" for exceptions to avoid InvalidClassException ([#481](https://github.com/jaegertracing/jaeger-client-java/pull/481), [@quaff](https://github.com/quaff))
+- Add jaeger-client module ([#479](https://github.com/jaegertracing/jaeger-client-java/pull/479), [@jpkrohling](https://github.com/jpkrohling))
+- Fix wrong package declaration ([#480](https://github.com/jaegertracing/jaeger-client-java/pull/480), [@quaff](https://github.com/quaff))
+- Make GuaranteedThroughputSampler public ([#457](https://github.com/jaegertracing/jaeger-client-java/pull/457), [@quaff](https://github.com/quaff))
+- Fix version retrieval from jaeger.properties ([#478](https://github.com/jaegertracing/jaeger-client-java/pull/478), [@jpkrohling](https://github.com/jpkrohling))
 
 0.30.0 (2018-07-04)
 -------------------
