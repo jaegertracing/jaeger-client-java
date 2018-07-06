@@ -15,6 +15,9 @@
 package io.jaegertracing.internal.exceptions;
 
 public class SenderException extends Exception {
+
+  private static final long serialVersionUID = 6770312992584114078L;
+
   private int droppedSpans;
 
   public SenderException(String msg, Throwable cause, int droppedSpans) {

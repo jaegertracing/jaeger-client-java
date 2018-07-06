@@ -17,6 +17,9 @@ package io.jaegertracing.internal.exceptions;
 import io.opentracing.propagation.Format;
 
 public class UnsupportedFormatException extends RuntimeException {
+
+  private static final long serialVersionUID = 3589851499963551948L;
+
   public UnsupportedFormatException(Format<?> format) {
     super(format.toString());
   }
