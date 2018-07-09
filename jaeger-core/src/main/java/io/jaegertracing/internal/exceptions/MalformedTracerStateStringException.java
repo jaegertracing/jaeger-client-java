@@ -15,6 +15,9 @@
 package io.jaegertracing.internal.exceptions;
 
 public class MalformedTracerStateStringException extends RuntimeException {
+
+  private static final long serialVersionUID = 6132770324736429065L;
+
   public MalformedTracerStateStringException(String value) {
     super("String does not match tracer state format: " + value);
   }

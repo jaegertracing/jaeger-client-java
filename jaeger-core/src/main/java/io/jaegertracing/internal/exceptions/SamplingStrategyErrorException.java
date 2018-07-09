@@ -15,6 +15,9 @@
 package io.jaegertracing.internal.exceptions;
 
 public class SamplingStrategyErrorException extends RuntimeException {
+
+  private static final long serialVersionUID = -3749650864768854563L;
+
   public SamplingStrategyErrorException(String msg) {
     super(msg);
   }

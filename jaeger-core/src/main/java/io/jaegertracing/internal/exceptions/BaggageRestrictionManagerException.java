@@ -17,6 +17,9 @@ package io.jaegertracing.internal.exceptions;
 import java.io.IOException;
 
 public class BaggageRestrictionManagerException extends IOException {
+
+  private static final long serialVersionUID = -7154971918992152963L;
+
   public BaggageRestrictionManagerException(String msg) {
     super(msg);
   }
