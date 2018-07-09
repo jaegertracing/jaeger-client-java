@@ -23,11 +23,11 @@ import static org.mockito.Mockito.when;
 
 import io.jaegertracing.internal.baggage.DefaultBaggageRestrictionManager;
 import io.jaegertracing.internal.baggage.Restriction;
+import io.jaegertracing.internal.clock.Clock;
 import io.jaegertracing.internal.metrics.InMemoryMetricsFactory;
 import io.jaegertracing.internal.metrics.Metrics;
 import io.jaegertracing.internal.reporters.InMemoryReporter;
 import io.jaegertracing.internal.samplers.ConstSampler;
-import io.jaegertracing.internal.utils.Clock;
 import io.jaegertracing.spi.BaggageRestrictionManager;
 import io.opentracing.References;
 import io.opentracing.log.Fields;

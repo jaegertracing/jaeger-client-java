@@ -17,6 +17,7 @@ package io.jaegertracing.internal.utils;
 import static junit.framework.TestCase.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import io.jaegertracing.internal.clock.Clock;
 import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 

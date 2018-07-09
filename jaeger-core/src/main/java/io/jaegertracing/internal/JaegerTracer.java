@@ -16,6 +16,8 @@ package io.jaegertracing.internal;
 
 import io.jaegertracing.internal.baggage.BaggageSetter;
 import io.jaegertracing.internal.baggage.DefaultBaggageRestrictionManager;
+import io.jaegertracing.internal.clock.Clock;
+import io.jaegertracing.internal.clock.SystemClock;
 import io.jaegertracing.internal.exceptions.EmptyIpException;
 import io.jaegertracing.internal.exceptions.NotFourOctetsException;
 import io.jaegertracing.internal.exceptions.UnsupportedFormatException;
@@ -25,8 +27,6 @@ import io.jaegertracing.internal.propagation.TextMapCodec;
 import io.jaegertracing.internal.reporters.RemoteReporter;
 import io.jaegertracing.internal.samplers.RemoteControlledSampler;
 import io.jaegertracing.internal.samplers.SamplingStatus;
-import io.jaegertracing.internal.utils.Clock;
-import io.jaegertracing.internal.utils.SystemClock;
 import io.jaegertracing.internal.utils.Utils;
 import io.jaegertracing.spi.BaggageRestrictionManager;
 import io.jaegertracing.spi.Extractor;
@@ -600,6 +600,10 @@ public class JaegerTracer implements Tracer, Closeable {
   }
 
   private static String loadVersion() {
+    return "Java-" + getVersionFromProperties();
+  }
+
+  public static String getVersionFromProperties() {
     String version;
     try {
       InputStream is = JaegerTracer.class.getResourceAsStream("jaeger.properties");
@@ -616,7 +620,7 @@ public class JaegerTracer implements Tracer, Closeable {
     if (version == null) {
       throw new RuntimeException("Cannot read " + Constants.JAEGER_CLIENT_VERSION_TAG_KEY + " from jaeger.properties");
     }
-    return "Java-" + version;
+    return version;
   }
 
   String getHostName() {
