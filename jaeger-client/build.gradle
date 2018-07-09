@@ -10,6 +10,4 @@ dependencies {
     compile project(':jaeger-tracerresolver')
 
     testCompile group: 'junit', name: 'junit', version: junitVersion
-    testCompile group: 'org.apache.thrift', name: 'libthrift', version: apacheThriftVersion
-    testCompile group: 'com.squareup.okhttp3', name: 'okhttp', version: okhttpVersion
 }

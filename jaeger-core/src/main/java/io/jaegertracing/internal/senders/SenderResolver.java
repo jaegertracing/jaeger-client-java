@@ -55,7 +55,7 @@ public class SenderResolver {
     Iterator<SenderFactory> senderFactoryIterator = senderFactoryServiceLoader.iterator();
 
     boolean hasMultipleFactories = false;
-    if (senderFactoryIterator.hasNext()) {
+    while (senderFactoryIterator.hasNext()) {
       SenderFactory senderFactory = senderFactoryIterator.next();
 
       if (senderFactoryIterator.hasNext()) {

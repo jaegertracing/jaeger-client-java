@@ -19,9 +19,22 @@ import static org.junit.Assert.assertNotEquals;
 
 import io.jaegertracing.Configuration;
 import io.jaegertracing.internal.JaegerTracer;
+import io.jaegertracing.internal.senders.NoopSender;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 public class VersionTest {
+
+  @Before
+  public void setEnvironment() {
+    System.setProperty(Configuration.JAEGER_SENDER_FACTORY, NoopSender.class.getName());
+  }
+
+  @After
+  public void unsetEnvironment() {
+    System.clearProperty(Configuration.JAEGER_SENDER_FACTORY);
+  }
 
   @Test
   public void testVersionGet() {

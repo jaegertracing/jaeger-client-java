@@ -21,6 +21,7 @@ import static org.junit.Assert.assertTrue;
 import io.jaegertracing.Configuration;
 import io.jaegertracing.internal.JaegerSpan;
 import io.jaegertracing.spi.Sender;
+import io.jaegertracing.spi.SenderFactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -54,6 +55,18 @@ public class SenderResolverTest {
   }
 
   @Test
+  public void testNoopSenderFactory() throws Exception {
+    System.setProperty(Configuration.JAEGER_SENDER_FACTORY, "noop");
+
+    Sender sender = getSenderForServiceFileContents("\n" + NoopSenderFactory.class.getName(), true);
+    SenderResolver.resolve();
+    assertTrue("Expected to have sender as instance of NoopSender, but was " + sender.getClass(),
+        sender instanceof NoopSender);
+
+    System.clearProperty(Configuration.JAEGER_SENDER_FACTORY);
+  }
+
+  @Test
   public void testFromServiceLoader() {
     CustomSender customSender = new CustomSender();
     SenderFactoryToBeLoaded.sender = customSender;
@@ -75,6 +88,10 @@ public class SenderResolverTest {
     SenderFactoryToBeLoaded.sender = customSender;
     Sender sender = getSenderForServiceFileContents("\nio.jaegertracing.internal.senders.InMemorySenderFactory", true);
     assertEquals(customSender, sender);
+
+    System.setProperty(Configuration.JAEGER_SENDER_FACTORY, "in-memory");
+    sender = getSenderForServiceFileContents("\nio.jaegertracing.internal.senders.InMemorySenderFactory", true);
+    assertTrue(sender instanceof InMemorySender);
   }
 
   private Sender getSenderForServiceFileContents(String contents, boolean append) throws Exception {
