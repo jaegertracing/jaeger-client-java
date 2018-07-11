@@ -11,8 +11,7 @@ compileJava {
 }
 
 dependencies {
-    compile project(':jaeger-core')
-    compile project(':jaeger-thrift')
+    compile project(':jaeger-client')
 
     compile group: 'org.apache.thrift', name: 'libthrift', version: apacheThriftVersion
     compile group: 'com.squareup.okhttp3', name: 'okhttp', version: okhttpVersion
