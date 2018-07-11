@@ -36,8 +36,6 @@ import io.jaegertracing.spi.Sampler;
 import io.opentracing.ScopeManager;
 import io.opentracing.Span;
 import io.opentracing.SpanContext;
-import io.opentracing.noop.NoopSpan;
-import io.opentracing.noop.NoopSpanContext;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
 import io.opentracing.tag.Tags;
@@ -177,18 +175,6 @@ public class JaegerTracerTest {
     assertTrue(jaegerSpan.getReferences().isEmpty());
 
     jaegerSpan = tracer.buildSpan("foo").asChildOf((SpanContext) null).start();
-    jaegerSpan.finish();
-    assertTrue(jaegerSpan.getReferences().isEmpty());
-  }
-
-  @Test
-  public void testAsChildOfIgnoreUnexpectedContextImpl() {
-    tracer = new JaegerTracer.Builder("foo")
-        .withReporter(new InMemoryReporter())
-        .withSampler(new ConstSampler(true))
-        .build();
-
-    JaegerSpan jaegerSpan = tracer.buildSpan("foo").asChildOf(NoopSpan.INSTANCE.context()).start();
     jaegerSpan.finish();
     assertTrue(jaegerSpan.getReferences().isEmpty());
   }
