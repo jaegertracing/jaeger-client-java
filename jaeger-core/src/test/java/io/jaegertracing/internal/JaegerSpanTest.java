@@ -31,6 +31,8 @@ import io.jaegertracing.internal.reporters.InMemoryReporter;
 import io.jaegertracing.internal.samplers.ConstSampler;
 import io.jaegertracing.spi.BaggageRestrictionManager;
 import io.opentracing.References;
+import io.opentracing.Span;
+import io.opentracing.SpanContext;
 import io.opentracing.log.Fields;
 import io.opentracing.noop.NoopSpan;
 import io.opentracing.tag.Tags;
@@ -462,6 +464,24 @@ public class JaegerSpanTest {
         .build();
     JaegerSpan jaegerSpan = tracer.buildSpan("foo")
         .asChildOf(NoopSpan.INSTANCE.context()).start();
+    jaegerSpan.finish();
+    assertTrue(jaegerSpan.getReferences().isEmpty());
+  }
+
+  @Test
+  public void testAsChildOfAcceptNull() {
+    JaegerTracer tracer = new JaegerTracer.Builder("foo")
+        .withReporter(reporter)
+        .withSampler(new ConstSampler(true))
+        .build();
+
+    JaegerSpan jaegerSpan = tracer.buildSpan("foo")
+        .asChildOf((Span) null).start();
+    jaegerSpan.finish();
+    assertTrue(jaegerSpan.getReferences().isEmpty());
+
+    jaegerSpan = tracer.buildSpan("foo")
+        .asChildOf((SpanContext) null).start();
     jaegerSpan.finish();
     assertTrue(jaegerSpan.getReferences().isEmpty());
   }

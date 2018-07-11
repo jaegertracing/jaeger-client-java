@@ -35,7 +35,6 @@ import io.jaegertracing.spi.Reporter;
 import io.jaegertracing.spi.Sampler;
 import io.opentracing.ScopeManager;
 import io.opentracing.Span;
-import io.opentracing.SpanContext;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
 import io.opentracing.tag.Tags;
@@ -161,22 +160,6 @@ public class JaegerTracerTest {
     tracer.close();
     verify(reporter).close();
     verify(sampler).close();
-  }
-
-  @Test
-  public void testAsChildOfAcceptNull() {
-    tracer = new JaegerTracer.Builder("foo")
-        .withReporter(new InMemoryReporter())
-        .withSampler(new ConstSampler(true))
-        .build();
-
-    JaegerSpan jaegerSpan = tracer.buildSpan("foo").asChildOf((Span) null).start();
-    jaegerSpan.finish();
-    assertTrue(jaegerSpan.getReferences().isEmpty());
-
-    jaegerSpan = tracer.buildSpan("foo").asChildOf((SpanContext) null).start();
-    jaegerSpan.finish();
-    assertTrue(jaegerSpan.getReferences().isEmpty());
   }
 
   @Test
