@@ -242,8 +242,11 @@ public class JaegerTracer implements Tracer, Closeable {
 
     @Override
     public JaegerTracer.SpanBuilder addReference(String referenceType, SpanContext reference) {
+      if (reference == null) {
+        return this;
+      }
       if (!(reference instanceof JaegerSpanContext)) {
-        log.warn("Expected to have a JaegerSpanContext but got " + referenceType.getClass().getName());
+        log.warn("Expected to have a JaegerSpanContext but got " + reference.getClass().getName());
         return this;
       }
 
