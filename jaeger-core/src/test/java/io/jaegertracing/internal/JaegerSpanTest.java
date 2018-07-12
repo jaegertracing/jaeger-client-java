@@ -17,6 +17,7 @@ package io.jaegertracing.internal;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -30,7 +31,10 @@ import io.jaegertracing.internal.reporters.InMemoryReporter;
 import io.jaegertracing.internal.samplers.ConstSampler;
 import io.jaegertracing.spi.BaggageRestrictionManager;
 import io.opentracing.References;
+import io.opentracing.Span;
+import io.opentracing.SpanContext;
 import io.opentracing.log.Fields;
+import io.opentracing.noop.NoopSpan;
 import io.opentracing.tag.Tags;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -450,5 +454,35 @@ public class JaegerSpanTest {
     foo.log(Collections.emptyMap())
         .finish();
     assertEquals(0, reporter.getSpans().size());
+  }
+
+  @Test
+  public void testAsChildOfIgnoreUnexpectedContextImpl() {
+    JaegerTracer tracer = new JaegerTracer.Builder("foo")
+        .withReporter(reporter)
+        .withSampler(new ConstSampler(true))
+        .build();
+    JaegerSpan jaegerSpan = tracer.buildSpan("foo")
+        .asChildOf(NoopSpan.INSTANCE.context()).start();
+    jaegerSpan.finish();
+    assertTrue(jaegerSpan.getReferences().isEmpty());
+  }
+
+  @Test
+  public void testAsChildOfAcceptNull() {
+    JaegerTracer tracer = new JaegerTracer.Builder("foo")
+        .withReporter(reporter)
+        .withSampler(new ConstSampler(true))
+        .build();
+
+    JaegerSpan jaegerSpan = tracer.buildSpan("foo")
+        .asChildOf((Span) null).start();
+    jaegerSpan.finish();
+    assertTrue(jaegerSpan.getReferences().isEmpty());
+
+    jaegerSpan = tracer.buildSpan("foo")
+        .asChildOf((SpanContext) null).start();
+    jaegerSpan.finish();
+    assertTrue(jaegerSpan.getReferences().isEmpty());
   }
 }
