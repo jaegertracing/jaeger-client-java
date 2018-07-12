@@ -31,10 +31,13 @@ For example:
 ```java
 import io.jaegertracing.zipkin.ZipkinSender;
 
-reporter = new RemoteReporter(ZipkinSender.create("http://localhost:9411/api/v1/spans"));
+reporter = new RemoteReporter.Builder()
+  .withSender(ZipkinSender.create("http://localhost:9411/api/v1/spans"))
+  .build();
+
 tracer = new JaegerTracer.Builder(serviceName)
   .withReporter(reporter)
-  ...
+  .build()
 ```
 
 ### Zipkin 2 Reporters
@@ -42,19 +45,18 @@ You can reuse a Zipkin 2 reporter instance as-is by using `ZipkinV2Reporter`, wh
 2 reporter to the Jaeger reporter interface and deals with converting Jaeger spans to the Zipkin 2 
 model.
 
-For example:
+The following example requires the artifact `io.zipkin.reporter2:zipkin-sender-urlconnection` and shows
+how to accomplish that:
 ```java
 import io.jaegertracing.zipkin.ZipkinV2Reporter;
 import zipkin2.reporter.AsyncReporter;
 import zipkin2.reporter.urlconnection.URLConnectionSender;
 
-reporter = new ZipkinV2Reporter(
-    AsyncReporter.create(URLConnectionSender.create("http://localhost:9411/api/v2/spans")));
+reporter = new ZipkinV2Reporter(AsyncReporter.create(URLConnectionSender.create("http://localhost:9411/api/v2/spans")));
 
 tracer = new JaegerTracer.Builder(serviceName)
-             .withReporter(reporter)
-             ...
-             .build()
+  .withReporter(reporter)
+  .build()
 ```
 
 This will send spans to the Zipkin v2 endpoint using the v2 JSON encoding.
