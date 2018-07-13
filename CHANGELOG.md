@@ -1,10 +1,11 @@
 Changes by Version
 ==================
 
-0.30.2 (unreleased)
+0.30.2 (2018-07-13)
 -------------------
 
-- Nothing yet
+- Do not log null spancontext references ([#487](https://github.com/jaegertracing/jaeger-client-java/pull/487), [@objectiser](https://github.com/objectiser))
+- Fix jaeger-client dependency jaeger-thrift no-shadow artifact ([#486](https://github.com/jaegertracing/jaeger-client-java/pull/486), [@jpkrohling](https://github.com/jpkrohling))
 
 0.30.1 (2018-07-10)
 -------------------
