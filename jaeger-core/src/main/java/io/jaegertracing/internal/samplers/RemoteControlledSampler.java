@@ -17,10 +17,7 @@ package io.jaegertracing.internal.samplers;
 import io.jaegertracing.internal.exceptions.SamplingStrategyErrorException;
 import io.jaegertracing.internal.metrics.InMemoryMetricsFactory;
 import io.jaegertracing.internal.metrics.Metrics;
-import io.jaegertracing.internal.samplers.http.OperationSamplingParameters;
-import io.jaegertracing.internal.samplers.http.ProbabilisticSamplingStrategy;
-import io.jaegertracing.internal.samplers.http.RateLimitingSamplingStrategy;
-import io.jaegertracing.internal.samplers.http.SamplingStrategyResponse;
+import io.jaegertracing.internal.samplers.http.*;
 import io.jaegertracing.spi.Sampler;
 import io.jaegertracing.spi.SamplingManager;
 import java.util.Timer;
@@ -91,7 +88,7 @@ public class RemoteControlledSampler implements Sampler {
     if (response.getOperationSampling() != null) {
       updatePerOperationSampler(response.getOperationSampling());
     } else {
-      updateRateLimitingOrProbabilisticSampler(response);
+      updateGuaranteedThroughputOrRateLimitingOrProbabilisticSampler(response);
     }
   }
 
@@ -99,9 +96,12 @@ public class RemoteControlledSampler implements Sampler {
    * Replace {@link #sampler} with a new instance when parameters are updated.
    * @param response which contains either a {@link ProbabilisticSampler} or {@link RateLimitingSampler}
    */
-  private void updateRateLimitingOrProbabilisticSampler(SamplingStrategyResponse response) {
+  private void updateGuaranteedThroughputOrRateLimitingOrProbabilisticSampler(SamplingStrategyResponse response) {
     Sampler sampler;
-    if (response.getProbabilisticSampling() != null) {
+    if (response.getGuaranteedThroughputSampling() != null) {
+      GuaranteedThroughputSamplingStrategy strategy = response.getGuaranteedThroughputSampling();
+      sampler = new GuaranteedThroughputSampler(strategy.getSamplingRate(), strategy.getLowerBound());
+    } else if (response.getProbabilisticSampling() != null) {
       ProbabilisticSamplingStrategy strategy = response.getProbabilisticSampling();
       sampler = new ProbabilisticSampler(strategy.getSamplingRate());
     } else if (response.getRateLimitingSampling() != null) {
