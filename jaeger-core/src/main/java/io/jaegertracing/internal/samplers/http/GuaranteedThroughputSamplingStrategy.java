@@ -16,10 +16,11 @@ package io.jaegertracing.internal.samplers.http;
 
 import lombok.Value;
 
+/**
+ * @author lican
+ */
 @Value
-public class SamplingStrategyResponse {
-  ProbabilisticSamplingStrategy probabilisticSampling;
-  RateLimitingSamplingStrategy rateLimitingSampling;
-  OperationSamplingParameters operationSampling;
-  GuaranteedThroughputSamplingStrategy guaranteedThroughputSampling;
+public class GuaranteedThroughputSamplingStrategy {
+    double samplingRate;
+    double lowerBound;
 }
