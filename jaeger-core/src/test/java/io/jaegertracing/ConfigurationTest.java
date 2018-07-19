@@ -139,7 +139,7 @@ public class ConfigurationTest {
   public void testTracerTagslist() {
     System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
     System.setProperty(Configuration.JAEGER_TAGS, "testTag1=testValue1, testTag2 = testValue2");
-    JaegerTracer tracer = Configuration.fromEnv().getTracer();
+    JaegerTracer tracer = (JaegerTracer) Configuration.fromEnv().getTracer();
     assertEquals("testValue1", tracer.tags().get("testTag1"));
     assertEquals("testValue2", tracer.tags().get("testTag2"));
   }
@@ -148,7 +148,7 @@ public class ConfigurationTest {
   public void testTracerTagslistFormatError() {
     System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
     System.setProperty(Configuration.JAEGER_TAGS, "testTag1, testTag2 = testValue2");
-    JaegerTracer tracer = Configuration.fromEnv().getTracer();
+    JaegerTracer tracer = (JaegerTracer) Configuration.fromEnv().getTracer();
     assertEquals("testValue2", tracer.tags().get("testTag2"));
   }
 
@@ -156,7 +156,7 @@ public class ConfigurationTest {
   public void testTracerTagsSubstitutionDefault() {
     System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
     System.setProperty(Configuration.JAEGER_TAGS, "testTag1=${" + TEST_PROPERTY + ":hello}");
-    JaegerTracer tracer = Configuration.fromEnv().getTracer();
+    JaegerTracer tracer = (JaegerTracer) Configuration.fromEnv().getTracer();
     assertEquals("hello", tracer.tags().get("testTag1"));
   }
 
@@ -165,7 +165,7 @@ public class ConfigurationTest {
     System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
     System.setProperty(TEST_PROPERTY, "goodbye");
     System.setProperty(Configuration.JAEGER_TAGS, "testTag1=${" + TEST_PROPERTY + ":hello}");
-    JaegerTracer tracer = Configuration.fromEnv().getTracer();
+    JaegerTracer tracer = (JaegerTracer) Configuration.fromEnv().getTracer();
     assertEquals("goodbye", tracer.tags().get("testTag1"));
   }
 
@@ -190,7 +190,7 @@ public class ConfigurationTest {
     TestTextMap textMap = new TestTextMap();
     JaegerSpanContext spanContext = new JaegerSpanContext(traceId, spanId, 0, (byte)0);
 
-    JaegerTracer tracer = Configuration.fromEnv().getTracer();
+    JaegerTracer tracer = (JaegerTracer) Configuration.fromEnv().getTracer();
     tracer.inject(spanContext, Format.Builtin.TEXT_MAP, textMap);
 
     assertNotNull(textMap.get("X-B3-TraceId"));
@@ -213,7 +213,7 @@ public class ConfigurationTest {
     TestTextMap textMap = new TestTextMap();
     JaegerSpanContext spanContext = new JaegerSpanContext(traceId, spanId, 0, (byte)0);
 
-    JaegerTracer tracer = Configuration.fromEnv().getTracer();
+    JaegerTracer tracer = (JaegerTracer) Configuration.fromEnv().getTracer();
     tracer.inject(spanContext, Format.Builtin.TEXT_MAP, textMap);
 
     assertNotNull(textMap.get("uber-trace-id"));
@@ -357,17 +357,17 @@ public class ConfigurationTest {
     Configuration configuration = new Configuration("foo")
         .withCodec(codecConfiguration);
     JaegerSpanContext spanContext = new JaegerSpanContext(2L, 11L, 22L, (byte) 0);
-    assertInjectExtract(configuration.getTracer(), Builtin.TEXT_MAP, spanContext, false);
+    assertInjectExtract((JaegerTracer) configuration.getTracer(), Builtin.TEXT_MAP, spanContext, false);
     // added codecs above overrides the default implementation
-    assertInjectExtract(configuration.getTracer(), Builtin.HTTP_HEADERS, spanContext, true);
+    assertInjectExtract((JaegerTracer) configuration.getTracer(), Builtin.HTTP_HEADERS, spanContext, true);
   }
 
   @Test
   public void testDefaultCodecs() {
     Configuration configuration = new Configuration("foo");
     JaegerSpanContext spanContext = new JaegerSpanContext(2L, 11L, 22L, (byte) 0);
-    assertInjectExtract(configuration.getTracer(), Builtin.TEXT_MAP, spanContext, false);
-    assertInjectExtract(configuration.getTracer(), Builtin.HTTP_HEADERS, spanContext, false);
+    assertInjectExtract((JaegerTracer) configuration.getTracer(), Builtin.TEXT_MAP, spanContext, false);
+    assertInjectExtract((JaegerTracer) configuration.getTracer(), Builtin.HTTP_HEADERS, spanContext, false);
   }
 
   @SuppressWarnings("unchecked")

@@ -15,13 +15,13 @@
 package io.jaegertracing.tracerresolver.internal;
 
 import io.jaegertracing.Configuration;
-import io.jaegertracing.internal.JaegerTracer;
+import io.opentracing.Tracer;
 import io.opentracing.contrib.tracerresolver.TracerResolver;
 
 public class JaegerTracerResolver extends TracerResolver {
 
   @Override
-  protected JaegerTracer resolve() {
+  protected Tracer resolve() {
     return Configuration.fromEnv().getTracer();
   }
 

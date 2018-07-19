@@ -32,7 +32,7 @@ public class VersionTest {
 
     assertNotEquals(
         "The version from the tracer should not be the same string as Version.get()",
-        new Configuration("testVersionGet").getTracer().getVersion(),
+        ((JaegerTracer) new Configuration("testVersionGet").getTracer()).getVersion(),
         Version.get()
     );
   }
