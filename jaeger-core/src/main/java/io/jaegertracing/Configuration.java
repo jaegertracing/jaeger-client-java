@@ -218,7 +218,7 @@ public class Configuration {
     return builder;
   }
 
-  public synchronized JaegerTracer getTracer() {
+  public synchronized io.opentracing.Tracer getTracer() {
     if (tracer != null) {
       return tracer;
     }
