@@ -6,6 +6,8 @@ description = 'Library to send data to Jaeger backend components via Thrift'
 dependencies {
     compile project(':jaeger-core')
 
+    compile group: 'org.slf4j', name: 'slf4j-api'
+
     compileOnly group: 'org.apache.thrift', name: 'libthrift', version: apacheThriftVersion
     compileOnly group: 'com.squareup.okhttp3', name: 'okhttp', version: okhttpVersion
 
@@ -51,13 +53,18 @@ jar {
 
 shadowJar {
     baseName = 'jaeger-thrift'
-    relocate 'com.google.gson'  , 'jaeger.com.google.gson'
-    relocate 'com.twitter'      , 'jaeger.com.twitter'
-    relocate 'okhttp'           , 'jaeger.okhttp'
-    relocate 'okio'             , 'jaeger.okio'
-    relocate 'org.apache'       , 'jaeger.org.apache'
+    relocate 'com.google.gson'  , 'io.jaegertracing.vendor.com.google.gson'
+    relocate 'com.twitter'      , 'io.jaegertracing.vendor.com.twitter'
+    relocate 'okhttp'           , 'io.jaegertracing.vendor.okhttp'
+    relocate 'okio'             , 'io.jaegertracing.vendor.okio'
+    relocate 'org.apache'       , 'io.jaegertracing.vendor.org.apache'
     classifier null
     configurations = [project.configurations.compileOnly]
+    dependencies {
+        exclude(dependency('org.slf4j:slf4j-api'))
+        exclude(dependency('org.projectlombok:lombok'))
+        exclude(dependency('org.codehaus.mojo:animal-sniffer-annotations'))
+    }
 }
 
 task testJar(type: Jar, dependsOn: testClasses) {

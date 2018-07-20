@@ -13,9 +13,6 @@ compileJava {
 dependencies {
     compile project(':jaeger-client')
 
-    compile group: 'org.apache.thrift', name: 'libthrift', version: apacheThriftVersion
-    compile group: 'com.squareup.okhttp3', name: 'okhttp', version: okhttpVersion
-
     compile group: 'io.opentracing.contrib', name: 'opentracing-jaxrs2', version: '0.1.4'
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
     compile group: 'org.glassfish.jersey.containers', name: 'jersey-container-grizzly2-http', version: jerseyVersion
