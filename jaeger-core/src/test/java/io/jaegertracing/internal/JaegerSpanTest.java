@@ -28,8 +28,10 @@ import io.jaegertracing.internal.clock.Clock;
 import io.jaegertracing.internal.metrics.InMemoryMetricsFactory;
 import io.jaegertracing.internal.metrics.Metrics;
 import io.jaegertracing.internal.reporters.InMemoryReporter;
+import io.jaegertracing.internal.reporters.NoopReporter;
 import io.jaegertracing.internal.samplers.ConstSampler;
 import io.jaegertracing.spi.BaggageRestrictionManager;
+import io.jaegertracing.spi.Reporter;
 import io.opentracing.References;
 import io.opentracing.Span;
 import io.opentracing.SpanContext;
@@ -44,6 +46,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -484,5 +492,45 @@ public class JaegerSpanTest {
         .asChildOf((SpanContext) null).start();
     jaegerSpan.finish();
     assertTrue(jaegerSpan.getReferences().isEmpty());
+  }
+
+  @Test
+  public void testConcurrentModificationLogs() {
+    JaegerTracer tracer = new JaegerTracer.Builder("foo")
+        .withSampler(new ConstSampler(true))
+        .build();
+
+    JaegerSpan span = tracer.buildSpan("foo").start();
+    span.log("foo");
+    for (LogData log: span.getLogs()) {
+      span.log("foo2");
+    }
+  }
+
+  @Test
+  public void testConcurrentModificationTags() {
+    JaegerTracer tracer = new JaegerTracer.Builder("foo")
+        .withSampler(new ConstSampler(true))
+        .build();
+
+    JaegerSpan span = tracer.buildSpan("foo").start();
+    span.setTag("foo", "bar");
+    for (Map.Entry<String, ?> tag: span.getTags().entrySet()) {
+      span.setTag("foo2", "bar");
+    }
+  }
+
+  @Test
+  public void testConcurrentModificationBaggage() {
+    jaegerSpan.getTags();
+    JaegerTracer tracer = new JaegerTracer.Builder("foo")
+        .withSampler(new ConstSampler(true))
+        .build();
+
+    JaegerSpan span = tracer.buildSpan("foo").start();
+    span.setBaggageItem("foo", "bar");
+    for (Map.Entry<String, ?> baggage: span.context().baggageItems()) {
+      span.setBaggageItem("foo2", "bar");
+    }
   }
 }
