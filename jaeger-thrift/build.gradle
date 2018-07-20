@@ -6,7 +6,7 @@ description = 'Library to send data to Jaeger backend components via Thrift'
 dependencies {
     compile project(':jaeger-core')
 
-    compile group: 'org.slf4j', name: 'slf4j-api'
+    compile group: 'org.slf4j', name: 'slf4j-api', version: slf4jVersion
 
     compileOnly group: 'org.apache.thrift', name: 'libthrift', version: apacheThriftVersion
     compileOnly group: 'com.squareup.okhttp3', name: 'okhttp', version: okhttpVersion
