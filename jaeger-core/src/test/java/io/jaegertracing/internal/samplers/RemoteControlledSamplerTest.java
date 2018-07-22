@@ -31,6 +31,7 @@ import io.jaegertracing.internal.samplers.http.RateLimitingSamplingStrategy;
 import io.jaegertracing.internal.samplers.http.SamplingStrategyResponse;
 import io.jaegertracing.spi.Sampler;
 import io.jaegertracing.spi.SamplingManager;
+import io.jaegertracing.spi.SamplingStatus;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.After;
