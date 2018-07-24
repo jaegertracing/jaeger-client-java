@@ -227,25 +227,25 @@ public class JaegerSpan implements Span {
 
   @Override
   public JaegerSpan log(Map<String, ?> fields) {
-    return log(tracer.clock().currentTimeMicros(), fields, null);
+    return log(tracer.clock().currentTimeMicros(), null, fields);
   }
 
   @Override
   public JaegerSpan log(long timestampMicroseconds, Map<String, ?> fields) {
-    return log(timestampMicroseconds, fields, null);
+    return log(timestampMicroseconds, null, fields);
   }
 
   @Override
   public JaegerSpan log(String event) {
-    return log(tracer.clock().currentTimeMicros(), null, event);
+    return log(tracer.clock().currentTimeMicros(), event, null);
   }
 
   @Override
   public JaegerSpan log(long timestampMicroseconds, String event) {
-    return log(timestampMicroseconds, null, event);
+    return log(timestampMicroseconds, event, null);
   }
 
-  private JaegerSpan log(long timestampMicroseconds, Map<String, ?> fields, String event) {
+  private JaegerSpan log(long timestampMicroseconds, String event, Map<String, ?> fields) {
     synchronized (this) {
       if (fields == null && event == null) {
         return this;
@@ -257,7 +257,7 @@ public class JaegerSpan implements Span {
         if (logs == null) {
           this.logs = new ArrayList<LogData>();
         }
-        logs.add(new LogData(timestampMicroseconds, fields, event));
+        logs.add(new LogData(timestampMicroseconds, event, fields));
       }
       return this;
     }
