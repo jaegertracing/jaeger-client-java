@@ -23,15 +23,9 @@ public final class LogData {
   private final String message;
   private final Map<String, ?> fields;
 
-  LogData(long time, String message) {
+  LogData(long time, String message, Map<String, ?> fields) {
     this.time = time;
     this.message = message;
-    this.fields = null;
-  }
-
-  LogData(long time, Map<String, ?> fields) {
-    this.time = time;
-    this.message = null;
     this.fields = fields;
   }
 }

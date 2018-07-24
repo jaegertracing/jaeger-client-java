@@ -92,7 +92,7 @@ public class JaegerSpan implements Span {
 
   public Map<String, Object> getTags() {
     synchronized (this) {
-      return Collections.unmodifiableMap(tags);
+      return Collections.unmodifiableMap(new HashMap<String, Object>(tags));
     }
   }
 
@@ -121,7 +121,7 @@ public class JaegerSpan implements Span {
       if (logs == null) {
         return null;
       }
-      return Collections.unmodifiableList(logs);
+      return Collections.unmodifiableList(new ArrayList<LogData>(logs));
     }
   }
 
@@ -227,44 +227,37 @@ public class JaegerSpan implements Span {
 
   @Override
   public JaegerSpan log(Map<String, ?> fields) {
-    return log(tracer.clock().currentTimeMicros(), fields);
+    return log(tracer.clock().currentTimeMicros(), null, fields);
   }
 
   @Override
   public JaegerSpan log(long timestampMicroseconds, Map<String, ?> fields) {
+    return log(timestampMicroseconds, null, fields);
+  }
+
+  @Override
+  public JaegerSpan log(String event) {
+    return log(tracer.clock().currentTimeMicros(), event, null);
+  }
+
+  @Override
+  public JaegerSpan log(long timestampMicroseconds, String event) {
+    return log(timestampMicroseconds, event, null);
+  }
+
+  private JaegerSpan log(long timestampMicroseconds, String event, Map<String, ?> fields) {
     synchronized (this) {
-      if (fields == null) {
+      if (fields == null && event == null) {
         return this;
       }
       if (context.isSampled()) {
-        if (tracer.isExpandExceptionLogs()) {
+        if (fields != null && tracer.isExpandExceptionLogs()) {
           fields = addExceptionLogs(fields);
         }
         if (logs == null) {
           this.logs = new ArrayList<LogData>();
         }
-        logs.add(new LogData(timestampMicroseconds, fields));
-      }
-      return this;
-    }
-  }
-
-  @Override
-  public JaegerSpan log(String event) {
-    return log(tracer.clock().currentTimeMicros(), event);
-  }
-
-  @Override
-  public JaegerSpan log(long timestampMicroseconds, String event) {
-    synchronized (this) {
-      if (event == null) {
-        return this;
-      }
-      if (context.isSampled()) {
-        if (logs == null) {
-          this.logs = new ArrayList<LogData>();
-        }
-        logs.add(new LogData(timestampMicroseconds, event));
+        logs.add(new LogData(timestampMicroseconds, event, fields));
       }
       return this;
     }

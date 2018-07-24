@@ -485,4 +485,44 @@ public class JaegerSpanTest {
     jaegerSpan.finish();
     assertTrue(jaegerSpan.getReferences().isEmpty());
   }
+
+  @Test
+  public void testConcurrentModificationLogs() {
+    JaegerTracer tracer = new JaegerTracer.Builder("foo")
+        .withSampler(new ConstSampler(true))
+        .build();
+
+    JaegerSpan span = tracer.buildSpan("foo").start();
+    span.log("foo");
+    for (LogData log: span.getLogs()) {
+      span.log("foo2");
+    }
+  }
+
+  @Test
+  public void testConcurrentModificationTags() {
+    JaegerTracer tracer = new JaegerTracer.Builder("foo")
+        .withSampler(new ConstSampler(true))
+        .build();
+
+    JaegerSpan span = tracer.buildSpan("foo").start();
+    span.setTag("foo", "bar");
+    for (Map.Entry<String, ?> tag: span.getTags().entrySet()) {
+      span.setTag("foo2", "bar");
+    }
+  }
+
+  @Test
+  public void testConcurrentModificationBaggage() {
+    jaegerSpan.getTags();
+    JaegerTracer tracer = new JaegerTracer.Builder("foo")
+        .withSampler(new ConstSampler(true))
+        .build();
+
+    JaegerSpan span = tracer.buildSpan("foo").start();
+    span.setBaggageItem("foo", "bar");
+    for (Map.Entry<String, ?> baggage: span.context().baggageItems()) {
+      span.setBaggageItem("foo2", "bar");
+    }
+  }
 }
