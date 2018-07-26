@@ -1,10 +1,11 @@
 Changes by Version
 ==================
 
-0.30.3 (unreleased)
+0.30.3 (2018-07-26)
 -------------------
 
-- Nothing yet
+- Fix concurrent modification exception on logs and tags ([#500](https://github.com/jaegertracing/jaeger-client-java/pull/500), [@pavolloffay](https://github.com/pavolloffay))
+- Remove unwanted classes from jaeger-thrift shadowed jar ([#498](https://github.com/jaegertracing/jaeger-client-java/pull/498), [@mdvorak](https://github.com/mdvorak))
 
 0.30.2 (2018-07-13)
 -------------------
