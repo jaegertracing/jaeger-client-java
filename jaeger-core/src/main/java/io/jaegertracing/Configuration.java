@@ -186,11 +186,15 @@ public class Configuration {
    * @return Configuration object from environmental variables
    */
   public static Configuration fromEnv() {
-    return new Configuration(getProperty(JAEGER_SERVICE_NAME))
-        .withTracerTags(tracerTagsFromEnv())
-        .withReporter(ReporterConfiguration.fromEnv())
-        .withSampler(SamplerConfiguration.fromEnv())
-        .withCodec(CodecConfiguration.fromEnv());
+    return Configuration.fromEnv(getProperty(JAEGER_SERVICE_NAME));
+  }
+
+  public static Configuration fromEnv(String serviceName) {
+    return new Configuration(serviceName)
+            .withTracerTags(tracerTagsFromEnv())
+            .withReporter(ReporterConfiguration.fromEnv())
+            .withSampler(SamplerConfiguration.fromEnv())
+            .withCodec(CodecConfiguration.fromEnv());
   }
 
   public JaegerTracer.Builder getTracerBuilder() {

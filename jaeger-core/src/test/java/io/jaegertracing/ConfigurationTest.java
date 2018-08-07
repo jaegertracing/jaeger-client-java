@@ -33,14 +33,11 @@ import io.jaegertracing.internal.samplers.ProbabilisticSampler;
 import io.jaegertracing.internal.samplers.RateLimitingSampler;
 import io.jaegertracing.spi.Codec;
 import io.jaegertracing.spi.Sampler;
-import io.opentracing.noop.NoopTracerFactory;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.Format.Builtin;
 import io.opentracing.propagation.TextMap;
 import io.opentracing.propagation.TextMapExtractAdapter;
 import io.opentracing.propagation.TextMapInjectAdapter;
-import io.opentracing.util.GlobalTracer;
-import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -74,18 +71,25 @@ public class ConfigurationTest {
     System.clearProperty(Configuration.JAEGER_PROPAGATION);
 
     System.clearProperty(TEST_PROPERTY);
-
-    // Reset opentracing's global tracer
-    Field field = GlobalTracer.class.getDeclaredField("tracer");
-    field.setAccessible(true);
-    field.set(null, NoopTracerFactory.create());
   }
 
   @Test
   public void testFromEnv() {
     System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
     assertNotNull(Configuration.fromEnv().getTracer());
-    assertFalse(GlobalTracer.isRegistered());
+  }
+
+  @Test
+  public void testFromEnvWithExplicitServiceName() {
+    // prepare
+    String serviceName = "testFromEnvWithExplicitServiceName";
+    System.setProperty(Configuration.JAEGER_SERVICE_NAME, "not" + serviceName);
+
+    // test
+    JaegerTracer tracer = Configuration.fromEnv(serviceName).getTracer();
+
+    // check
+    assertEquals(serviceName, tracer.getServiceName());
   }
 
   @Test
