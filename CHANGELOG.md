@@ -1,10 +1,11 @@
 Changes by Version
 ==================
 
-0.30.4 (unreleased)
+0.30.4 (2018-08-13)
 -------------------
 
-- Nothing yet
+- Add possibility to specify serviceName with 'fromEnv' ([#510](https://github.com/jaegertracing/jaeger-client-java/pull/510), [@jpkrohling](https://github.com/jpkrohling))
+
 
 0.30.3 (2018-07-26)
 -------------------
