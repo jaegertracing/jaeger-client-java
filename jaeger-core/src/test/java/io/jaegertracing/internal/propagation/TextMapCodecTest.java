@@ -79,4 +79,26 @@ public class TextMapCodecTest {
     assertEquals(context.getParentId(), 204);
     assertEquals(context.getFlags(), 4);
   }
+
+  @Test
+  public void testToStringFormatsPositiveFields() {
+    long traceId = -10L;
+    long spanId = -10L;
+    long parentId = -10L;
+    byte flags = (byte) 129;
+
+    // I use MIN_VALUE because the most significant bit, and thats when
+    // we want to make sure the hex number is positive.
+    JaegerSpanContext context = new JaegerSpanContext(traceId, spanId, parentId, flags);
+
+    context.contextAsString().split(":");
+
+    assertEquals(
+        "fffffffffffffff6:fffffffffffffff6:fffffffffffffff6:81", context.contextAsString());
+    JaegerSpanContext contextFromStr = TextMapCodec.contextFromString(context.contextAsString());
+    assertEquals(traceId, contextFromStr.getTraceId());
+    assertEquals(spanId, contextFromStr.getSpanId());
+    assertEquals(parentId, contextFromStr.getParentId());
+    assertEquals(flags, contextFromStr.getFlags());
+  }
 }
