@@ -16,9 +16,12 @@ package io.jaegertracing.internal.propagation;
 
 import io.jaegertracing.internal.Constants;
 import io.jaegertracing.internal.JaegerSpanContext;
+import io.jaegertracing.internal.exceptions.EmptyTracerStateStringException;
+import io.jaegertracing.internal.exceptions.MalformedTracerStateStringException;
 import io.jaegertracing.spi.Codec;
 import io.opentracing.propagation.TextMap;
 import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.HashMap;
@@ -54,6 +57,25 @@ public class TextMapCodec implements Codec<TextMap> {
     this.baggagePrefix = builder.baggagePrefix;
   }
 
+  public static JaegerSpanContext contextFromString(String value)
+      throws MalformedTracerStateStringException, EmptyTracerStateStringException {
+    if (value == null || value.equals("")) {
+      throw new EmptyTracerStateStringException();
+    }
+
+    String[] parts = value.split(":");
+    if (parts.length != 4) {
+      throw new MalformedTracerStateStringException(value);
+    }
+
+    // TODO(isaachier): When we drop Java 1.6 support, use Long.parseUnsignedLong instead of using BigInteger.
+    return new JaegerSpanContext(
+        new BigInteger(parts[0], 16).longValue(),
+        new BigInteger(parts[1], 16).longValue(),
+        new BigInteger(parts[2], 16).longValue(),
+        new BigInteger(parts[3], 16).byteValue());
+  }
+
   @Override
   public void inject(JaegerSpanContext spanContext, TextMap carrier) {
     carrier.put(contextKey, encodedValue(spanContext.contextAsString()));
@@ -71,7 +93,7 @@ public class TextMapCodec implements Codec<TextMap> {
       // TODO there should be no lower-case here
       String key = entry.getKey().toLowerCase(Locale.ROOT);
       if (key.equals(contextKey)) {
-        context = JaegerSpanContext.contextFromString(decodedValue(entry.getValue()));
+        context = contextFromString(decodedValue(entry.getValue()));
       } else if (key.equals(Constants.DEBUG_ID_HEADER_KEY)) {
         debugId = decodedValue(entry.getValue());
       } else if (key.startsWith(baggagePrefix)) {
