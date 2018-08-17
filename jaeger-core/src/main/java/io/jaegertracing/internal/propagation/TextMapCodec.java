@@ -57,7 +57,7 @@ public class TextMapCodec implements Codec<TextMap> {
     this.baggagePrefix = builder.baggagePrefix;
   }
 
-  public static JaegerSpanContext contextFromString(String value)
+  static JaegerSpanContext contextFromString(String value)
       throws MalformedTracerStateStringException, EmptyTracerStateStringException {
     if (value == null || value.equals("")) {
       throw new EmptyTracerStateStringException();

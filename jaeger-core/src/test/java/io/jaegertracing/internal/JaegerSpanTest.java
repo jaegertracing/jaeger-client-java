@@ -209,18 +209,6 @@ public class JaegerSpanTest {
   }
 
   @Test
-  public void testSpanToString() {
-    JaegerSpan jaegerSpan = tracer.buildSpan("test-operation").start();
-    JaegerSpanContext expectedContext =  jaegerSpan.context();
-    JaegerSpanContext actualContext = TextMapCodec.contextFromString(expectedContext.contextAsString());
-
-    assertEquals(expectedContext.getTraceId(), actualContext.getTraceId());
-    assertEquals(expectedContext.getSpanId(), actualContext.getSpanId());
-    assertEquals(expectedContext.getParentId(), actualContext.getParentId());
-    assertEquals(expectedContext.getFlags(), actualContext.getFlags());
-  }
-
-  @Test
   public void testOperationName() {
     String expectedOperation = "leela";
     JaegerSpan jaegerSpan = tracer.buildSpan(expectedOperation).start();

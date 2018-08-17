@@ -14,9 +14,15 @@
 
 package io.jaegertracing.internal.propagation;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import io.jaegertracing.internal.JaegerSpan;
+import io.jaegertracing.internal.JaegerSpanContext;
+import io.jaegertracing.internal.exceptions.EmptyTracerStateStringException;
+import io.jaegertracing.internal.exceptions.MalformedTracerStateStringException;
+import java.util.Collections;
 import org.junit.Test;
 
 public class TextMapCodecTest {
@@ -44,4 +50,33 @@ public class TextMapCodecTest {
     assertTrue(str.contains("urlEncoding=false"));
   }
 
+  @Test
+  public void testSpanToString() {
+    JaegerSpanContext expectedContext = new JaegerSpanContext(1, 2, 3, (byte) 1);
+    JaegerSpanContext actualContext = TextMapCodec.contextFromString(expectedContext.contextAsString());
+
+    assertEquals(expectedContext.getTraceId(), actualContext.getTraceId());
+    assertEquals(expectedContext.getSpanId(), actualContext.getSpanId());
+    assertEquals(expectedContext.getParentId(), actualContext.getParentId());
+    assertEquals(expectedContext.getFlags(), actualContext.getFlags());
+  }
+
+  @Test(expected = MalformedTracerStateStringException.class)
+  public void testContextFromStringMalformedException() throws Exception {
+    TextMapCodec.contextFromString("ff:ff:ff");
+  }
+
+  @Test(expected = EmptyTracerStateStringException.class)
+  public void testContextFromStringEmptyException() throws Exception {
+    TextMapCodec.contextFromString("");
+  }
+
+  @Test
+  public void testContextFromString() throws Exception {
+    JaegerSpanContext context = TextMapCodec.contextFromString("ff:dd:cc:4");
+    assertEquals(context.getTraceId(), 255);
+    assertEquals(context.getSpanId(), 221);
+    assertEquals(context.getParentId(), 204);
+    assertEquals(context.getFlags(), 4);
+  }
 }
