@@ -87,8 +87,6 @@ public class TextMapCodecTest {
     long parentId = -10L;
     byte flags = (byte) 129;
 
-    // I use MIN_VALUE because the most significant bit, and thats when
-    // we want to make sure the hex number is positive.
     JaegerSpanContext context = new JaegerSpanContext(traceId, spanId, parentId, flags);
 
     context.contextAsString().split(":");
