@@ -107,28 +107,6 @@ public class JaegerSpanContext implements SpanContext {
     return contextAsString();
   }
 
-  public static JaegerSpanContext contextFromString(String value)
-      throws MalformedTracerStateStringException, EmptyTracerStateStringException {
-    if (value == null || value.equals("")) {
-      throw new EmptyTracerStateStringException();
-    }
-
-    String[] parts = value.split(":");
-    if (parts.length != 4) {
-      throw new MalformedTracerStateStringException(value);
-    }
-
-    /*
-      oibe: because java doesn't like to convert large hex strings to longs
-      we should write this manually instead of using BigInteger.
-    */
-    return new JaegerSpanContext(
-        new BigInteger(parts[0], 16).longValue(),
-        new BigInteger(parts[1], 16).longValue(),
-        new BigInteger(parts[2], 16).longValue(),
-        new BigInteger(parts[3], 16).byteValue());
-  }
-
   public JaegerSpanContext withBaggageItem(String key, String val) {
     Map<String, String> newBaggage = new HashMap<String, String>(this.baggage);
     if (val == null) {
