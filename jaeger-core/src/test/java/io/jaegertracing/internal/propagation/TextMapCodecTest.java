@@ -18,11 +18,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import io.jaegertracing.internal.JaegerSpan;
 import io.jaegertracing.internal.JaegerSpanContext;
 import io.jaegertracing.internal.exceptions.EmptyTracerStateStringException;
 import io.jaegertracing.internal.exceptions.MalformedTracerStateStringException;
-import java.util.Collections;
 import org.junit.Test;
 
 public class TextMapCodecTest {
@@ -70,18 +68,15 @@ public class TextMapCodecTest {
   }
 
   @Test
-  public void testToStringFormatsPositiveFields() {
+  public void testContextAsStringFormatsPositiveFields() {
     long traceId = -10L;
     long spanId = -10L;
     long parentId = -10L;
     byte flags = (byte) 129;
 
     JaegerSpanContext context = new JaegerSpanContext(traceId, spanId, parentId, flags);
-
-    context.toString().split(":");
-
     assertEquals(
-        "fffffffffffffff6:fffffffffffffff6:fffffffffffffff6:81", context.toString());
+        "fffffffffffffff6:fffffffffffffff6:fffffffffffffff6:81", TextMapCodec.contextAsString(context));
     JaegerSpanContext contextFromStr = TextMapCodec.contextFromString(context.toString());
     assertEquals(traceId, contextFromStr.getTraceId());
     assertEquals(spanId, contextFromStr.getSpanId());

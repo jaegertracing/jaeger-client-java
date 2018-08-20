@@ -76,9 +76,24 @@ public class TextMapCodec implements Codec<TextMap> {
         new BigInteger(parts[3], 16).byteValue());
   }
 
+  /**
+   * Encode context into a string.
+   * @param context Span context to encode.
+   * @return Encoded string representing span context.
+   */
+  public static String contextAsString(JaegerSpanContext context) {
+    int intFlag = context.getFlags() & 0xFF;
+    return new StringBuilder()
+        .append(Long.toHexString(context.getTraceId())).append(":")
+        .append(Long.toHexString(context.getSpanId())).append(":")
+        .append(Long.toHexString(context.getParentId())).append(":")
+        .append(Integer.toHexString(intFlag))
+        .toString();
+  }
+
   @Override
   public void inject(JaegerSpanContext spanContext, TextMap carrier) {
-    carrier.put(contextKey, encodedValue(spanContext.toString()));
+    carrier.put(contextKey, encodedValue(contextAsString(spanContext)));
     for (Map.Entry<String, String> entry : spanContext.baggageItems()) {
       carrier.put(keys.prefixedKey(entry.getKey(), baggagePrefix), encodedValue(entry.getValue()));
     }

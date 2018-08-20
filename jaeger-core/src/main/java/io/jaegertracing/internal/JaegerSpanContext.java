@@ -14,10 +14,8 @@
 
 package io.jaegertracing.internal;
 
-import io.jaegertracing.internal.exceptions.EmptyTracerStateStringException;
-import io.jaegertracing.internal.exceptions.MalformedTracerStateStringException;
+import io.jaegertracing.internal.propagation.TextMapCodec;
 import io.opentracing.SpanContext;
-import java.math.BigInteger;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -92,19 +90,9 @@ public class JaegerSpanContext implements SpanContext {
     return (flags & flagDebug) == flagDebug;
   }
 
-  String contextAsString() {
-    int intFlag = flags & 0xFF;
-    return new StringBuilder()
-        .append(Long.toHexString(traceId)).append(":")
-        .append(Long.toHexString(spanId)).append(":")
-        .append(Long.toHexString(parentId)).append(":")
-        .append(Integer.toHexString(intFlag))
-        .toString();
-  }
-
   @Override
   public String toString() {
-    return contextAsString();
+    return TextMapCodec.contextAsString(this);
   }
 
   public JaegerSpanContext withBaggageItem(String key, String val) {
