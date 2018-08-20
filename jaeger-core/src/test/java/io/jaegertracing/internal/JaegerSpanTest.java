@@ -210,14 +210,17 @@ public class JaegerSpanTest {
   @Test
   public void testSpanToString() {
     String operation = "test-operation";
-    JaegerSpan span = tracer.buildSpan(operation).start();
-    String expectedString = String.format("%x:%x:%x:%x - %s",
-        span.context().getTraceId(),
-        span.context().getSpanId(),
-        span.context().getParentId(),
-        span.context().getFlags(),
-        operation);
-    assertEquals(expectedString, span.toString());
+    JaegerSpan span = new JaegerSpan(
+        tracer,
+        operation,
+        new JaegerSpanContext(
+            1, 2, 3, (byte) 4, Collections.emptyMap(), null /* debugId */),
+        0,
+        0,
+        false,
+        Collections.emptyMap(),
+        Collections.emptyList());
+    assertEquals("1:2:3:4 - test-operation", span.toString());
     span.finish();
   }
 
