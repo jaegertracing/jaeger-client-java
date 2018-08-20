@@ -92,7 +92,7 @@ public class JaegerSpanContext implements SpanContext {
     return (flags & flagDebug) == flagDebug;
   }
 
-  public String contextAsString() {
+  String contextAsString() {
     int intFlag = flags & 0xFF;
     return new StringBuilder()
         .append(Long.toHexString(traceId)).append(":")

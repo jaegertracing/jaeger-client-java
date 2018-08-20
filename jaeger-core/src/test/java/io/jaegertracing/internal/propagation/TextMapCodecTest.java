@@ -50,17 +50,6 @@ public class TextMapCodecTest {
     assertTrue(str.contains("urlEncoding=false"));
   }
 
-  @Test
-  public void testSpanToString() {
-    JaegerSpanContext expectedContext = new JaegerSpanContext(1, 2, 3, (byte) 1);
-    JaegerSpanContext actualContext = TextMapCodec.contextFromString(expectedContext.contextAsString());
-
-    assertEquals(expectedContext.getTraceId(), actualContext.getTraceId());
-    assertEquals(expectedContext.getSpanId(), actualContext.getSpanId());
-    assertEquals(expectedContext.getParentId(), actualContext.getParentId());
-    assertEquals(expectedContext.getFlags(), actualContext.getFlags());
-  }
-
   @Test(expected = MalformedTracerStateStringException.class)
   public void testContextFromStringMalformedException() throws Exception {
     TextMapCodec.contextFromString("ff:ff:ff");
@@ -89,11 +78,11 @@ public class TextMapCodecTest {
 
     JaegerSpanContext context = new JaegerSpanContext(traceId, spanId, parentId, flags);
 
-    context.contextAsString().split(":");
+    context.toString().split(":");
 
     assertEquals(
-        "fffffffffffffff6:fffffffffffffff6:fffffffffffffff6:81", context.contextAsString());
-    JaegerSpanContext contextFromStr = TextMapCodec.contextFromString(context.contextAsString());
+        "fffffffffffffff6:fffffffffffffff6:fffffffffffffff6:81", context.toString());
+    JaegerSpanContext contextFromStr = TextMapCodec.contextFromString(context.toString());
     assertEquals(traceId, contextFromStr.getTraceId());
     assertEquals(spanId, contextFromStr.getSpanId());
     assertEquals(parentId, contextFromStr.getParentId());

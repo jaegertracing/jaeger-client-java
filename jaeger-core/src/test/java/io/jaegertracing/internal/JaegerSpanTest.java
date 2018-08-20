@@ -14,20 +14,11 @@
 
 package io.jaegertracing.internal;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import io.jaegertracing.internal.baggage.DefaultBaggageRestrictionManager;
 import io.jaegertracing.internal.baggage.Restriction;
 import io.jaegertracing.internal.clock.Clock;
 import io.jaegertracing.internal.metrics.InMemoryMetricsFactory;
 import io.jaegertracing.internal.metrics.Metrics;
-import io.jaegertracing.internal.propagation.TextMapCodec;
 import io.jaegertracing.internal.reporters.InMemoryReporter;
 import io.jaegertracing.internal.samplers.ConstSampler;
 import io.jaegertracing.spi.BaggageRestrictionManager;
@@ -37,6 +28,10 @@ import io.opentracing.SpanContext;
 import io.opentracing.log.Fields;
 import io.opentracing.noop.NoopSpan;
 import io.opentracing.tag.Tags;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mockito;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Collections;
@@ -45,9 +40,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mockito;
+
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 public class JaegerSpanTest {
   private Clock clock;
@@ -200,12 +195,27 @@ public class JaegerSpanTest {
         .thenThrow(new IllegalStateException("currentTimeMicros() called 2nd time"));
     when(clock.currentNanoTicks()).thenReturn(20000L).thenReturn(30000L);
 
-    JaegerSpan jaegerSpan = tracer.buildSpan("test-service-name").start();
+    JaegerSpan jaegerSpan = tracer.buildSpan("test-operation").start();
     jaegerSpan.finish();
 
     assertEquals(1, reporter.getSpans().size());
     assertEquals(100, jaegerSpan.getStart());
     assertEquals(10, jaegerSpan.getDuration());
+  }
+
+  @Test
+  public void testSpanToString() {
+    String operation = "test-operation";
+    JaegerSpan span = tracer.buildSpan(operation).start();
+    String expectedString = String.format(
+        "%x:%x:%x:%x - %s",
+        span.context().getTraceId(),
+        span.context().getSpanId(),
+        span.context().getParentId(),
+        span.context().getFlags(),
+        operation);
+    assertEquals(expectedString, span.toString());
+    span.finish();
   }
 
   @Test
