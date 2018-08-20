@@ -51,7 +51,8 @@ public class SenderResolver {
    */
   public static Sender resolve(Configuration.SenderConfiguration senderConfiguration) {
     Sender sender = null;
-    ServiceLoader<SenderFactory> senderFactoryServiceLoader = ServiceLoader.load(SenderFactory.class);
+    ServiceLoader<SenderFactory> senderFactoryServiceLoader = ServiceLoader.load(SenderFactory.class,
+	  SenderFactory.class.getClassLoader());
     Iterator<SenderFactory> senderFactoryIterator = senderFactoryServiceLoader.iterator();
 
     boolean hasMultipleFactories = false;
