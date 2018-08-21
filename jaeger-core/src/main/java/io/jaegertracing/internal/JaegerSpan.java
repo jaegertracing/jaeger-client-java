@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2018, The Jaeger Authors
  * Copyright (c) 2016, Uber Technologies, Inc
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -46,7 +47,7 @@ public class JaegerSpan implements Span {
   private List<LogData> logs;
   private boolean finished = false; // to prevent the same span from getting reported multiple times
 
-  JaegerSpan(
+  protected JaegerSpan(
       JaegerTracer tracer,
       String operationName,
       JaegerSpanContext context,

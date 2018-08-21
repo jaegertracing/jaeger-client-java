@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2018, The Jaeger Authors
  * Copyright (c) 2016, Uber Technologies, Inc
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -30,18 +31,27 @@ public class JaegerSpanContext implements SpanContext {
   private final byte flags;
   private final Map<String, String> baggage;
   private final String debugId;
+  private final JaegerObjectFactory objectFactory;
 
   public JaegerSpanContext(long traceId, long spanId, long parentId, byte flags) {
-    this(traceId, spanId, parentId, flags, Collections.<String, String>emptyMap(), null);
+    this(
+        traceId,
+        spanId,
+        parentId,
+        flags,
+        Collections.<String, String>emptyMap(),
+        null, // debugId
+        new JaegerObjectFactory());
   }
 
-  JaegerSpanContext(
+  protected JaegerSpanContext(
       long traceId,
       long spanId,
       long parentId,
       byte flags,
       Map<String, String> baggage,
-      String debugId) {
+      String debugId,
+      JaegerObjectFactory objectFactory) {
     if (baggage == null) {
       throw new NullPointerException();
     }
@@ -51,6 +61,7 @@ public class JaegerSpanContext implements SpanContext {
     this.flags = flags;
     this.baggage = baggage;
     this.debugId = debugId;
+    this.objectFactory = objectFactory;
   }
 
   @Override
@@ -102,15 +113,15 @@ public class JaegerSpanContext implements SpanContext {
     } else {
       newBaggage.put(key, val);
     }
-    return new JaegerSpanContext(traceId, spanId, parentId, flags, newBaggage, debugId);
+    return objectFactory.createSpanContext(traceId, spanId, parentId, flags, newBaggage, debugId);
   }
 
   public JaegerSpanContext withBaggage(Map<String, String> newBaggage) {
-    return new JaegerSpanContext(traceId, spanId, parentId, flags, newBaggage, debugId);
+    return objectFactory.createSpanContext(traceId, spanId, parentId, flags, newBaggage, debugId);
   }
 
   public JaegerSpanContext withFlags(byte flags) {
-    return new JaegerSpanContext(traceId, spanId, parentId, flags, baggage, debugId);
+    return objectFactory.createSpanContext(traceId, spanId, parentId, flags, baggage, debugId);
   }
 
   /**
@@ -127,21 +138,12 @@ public class JaegerSpanContext implements SpanContext {
   }
 
   /**
-   * Create a new dummy JaegerSpanContext as a container for debugId string. This is used when
-   * "jaeger-debug-id" header is passed in the request headers and forces the trace to be sampled as
-   * debug trace, and the value of header recorded as a span tag to serve as a searchable
-   * correlation ID.
-   *
-   * @param debugId arbitrary string used as correlation ID
-   *
-   * @return new dummy JaegerSpanContext that serves as a container for debugId only.
+   * debugId is used when "jaeger-debug-id" header is passed in the request headers and forces the
+   * trace to be sampled as debug trace, and the value of header recorded as a span tag to serve as
+   * a searchable correlation ID.
    *
    * @see Constants#DEBUG_ID_HEADER_KEY
    */
-  public static JaegerSpanContext withDebugId(String debugId) {
-    return new JaegerSpanContext(0, 0, 0, (byte) 0, Collections.<String, String>emptyMap(), debugId);
-  }
-
   String getDebugId() {
     return debugId;
   }

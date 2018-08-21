@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2018, The Jaeger Authors
  * Copyright (c) 2016, Uber Technologies, Inc
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -214,7 +215,7 @@ public class JaegerSpanTest {
         tracer,
         operation,
         new JaegerSpanContext(
-            1, 2, 3, (byte) 4, Collections.emptyMap(), null /* debugId */),
+            1, 2, 3, (byte) 4, Collections.emptyMap(), null /* debugId */, new JaegerObjectFactory()),
         0,
         0,
         false,

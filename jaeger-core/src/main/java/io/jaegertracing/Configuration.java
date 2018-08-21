@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2018, The Jaeger Authors
  * Copyright (c) 2016, Uber Technologies, Inc
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -213,13 +214,17 @@ public class Configuration {
     Metrics metrics = new Metrics(metricsFactory);
     Reporter reporter = reporterConfig.getReporter(metrics);
     Sampler sampler = samplerConfig.createSampler(serviceName, metrics);
-    JaegerTracer.Builder builder = new JaegerTracer.Builder(serviceName)
+    JaegerTracer.Builder builder = createTracerBuilder(serviceName)
         .withSampler(sampler)
         .withReporter(reporter)
         .withMetrics(metrics)
         .withTags(tracerTags);
     codecConfig.apply(builder);
     return builder;
+  }
+
+  protected JaegerTracer.Builder createTracerBuilder(String serviceName) {
+    return new JaegerTracer.Builder(serviceName);
   }
 
   public synchronized JaegerTracer getTracer() {
