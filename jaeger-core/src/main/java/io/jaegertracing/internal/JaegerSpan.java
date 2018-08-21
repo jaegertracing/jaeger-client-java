@@ -147,7 +147,7 @@ public class JaegerSpan implements Span {
   @Override
   public String toString() {
     synchronized (this) {
-      return context.contextAsString() + " - " + operationName;
+      return context.toString() + " - " + operationName;
     }
   }
 

@@ -27,7 +27,6 @@ import io.jaegertracing.internal.baggage.Restriction;
 import io.jaegertracing.internal.clock.Clock;
 import io.jaegertracing.internal.metrics.InMemoryMetricsFactory;
 import io.jaegertracing.internal.metrics.Metrics;
-import io.jaegertracing.internal.propagation.TextMapCodec;
 import io.jaegertracing.internal.reporters.InMemoryReporter;
 import io.jaegertracing.internal.samplers.ConstSampler;
 import io.jaegertracing.spi.BaggageRestrictionManager;
@@ -200,7 +199,7 @@ public class JaegerSpanTest {
         .thenThrow(new IllegalStateException("currentTimeMicros() called 2nd time"));
     when(clock.currentNanoTicks()).thenReturn(20000L).thenReturn(30000L);
 
-    JaegerSpan jaegerSpan = tracer.buildSpan("test-service-name").start();
+    JaegerSpan jaegerSpan = tracer.buildSpan("test-operation").start();
     jaegerSpan.finish();
 
     assertEquals(1, reporter.getSpans().size());
@@ -210,14 +209,19 @@ public class JaegerSpanTest {
 
   @Test
   public void testSpanToString() {
-    JaegerSpan jaegerSpan = tracer.buildSpan("test-operation").start();
-    JaegerSpanContext expectedContext =  jaegerSpan.context();
-    JaegerSpanContext actualContext = TextMapCodec.contextFromString(expectedContext.contextAsString());
-
-    assertEquals(expectedContext.getTraceId(), actualContext.getTraceId());
-    assertEquals(expectedContext.getSpanId(), actualContext.getSpanId());
-    assertEquals(expectedContext.getParentId(), actualContext.getParentId());
-    assertEquals(expectedContext.getFlags(), actualContext.getFlags());
+    String operation = "test-operation";
+    JaegerSpan span = new JaegerSpan(
+        tracer,
+        operation,
+        new JaegerSpanContext(
+            1, 2, 3, (byte) 4, Collections.emptyMap(), null /* debugId */),
+        0,
+        0,
+        false,
+        Collections.emptyMap(),
+        Collections.emptyList());
+    assertEquals("1:2:3:4 - test-operation", span.toString());
+    span.finish();
   }
 
   @Test
