@@ -3,9 +3,6 @@ description = 'Integration library for Zipkin'
 dependencies {
     compile project(':jaeger-client')
 
-    // For some reason, we need to use the default configuration here to get access to the Thrift-generated classes
-    compile project(path: ':jaeger-thrift', configuration: "default")
-
     compile group: 'io.zipkin.reporter2', name: 'zipkin-sender-urlconnection', version: '2.7.6'
     compile group: 'org.apache.thrift', name: 'libthrift', version: apacheThriftVersion
 

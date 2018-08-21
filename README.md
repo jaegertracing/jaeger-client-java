@@ -48,9 +48,8 @@ This will bring a concrete sender, such as `jaeger-thrift`, as well as the `jaeg
 
 ### Thrift version conflicts
 The Jaeger Java Client uses `org.apache.thrift:libthrift:0.11.0`. By default, declaring a dependency on the
-`jaeger-thrift` module will bring a shaded version of Thrift (and others), making it safe to use your own versions of
-such dependencies. A non-shaded version of the dependency is available with the classifier `no-shadow`, but the
-transitive dependencies (Thrift included) will have to be added manually to your project.
+`jaeger-thrift` module will bring a non-shaded version of Thrift (and others). A shaded version of the dependency is
+available with the classifier `shadow`.
 
 ## Instantiating the Tracer
 

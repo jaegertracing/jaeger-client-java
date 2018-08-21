@@ -1,8 +1,7 @@
 description = 'Convenience module to be used by instrumented applications'
 
 dependencies {
-    // for the other projects, we can add the dependency on the projects themselves
-    compile project(path: ':jaeger-thrift', configuration: "shadow")
+    compile project(':jaeger-thrift')
     compile project(':jaeger-core')
     compile project(':jaeger-tracerresolver')
 

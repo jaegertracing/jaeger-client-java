@@ -1,6 +1,5 @@
 apply plugin: 'com.github.johnrengelman.shadow'
 
-
 description = 'A jaeger instrumented java server meant for testing interoperability with different Jaeger clients through the use of crossdock (https://github.com/crossdock/crossdock)'
 ext.jacksonVersion = '2.8.10'
 shadowJar.archiveName = 'jaeger-crossdock.jar'
@@ -13,15 +12,15 @@ compileJava {
 dependencies {
     compile project(':jaeger-client')
 
-    compile group: 'io.opentracing.contrib', name: 'opentracing-jaxrs2', version: '0.1.4'
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
+    compile group: 'io.opentracing.contrib', name: 'opentracing-jaxrs2', version: '0.1.4'
+    compile group: 'javax.servlet', name: 'javax.servlet-api', version: '4.0.0'
+    compile group: 'javax.servlet', name: 'servlet-api', version: '2.5'
+    compile group: 'org.glassfish.grizzly', name: 'grizzly-http-servlet', version: '2.3.23'
     compile group: 'org.glassfish.jersey.containers', name: 'jersey-container-grizzly2-http', version: jerseyVersion
     compile group: 'org.glassfish.jersey.containers', name: 'jersey-container-servlet', version: jerseyVersion
-    compile group: 'org.glassfish.grizzly', name: 'grizzly-http-servlet', version: '2.3.23'
-    compile group: 'javax.servlet', name: 'javax.servlet-api', version: '4.0.0'
     compile group: 'org.glassfish.jersey.core', name: 'jersey-client', version: jerseyVersion
     compile group: 'org.glassfish.jersey.media', name: 'jersey-media-json-jackson', version: jerseyVersion
-    compile group: 'javax.servlet', name: 'servlet-api', version: '2.5'
     compile group: 'org.slf4j', name: 'slf4j-log4j12', version: slf4jVersion
 
     // Testing Frameworks
