@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2018, The Jaeger Authors
  * Copyright (c) 2016, Uber Technologies, Inc
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -15,6 +16,7 @@
 package io.jaegertracing.internal.propagation;
 
 import io.jaegertracing.internal.Constants;
+import io.jaegertracing.internal.JaegerObjectFactory;
 import io.jaegertracing.internal.JaegerSpanContext;
 import io.jaegertracing.internal.exceptions.EmptyTracerStateStringException;
 import io.jaegertracing.internal.exceptions.MalformedTracerStateStringException;
@@ -24,6 +26,7 @@ import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -47,6 +50,11 @@ public class TextMapCodec implements Codec<TextMap> {
 
   private final boolean urlEncoding;
 
+  /**
+   * Object factory used to construct JaegerSpanContext subclass instances.
+   */
+  private final JaegerObjectFactory objectFactory;
+
   public TextMapCodec(boolean urlEncoding) {
     this(builder().withUrlEncoding(urlEncoding));
   }
@@ -55,6 +63,7 @@ public class TextMapCodec implements Codec<TextMap> {
     this.urlEncoding = builder.urlEncoding;
     this.contextKey = builder.spanContextKey;
     this.baggagePrefix = builder.baggagePrefix;
+    this.objectFactory = builder.objectFactory;
   }
 
   static JaegerSpanContext contextFromString(String value)
@@ -120,7 +129,13 @@ public class TextMapCodec implements Codec<TextMap> {
     }
     if (context == null) {
       if (debugId != null) {
-        return JaegerSpanContext.withDebugId(debugId);
+        return objectFactory.createSpanContext(
+            0,
+            0,
+            0,
+            (byte) 0,
+            Collections.<String, String>emptyMap(),
+            debugId);
       }
       return null;
     }
@@ -185,6 +200,7 @@ public class TextMapCodec implements Codec<TextMap> {
     private boolean urlEncoding;
     private String spanContextKey = SPAN_CONTEXT_KEY;
     private String baggagePrefix = BAGGAGE_KEY_PREFIX;
+    private JaegerObjectFactory objectFactory = new JaegerObjectFactory();
 
     public Builder withUrlEncoding(boolean urlEncoding) {
       this.urlEncoding = urlEncoding;
@@ -198,6 +214,16 @@ public class TextMapCodec implements Codec<TextMap> {
 
     public Builder withBaggagePrefix(String baggagePrefix) {
       this.baggagePrefix = baggagePrefix;
+      return this;
+    }
+
+    /**
+     * Set object factory to use for construction of JaegerSpanContext subclass instances.
+     *
+     * @param objectFactory JaegerObjectFactory subclass instance.
+     */
+    public Builder withObjectFactory(JaegerObjectFactory objectFactory) {
+      this.objectFactory = objectFactory;
       return this;
     }
 

@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2018, The Jaeger Authors
  * Copyright (c) 2017, Uber Technologies, Inc
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -14,11 +15,13 @@
 
 package io.jaegertracing.internal.propagation;
 
+import io.jaegertracing.internal.JaegerObjectFactory;
 import io.jaegertracing.internal.JaegerSpanContext;
 import io.jaegertracing.internal.JaegerTracer;
 import io.jaegertracing.spi.BaggageRestrictionManager;
 import io.jaegertracing.spi.Codec;
 import io.opentracing.propagation.TextMap;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -57,6 +60,7 @@ public class B3TextMapCodec implements Codec<TextMap> {
 
   private static final PrefixedKeys keys = new PrefixedKeys();
   private final String baggagePrefix;
+  private final JaegerObjectFactory objectFactory;
 
   /**
    * @deprecated use {@link Builder} instead
@@ -68,6 +72,7 @@ public class B3TextMapCodec implements Codec<TextMap> {
 
   private B3TextMapCodec(Builder builder) {
     this.baggagePrefix = builder.baggagePrefix;
+    this.objectFactory = builder.objectFactory;
   }
 
   @Override
@@ -118,7 +123,14 @@ public class B3TextMapCodec implements Codec<TextMap> {
     }
 
     if (null != traceId && null != parentId && null != spanId) {
-      JaegerSpanContext spanContext = new JaegerSpanContext(traceId, spanId, parentId, flags);
+      JaegerSpanContext spanContext = objectFactory.createSpanContext(
+          traceId,
+          spanId,
+          parentId,
+          flags,
+          Collections.<String, String>emptyMap(),
+          null // debugId
+          );
       if (baggage != null) {
         spanContext = spanContext.withBaggage(baggage);
       }
@@ -129,12 +141,22 @@ public class B3TextMapCodec implements Codec<TextMap> {
 
   public static class Builder {
     private String baggagePrefix = BAGGAGE_PREFIX;
+    private JaegerObjectFactory objectFactory = new JaegerObjectFactory();
 
     /**
      * Specify baggage prefix. The default is {@value B3TextMapCodec#BAGGAGE_PREFIX}
      */
     public Builder withBaggagePrefix(String baggagePrefix) {
       this.baggagePrefix = baggagePrefix;
+      return this;
+    }
+
+    /**
+     * Specify JaegerSpanContext factory. Used for creating new span contexts. The default factory
+     * is an instance of {@link JaegerObjectFactory}.
+     */
+    public Builder withObjectFactory(JaegerObjectFactory objectFactory) {
+      this.objectFactory = objectFactory;
       return this;
     }
 
