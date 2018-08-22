@@ -26,7 +26,7 @@ import java.net.URLEncoder;
 import lombok.ToString;
 
 
-@ToString
+@ToString(exclude = "gson")
 public class HttpSamplingManager implements SamplingManager {
   public static final String DEFAULT_HOST_PORT = "localhost:5778";
   private final Gson gson = new Gson();
