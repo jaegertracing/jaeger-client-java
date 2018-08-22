@@ -57,10 +57,15 @@ import zipkin2.reporter.urlconnection.URLConnectionSender;
  * <p>
  * See https://github.com/openzipkin/zipkin/tree/master/zipkin-server
  */
-@ToString(exclude = {"spanBuffer", "encoder"})
+@ToString
 public final class ZipkinSender implements Sender {
   static final Set<String> CORE_ANNOTATIONS = new LinkedHashSet<String>(
       Arrays.asList(CLIENT_SEND, CLIENT_RECV, SERVER_SEND, SERVER_RECV));
+
+  final zipkin2.reporter.Sender delegate;
+
+  @ToString.Exclude final ThriftSpanEncoder encoder = new ThriftSpanEncoder();
+  @ToString.Exclude final List<byte[]> spanBuffer;
 
   /**
    * @param endpoint The POST URL for zipkin's <a href="http://zipkin.io/zipkin-api/#/">v1 api</a>,
@@ -97,10 +102,6 @@ public final class ZipkinSender implements Sender {
     }
     return new ZipkinSender(delegate);
   }
-
-  final ThriftSpanEncoder encoder = new ThriftSpanEncoder();
-  final zipkin2.reporter.Sender delegate;
-  final List<byte[]> spanBuffer;
 
   ZipkinSender(zipkin2.reporter.Sender delegate) {
     this.delegate = delegate;

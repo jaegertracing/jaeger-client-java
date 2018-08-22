@@ -30,13 +30,14 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-@ToString(exclude = {"httpClient", "requestBuilder"})
+@ToString
 public class HttpSender extends ThriftSender {
   private static final String HTTP_COLLECTOR_JAEGER_THRIFT_FORMAT_PARAM = "format=jaeger.thrift";
   private static final int ONE_MB_IN_BYTES = 1048576;
   private static final MediaType MEDIA_TYPE_THRIFT = MediaType.parse("application/x-thrift");
-  private final OkHttpClient httpClient;
-  private final Request.Builder requestBuilder;
+
+  @ToString.Exclude private final OkHttpClient httpClient;
+  @ToString.Exclude private final Request.Builder requestBuilder;
 
   protected HttpSender(Builder builder) {
     super(ProtocolType.Binary, builder.maxPacketSize);

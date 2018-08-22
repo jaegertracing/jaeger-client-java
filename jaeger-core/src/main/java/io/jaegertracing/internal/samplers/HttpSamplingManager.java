@@ -26,11 +26,12 @@ import java.net.URLEncoder;
 import lombok.ToString;
 
 
-@ToString(exclude = "gson")
+@ToString
 public class HttpSamplingManager implements SamplingManager {
   public static final String DEFAULT_HOST_PORT = "localhost:5778";
-  private final Gson gson = new Gson();
   private final String hostPort;
+
+  @ToString.Exclude private final Gson gson = new Gson();
 
   /**
    * This constructor expects running sampling manager on {@link #DEFAULT_HOST_PORT}.

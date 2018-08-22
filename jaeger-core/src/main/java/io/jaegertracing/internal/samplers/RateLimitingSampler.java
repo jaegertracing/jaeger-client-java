@@ -24,14 +24,15 @@ import lombok.Getter;
 import lombok.ToString;
 
 @SuppressWarnings("EqualsHashCode")
-@ToString(exclude = "rateLimiter")
+@ToString
 public class RateLimitingSampler implements Sampler {
   public static final String TYPE = "ratelimiting";
 
-  private final RateLimiter rateLimiter;
   @Getter
   private final double maxTracesPerSecond;
   private final Map<String, Object> tags;
+
+  @ToString.Exclude private final RateLimiter rateLimiter;
 
   public RateLimitingSampler(double maxTracesPerSecond) {
     this.maxTracesPerSecond = maxTracesPerSecond;

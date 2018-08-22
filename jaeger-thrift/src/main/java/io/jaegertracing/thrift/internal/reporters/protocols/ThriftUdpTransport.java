@@ -29,15 +29,16 @@ import org.apache.thrift.transport.TTransportException;
 /*
  * A thrift transport for sending sending/receiving spans.
  */
-@ToString(exclude = {"writeBuffer"})
+@ToString
 public class ThriftUdpTransport extends TTransport implements Closeable {
   public static final int MAX_PACKET_SIZE = 65000;
 
-  public final DatagramSocket socket;
-  public byte[] receiveBuf;
   public int receiveOffSet = -1;
   public int receiveLength = 0;
-  public ByteBuffer writeBuffer;
+
+  @ToString.Exclude public final DatagramSocket socket;
+  @ToString.Exclude public byte[] receiveBuf;
+  @ToString.Exclude public ByteBuffer writeBuffer;
 
   // Create a UDP client for sending data to specific host and port
   public static ThriftUdpTransport newThriftUdpClient(String host, int port) {

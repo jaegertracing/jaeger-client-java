@@ -32,20 +32,22 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * RemoteReporter buffers spans in memory and sends them out of process using Sender.
  */
-@ToString(exclude = {"commandQueue", "flushTimer", "queueProcessorThread", "metrics"})
+@ToString
 @Slf4j
 public class RemoteReporter implements Reporter {
+  private static final int DEFAULT_CLOSE_ENQUEUE_TIMEOUT_MILLIS = 1000;
+
   public static final int DEFAULT_FLUSH_INTERVAL_MS = 1000;
   public static final int DEFAULT_MAX_QUEUE_SIZE = 100;
 
-  private static final int DEFAULT_CLOSE_ENQUEUE_TIMEOUT_MILLIS = 1000;
-  private final BlockingQueue<Command> commandQueue;
-  private final Timer flushTimer;
-  private final Thread queueProcessorThread;
-  private final QueueProcessor queueProcessor;
   private final Sender sender;
   private final int closeEnqueueTimeout;
-  private final Metrics metrics;
+
+  @ToString.Exclude private final BlockingQueue<Command> commandQueue;
+  @ToString.Exclude private final Timer flushTimer;
+  @ToString.Exclude private final Thread queueProcessorThread;
+  @ToString.Exclude private final QueueProcessor queueProcessor;
+  @ToString.Exclude private final Metrics metrics;
 
   private RemoteReporter(Sender sender, int flushInterval, int maxQueueSize, int closeEnqueueTimeout,
       Metrics metrics) {

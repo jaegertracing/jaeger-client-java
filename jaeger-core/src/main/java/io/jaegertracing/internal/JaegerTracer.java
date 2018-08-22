@@ -58,24 +58,24 @@ import java.util.Properties;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
-@ToString(exclude = {"registry", "clock", "metrics", "scopeManager"})
+@ToString
 @Slf4j
 public class JaegerTracer implements Tracer, Closeable {
-
   private final String version;
   private final String serviceName;
   private final Reporter reporter;
   private final Sampler sampler;
-  private final PropagationRegistry registry;
-  private final Clock clock;
-  private final Metrics metrics;
-  private final int ipv4;
   private final Map<String, ?> tags;
   private final boolean zipkinSharedRpcSpan;
-  private final ScopeManager scopeManager;
-  private final BaggageSetter baggageSetter;
   private final boolean expandExceptionLogs;
-  private final JaegerObjectFactory objectFactory;
+
+  @ToString.Exclude private final PropagationRegistry registry;
+  @ToString.Exclude private final Clock clock;
+  @ToString.Exclude private final Metrics metrics;
+  @ToString.Exclude private final ScopeManager scopeManager;
+  @ToString.Exclude private final BaggageSetter baggageSetter;
+  @ToString.Exclude private final JaegerObjectFactory objectFactory;
+  @ToString.Exclude private final int ipv4; // human readable representation is present within the tag map
 
   protected JaegerTracer(JaegerTracer.Builder builder) {
     this.serviceName = builder.serviceName;

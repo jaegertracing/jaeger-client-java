@@ -32,20 +32,24 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 @SuppressWarnings("EqualsHashCode")
-@ToString(exclude = {"pollTimer", "lock"})
+@ToString
 @Slf4j
 public class RemoteControlledSampler implements Sampler {
   public static final String TYPE = "remote";
   private static final int DEFAULT_POLLING_INTERVAL_MS = 60000;
 
   private final int maxOperations = 2000;
-  private final String serviceName;
   private final SamplingManager manager;
-  private final Timer pollTimer;
-  private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-  private final Metrics metrics;
+
   @Getter(AccessLevel.PACKAGE)
   private Sampler sampler;
+
+  // most of the time, toString here is called from the JaegerTracer, which holds this as well
+  @ToString.Exclude private final String serviceName;
+
+  @ToString.Exclude private final Timer pollTimer;
+  @ToString.Exclude private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+  @ToString.Exclude private final Metrics metrics;
 
   private RemoteControlledSampler(Builder builder) {
     this.serviceName = builder.serviceName;

@@ -24,13 +24,14 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.ToString;
 
-@ToString(exclude = {"spanBuffer"})
+@ToString
 public abstract class ThriftSender extends ThriftSenderBase implements Sender {
 
   private Process process;
   private int processBytesSize;
-  private List<io.jaegertracing.thriftjava.Span> spanBuffer;
   private int byteBufferSize;
+
+  @ToString.Exclude private List<io.jaegertracing.thriftjava.Span> spanBuffer;
 
   /**
    * @param protocolType protocol type (compact or binary)

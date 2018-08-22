@@ -28,10 +28,12 @@ public class ProbabilisticSampler implements Sampler {
   public static final double DEFAULT_SAMPLING_PROBABILITY = 0.001;
   public static final String TYPE = "probabilistic";
 
-  private final long positiveSamplingBoundary;
-  private final long negativeSamplingBoundary;
-  @Getter private final double samplingRate;
   private final Map<String, Object> tags;
+
+  // exclude from toString as these are represented in the tags map already
+  @ToString.Exclude private final long positiveSamplingBoundary;
+  @ToString.Exclude private final long negativeSamplingBoundary;
+  @ToString.Exclude @Getter private final double samplingRate;
 
   public ProbabilisticSampler(double samplingRate) {
     if (samplingRate < 0.0 || samplingRate > 1.0) {

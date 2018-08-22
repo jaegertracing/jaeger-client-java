@@ -24,7 +24,7 @@ import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.transport.AutoExpandingBufferWriteTransport;
 
-@ToString(exclude = {"memoryTransport"})
+@ToString
 @Slf4j
 public abstract class ThriftSenderBase {
 
@@ -35,11 +35,11 @@ public abstract class ThriftSenderBase {
 
   public static final int EMIT_BATCH_OVERHEAD = 33;
 
-  private AutoExpandingBufferWriteTransport memoryTransport;
-
   protected final TProtocolFactory protocolFactory;
   private final TSerializer serializer;
   private final int maxSpanBytes;
+
+  @ToString.Exclude private AutoExpandingBufferWriteTransport memoryTransport;
 
   /**
    * @param protocolType protocol type (compact or binary)

@@ -69,7 +69,7 @@ public class SenderResolver {
         // factory the user wants:
         String requestedFactory = System.getProperty(Configuration.JAEGER_SENDER_FACTORY);
         if (senderFactory.getType().equals(requestedFactory)) {
-          log.info(
+          log.debug(
               String.format("Found the requested (%s) sender factory: %s",
                   requestedFactory,
                   senderFactory)
@@ -83,7 +83,7 @@ public class SenderResolver {
     }
 
     if (null != sender) {
-      log.info(String.format("Using sender %s", sender));
+      log.debug(String.format("Using sender %s", sender));
       return sender;
     } else {
       log.warn("No suitable sender found. Using NoopSender, meaning that data will not be sent anywhere!");

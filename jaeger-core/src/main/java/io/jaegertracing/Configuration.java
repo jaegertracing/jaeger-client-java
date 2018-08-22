@@ -250,7 +250,7 @@ public class Configuration {
     Iterator<MetricsFactory> iterator = loader.iterator();
     if (iterator.hasNext()) {
       MetricsFactory metricsFactory = iterator.next();
-      log.info("Found a Metrics Factory service: {}", metricsFactory.getClass());
+      log.debug("Found a Metrics Factory service: {}", metricsFactory.getClass());
       return metricsFactory;
     }
 

@@ -22,13 +22,13 @@ import io.jaegertracing.thriftjava.Process;
 import java.util.List;
 import lombok.ToString;
 
-@ToString(exclude = {"agentClient"})
+@ToString
 public class UdpSender extends ThriftSender {
   public static final String DEFAULT_AGENT_UDP_HOST = "localhost";
   public static final int DEFAULT_AGENT_UDP_COMPACT_PORT = 6831;
 
-  private Agent.Client agentClient;
-  private ThriftUdpTransport udpTransport;
+  @ToString.Exclude private Agent.Client agentClient;
+  @ToString.Exclude private ThriftUdpTransport udpTransport;
 
   /**
    * This constructor expects Jaeger running running on {@value #DEFAULT_AGENT_UDP_HOST}
