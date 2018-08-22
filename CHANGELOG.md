@@ -1,10 +1,15 @@
 Changes by Version
 ==================
 
-0.30.5 (unreleased)
+0.30.5 (2018-08-22)
 -------------------
 
-- Nothing yet
+- Move jaeger-thrift shadow jar to its own classifier ([#526](https://github.com/jaegertracing/jaeger-client-java/pull/526), [@jpkrohling](https://github.com/jpkrohling))
+- Mark gson field in HttpSamplingManager as ignored for toString ([#528](https://github.com/jaegertracing/jaeger-client-java/pull/528), [@jpkrohling](https://github.com/jpkrohling))
+- Use abstract factory pattern to allow subclassing core Jaeger types ([#509](https://github.com/jaegertracing/jaeger-client-java/pull/509), [@isaachier](https://github.com/isaachier))
+- Use SenderFactory classloader for ServiceLoader ([#523](https://github.com/jaegertracing/jaeger-client-java/pull/523), [@dbuchhorn](https://github.com/dbuchhorn))
+- Reduce visibility of TextMapCodec.contextFromString to package scope ([#519](https://github.com/jaegertracing/jaeger-client-java/pull/519), [@isaachier](https://github.com/isaachier))
+- Move contextFromString out of JaegerSpanContext into TextMapCodec ([#517](https://github.com/jaegertracing/jaeger-client-java/pull/517), [@isaachier](https://github.com/isaachier))
 
 
 0.30.4 (2018-08-13)
