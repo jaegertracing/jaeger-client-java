@@ -1,5 +1,11 @@
 ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
 
+ext.sharedManifest = manifest {
+    attributes("Implementation-Title": project.name,
+               "Implementation-Version": project.version,
+               "Specification-Version": project.version)
+}
+
 def getRepositoryUsername() {
     return hasProperty('ossrhUsername') ? ossrhUsername : ""
 }
@@ -65,8 +71,8 @@ uploadArchives {
 task javadocJar(type: Jar, dependsOn: javadoc) {
     classifier = 'javadoc'
     from javadoc.destinationDir
-    manifest {
-        attributes('Implementation-Title': project.name, 'Implementation-Version': project.version, 'Specification-Version': project.version)
+    manifest = project.manifest {
+        from sharedManifest
     }
 }
 
@@ -74,8 +80,8 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 task sourcesJar(type: Jar) {
     classifier = 'sources'
     from sourceSets.main.allSource
-    manifest {
-        attributes('Implementation-Title': project.name, 'Implementation-Version': project.version, 'Specification-Version': project.version)
+    manifest = project.manifest {
+        from sharedManifest
     }
 }
 
