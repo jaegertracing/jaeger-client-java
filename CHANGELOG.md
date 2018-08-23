@@ -1,10 +1,11 @@
 Changes by Version
 ==================
 
-0.30.6 (unreleased)
+0.30.6 (2018-08-23)
 -------------------
 
-- Nothing yet 
+- Fine-tune bootstrap logging ([#531](https://github.com/jaegertracing/jaeger-client-java/pull/531), [@jpkrohling](https://github.com/jpkrohling))
+- Add specification version to jars, and impl-title/version & spec version to javadoc and sources jars ([#533](https://github.com/jaegertracing/jaeger-client-java/pull/533), [@objectiser](https://github.com/objectiser))
 
 
 0.30.5 (2018-08-22)
