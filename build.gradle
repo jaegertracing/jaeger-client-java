@@ -75,7 +75,7 @@ subprojects {
     jar {
         from sourceSets.main.output
         manifest {
-            attributes('Implementation-Title': project.name, 'Implementation-Version': project.version)
+            attributes('Implementation-Title': project.name, 'Implementation-Version': project.version, 'Specification-Version': project.version)
         }
     }
 

@@ -65,12 +65,18 @@ uploadArchives {
 task javadocJar(type: Jar, dependsOn: javadoc) {
     classifier = 'javadoc'
     from javadoc.destinationDir
+    manifest {
+        attributes('Implementation-Title': project.name, 'Implementation-Version': project.version, 'Specification-Version': project.version)
+    }
 }
 
 // add sources to our jar
 task sourcesJar(type: Jar) {
     classifier = 'sources'
     from sourceSets.main.allSource
+    manifest {
+        attributes('Implementation-Title': project.name, 'Implementation-Version': project.version, 'Specification-Version': project.version)
+    }
 }
 
 // add the jars as artifacts
