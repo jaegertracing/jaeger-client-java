@@ -71,3 +71,9 @@ artifacts {
     }
     tests testJar
 }
+
+sonarqube {
+    properties {
+        property "sonar.exclusions", "**/gen-java/**"
+    }
+}

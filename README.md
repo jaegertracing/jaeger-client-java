@@ -1,4 +1,4 @@
-[![Build Status][ci-img]][ci] [![Coverage Status][cov-img]][cov] [![Released Version][maven-img]][maven] [![FOSSA Status][fossa-img]][fossa]
+[![Build Status][ci-img]][ci] [![Coverage Status][cov-img]][cov] [![Released Version][maven-img]][maven] [![FOSSA Status][fossa-img]][fossa] [![SonarCloud Status][sonarcloud-badge]][sonarcloud]
 
 # Jaeger's Tracing Instrumentation Library for Java
 
@@ -131,3 +131,5 @@ This allows using Jaeger UI to find the trace by this tag.
 [legacy-client-java]: https://github.com/jaegertracing/legacy-client-java
 [javadoc]: http://javadoc.io/doc/io.jaegertracing/jaeger-core
 [javadoc-badge]: http://javadoc.io/badge/io.jaegertracing/jaeger-core.svg
+[sonarcloud]: https://sonarcloud.io/dashboard?id=io.jaegertracing%3Ajaeger-client
+[sonarcloud-badge]: https://sonarcloud.io/api/project_badges/measure?project=io.jaegertracing%3Ajaeger-client&metric=alert_status
