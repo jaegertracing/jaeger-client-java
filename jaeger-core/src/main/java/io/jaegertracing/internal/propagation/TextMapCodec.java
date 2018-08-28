@@ -22,15 +22,18 @@ import io.jaegertracing.internal.exceptions.EmptyTracerStateStringException;
 import io.jaegertracing.internal.exceptions.MalformedTracerStateStringException;
 import io.jaegertracing.spi.Codec;
 import io.opentracing.propagation.TextMap;
+
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class TextMapCodec implements Codec<TextMap> {
   /**
    * Key used to store serialized span context representation
@@ -142,14 +145,15 @@ public class TextMapCodec implements Codec<TextMap> {
   }
 
   private Map<String, String> parseBaggageHeader(String header, Map<String, String> baggage) {
-    String[] parts = header.split("\\ *,\\ *");
-    for (int i = 0; i < parts.length; i++) {
-      String[] kv = parts[i].split("\\ *=\\ *");
+    for (String part : header.split("\\s*,\\s*")) {
+      String[] kv = part.split("\\s*=\\s*");
       if (kv.length == 2) {
         if (baggage == null) {
           baggage = new HashMap<String, String>();
         }
         baggage.put(kv[0], kv[1]);
+      } else {
+        log.debug("malformed token in {} header: {}", Constants.BAGGAGE_HEADER_KEY, part);
       }
     }
     return baggage;
