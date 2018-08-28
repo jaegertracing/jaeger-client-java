@@ -125,24 +125,34 @@ public class TextMapCodec implements Codec<TextMap> {
           baggage = new HashMap<String, String>();
         }
         baggage.put(keys.unprefixedKey(key, baggagePrefix), decodedValue(entry.getValue()));
+      } else if (key.equals(Constants.BAGGAGE_HEADER_KEY)) {
+        baggage = parseBaggageHeader(decodedValue(entry.getValue()), baggage);
       }
     }
-    if (context == null) {
-      if (debugId != null) {
-        return objectFactory.createSpanContext(
-            0,
-            0,
-            0,
-            (byte) 0,
-            Collections.<String, String>emptyMap(),
-            debugId);
-      }
-      return null;
-    }
-    if (baggage == null) {
+    if (debugId == null && baggage == null) {
       return context;
     }
-    return context.withBaggage(baggage);
+    return objectFactory.createSpanContext(
+      context == null ? 0 : context.getTraceId(),
+      context == null ? 0 : context.getSpanId(),
+      context == null ? 0 : context.getParentId(),
+      context == null ? (byte)0 : context.getFlags(),
+      baggage,
+      debugId);
+  }
+
+  private Map<String, String> parseBaggageHeader(String header, Map<String, String> baggage) {
+    String[] parts = header.split("\\ *,\\ *");
+    for (int i = 0; i < parts.length; i++) {
+      String[] kv = parts[i].split("\\ *=\\ *");
+      if (kv.length == 2) {
+        if (baggage == null) {
+          baggage = new HashMap<String, String>();
+        }
+        baggage.put(kv[0], kv[1]);
+      }
+    }
+    return baggage;
   }
 
   @Override

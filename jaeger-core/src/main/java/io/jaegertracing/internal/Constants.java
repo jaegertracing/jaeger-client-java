@@ -36,6 +36,15 @@ public class Constants {
   public static final String DEBUG_ID_HEADER_KEY = "jaeger-debug-id";
 
   /**
+   * The name of HTTP header or a TextMap carrier key that can be used to pass
+   * additional baggage to the span, e.g. when executing an ad-hoc curl request:
+   * <pre>
+   * curl -H 'jaeger-baggage: k1=v1,k2=v2' http://...
+   * </pre>
+   */
+  public static final String BAGGAGE_HEADER_KEY = "jaeger-baggage";
+
+  /**
    * The name of the tag used to report client version.
    */
   public static final String JAEGER_CLIENT_VERSION_TAG_KEY = "jaeger.version";

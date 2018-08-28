@@ -37,8 +37,13 @@ import io.opentracing.ScopeManager;
 import io.opentracing.Span;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
+import io.opentracing.propagation.TextMapExtractAdapter;
+import io.opentracing.propagation.TextMapInjectAdapter;
 import io.opentracing.tag.Tags;
 import java.io.Closeable;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -192,5 +197,30 @@ public class JaegerTracerTest {
 
     // check
     assertEquals(activeSpan, tracer.activeSpan());
+  }
+
+  @Test
+  public void testStartTraceWithAdhocBaggage() {
+    traceWithAdhocBaggage(new HashMap<String, String>());
+  }
+
+  @Test
+  public void testJoinTraceWithAdhocBaggage() {
+    Span span = tracer.buildSpan("test").start();
+    Map<String, String> headers = new HashMap<String, String>();
+    tracer.inject(span.context(), Format.Builtin.HTTP_HEADERS, new TextMapInjectAdapter(headers));
+    assertEquals(1, headers.size());
+
+    traceWithAdhocBaggage(headers);
+  }
+
+  private void traceWithAdhocBaggage(Map<String, String> headers) {
+    headers.put("jaeger-baggage", "k1=v1, k2 = v2");
+
+    JaegerSpanContext parent = tracer.extract(Format.Builtin.HTTP_HEADERS, new TextMapExtractAdapter(headers));
+    Span span = tracer.buildSpan("test").asChildOf(parent).start();
+
+    assertEquals("must have baggage", "v1", span.getBaggageItem("k1"));
+    assertEquals("must have baggage", "v2", span.getBaggageItem("k2"));
   }
 }

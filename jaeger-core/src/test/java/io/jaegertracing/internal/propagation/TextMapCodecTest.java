@@ -21,6 +21,12 @@ import static org.junit.Assert.assertTrue;
 import io.jaegertracing.internal.JaegerSpanContext;
 import io.jaegertracing.internal.exceptions.EmptyTracerStateStringException;
 import io.jaegertracing.internal.exceptions.MalformedTracerStateStringException;
+import io.opentracing.propagation.TextMapExtractAdapter;
+import io.opentracing.propagation.TextMapInjectAdapter;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import org.junit.Test;
 
 public class TextMapCodecTest {
@@ -82,5 +88,35 @@ public class TextMapCodecTest {
     assertEquals(spanId, contextFromStr.getSpanId());
     assertEquals(parentId, contextFromStr.getParentId());
     assertEquals(flags, contextFromStr.getFlags());
+  }
+
+  /**
+   * Tests that the codec will include baggage from header "jaeger-baggage".
+   */
+  @Test
+  public void testAdhocBaggageWithTraceId() {
+    TextMapCodec codec = new TextMapCodec(false);
+    Map<String, String> headers = new HashMap<String, String>();
+    codec.inject(new JaegerSpanContext(42, 1, 0, (byte)1), new TextMapInjectAdapter(headers));
+    headers.put("jaeger-baggage", "k1=v1, k2 = v2");
+    JaegerSpanContext context = codec.extract(new TextMapExtractAdapter(headers));
+    assertEquals("must have trace ID", 42, context.getTraceId());
+    assertEquals("must have bagggae", "v1", context.getBaggageItem("k1"));
+    assertEquals("must have bagggae", "v2", context.getBaggageItem("k2"));
+  }
+  
+  /**
+   * Tests that the codec will return non-null SpanContext even if the only header
+   * present is "jaeger-baggage".
+   */
+  @Test
+  public void testAdhocBaggageWithoutTraceId() {
+    Map<String, String> headers = new HashMap<String, String>();
+    headers.put("jaeger-baggage", "k1=v1, k2 = v2, k3=v3=d3");
+    TextMapCodec codec = new TextMapCodec(false);
+    JaegerSpanContext context = codec.extract(new TextMapExtractAdapter(headers));
+    assertEquals("v1", context.getBaggageItem("k1"));
+    assertEquals("v2", context.getBaggageItem("k2"));
+    assertEquals(null, context.getBaggageItem("k3"));
   }
 }

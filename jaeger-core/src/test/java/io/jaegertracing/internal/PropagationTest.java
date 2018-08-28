@@ -16,6 +16,7 @@ package io.jaegertracing.internal;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
@@ -33,6 +34,8 @@ import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
 import io.opentracing.propagation.TextMapExtractAdapter;
 import java.util.Collections;
+import java.util.Map;
+
 import org.junit.Test;
 
 public class PropagationTest {
@@ -42,9 +45,11 @@ public class PropagationTest {
             .withReporter(new InMemoryReporter())
             .withSampler(new ConstSampler(true))
             .build();
-    TextMap carrier = new TextMapExtractAdapter(Collections.singletonMap(Constants.DEBUG_ID_HEADER_KEY, "Coraline"));
+    Map<String, String> headers = Collections.singletonMap(Constants.DEBUG_ID_HEADER_KEY, "Coraline");
+    TextMap carrier = new TextMapExtractAdapter(headers);
 
     JaegerSpanContext jaegerSpanContext = tracer.extract(Format.Builtin.TEXT_MAP, carrier);
+    assertNotNull(jaegerSpanContext);
     assertTrue(jaegerSpanContext.isDebugIdContainerOnly());
     assertEquals("Coraline", jaegerSpanContext.getDebugId());
 
