@@ -53,7 +53,7 @@ public class JaegerSpanContext implements SpanContext {
       String debugId,
       JaegerObjectFactory objectFactory) {
     if (baggage == null) {
-      throw new NullPointerException();
+      baggage = Collections.<String, String>emptyMap();
     }
     this.traceId = traceId;
     this.spanId = spanId;

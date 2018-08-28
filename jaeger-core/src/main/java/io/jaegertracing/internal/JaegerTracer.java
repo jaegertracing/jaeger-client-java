@@ -410,9 +410,7 @@ public class JaegerTracer implements Tracer, Closeable {
       }
 
       String debugId = debugId();
-      if (references.isEmpty()) {
-        context = createNewContext(null);
-      } else if (debugId != null) {
+      if (references.isEmpty() || debugId != null) {
         context = createNewContext(debugId);
       } else {
         context = createChildContext();

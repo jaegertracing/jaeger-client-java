@@ -22,15 +22,18 @@ import io.jaegertracing.internal.exceptions.EmptyTracerStateStringException;
 import io.jaegertracing.internal.exceptions.MalformedTracerStateStringException;
 import io.jaegertracing.spi.Codec;
 import io.opentracing.propagation.TextMap;
+
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class TextMapCodec implements Codec<TextMap> {
   /**
    * Key used to store serialized span context representation
@@ -125,24 +128,35 @@ public class TextMapCodec implements Codec<TextMap> {
           baggage = new HashMap<String, String>();
         }
         baggage.put(keys.unprefixedKey(key, baggagePrefix), decodedValue(entry.getValue()));
+      } else if (key.equals(Constants.BAGGAGE_HEADER_KEY)) {
+        baggage = parseBaggageHeader(decodedValue(entry.getValue()), baggage);
       }
     }
-    if (context == null) {
-      if (debugId != null) {
-        return objectFactory.createSpanContext(
-            0,
-            0,
-            0,
-            (byte) 0,
-            Collections.<String, String>emptyMap(),
-            debugId);
-      }
-      return null;
-    }
-    if (baggage == null) {
+    if (debugId == null && baggage == null) {
       return context;
     }
-    return context.withBaggage(baggage);
+    return objectFactory.createSpanContext(
+      context == null ? 0 : context.getTraceId(),
+      context == null ? 0 : context.getSpanId(),
+      context == null ? 0 : context.getParentId(),
+      context == null ? (byte)0 : context.getFlags(),
+      baggage,
+      debugId);
+  }
+
+  private Map<String, String> parseBaggageHeader(String header, Map<String, String> baggage) {
+    for (String part : header.split("\\s*,\\s*")) {
+      String[] kv = part.split("\\s*=\\s*");
+      if (kv.length == 2) {
+        if (baggage == null) {
+          baggage = new HashMap<String, String>();
+        }
+        baggage.put(kv[0], kv[1]);
+      } else {
+        log.debug("malformed token in {} header: {}", Constants.BAGGAGE_HEADER_KEY, part);
+      }
+    }
+    return baggage;
   }
 
   @Override
