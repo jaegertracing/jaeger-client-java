@@ -1,10 +1,10 @@
 Changes by Version
 ==================
 
-0.30.7 (unreleased)
+0.31.0 (2018-08-28)
 -------------------
 
- - Nothing yet 
+- Support `jaeger-baggage` header for ad-hoc baggage ([#525](https://github.com/jaegertracing/jaeger-client-java/pull/525), [@yurishkuro](https://github.com/yurishkuro))
 
 0.30.6 (2018-08-23)
 -------------------
