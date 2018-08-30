@@ -162,13 +162,6 @@ public class JaegerTracerTest {
   }
 
   @Test
-  public void testActiveSpan() {
-    JaegerSpan mockSpan = Mockito.mock(JaegerSpan.class);
-    tracer.scopeManager().activate(mockSpan, true);
-    assertEquals(mockSpan, tracer.activeSpan());
-  }
-
-  @Test
   public void testSpanContextNotSampled() {
     String expectedOperation = "fry";
     JaegerSpan first = tracer.buildSpan(expectedOperation).start();
@@ -178,18 +171,5 @@ public class JaegerTracerTest {
     assertEquals(1, metricsFactory.getCounter("jaeger:started_spans", "sampled=n"));
     assertEquals(1, metricsFactory.getCounter("jaeger:traces", "sampled=y,state=started"));
     assertEquals(0, metricsFactory.getCounter("jaeger:traces", "sampled=n,state=started"));
-  }
-
-  @Test
-  public void testCustomSpanOnSpanManager() {
-    // prepare
-    Span activeSpan = mock(Span.class);
-    ScopeManager scopeManager = tracer.scopeManager();
-
-    // test
-    scopeManager.activate(activeSpan, false);
-
-    // check
-    assertEquals(activeSpan, tracer.activeSpan());
   }
 }

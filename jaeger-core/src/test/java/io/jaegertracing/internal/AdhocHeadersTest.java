@@ -20,8 +20,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import io.jaegertracing.internal.metrics.InMemoryMetricsFactory;
-import io.jaegertracing.internal.metrics.Metrics;
 import io.jaegertracing.internal.reporters.InMemoryReporter;
 import io.jaegertracing.internal.samplers.ConstSampler;
 import io.opentracing.Span;
@@ -39,16 +37,13 @@ import org.junit.Test;
 
 public class AdhocHeadersTest {
   JaegerTracer tracer;
-  InMemoryMetricsFactory metricsFactory;
 
   @Before
   public void setUp() {
-    metricsFactory = new InMemoryMetricsFactory();
     tracer =
         new JaegerTracer.Builder("TracerTestService")
             .withReporter(new InMemoryReporter())
             .withSampler(new ConstSampler(true))
-            .withMetrics(new Metrics(metricsFactory))
             .build();
   }
 

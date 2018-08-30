@@ -26,15 +26,33 @@ import io.opentracing.Scope;
 import io.opentracing.ScopeManager;
 import io.opentracing.Span;
 
+import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 public class ActiveSpanTest {
-  @Test
-  public void testActiveSpanPropagation() {
-    JaegerTracer tracer = new JaegerTracer.Builder("test")
-            .withReporter(new InMemoryReporter())
+  InMemoryReporter reporter;
+  JaegerTracer tracer;
+
+  @Before
+  public void setUp() {
+    reporter = new InMemoryReporter();
+    tracer =
+        new JaegerTracer.Builder("TracerTestService")
+            .withReporter(reporter)
             .withSampler(new ConstSampler(true))
             .build();
+  }
+
+  @Test
+  public void testActiveSpan() {
+    JaegerSpan mockSpan = Mockito.mock(JaegerSpan.class);
+    tracer.scopeManager().activate(mockSpan, true);
+    assertEquals(mockSpan, tracer.activeSpan());
+  }
+
+  @Test
+  public void testActiveSpanPropagation() {
     try (Scope parent = tracer.buildSpan("parent").startActive(true)) {
       assertEquals(parent, tracer.scopeManager().active());
     }
@@ -42,11 +60,6 @@ public class ActiveSpanTest {
 
   @Test
   public void testActiveSpanAutoReference() {
-    InMemoryReporter reporter = new InMemoryReporter();
-    JaegerTracer tracer = new JaegerTracer.Builder("test")
-            .withReporter(reporter)
-            .withSampler(new ConstSampler(true))
-            .build();
     try (Scope ignored = tracer.buildSpan("parent").startActive(true)) {
       tracer.buildSpan("child").startActive(true).close();
     }
@@ -70,22 +83,12 @@ public class ActiveSpanTest {
 
   @Test
   public void testActiveSpanAutoFinishOnClose() {
-    InMemoryReporter reporter = new InMemoryReporter();
-    JaegerTracer tracer = new JaegerTracer.Builder("test")
-            .withReporter(reporter)
-            .withSampler(new ConstSampler(true))
-            .build();
     tracer.buildSpan("parent").startActive(true).close();
     assertEquals(1, reporter.getSpans().size());
   }
 
   @Test
   public void testActiveSpanNotAutoFinishOnClose() {
-    InMemoryReporter reporter = new InMemoryReporter();
-    JaegerTracer tracer = new JaegerTracer.Builder("test")
-            .withReporter(reporter)
-            .withSampler(new ConstSampler(true))
-            .build();
     Scope scope = tracer.buildSpan("parent").startActive(false);
     Span span = scope.span();
     scope.close();
@@ -96,11 +99,6 @@ public class ActiveSpanTest {
 
   @Test
   public void testIgnoreActiveSpan() {
-    InMemoryReporter reporter = new InMemoryReporter();
-    JaegerTracer tracer = new JaegerTracer.Builder("test")
-            .withReporter(reporter)
-            .withSampler(new ConstSampler(true))
-            .build();
     try (Scope ignored = tracer.buildSpan("parent").startActive(true)) {
       tracer.buildSpan("child").ignoreActiveSpan().startActive(true).close();
     }
@@ -119,12 +117,6 @@ public class ActiveSpanTest {
 
   @Test
   public void testNoAutoRefWithExistingRefs() {
-    InMemoryReporter reporter = new InMemoryReporter();
-    JaegerTracer tracer = new JaegerTracer.Builder("test")
-        .withReporter(reporter)
-        .withSampler(new ConstSampler(true))
-        .build();
-
     JaegerSpan initialSpan = tracer.buildSpan("initial").start();
 
     try (Scope ignored = tracer.buildSpan("parent").startActive(true)) {
@@ -172,5 +164,19 @@ public class ActiveSpanTest {
           }
         }).build();
     assertEquals(scope, tracer.scopeManager().active());
+  }
+
+
+  @Test
+  public void testCustomSpanOnSpanManager() {
+    // prepare
+    Span activeSpan = mock(Span.class);
+    ScopeManager scopeManager = tracer.scopeManager();
+
+    // test
+    scopeManager.activate(activeSpan, false);
+
+    // check
+    assertEquals(activeSpan, tracer.activeSpan());
   }
 }
