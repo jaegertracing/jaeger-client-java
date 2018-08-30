@@ -4,7 +4,7 @@ Changes by Version
 0.31.1 (unreleased)
 -------------------
 
-- Nothing yet
+- Fix sampling when `jaeger-baggage` header is given ([#542](https://github.com/jaegertracing/jaeger-client-java/pull/542), [@yurishkuro](https://github.com/yurishkuro))
 
 0.31.0 (2018-08-28)
 -------------------

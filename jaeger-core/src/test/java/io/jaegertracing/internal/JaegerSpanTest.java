@@ -237,11 +237,8 @@ public class JaegerSpanTest {
     long expectedTimestamp = 2222;
     final String expectedLog = "some-log";
     final String expectedEvent = "event";
-    Map<String, String> expectedFields = new HashMap<String, String>() {
-      {
-        put(expectedEvent, expectedLog);
-      }
-    };
+    Map<String, String> expectedFields = new HashMap<String, String>();
+    expectedFields.put(expectedEvent, expectedLog);
 
     jaegerSpan.log(expectedTimestamp, expectedEvent);
     jaegerSpan.log(expectedTimestamp, expectedFields);

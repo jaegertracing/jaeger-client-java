@@ -289,7 +289,8 @@ public class JaegerTracer implements Tracer, Closeable {
       return this;
     }
 
-    private JaegerSpanContext createNewContext(String debugId) {
+    private JaegerSpanContext createNewContext() {
+      String debugId = getDebugId();
       long id = Utils.uniqueId();
 
       byte flags = 0;
@@ -298,7 +299,7 @@ public class JaegerTracer implements Tracer, Closeable {
         tags.put(Constants.DEBUG_ID_HEADER_KEY, debugId);
         metrics.traceStartedSampled.inc(1);
       } else {
-        //TODO(prithvi): Don't assume operationName is set on creation
+        // TODO: (prithvi) Don't assume operationName is set on creation
         SamplingStatus samplingStatus = sampler.sample(operationName, id);
         if (samplingStatus.isSampled()) {
           flags |= JaegerSpanContext.flagSampled;
@@ -314,11 +315,11 @@ public class JaegerTracer implements Tracer, Closeable {
           id,
           0,
           flags,
-          Collections.<String, String>emptyMap(),
+          getBaggage(),
           debugId);
     }
 
-    private Map<String, String> createChildBaggage() {
+    private Map<String, String> getBaggage() {
       Map<String, String> baggage = null;
 
       // optimization for 99% use cases, when there is only one parent
@@ -360,7 +361,7 @@ public class JaegerTracer implements Tracer, Closeable {
           preferredReference.getSpanId(),
           // should we do OR across passed references?
           preferredReference.getFlags(),
-          createChildBaggage(),
+          getBaggage(),
           null);
     }
 
@@ -393,11 +394,11 @@ public class JaegerTracer implements Tracer, Closeable {
       return false;
     }
 
-    private String debugId() {
-      if (references.size() == 1 && references.get(0).getSpanContext().isDebugIdContainerOnly()) {
-        return references.get(0).getSpanContext().getDebugId();
+    private String getDebugId() {
+      if (references.isEmpty()) {
+        return null;
       }
-      return null;
+      return references.get(0).getSpanContext().getDebugId();
     }
 
     @Override
@@ -409,9 +410,8 @@ public class JaegerTracer implements Tracer, Closeable {
         asChildOf(scopeManager.active().span());
       }
 
-      String debugId = debugId();
-      if (references.isEmpty() || debugId != null) {
-        context = createNewContext(debugId);
+      if (references.isEmpty() || !references.get(0).getSpanContext().hasTrace()) {
+        context = createNewContext();
       } else {
         context = createChildContext();
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Uber Technologies, Inc
+ * Copyright (c) 2018, The Jaeger Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -16,56 +16,43 @@ package io.jaegertracing.internal;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
-import io.jaegertracing.internal.Constants;
-import io.jaegertracing.internal.JaegerSpan;
-import io.jaegertracing.internal.JaegerSpanContext;
-import io.jaegertracing.internal.JaegerTracer;
 import io.jaegertracing.internal.reporters.InMemoryReporter;
 import io.jaegertracing.internal.samplers.ConstSampler;
 import io.opentracing.References;
 import io.opentracing.Scope;
 import io.opentracing.ScopeManager;
 import io.opentracing.Span;
-import io.opentracing.propagation.Format;
-import io.opentracing.propagation.TextMap;
-import io.opentracing.propagation.TextMapExtractAdapter;
-import java.util.Collections;
-import java.util.Map;
 
+import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
-public class PropagationTest {
-  @Test
-  public void testDebugCorrelationId() {
-    JaegerTracer tracer = new JaegerTracer.Builder("test")
-            .withReporter(new InMemoryReporter())
+public class ActiveSpanTest {
+  InMemoryReporter reporter;
+  JaegerTracer tracer;
+
+  @Before
+  public void setUp() {
+    reporter = new InMemoryReporter();
+    tracer =
+        new JaegerTracer.Builder("TracerTestService")
+            .withReporter(reporter)
             .withSampler(new ConstSampler(true))
             .build();
-    Map<String, String> headers = Collections.singletonMap(Constants.DEBUG_ID_HEADER_KEY, "Coraline");
-    TextMap carrier = new TextMapExtractAdapter(headers);
+  }
 
-    JaegerSpanContext jaegerSpanContext = tracer.extract(Format.Builtin.TEXT_MAP, carrier);
-    assertNotNull(jaegerSpanContext);
-    assertTrue(jaegerSpanContext.isDebugIdContainerOnly());
-    assertEquals("Coraline", jaegerSpanContext.getDebugId());
-
-    JaegerSpan span = tracer.buildSpan("span").asChildOf(jaegerSpanContext).start();
-    jaegerSpanContext = span.context();
-    assertTrue(jaegerSpanContext.isSampled());
-    assertTrue(jaegerSpanContext.isDebug());
-    assertEquals("Coraline", span.getTags().get(Constants.DEBUG_ID_HEADER_KEY));
+  @Test
+  public void testActiveSpan() {
+    JaegerSpan mockSpan = Mockito.mock(JaegerSpan.class);
+    tracer.scopeManager().activate(mockSpan, true);
+    assertEquals(mockSpan, tracer.activeSpan());
   }
 
   @Test
   public void testActiveSpanPropagation() {
-    JaegerTracer tracer = new JaegerTracer.Builder("test")
-            .withReporter(new InMemoryReporter())
-            .withSampler(new ConstSampler(true))
-            .build();
     try (Scope parent = tracer.buildSpan("parent").startActive(true)) {
       assertEquals(parent, tracer.scopeManager().active());
     }
@@ -73,11 +60,6 @@ public class PropagationTest {
 
   @Test
   public void testActiveSpanAutoReference() {
-    InMemoryReporter reporter = new InMemoryReporter();
-    JaegerTracer tracer = new JaegerTracer.Builder("test")
-            .withReporter(reporter)
-            .withSampler(new ConstSampler(true))
-            .build();
     try (Scope ignored = tracer.buildSpan("parent").startActive(true)) {
       tracer.buildSpan("child").startActive(true).close();
     }
@@ -101,22 +83,12 @@ public class PropagationTest {
 
   @Test
   public void testActiveSpanAutoFinishOnClose() {
-    InMemoryReporter reporter = new InMemoryReporter();
-    JaegerTracer tracer = new JaegerTracer.Builder("test")
-            .withReporter(reporter)
-            .withSampler(new ConstSampler(true))
-            .build();
     tracer.buildSpan("parent").startActive(true).close();
     assertEquals(1, reporter.getSpans().size());
   }
 
   @Test
   public void testActiveSpanNotAutoFinishOnClose() {
-    InMemoryReporter reporter = new InMemoryReporter();
-    JaegerTracer tracer = new JaegerTracer.Builder("test")
-            .withReporter(reporter)
-            .withSampler(new ConstSampler(true))
-            .build();
     Scope scope = tracer.buildSpan("parent").startActive(false);
     Span span = scope.span();
     scope.close();
@@ -127,11 +99,6 @@ public class PropagationTest {
 
   @Test
   public void testIgnoreActiveSpan() {
-    InMemoryReporter reporter = new InMemoryReporter();
-    JaegerTracer tracer = new JaegerTracer.Builder("test")
-            .withReporter(reporter)
-            .withSampler(new ConstSampler(true))
-            .build();
     try (Scope ignored = tracer.buildSpan("parent").startActive(true)) {
       tracer.buildSpan("child").ignoreActiveSpan().startActive(true).close();
     }
@@ -150,12 +117,6 @@ public class PropagationTest {
 
   @Test
   public void testNoAutoRefWithExistingRefs() {
-    InMemoryReporter reporter = new InMemoryReporter();
-    JaegerTracer tracer = new JaegerTracer.Builder("test")
-        .withReporter(reporter)
-        .withSampler(new ConstSampler(true))
-        .build();
-
     JaegerSpan initialSpan = tracer.buildSpan("initial").start();
 
     try (Scope ignored = tracer.buildSpan("parent").startActive(true)) {
@@ -203,5 +164,19 @@ public class PropagationTest {
           }
         }).build();
     assertEquals(scope, tracer.scopeManager().active());
+  }
+
+
+  @Test
+  public void testCustomSpanOnSpanManager() {
+    // prepare
+    Span activeSpan = mock(Span.class);
+    ScopeManager scopeManager = tracer.scopeManager();
+
+    // test
+    scopeManager.activate(activeSpan, false);
+
+    // check
+    assertEquals(activeSpan, tracer.activeSpan());
   }
 }
