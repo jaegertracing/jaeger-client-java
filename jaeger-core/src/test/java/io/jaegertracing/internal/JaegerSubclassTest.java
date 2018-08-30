@@ -17,7 +17,6 @@ package io.jaegertracing.internal;
 import io.jaegertracing.Configuration;
 import io.opentracing.Scope;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
