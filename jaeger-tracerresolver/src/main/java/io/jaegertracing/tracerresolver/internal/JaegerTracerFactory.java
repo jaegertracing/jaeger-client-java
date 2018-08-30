@@ -16,16 +16,11 @@ package io.jaegertracing.tracerresolver.internal;
 
 import io.jaegertracing.Configuration;
 import io.jaegertracing.internal.JaegerTracer;
-import io.opentracing.Tracer;
 import io.opentracing.contrib.tracerresolver.TracerFactory;
 
 public class JaegerTracerFactory implements TracerFactory {
   @Override
-  public Tracer getTracer() {
-    return getJaegerTracer();
-  }
-
-  public JaegerTracer getJaegerTracer() {
+  public JaegerTracer getTracer() {
     return Configuration.fromEnv().getTracer();
   }
 }

@@ -21,7 +21,7 @@ public class JaegerTracerResolver extends TracerResolver {
 
   @Override
   protected JaegerTracer resolve() {
-    return new JaegerTracerFactory().getJaegerTracer();
+    return new JaegerTracerFactory().getTracer();
   }
 
 }
