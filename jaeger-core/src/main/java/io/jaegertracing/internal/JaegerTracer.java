@@ -394,10 +394,10 @@ public class JaegerTracer implements Tracer, Closeable {
     }
 
     private String debugId() {
-      if (references.size() == 1 && references.get(0).getSpanContext().isDebugIdContainerOnly()) {
-        return references.get(0).getSpanContext().getDebugId();
+      if (references.isEmpty()) {
+        return null;
       }
-      return null;
+      return references.get(0).getSpanContext().getDebugId();
     }
 
     @Override
@@ -409,8 +409,8 @@ public class JaegerTracer implements Tracer, Closeable {
         asChildOf(scopeManager.active().span());
       }
 
-      String debugId = debugId();
-      if (references.isEmpty() || debugId != null) {
+      if (references.isEmpty() || !references.get(0).getSpanContext().hasTrace()) {
+        String debugId = debugId();
         context = createNewContext(debugId);
       } else {
         context = createChildContext();

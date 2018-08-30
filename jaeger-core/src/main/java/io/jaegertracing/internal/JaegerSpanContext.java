@@ -125,16 +125,15 @@ public class JaegerSpanContext implements SpanContext {
   }
 
   /**
-   * @return true when the instance of the context is only used to return the debug/correlation ID
-   * from extract() method. This happens in the situation when "jaeger-debug-id" header is passed in
-   * the carrier to the extract() method, but the request otherwise has no span context in it.
-   * Previously this would've returned null from the extract method, but now it returns a dummy
-   * context with only debugId filled in.
+   * @return true when the instance of the context contains a non-zero trace and span ID,
+   * indicating a valid trace. It may return false if the context was created with only
+   * a debugId or baggage passed via special ad-hoc headers.
    *
    * @see Constants#DEBUG_ID_HEADER_KEY
+   * @see Constants#BAGGAGE_HEADER_KEY
    */
-  boolean isDebugIdContainerOnly() {
-    return traceId == 0 && debugId != null;
+  boolean hasTrace() {
+    return traceId != 0 && spanId != 0;
   }
 
   /**
