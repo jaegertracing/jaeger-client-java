@@ -1,8 +1,7 @@
 # Jaeger Tracer Resolver
 
-This module provides a Jaeger implementation for the [TracerResolver](https://github.com/opentracing-contrib/java-tracerresolver). This mechanism provides a vendor neutral approach for obtaining a `Tracer` using the JDK
-`ServiceLoader`.
-
+This module provides a Jaeger implementation for the [TracerResolver](https://github.com/opentracing-contrib/java-tracerresolver).
+This mechanism provides a vendor neutral approach for obtaining a `Tracer` using the JDK `ServiceLoader`.
 
 ## Maven Dependency
 ```xml

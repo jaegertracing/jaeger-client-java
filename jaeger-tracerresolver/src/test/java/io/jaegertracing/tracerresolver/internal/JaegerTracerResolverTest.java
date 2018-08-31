@@ -21,7 +21,9 @@ import static org.junit.Assert.assertTrue;
 import io.jaegertracing.Configuration;
 import io.jaegertracing.internal.JaegerTracer;
 import io.opentracing.Tracer;
+import io.opentracing.contrib.tracerresolver.TracerFactory;
 import io.opentracing.contrib.tracerresolver.TracerResolver;
+import java.util.ServiceLoader;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -46,6 +48,25 @@ public class JaegerTracerResolverTest {
     Tracer tracer = TracerResolver.resolveTracer();
     assertNotNull(tracer);
     assertTrue(tracer instanceof JaegerTracer);
+  }
+
+  @Test
+  public void canFindTracerFactory() {
+    System.setProperty(Configuration.JAEGER_SERVICE_NAME, "canFindTracerFactory");
+    Tracer tracer = ServiceLoader.load(TracerFactory.class).iterator().next().getTracer();
+    assertNotNull(tracer);
+    assertTrue(tracer instanceof JaegerTracer);
+  }
+
+  @Test
+  public void canFindTracerResolver() {
+    System.setProperty(Configuration.JAEGER_SERVICE_NAME, "canFindTracerResolver");
+    TracerResolver tracerResolver = ServiceLoader.load(TracerResolver.class).iterator().next();
+    assertNotNull(tracerResolver);
+    assertTrue(tracerResolver instanceof JaegerTracerResolver);
+
+    JaegerTracer tracer = ((JaegerTracerResolver) tracerResolver).resolve();
+    assertNotNull(tracer);
   }
 
 }

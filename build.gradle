@@ -23,7 +23,7 @@ ext.apacheThriftVersion = getProperty('apacheThriftVersion','0.11.0')
 ext.jerseyVersion = getProperty('jerseyVersion','2.22.2')
 ext.slf4jVersion = getProperty('slf4jVersion','1.7.25')
 ext.gsonVersion = getProperty('gsonVersion','2.8.2')
-ext.tracerResolverVersion = getProperty('tracerResolverVersion','0.1.4')
+ext.tracerResolverVersion = getProperty('tracerResolverVersion','0.1.5')
 ext.micrometerVersion = getProperty('micrometerVersion','1.0.0')
 ext.okhttpVersion = getProperty('okhttpVersion','3.9.0')
 

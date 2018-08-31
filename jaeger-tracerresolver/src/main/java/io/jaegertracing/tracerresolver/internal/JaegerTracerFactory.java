@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Uber Technologies, Inc
+ * Copyright (c) 2018, The Jaeger Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -14,14 +14,13 @@
 
 package io.jaegertracing.tracerresolver.internal;
 
+import io.jaegertracing.Configuration;
 import io.jaegertracing.internal.JaegerTracer;
-import io.opentracing.contrib.tracerresolver.TracerResolver;
+import io.opentracing.contrib.tracerresolver.TracerFactory;
 
-public class JaegerTracerResolver extends TracerResolver {
-
+public class JaegerTracerFactory implements TracerFactory {
   @Override
-  protected JaegerTracer resolve() {
-    return new JaegerTracerFactory().getTracer();
+  public JaegerTracer getTracer() {
+    return Configuration.fromEnv().getTracer();
   }
-
 }
