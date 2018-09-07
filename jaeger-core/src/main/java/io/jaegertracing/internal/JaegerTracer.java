@@ -120,6 +120,14 @@ public class JaegerTracer implements Tracer, Closeable {
     }
     this.ipv4 = ipv4;
     this.tags = Collections.unmodifiableMap(tags);
+
+    // register this tracer with a shutdown hook, to flush the spans before the VM shuts down
+    Runtime.getRuntime().addShutdownHook(new Thread() {
+      @Override
+      public void run() {
+        JaegerTracer.this.close();
+      }
+    });
   }
 
   public String getVersion() {
