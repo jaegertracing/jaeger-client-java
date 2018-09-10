@@ -50,6 +50,11 @@ public class Constants {
   public static final String JAEGER_CLIENT_VERSION_TAG_KEY = "jaeger.version";
 
   /**
+   * The name of the tag used to report java version.
+   */
+  public static final String JAVA_VERSION_TAG_KEY = "java.version";
+
+  /**
    * The name used to report host name of the process.
    */
   public static final String TRACER_HOSTNAME_TAG_KEY = "hostname";
