@@ -94,6 +94,7 @@ public class JaegerTracer implements Tracer, Closeable {
 
     Map<String, Object> tags = new HashMap<String, Object>(builder.tags);
     tags.put(Constants.JAEGER_CLIENT_VERSION_TAG_KEY, this.version);
+    tags.put(Constants.JAVA_VERSION_TAG_KEY, System.getProperty(Constants.JAVA_VERSION_TAG_KEY));
     if (tags.get(Constants.TRACER_HOSTNAME_TAG_KEY) == null) {
       String hostname = getHostName();
       if (hostname != null) {
