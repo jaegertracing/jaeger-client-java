@@ -1,34 +1,28 @@
 sudo: required
 language: java
 dist: trusty
+
 services:
 - docker
+
 env:
   global:
   - DOCKER_VERSION=1.11.1-0~trusty
   - DOCKER_COMPOSE_VERSION=1.7.0
   - COMMIT=${TRAVIS_COMMIT::8}
-  # travis encrypt -r <repo> SONATYPE_USERNAME=<username>
-  - secure: "szUKwXCryzn9J59+K8E3/mvxmH1pVgpXkoXKN4tWNU5Tu9yht43agyYQ6JK388Ik2oYAo0P0qD4Tablrpv6aMFrw2YWh7hZ1YfCmTkgTyZ7TL7jdQIwOLSgy96ttRZxxJwk+bwKHBYSRSQMBcveDmxaRz7q1tKPV7HJIIjbbpHPZOf0mGkPWgSmCuFG35w7m22ZudgyjwlaiBvddMywobIQDkyrThro7VoVLh/IvTRwpHWa1JfQeCO3r81Z6VHmz06LO/82fczra2AldVjpyldFq+Ow5S+fYoFe065nbyWl19OFy1mSgYoS3VUNueY76WfmvSMkp3NfpJMFrtSYY2jHesdqMi8daKCHPuT223CTU83fBs+rHwdA8iE23TSxCgOkm3RS85Zz+s/WbuyJojh5GrqB1+lWCE+LHIPlZqmnd4vR95MP07324EaJ0lZyFT1WzrdhfLMl07+sYQCb7EEp5lt2PjIdRyAOuIf5fdV5sf3E0gm4cfdNNIKuThNTqIXKcaOP7UjZSysfeskt1oDJA5qtsftaeaiAsNTrDjY3ay6jT5W1eV2hBgcOfUeu/eVQ8TlXu8JkxUolntEh0L9FSmiJc7+nppkqKjGFEHzqCfFwm2rHLprnwCrUQl/FLmYJVeBczIRYwkb3u/SXLFqjxmrgjyE0jooPnj9PF30I="
-  # travis encrypt -r <repo> SONATYPE_PASSWORD=<password>
-  - secure: "mxehNG9GvM/PKC9woLDJTWTW9htr7chRi3punkV6xrxET8Hvq6P5cc5AR8UgWRfcouQjYraEb0ehvbDG9OSu6JCcrGnY633PbdBcGqqSx47y3MUGFbnHnz6dRNyVFel6qBgxgTfPm2TlwaR3o3zEIUrGCN7XV9SoLN4YZ6nfWSUa8jBZdPIMpxVjf7sLSROO+/ocari5ny2EeVmUbzb/wKm3vl3T6xbdRsoDtU0b2RxrCejJDMO2D+Mj1MzEJLYjFMfFVy0NwlrYRxR09zKAg4ji5wuw665UFxRiMJev/BRKYEtjhutco8v1GTuCSuEm9c+6yt5D3nnpfFVwBl0Mbcxd4z/wgbbMSZ9R3R2BgpKcK7IRE/LXoVpuyNlpFusWZxwK5DLCBXLI3vBduWrkaVuLfSy2SXX/TI3qqA404ozR5mJeYaFZowBoIIzHKYzdpjcueohJ3XsiWAOlWLTxoZkFnFX0XXvmFOKpuH5A1Wa+f7e6HPNP8N+cqmpLaXpDgS8PbPk+fsQgUkUkQTuDxtTNrtgQjpaYhFphNfxxhr0L2qetOosGHLWuGIE5AZAoKrYO/74sqGmQ11iLdcNWDHqQPu7nAmyY2blaG380msLPShjc/gj9FhjwpsKMLTLSQnUsqkVvlHEddCC5gnYC8QnlUUnY9N0xYmkF831egHQ="
   # DOCKER_USERNAME=<docker username>
   - secure: "umlGRhDNOovzsgqHTCz7TRSC0RV/Vgfvqo/NdrgFtw2J+N29miGTBP19oOS8Vz5ybdd+Q7Kvh3gtraFQn5q2Kccn2s4i6gcMwcjp3dHNwSBNZuuPz8JpO5UEtMGhqnKnUNgx8HfZx7AhQY3JpVBdlwBNgXpLbG6O21wQoyxk0PPwQP9qe5HS475lhUUi45/UX9F8OSsDY6fmrDf7M+lZ8KU13ZMoPBW5qC/BpJGKwo5KIj6Yq58m5AMWWT51qKcPoX/J0G6SWKYrvFKSZpDTtfzqD2vsuUWEC5ZeiZeQHK274/0OMs6aJ7qU1Q3CUED086e6AZnGTz4GXolilKfpSUrc2IEUBY2ROKCVYh22NL/WdHQhpH9gfVNA+pK+9M/NdHKflqk01Hhnszwxk4VkDjBlbhE2W/XmvKbUGxYBHtjS8FNGRxcQVXJ1OgCFAL+jJ5O8XpkENuOGyOQoh5JqK+fCNIdH1oAWjt2oLF9ra8Tn5h1z4dp0Aan0xZfzSn4a4PiUV8SJ4+S4eAwexqTD2QhAgv0+9IcK0REzBlqbFSCRx8ysILr3KEJqTxbY5JJThmw6OVf1+BDsh+egaIb2hq5gBCvXmo3F+346UxdqIn2+qJ4/p83hJAZRFMrzV9MPnaoSYZgTZ8wW8JfIeHvOtyCKSvnOsMtjaAR0JjIajFo="
   # DOCKER_PASSWORD=<docker password>
   - secure: "r1jBgwOr9Oa0sBaT+ZA9ulhwChjHqR8hMbb7a3J3ifIqBQVWODFpnoXkaWX5BBTASnwY4Qi/lotbXv8uXS/f+nIKReqV5XLvWj9BE3mPouinUx42MP1QAlTs93GQTmHAW2L7Pwoa5RHXraZHHtsJP2Vjx23MTo1yJ3ZlCJNgnoPA9upMglQQ6CIhREErNIbhRUXRAp8ePEEdFvd4lV6NitbzUj5pc2RrwyWJYKhYPsk9kARJIH6JC7JuH9TtLZBNt/FqLtdMW38GureVYSYA8JNjdY0MglEgsbsLWfH0C1A3Bohb/uF7WVH4ktxqW39L3oNICeDl5/YxJ7inAA1Kns40nm3CY7rBEFX97c/enoKZP86E9mEmIBtCtJYrNGRJ14/iOsdcllgXcuA136iVAVUwpu/Gl9LsvAIrfQvCsXqN9SK2b/O046oPmFBD0keOFKBYMtHpIisvjlvnLzbTsLM8nv6meAbY5vAoFNvIuuQkbOgV2B0McfHc9eFJcvsbLh6fxJwtkMiWN81/YH9G54xolM0jTT9DZAHpsPR0W1IgJ1qSBXxgwUy+agWPvUJcBlrjCj1ik/Hg5eKC6GlkIHjICS4DgxONaNpIrmO7B/6H1bYjcZCovqgge29xskoDUvdnUcMuTH3agRfJAINtZcH+ct6xMsvauBKq6nVsMpY="
-  # SIGNING_KEY_ID
-  - secure: XGYGC10lwUY0n9fYW49iCEeFaN06/m/yAJOAwJgYXORxcqsr1mEBwpvgnulWBk++J+xu+cgtHdqkA46+GcCV+xAz7jMnRv9kef9Xqz+4z4hNmsgl62IyL059kXVOG2i1UTkTIdYMoCQAnl0UGH9blZjx1lL9bOzbuCDvxi9IjNqUuWD53NySTOkKP15ScZBDi0nA0yOPTyE5SS2X7ymPy7brd7DzIvhIj0MqWt7LxzrmzWKKou5CSIe4Tme+3wh7VI9cOPz4HI1N9HNGz913Yam+YpNi3avkSXXvfxFirivwTbguNKNCWynsse22xCkbdussCQkJyGheyWJnIGfP79bwBzk5wHiao5pVPDSdgwhLQh20z8XrHeAKUhv/f8C1V1TeY09iXxxTfEWgO4b59mlAlNYdUjmgkrWPJWJUQgRqWW8q+yuwsvLMt/QFN0SRUOWqdPAUIEKjzcWU1mZShceD5QRe6KJXQgneX+RxqZk1GzvKUtwTBCkKFVMU8wykL6kxxf9H/iyggruKSNwSzia6suMTyM6INRubrQ1/a0GO650g1uFd07uZlH0I+DXQJYg5FRQJDnT8WBQvhstf6hfIkvNpdBVWIVtXH1nFoJfdyOLMfZDcZf4zuguN4RQR1JId7I8BDsoEbyvsaZlE1yKRw05CkfmQZk2qgHmJjUg=
-  # SIGNING_KEY_PASSPHRASE
-  - secure: D+ELI5AuDmE+9lul7t/wDXZPk4dec94B8n0ShSFRSpmiclJiabdwUk8zI74cEWdBoheGeYTkrl1I/5l+XlvLhZYxUS0CWkxtLUcd8n3SE+J+VjiyAbWUBaguMJpKWo/9+W2Jm5v79oY96kEeGvyW0e8PnABdRTnvB7aNz6oRe/EAUQmYHepyzP4s33rgdcN522eu81Z2Cxkcjm1nh+JV1v2Y7iRxXzsoorMLxp1aYO+GV30rHMDb70A1WKW6LImG2JgQnXuYUJCsIDeVpgHTTWqPScGU07HjjGmLHsdZubLp7OFHjlGOlisUNjQ8QZ0EpEYDZTF7VaiXLbypyrVfuYsOrp9utBJRHkHsxyRCfJENzCMWX27tTFjmihxp1H6MHdiWgrklkJXaLSX82T8/j3RYQUA0SCGFHiV5uCIRtVZf5LkUaO86uySymsfCmSA9BdIRET9stra5YNYxuQ8zzY8KGNI+jcjpe0STWUG/ZNGBOHJ7Viw1S4TpXLRz4jbmjC4jJXjjR2Sa0C2NLNOKchO+aOP1a+6+ODuyrjBwDhIohSh39rIYjmt5v14RKj7k/C5Bz5QfXejw8JVp49zLaLF1lksCaP8BVhOu5xOuttgOoXA7LV+tKmyovg1Ka9DXLaQNd5vAfPnqVXaZXKYP8AIJXrCUT/Z280brNZOfLxg=
+
 before_cache:
 - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
 - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
 cache:
   directories:
   - "$HOME/.gradle/caches/"
   - "$HOME/.gradle/wrapper/"
-before_install:
-- ./travis/prepare-signing.sh $encrypted_677f232983c0_key $encrypted_677f232983c0_iv
 
 stages:
   - name: test
@@ -39,15 +33,17 @@ jobs:
   include:
     - stage: test
       env: [ NAME=unit-test ]
-      script: make test-travis && ./gradlew codeCoverageReport && bash <(curl -s https://codecov.io/bash)
+      script: make test-travis
+      after_success: make coverage
 
     - stage: test
       env: [ NAME=crossdock ]
       script: make crossdock-fresh
 
     - stage: deploy
-      env: [ NAME=deploy-to-maven ]
-      script: ./gradlew upload
+      env: [ NAME=release ]
+      script: make release
+      if: tag =~ /^release\/v.[\d\.]+(\-.*)?$/ # matches "release/v0.31.0" or "release/v0.31.0-RC1"
 
     - stage: deploy
       env: [ NAME=deploy-crossdock-to-dockerhub ]

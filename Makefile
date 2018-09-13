@@ -16,4 +16,10 @@ test-travis:
 
 .PHONY: release
 release: clean
-	$(GRADLE) -i uploadArchives
+	$(GRADLE) -i ciPerformRelease
+
+.PHONY: coverage
+coverage: SHELL:=/bin/bash
+coverage:
+	$(GRADLE) codeCoverageReport
+	bash <(curl -s https://codecov.io/bash)

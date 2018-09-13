@@ -1,0 +1,29 @@
+shipkit {
+   git.releasableBranchRegex = "release/.+"
+   git.user = "jaeger-release-bot"
+   git.email = "jaeger-client-java@jaegertracing.io"
+
+   gitHub.repository = "jaegertracing/jaeger-client-java"
+   gitHub.readOnlyAuthToken = System.getenv("GH_READ_TOKEN") ?: "7daade13ce3b15302a0da78abcb57ba2d8593d12"
+   gitHub.writeAuthToken = System.getenv("GH_WRITE_TOKEN")
+   releaseNotes.file = "CHANGELOG.md"
+}
+
+allprojects {
+   plugins.withId("com.jfrog.bintray") {
+
+       //Bintray configuration is handled by JFrog Bintray Gradle Plugin
+       //For reference see the official documentation: https://github.com/bintray/gradle-bintray-plugin
+       bintray {
+           key = System.getenv("BINTRAY_API_KEY")
+           pkg {
+               userOrg = 'jaegertracing'
+               repo = 'jaeger-client-java'
+               user = System.getenv("BINTRAY_API_USER")
+               name = 'maven'
+               licenses = ['Apache-2.0']
+               labels = ['distributed tracing', 'jaeger']
+           }
+       }
+   }
+}
