@@ -94,7 +94,7 @@ public class TraceBehavior {
     }
 
     JaegerSpanContext context = span.context();
-    String traceId = String.format("%x", context.getTraceId());
+    String traceId = context.getTraceId();
     boolean sampled = context.isSampled();
     String baggage = span.getBaggageItem(Constants.BAGGAGE_KEY);
     return new ObservedSpan(traceId, sampled, baggage);

@@ -20,6 +20,7 @@ import io.jaegertracing.internal.JaegerObjectFactory;
 import io.jaegertracing.internal.JaegerSpanContext;
 import io.jaegertracing.internal.exceptions.EmptyTracerStateStringException;
 import io.jaegertracing.internal.exceptions.MalformedTracerStateStringException;
+import io.jaegertracing.internal.exceptions.TraceIdOutOfBoundException;
 import io.jaegertracing.spi.Codec;
 import io.opentracing.propagation.TextMap;
 
@@ -80,12 +81,32 @@ public class TextMapCodec implements Codec<TextMap> {
       throw new MalformedTracerStateStringException(value);
     }
 
+    String traceId = parts[0];
+    if (traceId.length() > 32 || traceId.length() < 1) {
+      throw new TraceIdOutOfBoundException("Trace id [" + traceId + "] length is not withing 1 and 32");
+    }
+
     // TODO(isaachier): When we drop Java 1.6 support, use Long.parseUnsignedLong instead of using BigInteger.
     return new JaegerSpanContext(
-        new BigInteger(parts[0], 16).longValue(),
+        high(traceId),
+        new BigInteger(traceId, 16).longValue(),
         new BigInteger(parts[1], 16).longValue(),
         new BigInteger(parts[2], 16).longValue(),
         new BigInteger(parts[3], 16).byteValue());
+  }
+
+  /**
+   * Parses a full (low + high) traceId, trimming the lower 64 bits.
+   * @param hexString a full traceId
+   * @return the long value of the higher 64 bits for a 128 bit traceId or 0 for 64 bit traceIds
+   */
+  private static long high(String hexString) {
+    if (hexString.length() > 16) {
+      int highLength = hexString.length() - 16;
+      String highString = hexString.substring(0, highLength);
+      return new BigInteger(highString, 16).longValue();
+    }
+    return 0L;
   }
 
   /**
@@ -96,7 +117,7 @@ public class TextMapCodec implements Codec<TextMap> {
   public static String contextAsString(JaegerSpanContext context) {
     int intFlag = context.getFlags() & 0xFF;
     return new StringBuilder()
-        .append(Long.toHexString(context.getTraceId())).append(":")
+        .append(context.getTraceId()).append(":")
         .append(Long.toHexString(context.getSpanId())).append(":")
         .append(Long.toHexString(context.getParentId())).append(":")
         .append(Integer.toHexString(intFlag))
@@ -136,9 +157,10 @@ public class TextMapCodec implements Codec<TextMap> {
       return context;
     }
     return objectFactory.createSpanContext(
-      context == null ? 0 : context.getTraceId(),
-      context == null ? 0 : context.getSpanId(),
-      context == null ? 0 : context.getParentId(),
+      context == null ? 0L : context.getTraceIdHigh(),
+      context == null ? 0L : context.getTraceIdLow(),
+      context == null ? 0L : context.getSpanId(),
+      context == null ? 0L : context.getParentId(),
       context == null ? (byte)0 : context.getFlags(),
       baggage,
       debugId);
