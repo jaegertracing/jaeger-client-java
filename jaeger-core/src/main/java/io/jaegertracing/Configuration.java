@@ -420,8 +420,16 @@ public class Configuration {
     }
 
     public static CodecConfiguration fromEnv() {
+      return fromString(getProperty(JAEGER_PROPAGATION));
+    }
+
+    /**
+     * Parse codecs/propagation from string
+     * @param propagation string containing a coma separated list of propagations {@link Propagation}.
+     * @return codec configuration
+     */
+    public static CodecConfiguration fromString(String propagation) {
       Map<Format<?>, List<Codec<TextMap>>> codecs = new HashMap<Format<?>, List<Codec<TextMap>>>();
-      String propagation = getProperty(JAEGER_PROPAGATION);
       if (propagation != null) {
         for (String format : Arrays.asList(propagation.split(","))) {
           try {

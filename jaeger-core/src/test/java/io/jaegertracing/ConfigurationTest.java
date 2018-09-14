@@ -21,6 +21,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import io.jaegertracing.Configuration.CodecConfiguration;
+import io.jaegertracing.Configuration.Propagation;
 import io.jaegertracing.Configuration.ReporterConfiguration;
 import io.jaegertracing.Configuration.SamplerConfiguration;
 import io.jaegertracing.internal.JaegerSpanContext;
@@ -28,6 +29,8 @@ import io.jaegertracing.internal.JaegerTracer;
 import io.jaegertracing.internal.metrics.InMemoryMetricsFactory;
 import io.jaegertracing.internal.metrics.Metrics;
 import io.jaegertracing.internal.metrics.MockMetricsFactory;
+import io.jaegertracing.internal.propagation.B3TextMapCodec;
+import io.jaegertracing.internal.propagation.TextMapCodec;
 import io.jaegertracing.internal.samplers.ConstSampler;
 import io.jaegertracing.internal.samplers.ProbabilisticSampler;
 import io.jaegertracing.internal.samplers.RateLimitingSampler;
@@ -374,6 +377,19 @@ public class ConfigurationTest {
     assertInjectExtract(configuration.getTracer(), Builtin.HTTP_HEADERS, spanContext, false);
   }
 
+  @Test
+  public void testCodecFromString() {
+    CodecConfiguration codecConfiguration = CodecConfiguration
+        .fromString(String.format("%s,%s", Propagation.B3.name(), Propagation.JAEGER.name()));
+    assertEquals(2, codecConfiguration.getCodecs().size());
+    assertEquals(2, codecConfiguration.getCodecs().get(Builtin.HTTP_HEADERS).size());
+    assertEquals(2, codecConfiguration.getCodecs().get(Builtin.TEXT_MAP).size());
+    assertTrue(codecConfiguration.getCodecs().get(Builtin.HTTP_HEADERS).get(0) instanceof B3TextMapCodec);
+    assertTrue(codecConfiguration.getCodecs().get(Builtin.HTTP_HEADERS).get(1) instanceof TextMapCodec);
+    assertTrue(codecConfiguration.getCodecs().get(Builtin.TEXT_MAP).get(0) instanceof B3TextMapCodec);
+    assertTrue(codecConfiguration.getCodecs().get(Builtin.TEXT_MAP).get(1) instanceof TextMapCodec);
+  }
+
   @SuppressWarnings("unchecked")
   private <C> void assertInjectExtract(JaegerTracer tracer, Format<C> format, JaegerSpanContext contextToInject,
                                        boolean injectMapIsEmpty) {
@@ -416,4 +432,5 @@ public class ConfigurationTest {
       return values.get(key);
     }
   }
+
 }
