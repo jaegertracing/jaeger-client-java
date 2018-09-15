@@ -429,10 +429,10 @@ public class JaegerTracer implements Tracer, Closeable {
 
       if (startTimeMicroseconds == 0) {
         startTimeMicroseconds = clock.currentTimeMicros();
-        if (!clock.isMicrosAccurate()) {
+	  }
+      if (!clock.isMicrosAccurate()) {
           startTimeNanoTicks = clock.currentNanoTicks();
           computeDurationViaNanoTicks = true;
-        }
       }
 
       JaegerSpan jaegerSpan = getObjectFactory().createSpan(
