@@ -15,8 +15,8 @@ test-travis:
 	$(GRADLE) -is check
 
 .PHONY: release
-release: clean
-	$(GRADLE) -i ciPerformRelease
+release:
+	./travis/release.sh
 
 .PHONY: coverage
 coverage: SHELL:=/bin/bash

@@ -25,7 +25,6 @@ Those are self-explanatory, but check the [Shipkit Getting Started](https://gith
 Do everything like the "Automated" session but instead of pushing the tag to the remote repository, run:
 
 ```bash
-git checkout release/v0.31.1
-./gradlew performRelease
+make release
 ```
 
