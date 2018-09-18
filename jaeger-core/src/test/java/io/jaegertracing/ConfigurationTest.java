@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 import io.jaegertracing.Configuration.CodecConfiguration;
 import io.jaegertracing.Configuration.ReporterConfiguration;
 import io.jaegertracing.Configuration.SamplerConfiguration;
+import io.jaegertracing.Configuration.SenderConfiguration;
 import io.jaegertracing.internal.JaegerSpanContext;
 import io.jaegertracing.internal.JaegerTracer;
 import io.jaegertracing.internal.metrics.InMemoryMetricsFactory;
@@ -181,6 +182,12 @@ public class ConfigurationTest {
         .getSenderConfiguration().getAgentHost());
     assertEquals(Integer.valueOf(6832), Configuration.ReporterConfiguration.fromEnv()
         .getSenderConfiguration().getAgentPort());
+  }
+
+  @Test
+  public void testSenderInstanceIsCached() {
+    SenderConfiguration senderConfiguration = SenderConfiguration.fromEnv();
+    assertEquals(senderConfiguration.getSender(), senderConfiguration.getSender());
   }
 
   @Test
