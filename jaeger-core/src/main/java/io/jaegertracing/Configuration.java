@@ -635,8 +635,7 @@ public class Configuration {
       if (null != sender) {
         return sender;
       }
-
-      return SenderResolver.resolve(this);
+      return (sender = SenderResolver.resolve(this));
     }
 
     /**
