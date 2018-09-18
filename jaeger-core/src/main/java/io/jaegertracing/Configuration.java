@@ -414,11 +414,6 @@ public class Configuration {
       codecs = new HashMap<Format<?>, List<Codec<TextMap>>>();
     }
 
-
-    private CodecConfiguration(Map<Format<?>, List<Codec<TextMap>>> codecs) {
-      this.codecs = codecs;
-    }
-
     public static CodecConfiguration fromEnv() {
       return fromString(getProperty(JAEGER_PROPAGATION));
     }
@@ -429,29 +424,33 @@ public class Configuration {
      * @return codec configuration
      */
     public static CodecConfiguration fromString(String propagation) {
-      Map<Format<?>, List<Codec<TextMap>>> codecs = new HashMap<Format<?>, List<Codec<TextMap>>>();
+      CodecConfiguration codecConfiguration = new CodecConfiguration();
       if (propagation != null) {
         for (String format : Arrays.asList(propagation.split(","))) {
           try {
-            switch (Configuration.Propagation.valueOf(format.toUpperCase())) {
-              case JAEGER:
-                addCodec(codecs, Format.Builtin.HTTP_HEADERS, new TextMapCodec(true));
-                addCodec(codecs, Format.Builtin.TEXT_MAP, new TextMapCodec(false));
-                break;
-              case B3:
-                addCodec(codecs, Format.Builtin.HTTP_HEADERS, new B3TextMapCodec.Builder().build());
-                addCodec(codecs, Format.Builtin.TEXT_MAP, new B3TextMapCodec.Builder().build());
-                break;
-              default:
-                log.error("Unhandled propagation format '" + format + "'");
-                break;
-            }
+            codecConfiguration.withPropagation(Configuration.Propagation.valueOf(format.toUpperCase()));
           } catch (IllegalArgumentException iae) {
             log.error("Unknown propagation format '" + format + "'");
           }
         }
       }
-      return new CodecConfiguration(codecs);
+      return codecConfiguration;
+    }
+
+    public CodecConfiguration withPropagation(Propagation propagation) {
+      switch (propagation) {
+        case JAEGER:
+          addCodec(codecs, Format.Builtin.HTTP_HEADERS, new TextMapCodec(true));
+          addCodec(codecs, Format.Builtin.TEXT_MAP, new TextMapCodec(false));
+          break;
+        case B3:
+          addCodec(codecs, Format.Builtin.HTTP_HEADERS, new B3TextMapCodec.Builder().build());
+          addCodec(codecs, Format.Builtin.TEXT_MAP, new B3TextMapCodec.Builder().build());
+          break;
+        default:
+          log.error("Unhandled propagation format '" + propagation + "'");
+      }
+      return this;
     }
 
     public CodecConfiguration withCodec(Format<?> format, Codec<TextMap> codec) {

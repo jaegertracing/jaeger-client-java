@@ -390,6 +390,28 @@ public class ConfigurationTest {
     assertTrue(codecConfiguration.getCodecs().get(Builtin.TEXT_MAP).get(1) instanceof TextMapCodec);
   }
 
+  @Test
+  public void testCodecWithPropagationJaeger() {
+    CodecConfiguration codecConfiguration = new CodecConfiguration()
+        .withPropagation(Propagation.JAEGER);
+    assertEquals(2, codecConfiguration.getCodecs().size());
+    assertEquals(1, codecConfiguration.getCodecs().get(Builtin.HTTP_HEADERS).size());
+    assertEquals(1, codecConfiguration.getCodecs().get(Builtin.TEXT_MAP).size());
+    assertTrue(codecConfiguration.getCodecs().get(Builtin.HTTP_HEADERS).get(0) instanceof TextMapCodec);
+    assertTrue(codecConfiguration.getCodecs().get(Builtin.TEXT_MAP).get(0) instanceof TextMapCodec);
+  }
+
+  @Test
+  public void testCodecWithPropagationB3() {
+    CodecConfiguration codecConfiguration = new CodecConfiguration()
+        .withPropagation(Propagation.B3);
+    assertEquals(2, codecConfiguration.getCodecs().size());
+    assertEquals(1, codecConfiguration.getCodecs().get(Builtin.HTTP_HEADERS).size());
+    assertEquals(1, codecConfiguration.getCodecs().get(Builtin.TEXT_MAP).size());
+    assertTrue(codecConfiguration.getCodecs().get(Builtin.HTTP_HEADERS).get(0) instanceof B3TextMapCodec);
+    assertTrue(codecConfiguration.getCodecs().get(Builtin.TEXT_MAP).get(0) instanceof B3TextMapCodec);
+  }
+
   @SuppressWarnings("unchecked")
   private <C> void assertInjectExtract(JaegerTracer tracer, Format<C> format, JaegerSpanContext contextToInject,
                                        boolean injectMapIsEmpty) {
