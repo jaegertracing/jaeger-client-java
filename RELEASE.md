@@ -5,11 +5,10 @@ This project uses [Shipkit](http://shipkit.org) for most of the release manageme
 ## Automated
 
 1. Update the `CHANGELOG.md` with the changes for the last release. Most of the changes should have been added there already, but at least the release date has to be set.
-1. Check the `version.properties` file: the `version` property is the version that is going to be released next. If you intend to have a different version, update this file.
-1. Get the changes above merged
+1. Get the change above merged
 1. Tag the release, like, `git tag release/v0.31.1` and push the tag to the main repository (`git push upstream v0.31.0`, if your `jaegertracing/jaeger-client-java` remote is called `upstream`)
 
-Once these steps are done, Travis will trigger a `make release`. Shipkit then builds and uploads the release to Bintray. The artifacts then end up in Maven Central in a few minutes.
+Once these steps are done, Travis will trigger a `make release`, our `travis/release.sh` will update the `version.properties` used by Shipkit, which then builds and uploads the release to Bintray. The artifacts then end up in Maven Central in a few minutes.
 
 ## Manual
 
