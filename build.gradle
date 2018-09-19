@@ -10,7 +10,7 @@ plugins {
     id "net.ltgt.errorprone" version "0.0.14"
     id 'ru.vyarus.animalsniffer' version '1.4.3'
     id 'com.github.ben-manes.versions' version '0.17.0'
-    id "org.shipkit.java" version "1.0.12"
+    id "org.shipkit.java" version "2.0.31"
 }
 
 ext.opentracingVersion = getProperty('opentracingVersion','0.31.0')

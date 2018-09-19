@@ -12,7 +12,7 @@ We gratefully welcome improvements to documentation as well as to code.
 ## Developing
 
  1. `git submodule update --init`
- 2. `./gradlew clean check`
+ 2. `./gradlew clean snapshot check`
  
 ### Code Style
 
@@ -30,7 +30,7 @@ the [IntelliJ plugin](https://plugins.jetbrains.com/plugin/6317) to add IDE supp
 Discussing your proposed changes ahead of time will make the contribution process smooth for everyone.
 
 Once we've discussed your changes and you've got your code ready, make sure
-that tests are passing (`make test` or `./gradlew check`) and open your pull request. 
+that tests are passing (`make test` or `./gradlew snapshot check`) and open your pull request. 
 Your pull request is most likely to be accepted if it:
 
 * Includes tests for new functionality.
