@@ -631,11 +631,10 @@ public class Configuration {
      * @return the sender passed via the constructor or a properly configured sender
      */
     public Sender getSender() {
-      // if we have a sender, that's the one we return
-      if (null != sender) {
-        return sender;
+      if (sender == null) {
+        sender = SenderResolver.resolve(this);
       }
-      return (sender = SenderResolver.resolve(this));
+      return sender;
     }
 
     /**
