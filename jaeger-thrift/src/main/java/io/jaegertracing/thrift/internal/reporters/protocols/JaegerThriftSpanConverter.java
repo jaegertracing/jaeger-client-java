@@ -44,8 +44,8 @@ public class JaegerThriftSpanConverter {
         : buildReferences(jaegerSpan.getReferences());
 
     return new io.jaegertracing.thriftjava.Span(
-        context.getTraceId(),
-        0, // TraceIdHigh is currently not supported
+        context.getTraceIdLow(),
+        context.getTraceIdHigh(),
         context.getSpanId(),
         oneChildOfParent ? context.getParentId() : 0,
         jaegerSpan.getOperationName(),
@@ -63,8 +63,8 @@ public class JaegerThriftSpanConverter {
     for (Reference reference: references) {
       SpanRefType thriftRefType = References.CHILD_OF.equals(reference.getType()) ? SpanRefType.CHILD_OF :
               SpanRefType.FOLLOWS_FROM;
-      thriftReferences.add(new SpanRef(thriftRefType, reference.getSpanContext().getTraceId(),
-              0, reference.getSpanContext().getSpanId()));
+      thriftReferences.add(new SpanRef(thriftRefType, reference.getSpanContext().getTraceIdLow(),
+              reference.getSpanContext().getTraceIdHigh(), reference.getSpanContext().getSpanId()));
     }
 
     return thriftReferences;

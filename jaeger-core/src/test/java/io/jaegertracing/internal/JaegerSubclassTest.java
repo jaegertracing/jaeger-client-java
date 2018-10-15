@@ -107,14 +107,15 @@ public class JaegerSubclassTest {
 
   private static class CustomSpanContext extends JaegerSpanContext {
     private CustomSpanContext(
-        long traceId,
+        long traceIdHigh,
+        long traceIdLow,
         long spanId,
         long parentId,
         byte flags,
         Map<String, String> baggage,
         String debugId,
         CustomObjectFactory objectFactory) {
-      super(traceId, spanId, parentId, flags, baggage, debugId, objectFactory);
+      super(traceIdHigh, traceIdLow, spanId, parentId, flags, baggage, debugId, objectFactory);
     }
   }
 
@@ -142,13 +143,14 @@ public class JaegerSubclassTest {
 
     @Override
     public CustomSpanContext createSpanContext(
-        long traceId,
+        long traceIdHigh,
+        long traceIdLow,
         long spanId,
         long parentId,
         byte flags,
         Map<String, String> baggage,
         String debugId) {
-      return new CustomSpanContext(traceId, spanId, parentId, flags, baggage, debugId, this);
+      return new CustomSpanContext(traceIdHigh, traceIdLow, spanId, parentId, flags, baggage, debugId, this);
     }
 
     @Override

@@ -14,7 +14,10 @@
 
 package io.jaegertracing.internal.propagation;
 
+import lombok.extern.slf4j.Slf4j;
+
 // copy/pasted from brave.internal.HexCodec 4.1.1 to avoid build complexity
+@Slf4j
 final class HexCodec {
 
   /**
@@ -26,13 +29,30 @@ final class HexCodec {
   static Long lowerHexToUnsignedLong(String lowerHex) {
     int length = lowerHex.length();
     if (length < 1 || length > 32) {
+      log.debug("token {} size is out of bounds [1, 32]", lowerHex);
       return null;
     }
 
     // trim off any high bits
     int beginIndex = length > 16 ? length - 16 : 0;
 
-    return lowerHexToUnsignedLong(lowerHex, beginIndex);
+    return hexToUnsignedLong(lowerHex, beginIndex, Math.min(beginIndex + 16, lowerHex.length()));
+  }
+
+  /**
+   * Parses a 1 to 32 character higher-hex string with no prefix into an unsigned long, tossing any
+   * bits lower than 64.
+   *
+   * @return a 64 bit long, meaning that negative values are the overflow of Java's 32 bit long
+   */
+  static Long higherHexToUnsignedLong(String higherHex) {
+    int length = higherHex.length();
+    if (length > 32 || length < 1) {
+      log.debug("token {} size is out of bounds [1, 32]", higherHex);
+      return null;
+    }
+
+    return hexToUnsignedLong(higherHex, 0, Math.max(length - 16, 0));
   }
 
   /**
@@ -41,9 +61,9 @@ final class HexCodec {
    *
    * @return a 64 bit long, meaning that negative values are the overflow of Java's 32 bit long
    */
-  static Long lowerHexToUnsignedLong(String lowerHex, int index) {
+  static Long hexToUnsignedLong(String lowerHex, int index, int endIndex) {
     long result = 0;
-    for (int endIndex = Math.min(index + 16, lowerHex.length()); index < endIndex; index++) {
+    for (; index < endIndex; index++) {
       char c = lowerHex.charAt(index);
       result <<= 4;
       if (c >= '0' && c <= '9') {

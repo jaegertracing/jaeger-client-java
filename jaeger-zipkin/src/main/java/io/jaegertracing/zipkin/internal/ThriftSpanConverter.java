@@ -42,12 +42,13 @@ public class ThriftSpanConverter {
 
     JaegerSpanContext context = jaegerSpan.context();
     return new com.twitter.zipkin.thriftjava.Span(
-            context.getTraceId(),
+            context.getTraceIdLow(),
             jaegerSpan.getOperationName(),
             context.getSpanId(),
             buildAnnotations(jaegerSpan, host),
             buildBinaryAnnotations(jaegerSpan, host))
         .setParent_id(context.getParentId())
+        .setTrace_id_high(context.getTraceIdHigh())
         .setDebug(context.isDebug())
         .setTimestamp(jaegerSpan.getStart())
         .setDuration(jaegerSpan.getDuration());

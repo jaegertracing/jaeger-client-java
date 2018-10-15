@@ -17,6 +17,7 @@ package io.jaegertracing.internal;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -53,6 +54,7 @@ public class JaegerSpanTest {
   private Clock clock;
   private InMemoryReporter reporter;
   private JaegerTracer tracer;
+  private JaegerTracer tracer128;
   private JaegerSpan jaegerSpan;
   private InMemoryMetricsFactory metricsFactory;
   private Metrics metrics;
@@ -63,16 +65,32 @@ public class JaegerSpanTest {
     reporter = new InMemoryReporter();
     clock = mock(Clock.class);
     metrics = new Metrics(metricsFactory);
-    tracer = new JaegerTracer.Builder("SamplerTest")
+    final JaegerTracer.Builder tracerBuilder = new JaegerTracer.Builder("SamplerTest")
             .withReporter(reporter)
             .withSampler(new ConstSampler(true))
             .withMetrics(metrics)
             .withClock(clock)
             .withBaggageRestrictionManager(new DefaultBaggageRestrictionManager())
-            .withExpandExceptionLogs()
-            .build();
+            .withExpandExceptionLogs();
+    tracer = tracerBuilder.build();
+    tracer128 = tracerBuilder.withTraceId128Bit().build();
     jaegerSpan = tracer.buildSpan("some-operation").start();
   }
+
+  @Test
+  public void testTraceId64Bit() {
+    tracer = new JaegerTracer.Builder("traceId64Bit").build();
+    jaegerSpan = tracer.buildSpan("foo").start();
+    assertEquals(0, jaegerSpan.context().getTraceIdHigh());
+  }
+
+  @Test
+  public void testTraceId128Bit() {
+    tracer = new JaegerTracer.Builder("traceId128Bit").withTraceId128Bit().build();
+    jaegerSpan = tracer.buildSpan("foo").start();
+    assertNotEquals(0, jaegerSpan.context().getTraceIdHigh());
+  }
+
 
   @Test
   public void testSpanMetrics() {
@@ -211,17 +229,43 @@ public class JaegerSpanTest {
   @Test
   public void testSpanToString() {
     String operation = "test-operation";
+    long traceIdLow = 1L;
+    long spanId = 2L;
+    long parentId = 3L;
     JaegerSpan span = new JaegerSpan(
         tracer,
         operation,
         new JaegerSpanContext(
-            1, 2, 3, (byte) 4, Collections.emptyMap(), null /* debugId */, new JaegerObjectFactory()),
+        0, traceIdLow, spanId, parentId,
+        (byte) 4, Collections.emptyMap(), null /* debugId */, new JaegerObjectFactory()),
         0,
         0,
         false,
         Collections.emptyMap(),
         Collections.emptyList());
     assertEquals("1:2:3:4 - test-operation", span.toString());
+    span.finish();
+  }
+
+  @Test
+  public void testSpanToStringWith128BitTraceId() {
+    String operation = "test-operation";
+    long traceIdLow = 1L;
+    long traceIdHigh = 2L;
+    long spanId = 3L;
+    long parentId = 4L;
+    JaegerSpan span = new JaegerSpan(
+            tracer128,
+            operation,
+            new JaegerSpanContext(
+            traceIdHigh, traceIdLow, spanId, parentId,
+            (byte) 4, Collections.emptyMap(), null /* debugId */, new JaegerObjectFactory()),
+            0,
+            0,
+            false,
+            Collections.emptyMap(),
+            Collections.emptyList());
+    assertEquals("20000000000000001:3:4:4 - test-operation", span.toString());
     span.finish();
   }
 

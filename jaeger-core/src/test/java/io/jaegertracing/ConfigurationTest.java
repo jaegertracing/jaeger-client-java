@@ -73,6 +73,7 @@ public class ConfigurationTest {
     System.clearProperty(Configuration.JAEGER_USER);
     System.clearProperty(Configuration.JAEGER_PASSWORD);
     System.clearProperty(Configuration.JAEGER_PROPAGATION);
+    System.clearProperty(Configuration.JAEGER_TRACEID_128BIT);
 
     System.clearProperty(TEST_PROPERTY);
   }
@@ -144,6 +145,22 @@ public class ConfigurationTest {
   }
 
   @Test
+  public void testTracerUse128BitTraceId() {
+    System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
+    System.setProperty(Configuration.JAEGER_TRACEID_128BIT, "true");
+    JaegerTracer tracer = Configuration.fromEnv().getTracer();
+    assertTrue(tracer.isUseTraceId128Bit());
+  }
+
+  @Test
+  public void testTracerInvalidUse128BitTraceId() {
+    System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
+    System.setProperty(Configuration.JAEGER_TRACEID_128BIT, "X");
+    JaegerTracer tracer = Configuration.fromEnv().getTracer();
+    assertFalse(tracer.isUseTraceId128Bit());
+  }
+
+  @Test
   public void testTracerTagslist() {
     System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
     System.setProperty(Configuration.JAEGER_TAGS, "testTag1=testValue1, testTag2 = testValue2");
@@ -198,11 +215,11 @@ public class ConfigurationTest {
     System.setProperty(Configuration.JAEGER_PROPAGATION, "b3");
     System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
 
-    long traceId = 1234;
-    long spanId = 5678;
+    long traceIdLow = 1234L;
+    long spanId = 5678L;
 
     TestTextMap textMap = new TestTextMap();
-    JaegerSpanContext spanContext = new JaegerSpanContext(traceId, spanId, 0, (byte)0);
+    JaegerSpanContext spanContext = new JaegerSpanContext(0, traceIdLow, spanId, 0, (byte)0);
 
     JaegerTracer tracer = Configuration.fromEnv().getTracer();
     tracer.inject(spanContext, Format.Builtin.TEXT_MAP, textMap);
@@ -212,7 +229,8 @@ public class ConfigurationTest {
     assertNull(textMap.get("uber-trace-id"));
 
     JaegerSpanContext extractedContext = tracer.extract(Format.Builtin.TEXT_MAP, textMap);
-    assertEquals(traceId, extractedContext.getTraceId());
+    assertEquals(traceIdLow, extractedContext.getTraceIdLow());
+    assertEquals(0, extractedContext.getTraceIdHigh());
     assertEquals(spanId, extractedContext.getSpanId());
   }
 
@@ -221,11 +239,11 @@ public class ConfigurationTest {
     System.setProperty(Configuration.JAEGER_PROPAGATION, "jaeger,b3");
     System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
 
-    long traceId = 1234;
-    long spanId = 5678;
+    long traceIdLow = 1234L;
+    long spanId = 5678L;
 
     TestTextMap textMap = new TestTextMap();
-    JaegerSpanContext spanContext = new JaegerSpanContext(traceId, spanId, 0, (byte)0);
+    JaegerSpanContext spanContext = new JaegerSpanContext(0, traceIdLow, spanId, 0, (byte)0);
 
     JaegerTracer tracer = Configuration.fromEnv().getTracer();
     tracer.inject(spanContext, Format.Builtin.TEXT_MAP, textMap);
@@ -235,7 +253,8 @@ public class ConfigurationTest {
     assertNotNull(textMap.get("X-B3-SpanId"));
 
     JaegerSpanContext extractedContext = tracer.extract(Format.Builtin.TEXT_MAP, textMap);
-    assertEquals(traceId, extractedContext.getTraceId());
+    assertEquals(traceIdLow, extractedContext.getTraceIdLow());
+    assertEquals(0, extractedContext.getTraceIdHigh());
     assertEquals(spanId, extractedContext.getSpanId());
   }
 
@@ -243,8 +262,11 @@ public class ConfigurationTest {
   public void testPropagationDefault() {
     System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
 
+    long traceIdLow = 1234;
+    long spanId = 5678;
+
     TestTextMap textMap = new TestTextMap();
-    JaegerSpanContext spanContext = new JaegerSpanContext(1234, 5678, 0, (byte)0);
+    JaegerSpanContext spanContext = new JaegerSpanContext(0, traceIdLow, spanId, 0, (byte)0);
 
     Configuration.fromEnv().getTracer().inject(spanContext, Format.Builtin.TEXT_MAP, textMap);
 
@@ -258,8 +280,11 @@ public class ConfigurationTest {
     System.setProperty(Configuration.JAEGER_PROPAGATION, "jaeger,invalid");
     System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
 
+    long traceIdLow = 1234;
+    long spanId = 5678;
+
     TestTextMap textMap = new TestTextMap();
-    JaegerSpanContext spanContext = new JaegerSpanContext(1234, 5678, 0, (byte)0);
+    JaegerSpanContext spanContext = new JaegerSpanContext(0, traceIdLow, spanId, 0, (byte)0);
 
     Configuration.fromEnv().getTracer().inject(spanContext, Format.Builtin.TEXT_MAP, textMap);
 
@@ -370,7 +395,10 @@ public class ConfigurationTest {
 
     Configuration configuration = new Configuration("foo")
         .withCodec(codecConfiguration);
-    JaegerSpanContext spanContext = new JaegerSpanContext(2L, 11L, 22L, (byte) 0);
+    long traceIdLow = 2L;
+    long spanId = 11L;
+    long parentId = 22L;
+    JaegerSpanContext spanContext = new JaegerSpanContext(0, traceIdLow, spanId, parentId, (byte) 0);
     assertInjectExtract(configuration.getTracer(), Builtin.TEXT_MAP, spanContext, false);
     // added codecs above overrides the default implementation
     assertInjectExtract(configuration.getTracer(), Builtin.HTTP_HEADERS, spanContext, true);
@@ -379,7 +407,36 @@ public class ConfigurationTest {
   @Test
   public void testDefaultCodecs() {
     Configuration configuration = new Configuration("foo");
-    JaegerSpanContext spanContext = new JaegerSpanContext(2L, 11L, 22L, (byte) 0);
+    long traceIdLow = 2L;
+    long spanId = 11L;
+    long parentId = 22L;
+    JaegerSpanContext spanContext = new JaegerSpanContext(0, traceIdLow, spanId, parentId, (byte) 0);
+    assertInjectExtract(configuration.getTracer(), Builtin.TEXT_MAP, spanContext, false);
+    assertInjectExtract(configuration.getTracer(), Builtin.HTTP_HEADERS, spanContext, false);
+  }
+
+  @Test
+  public void testDefaultCodecsWith128BitTraceId() {
+    Configuration configuration = new Configuration("foo").withTraceId128Bit(true);
+    long traceIdLow = 2L;
+    long traceIdHigh = 3L;
+    long spanId = 11L;
+    long parentId = 22L;
+    JaegerSpanContext spanContext = new JaegerSpanContext(traceIdHigh, traceIdLow, spanId, parentId, (byte) 0);
+    assertInjectExtract(configuration.getTracer(), Builtin.TEXT_MAP, spanContext, false);
+    assertInjectExtract(configuration.getTracer(), Builtin.HTTP_HEADERS, spanContext, false);
+  }
+
+  @Test
+  public void testB3CodecsWith128BitTraceId() {
+    System.setProperty(Configuration.JAEGER_PROPAGATION, "b3");
+    System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
+    Configuration configuration = Configuration.fromEnv().withTraceId128Bit(true);
+    long traceIdLow = 2L;
+    long traceIdHigh = 3L;
+    long spanId = 11L;
+    long parentId = 22L;
+    JaegerSpanContext spanContext = new JaegerSpanContext(traceIdHigh, traceIdLow, spanId, parentId, (byte) 0);
     assertInjectExtract(configuration.getTracer(), Builtin.TEXT_MAP, spanContext, false);
     assertInjectExtract(configuration.getTracer(), Builtin.HTTP_HEADERS, spanContext, false);
   }
