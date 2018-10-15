@@ -84,7 +84,7 @@ subprojects {
             // Dealing with error "Wrong number of received repositories in state 'open'" (http://bit.ly/2ybracm)
             numberOfRetries = 50
             delayBetweenRetriesInMillis = 3000
-            stagingProfileId = "${getVersionForBuild().replaceAll("\\.|-", "")}-${System.currentTimeMillis()}"
+            stagingProfileId = "${getVersionForBuild().replaceAll("\\.|-", "")}-${System.currentTimeMillis()}".toString()
         }
 
         uploadArchives.finalizedBy closeAndReleaseRepository
