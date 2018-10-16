@@ -43,13 +43,15 @@ import org.junit.runner.RunWith;
 @RunWith(DataProviderRunner.class)
 public class JaegerThriftSpanConverterTest {
   JaegerTracer tracer;
+  JaegerTracer tracer128;
 
   @Before
   public void setUp() {
-    tracer = new JaegerTracer.Builder("test-service-name")
+    final JaegerTracer.Builder tracerBuilder = new JaegerTracer.Builder("test-service-name")
             .withReporter(new InMemoryReporter())
-            .withSampler(new ConstSampler(true))
-            .build();
+            .withSampler(new ConstSampler(true));
+    tracer = tracerBuilder.build();
+    tracer128 = tracerBuilder.withTraceId128Bit().build();
   }
 
   @DataProvider
@@ -140,6 +142,16 @@ public class JaegerThriftSpanConverterTest {
     thriftTag = thriftLog.getFields().get(2);
     assertEquals("key", thriftTag.getKey());
     assertEquals("foo", thriftTag.getVStr());
+  }
+
+  @Test
+  public void testConvertSpanWith128BitTraceId() {
+    JaegerSpan span = tracer128.buildSpan("operation-name").start();
+
+    io.jaegertracing.thriftjava.Span thriftSpan = JaegerThriftSpanConverter.convertSpan(span);
+
+    assertEquals(span.context().getTraceIdLow(), thriftSpan.getTraceIdLow());
+    assertEquals(span.context().getTraceIdHigh(), thriftSpan.getTraceIdHigh());
   }
 
   @Test

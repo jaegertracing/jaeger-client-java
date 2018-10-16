@@ -67,6 +67,18 @@ public class JaegerTracerTest {
   }
 
   @Test
+  public void testTraceId64Bit() {
+    JaegerTracer tracer = new Builder("name").build();
+    assertFalse(tracer.isUseTraceId128Bit());
+  }
+
+  @Test
+  public void testTraceId128Bit() {
+    JaegerTracer tracer = new Builder("name").withTraceId128Bit().build();
+    assertTrue(tracer.isUseTraceId128Bit());
+  }
+
+  @Test
   public void testBuildSpan() {
     String expectedOperation = "fry";
     JaegerSpan jaegerSpan = tracer.buildSpan(expectedOperation).start();

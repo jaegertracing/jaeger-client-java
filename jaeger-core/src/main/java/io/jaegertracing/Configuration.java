@@ -148,6 +148,11 @@ public class Configuration {
   public static final String JAEGER_SENDER_FACTORY = JAEGER_PREFIX + "SENDER_FACTORY";
 
   /**
+   *  Opt-in to use 128 bit traceIds. By default, uses 64 bits.
+   */
+  public static final String JAEGER_TRACEID_128BIT = JAEGER_PREFIX + "TRACEID_128BIT";
+
+  /**
    * The supported trace context propagation formats.
    */
   public enum Propagation {
@@ -172,6 +177,7 @@ public class Configuration {
   private CodecConfiguration codecConfig;
   private MetricsFactory metricsFactory;
   private Map<String, String> tracerTags;
+  private boolean useTraceId128Bit;
 
   /**
    * lazy singleton JaegerTracer initialized in getTracer() method.
@@ -193,6 +199,7 @@ public class Configuration {
   public static Configuration fromEnv(String serviceName) {
     return new Configuration(serviceName)
             .withTracerTags(tracerTagsFromEnv())
+            .withTraceId128Bit(getPropertyAsBool(JAEGER_TRACEID_128BIT))
             .withReporter(ReporterConfiguration.fromEnv())
             .withSampler(SamplerConfiguration.fromEnv())
             .withCodec(CodecConfiguration.fromEnv());
@@ -219,6 +226,9 @@ public class Configuration {
         .withReporter(reporter)
         .withMetrics(metrics)
         .withTags(tracerTags);
+    if (useTraceId128Bit) {
+      builder = builder.withTraceId128Bit();
+    }
     codecConfig.apply(builder);
     return builder;
   }
@@ -282,6 +292,11 @@ public class Configuration {
 
   public Configuration withCodec(CodecConfiguration codecConfig) {
     this.codecConfig = codecConfig;
+    return this;
+  }
+
+  public Configuration withTraceId128Bit(boolean useTraceId128Bit) {
+    this.useTraceId128Bit = useTraceId128Bit;
     return this;
   }
 

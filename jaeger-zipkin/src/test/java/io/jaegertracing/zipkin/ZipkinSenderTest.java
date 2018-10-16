@@ -15,7 +15,9 @@
 package io.jaegertracing.zipkin;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import io.jaegertracing.internal.JaegerSpan;
@@ -54,15 +56,17 @@ public class ZipkinSenderTest {
   Reporter reporter;
   ThriftSpanConverter converter;
   JaegerTracer tracer;
+  JaegerTracer tracer128;
 
   @Before
   public void setUp() {
     reporter = new InMemoryReporter();
-    tracer = new JaegerTracer.Builder("test-sender")
+    final JaegerTracer.Builder tracerBuilder = new JaegerTracer.Builder("test-sender")
             .withReporter(reporter)
             .withSampler(new ConstSampler(true))
-            .withMetricsFactory(new InMemoryMetricsFactory())
-            .build();
+            .withMetricsFactory(new InMemoryMetricsFactory());
+    tracer = tracerBuilder.build();
+    tracer128 = tracerBuilder.withTraceId128Bit().build();
     sender = newSender(messageMaxBytes);
     converter = new ThriftSpanConverter();
   }
@@ -137,12 +141,33 @@ public class ZipkinSenderTest {
     zipkin2.Span actualSpan = traces.get(0).get(0);
     JaegerSpanContext context = expectedSpan.context();
 
-    assertEquals(context.getTraceId(), HexCodec.lowerHexToUnsignedLong(actualSpan.traceId()));
+    assertEquals(context.getTraceIdLow(), HexCodec.lowerHexToUnsignedLong(actualSpan.traceId()));
+    assertEquals(context.getTraceIdHigh(), 0L);
     assertEquals(context.getSpanId(), HexCodec.lowerHexToUnsignedLong(actualSpan.id()));
     assertEquals(context.getParentId(), 0L);
     assertNull(actualSpan.parentId());
     assertEquals(expectedSpan.getOperationName(), actualSpan.name());
     assertEquals(tracer.getServiceName(), actualSpan.localServiceName());
+  }
+
+  @Test
+  public void testAppend128BitTraceId() throws Exception {
+    JaegerSpan expectedSpan = tracer128.buildSpan("raza").start();
+
+    sender.append(expectedSpan);
+    sender.flush();
+
+    List<List<zipkin2.Span>> traces = zipkinRule.getTraces();
+    assertEquals(traces.size(), 1);
+    assertEquals(traces.get(0).size(), 1);
+
+    zipkin2.Span actualSpan = traces.get(0).get(0);
+    JaegerSpanContext context = expectedSpan.context();
+
+    assertNotEquals(context.getTraceIdHigh(), 0L);
+    assertTrue(actualSpan.traceId().length() > 16);
+    assertEquals(context.getTraceIdLow(), HexCodec.lowerHexToUnsignedLong(actualSpan.traceId()));
+    assertEquals(context.getTraceIdHigh(), HexCodec.lowerHexToUnsignedLong(actualSpan.traceId().substring(0, 16)));
   }
 
   @Test

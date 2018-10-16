@@ -68,6 +68,7 @@ public class JaegerTracer implements Tracer, Closeable {
   private final Map<String, ?> tags;
   private final boolean zipkinSharedRpcSpan;
   private final boolean expandExceptionLogs;
+  private final boolean useTraceId128Bit;
 
   @ToString.Exclude private final PropagationRegistry registry;
   @ToString.Exclude private final Clock clock;
@@ -89,6 +90,7 @@ public class JaegerTracer implements Tracer, Closeable {
     this.baggageSetter = new BaggageSetter(builder.baggageRestrictionManager, metrics);
     this.expandExceptionLogs = builder.expandExceptionLogs;
     this.objectFactory = builder.objectFactory;
+    this.useTraceId128Bit = builder.useTraceId128Bit;
 
     this.version = loadVersion();
 
@@ -299,7 +301,9 @@ public class JaegerTracer implements Tracer, Closeable {
 
     private JaegerSpanContext createNewContext() {
       String debugId = getDebugId();
-      long id = Utils.uniqueId();
+      long spanId = Utils.uniqueId();
+      long traceIdLow = spanId;
+      long traceIdHigh = isUseTraceId128Bit() ? Utils.uniqueId() : 0;
 
       byte flags = 0;
       if (debugId != null) {
@@ -308,7 +312,7 @@ public class JaegerTracer implements Tracer, Closeable {
         metrics.traceStartedSampled.inc(1);
       } else {
         // TODO: (prithvi) Don't assume operationName is set on creation
-        SamplingStatus samplingStatus = sampler.sample(operationName, id);
+        SamplingStatus samplingStatus = sampler.sample(operationName, spanId);
         if (samplingStatus.isSampled()) {
           flags |= JaegerSpanContext.flagSampled;
           tags.putAll(samplingStatus.getTags());
@@ -319,8 +323,9 @@ public class JaegerTracer implements Tracer, Closeable {
       }
 
       return getObjectFactory().createSpanContext(
-          id,
-          id,
+          traceIdHigh,
+          traceIdLow,
+          spanId,
           0,
           flags,
           getBaggage(),
@@ -364,7 +369,8 @@ public class JaegerTracer implements Tracer, Closeable {
       }
 
       return getObjectFactory().createSpanContext(
-          preferredReference.getTraceId(),
+          preferredReference.getTraceIdHigh(),
+          preferredReference.getTraceIdLow(),
           Utils.uniqueId(),
           preferredReference.getSpanId(),
           // should we do OR across passed references?
@@ -490,6 +496,7 @@ public class JaegerTracer implements Tracer, Closeable {
     private BaggageRestrictionManager baggageRestrictionManager = new DefaultBaggageRestrictionManager();
     private boolean expandExceptionLogs;
     private final JaegerObjectFactory objectFactory;
+    private boolean useTraceId128Bit;
 
     public Builder(String serviceName) {
       this(serviceName, new JaegerObjectFactory());
@@ -574,6 +581,11 @@ public class JaegerTracer implements Tracer, Closeable {
 
     public Builder withMetrics(Metrics metrics) {
       this.metrics = metrics;
+      return this;
+    }
+
+    public Builder withTraceId128Bit() {
+      this.useTraceId128Bit = true;
       return this;
     }
 
@@ -669,5 +681,9 @@ public class JaegerTracer implements Tracer, Closeable {
 
   boolean isExpandExceptionLogs() {
     return this.expandExceptionLogs;
+  }
+
+  public boolean isUseTraceId128Bit() {
+    return this.useTraceId128Bit;
   }
 }

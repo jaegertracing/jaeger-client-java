@@ -21,6 +21,7 @@ import static org.junit.Assert.assertTrue;
 import io.jaegertracing.internal.JaegerSpanContext;
 import io.jaegertracing.internal.exceptions.EmptyTracerStateStringException;
 import io.jaegertracing.internal.exceptions.MalformedTracerStateStringException;
+import io.jaegertracing.internal.exceptions.TraceIdOutOfBoundException;
 import io.opentracing.propagation.TextMapExtractAdapter;
 import io.opentracing.propagation.TextMapInjectAdapter;
 
@@ -64,27 +65,62 @@ public class TextMapCodecTest {
     TextMapCodec.contextFromString("");
   }
 
+  @Test(expected = TraceIdOutOfBoundException.class)
+  public void testContextFromStringTraceIdOutOfBoundExceptionTooBig() {
+    TextMapCodec.contextFromString("123456789012345678901234567890123:ff:ff:ff");
+  }
+
+  @Test(expected = TraceIdOutOfBoundException.class)
+  public void testContextFromStringTraceIdOutOfBoundExceptionToSmall() {
+    TextMapCodec.contextFromString(":ff:ff:ff");
+  }
+
   @Test
   public void testContextFromString() throws Exception {
     JaegerSpanContext context = TextMapCodec.contextFromString("ff:dd:cc:4");
-    assertEquals(context.getTraceId(), 255);
-    assertEquals(context.getSpanId(), 221);
-    assertEquals(context.getParentId(), 204);
+    assertEquals(context.getTraceIdLow(), 255L);
+    assertEquals(context.getTraceIdHigh(), 0L);
+    assertEquals(context.getSpanId(), 221L);
+    assertEquals(context.getParentId(), 204L);
     assertEquals(context.getFlags(), 4);
   }
 
   @Test
+  public void testContextFromStringWith128BitTraceId() {
+    JaegerSpanContext context = TextMapCodec.contextFromString("100000000000000ff:dd:cc:4");
+    assertEquals(context.getTraceIdLow(), 255L);
+    assertEquals(context.getTraceIdHigh(), 1L);
+    assertEquals(context.getSpanId(), 221L);
+    assertEquals(context.getParentId(), 204L);
+    assertEquals(context.getFlags(), 4);
+  }
+
+  @Test
+  public void testContextAsStringWith128BitTraceId() {
+    long traceIdLow = 1L;
+    long traceIdHigh = 2L;
+    long spanId = 3L;
+    long parentId = 4L;
+    byte flags = (byte) 5;
+
+    JaegerSpanContext context = new JaegerSpanContext(traceIdHigh, traceIdLow, spanId, parentId, flags);
+    assertEquals(
+            "20000000000000001:3:4:5", TextMapCodec.contextAsString(context));
+  }
+
+  @Test
   public void testContextAsStringFormatsPositiveFields() {
-    long traceId = -10L;
+    long traceIdLow = -10L;
     long spanId = -10L;
     long parentId = -10L;
     byte flags = (byte) 129;
 
-    JaegerSpanContext context = new JaegerSpanContext(traceId, spanId, parentId, flags);
+    JaegerSpanContext context = new JaegerSpanContext(0L, traceIdLow, spanId, parentId, flags);
     assertEquals(
         "fffffffffffffff6:fffffffffffffff6:fffffffffffffff6:81", TextMapCodec.contextAsString(context));
     JaegerSpanContext contextFromStr = TextMapCodec.contextFromString(context.toString());
-    assertEquals(traceId, contextFromStr.getTraceId());
+    assertEquals(traceIdLow, contextFromStr.getTraceIdLow());
+    assertEquals(0L, contextFromStr.getTraceIdHigh());
     assertEquals(spanId, contextFromStr.getSpanId());
     assertEquals(parentId, contextFromStr.getParentId());
     assertEquals(flags, contextFromStr.getFlags());
@@ -97,10 +133,14 @@ public class TextMapCodecTest {
   public void testAdhocBaggageWithTraceId() {
     TextMapCodec codec = new TextMapCodec(false);
     Map<String, String> headers = new HashMap<String, String>();
-    codec.inject(new JaegerSpanContext(42, 1, 0, (byte)1), new TextMapInjectAdapter(headers));
+    long traceIdLow = 42;
+    long spanId = 1;
+    long parentId = 0;
+    codec.inject(new JaegerSpanContext(0L, traceIdLow, spanId, parentId, (byte)1), new TextMapInjectAdapter(headers));
     headers.put("jaeger-baggage", "k1=v1, k2 = v2");
     JaegerSpanContext context = codec.extract(new TextMapExtractAdapter(headers));
-    assertEquals("must have trace ID", 42, context.getTraceId());
+    assertEquals("must have trace ID", 42, context.getTraceIdLow());
+    assertEquals("must have trace ID", 0L, context.getTraceIdHigh());
     assertEquals("must have bagggae", "v1", context.getBaggageItem("k1"));
     assertEquals("must have bagggae", "v2", context.getBaggageItem("k2"));
   }

@@ -1,10 +1,19 @@
 Changes by Version
 ==================
 
-0.31.1 (unreleased)
+0.32.1 (unreleased)
 -------------------
 
+0.32.0 (2018-10-15)
+-------------------
+
+- Support 128bit trace ids ([#507](https://github.com/jaegertracing/jaeger-client-java/pull/507), [@hypnoce](https://github.com/hypnoce))
+- Fix repeated resolving of sender in configuration ([#555](https://github.com/jaegertracing/jaeger-client-java/pull/555), [@pavolloffay](https://github.com/pavolloffay))
+- Parse configuration coded programmatically ([#550](https://github.com/jaegertracing/jaeger-client-java/pull/550), [@pavolloffay](https://github.com/pavolloffay))
+- Close tracer on JVM shutdown ([#546](https://github.com/jaegertracing/jaeger-client-java/pull/546), [@jpkrohling](https://github.com/jpkrohling))
+- Implement `TracerFactory` ([#527](https://github.com/jaegertracing/jaeger-client-java/pull/527), [@jpkrohling](https://github.com/jpkrohling))
 - Fix sampling when `jaeger-baggage` header is given ([#542](https://github.com/jaegertracing/jaeger-client-java/pull/542), [@yurishkuro](https://github.com/yurishkuro))
+
 
 0.31.0 (2018-08-28)
 -------------------

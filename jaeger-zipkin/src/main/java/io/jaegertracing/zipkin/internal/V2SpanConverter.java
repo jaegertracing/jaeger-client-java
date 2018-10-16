@@ -45,7 +45,7 @@ public class V2SpanConverter {
     JaegerSpanContext context = span.context();
     zipkin2.Span.Builder builder = zipkin2.Span.newBuilder()
             .id(Long.toHexString(context.getSpanId()))
-            .traceId(Long.toHexString(context.getTraceId()))
+            .traceId(context.getTraceIdHigh(), context.getTraceIdLow())
             .name(span.getOperationName())
             .parentId(Long.toHexString(context.getParentId()))
             .debug(context.isDebug())

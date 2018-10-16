@@ -17,6 +17,7 @@ package io.jaegertracing.internal;
 
 import io.jaegertracing.internal.propagation.TextMapCodec;
 import io.opentracing.SpanContext;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,7 +26,8 @@ public class JaegerSpanContext implements SpanContext {
   protected static final byte flagSampled = 1;
   protected static final byte flagDebug = 2;
 
-  private final long traceId;
+  private final long traceIdLow;
+  private final long traceIdHigh;
   private final long spanId;
   private final long parentId;
   private final byte flags;
@@ -33,9 +35,10 @@ public class JaegerSpanContext implements SpanContext {
   private final String debugId;
   private final JaegerObjectFactory objectFactory;
 
-  public JaegerSpanContext(long traceId, long spanId, long parentId, byte flags) {
+  public JaegerSpanContext(long traceIdHigh, long traceIdLow, long spanId, long parentId, byte flags) {
     this(
-        traceId,
+        traceIdHigh,
+        traceIdLow,
         spanId,
         parentId,
         flags,
@@ -45,7 +48,8 @@ public class JaegerSpanContext implements SpanContext {
   }
 
   protected JaegerSpanContext(
-      long traceId,
+      long traceIdHigh,
+      long traceIdLow,
       long spanId,
       long parentId,
       byte flags,
@@ -55,7 +59,8 @@ public class JaegerSpanContext implements SpanContext {
     if (baggage == null) {
       baggage = Collections.<String, String>emptyMap();
     }
-    this.traceId = traceId;
+    this.traceIdLow = traceIdLow;
+    this.traceIdHigh = traceIdHigh;
     this.spanId = spanId;
     this.parentId = parentId;
     this.flags = flags;
@@ -77,8 +82,27 @@ public class JaegerSpanContext implements SpanContext {
     return this.baggage;
   }
 
-  public long getTraceId() {
-    return traceId;
+  public String getTraceId() {
+    if (traceIdHigh == 0L) {
+      return Long.toHexString(traceIdLow);
+    }
+    final String hexStringHigh = Long.toHexString(traceIdHigh);
+    final String hexStringLow = Long.toHexString(traceIdLow);
+    if (hexStringLow.length() < 16) {
+      // left pad low trace id with '0'.
+      // In theory, only 12.5% of all possible long values will be padded.
+      // In practice, using Random.nextLong(), only 6% will need padding
+      return hexStringHigh + "0000000000000000".substring(hexStringLow.length()) + hexStringLow;
+    }
+    return hexStringHigh + hexStringLow;
+  }
+
+  public long getTraceIdLow() {
+    return traceIdLow;
+  }
+
+  public long getTraceIdHigh() {
+    return traceIdHigh;
   }
 
   public long getSpanId() {
@@ -113,15 +137,15 @@ public class JaegerSpanContext implements SpanContext {
     } else {
       newBaggage.put(key, val);
     }
-    return objectFactory.createSpanContext(traceId, spanId, parentId, flags, newBaggage, debugId);
+    return objectFactory.createSpanContext(traceIdHigh, traceIdLow, spanId, parentId, flags, newBaggage, debugId);
   }
 
   public JaegerSpanContext withBaggage(Map<String, String> newBaggage) {
-    return objectFactory.createSpanContext(traceId, spanId, parentId, flags, newBaggage, debugId);
+    return objectFactory.createSpanContext(traceIdHigh, traceIdLow, spanId, parentId, flags, newBaggage, debugId);
   }
 
   public JaegerSpanContext withFlags(byte flags) {
-    return objectFactory.createSpanContext(traceId, spanId, parentId, flags, baggage, debugId);
+    return objectFactory.createSpanContext(traceIdHigh, traceIdLow, spanId, parentId, flags, baggage, debugId);
   }
 
   /**
@@ -133,7 +157,7 @@ public class JaegerSpanContext implements SpanContext {
    * @see Constants#BAGGAGE_HEADER_KEY
    */
   boolean hasTrace() {
-    return traceId != 0 && spanId != 0;
+    return (traceIdLow != 0 || traceIdHigh != 0) && spanId != 0;
   }
 
   /**

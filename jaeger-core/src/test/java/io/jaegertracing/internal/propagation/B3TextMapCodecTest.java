@@ -39,7 +39,7 @@ public class B3TextMapCodecTest {
   B3TextMapCodec b3Codec = new B3TextMapCodec.Builder().build();
 
   @Test
-  public void downgrades128BitTraceIdToLower64Bits() {
+  public void support128BitTraceIdExtraction() {
     String hex128Bits = "463ac35c9f6413ad48485a3953bb6124";
     String lower64Bits = "48485a3953bb6124";
 
@@ -55,7 +55,8 @@ public class B3TextMapCodecTest {
     JaegerSpanContext context = b3Codec.extract(textMap);
 
     assertNotNull(HexCodec.lowerHexToUnsignedLong(lower64Bits));
-    assertEquals(HexCodec.lowerHexToUnsignedLong(lower64Bits).longValue(), context.getTraceId());
+    assertEquals(HexCodec.lowerHexToUnsignedLong(hex128Bits).longValue(), context.getTraceIdLow());
+    assertEquals(HexCodec.higherHexToUnsignedLong(hex128Bits).longValue(), context.getTraceIdHigh());
     assertEquals(HexCodec.lowerHexToUnsignedLong(lower64Bits).longValue(), context.getSpanId());
     assertEquals(0, context.getParentId());
     assertEquals(B3TextMapCodec.SAMPLED_FLAG | B3TextMapCodec.DEBUG_FLAG, context.getFlags());
@@ -69,7 +70,10 @@ public class B3TextMapCodecTest {
         .build();
 
     DelegatingTextMap entries = new DelegatingTextMap();
-    JaegerSpanContext spanContext = new JaegerSpanContext(1, 2, 3, (byte)0)
+    long traceIdLow = 1;
+    long spanId = 2;
+    long parentId = 3;
+    JaegerSpanContext spanContext = new JaegerSpanContext(0L, traceIdLow, spanId, parentId, (byte)0)
         .withBaggageItem("foo", "bar");
 
     b3Codec.inject(spanContext, entries);
@@ -88,7 +92,10 @@ public class B3TextMapCodecTest {
         .build();
 
     DelegatingTextMap entries = new DelegatingTextMap();
-    JaegerSpanContext spanContext = new JaegerSpanContext(1, 2, 3, (byte)0)
+    long traceIdLow = 1;
+    long spanId = 2;
+    long parentId = 3;
+    JaegerSpanContext spanContext = new JaegerSpanContext(0L, traceIdLow, spanId, parentId, (byte)0)
         .withBaggageItem("foo", "bar");
 
     b3Codec.inject(spanContext, entries);
@@ -99,10 +106,27 @@ public class B3TextMapCodecTest {
   @Test
   public void testInject() {
     DelegatingTextMap textMap = new DelegatingTextMap();
-    b3Codec.inject(new JaegerSpanContext(1, 1, 1, SAMPLED), textMap);
+    long traceIdLow = 1;
+    long spanId = 2;
+    long parentId = 3;
+    b3Codec.inject(new JaegerSpanContext(0L, traceIdLow, spanId, parentId, SAMPLED), textMap);
 
     assertTrue(textMap.containsKey(B3TextMapCodec.TRACE_ID_NAME));
     assertTrue(textMap.containsKey(B3TextMapCodec.SPAN_ID_NAME));
+  }
+
+  @Test
+  public void testInject128BitTraceId() {
+    DelegatingTextMap textMap = new DelegatingTextMap();
+    long traceIdLow = 1;
+    long traceIdHigh = 2;
+    long spanId = 3;
+    long parentId = 4;
+    b3Codec.inject(new JaegerSpanContext(traceIdHigh, traceIdLow, spanId, parentId, SAMPLED), textMap);
+
+    final String traceId = textMap.get(B3TextMapCodec.TRACE_ID_NAME);
+    assertEquals(traceIdLow, HexCodec.lowerHexToUnsignedLong(traceId).longValue());
+    assertEquals(traceIdHigh, HexCodec.higherHexToUnsignedLong(traceId).longValue());
   }
 
   static class DelegatingTextMap implements TextMap {
@@ -120,6 +144,10 @@ public class B3TextMapCodecTest {
 
     public boolean containsKey(String key) {
       return delegate.containsKey(key);
+    }
+
+    public String get(String key) {
+      return delegate.get(key);
     }
   }
 }

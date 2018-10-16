@@ -77,7 +77,8 @@ public class B3TextMapCodec implements Codec<TextMap> {
 
   @Override
   public void inject(JaegerSpanContext spanContext, TextMap carrier) {
-    carrier.put(TRACE_ID_NAME, HexCodec.toLowerHex(spanContext.getTraceId()));
+    carrier.put(TRACE_ID_NAME, // Use HexCode instead of getTraceId to ensure zipkin compatibility
+            HexCodec.toLowerHex(spanContext.getTraceIdHigh(), spanContext.getTraceIdLow()));
     if (spanContext.getParentId() != 0L) { // Conventionally, parent id == 0 means the root span
       carrier.put(PARENT_SPAN_ID_NAME, HexCodec.toLowerHex(spanContext.getParentId()));
     }
@@ -93,7 +94,8 @@ public class B3TextMapCodec implements Codec<TextMap> {
 
   @Override
   public JaegerSpanContext extract(TextMap carrier) {
-    Long traceId = null;
+    Long traceIdLow = null;
+    Long traceIdHigh = 0L; // It's enough to check for a null low trace id
     Long spanId = null;
     Long parentId = 0L; // Conventionally, parent id == 0 means the root span
     byte flags = 0;
@@ -105,7 +107,8 @@ public class B3TextMapCodec implements Codec<TextMap> {
           flags |= SAMPLED_FLAG;
         }
       } else if (entry.getKey().equalsIgnoreCase(TRACE_ID_NAME)) {
-        traceId = HexCodec.lowerHexToUnsignedLong(entry.getValue());
+        traceIdLow = HexCodec.lowerHexToUnsignedLong(entry.getValue());
+        traceIdHigh = HexCodec.higherHexToUnsignedLong(entry.getValue());
       } else if (entry.getKey().equalsIgnoreCase(PARENT_SPAN_ID_NAME)) {
         parentId = HexCodec.lowerHexToUnsignedLong(entry.getValue());
       } else if (entry.getKey().equalsIgnoreCase(SPAN_ID_NAME)) {
@@ -122,9 +125,10 @@ public class B3TextMapCodec implements Codec<TextMap> {
       }
     }
 
-    if (null != traceId && null != parentId && null != spanId) {
+    if (null != traceIdLow && null != parentId && null != spanId) {
       JaegerSpanContext spanContext = objectFactory.createSpanContext(
-          traceId,
+          traceIdHigh,
+          traceIdLow,
           spanId,
           parentId,
           flags,

@@ -14,10 +14,11 @@
 
 package io.jaegertracing.zipkin.internal;
 
-import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
@@ -50,14 +51,16 @@ import org.junit.runner.RunWith;
 @RunWith(DataProviderRunner.class)
 public class ThriftSpanConverterTest {
   JaegerTracer tracer;
+  JaegerTracer tracer128;
 
   @Before
   public void setUp() {
-    tracer = new JaegerTracer.Builder("test-service-name")
+    final JaegerTracer.Builder tracerBuilder = new JaegerTracer.Builder("test-service-name")
             .withReporter(new InMemoryReporter())
             .withSampler(new ConstSampler(true))
-            .withZipkinSharedRpcSpan()
-            .build();
+            .withZipkinSharedRpcSpan();
+    tracer = tracerBuilder.build();
+    tracer128 = tracerBuilder.withTraceId128Bit().build();
   }
 
   // undef value is used to mark tags that should *not* be present
@@ -304,5 +307,15 @@ public class ThriftSpanConverterTest {
     expectedValues.add("{\"boolean\":true,\"event\":\"structured data\",\"number\":42,\"string\":\"something\"}");
 
     assertEquals("zipkin span should contain matching annotations for span logs", expectedValues, annotationValues);
+  }
+
+  @Test
+  public void testConvertSpanWith128BitTraceId() {
+    JaegerSpan span = tracer128.buildSpan("operation-name").start();
+
+    com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan(span);
+    assertNotEquals(0, span.context().getTraceIdHigh());
+    assertEquals(span.context().getTraceIdLow(), zipkinSpan.getTrace_id());
+    assertEquals(span.context().getTraceIdHigh(), zipkinSpan.getTrace_id_high());
   }
 }

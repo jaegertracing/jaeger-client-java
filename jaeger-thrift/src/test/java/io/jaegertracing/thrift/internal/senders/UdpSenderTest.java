@@ -42,6 +42,7 @@ public class UdpSenderTest {
   final int maxPacketSize = 1000;
 
   JaegerTracer tracer;
+  JaegerTracer tracer128;
   Reporter reporter;
   UdpSender sender;
   TestTServer server;
@@ -66,13 +67,13 @@ public class UdpSenderTest {
   public void setUp() throws Exception {
     server = startServer();
     reporter = new InMemoryReporter();
-    tracer =
-        new JaegerTracer.Builder(SERVICE_NAME)
+    final JaegerTracer.Builder tracerBuilder = new JaegerTracer.Builder(SERVICE_NAME)
             .withReporter(reporter)
             .withSampler(new ConstSampler(true))
             .withMetricsFactory(new InMemoryMetricsFactory())
-            .withTag("foo", "bar")
-            .build();
+            .withTag("foo", "bar");
+    tracer = tracerBuilder.build();
+    tracer128 = tracerBuilder.withTraceId128Bit().build();
     sender = new UdpSender(destHost, destPort, maxPacketSize);
   }
 
@@ -144,7 +145,7 @@ public class UdpSenderTest {
     assertEquals(expectedNumSpans, batch.getSpans().size());
 
     io.jaegertracing.thriftjava.Span actualSpan = batch.getSpans().get(0);
-    assertEquals(expectedSpan.context().getTraceId(), actualSpan.getTraceIdLow());
+    assertEquals(expectedSpan.context().getTraceIdLow(), actualSpan.getTraceIdLow());
     assertEquals(0, actualSpan.getTraceIdHigh());
     assertEquals(expectedSpan.context().getSpanId(), actualSpan.getSpanId());
     assertEquals(0, actualSpan.getParentSpanId());
@@ -155,6 +156,22 @@ public class UdpSenderTest {
     assertEquals("jaeger.version", batch.getProcess().getTags().get(1).getKey());
     assertEquals("bar", batch.getProcess().getTags().get(2).getVStr());
     assertEquals("ip", batch.getProcess().getTags().get(3).getKey());
+  }
+
+  @Test
+  public void testFlushSendsSpanWith128BitTraceId() throws Exception {
+    int timeout = 50; // in milliseconds
+    int expectedNumSpans = 1;
+    JaegerSpan expectedSpan = tracer128.buildSpan("raza").start();
+    assertEquals(0, sender.append(expectedSpan));
+    assertEquals(1, sender.flush());
+
+    Batch batch = server.getBatch(expectedNumSpans, timeout);
+    assertEquals(expectedNumSpans, batch.getSpans().size());
+
+    io.jaegertracing.thriftjava.Span actualSpan = batch.getSpans().get(0);
+    assertEquals(expectedSpan.context().getTraceIdLow(), actualSpan.getTraceIdLow());
+    assertEquals(expectedSpan.context().getTraceIdHigh(), actualSpan.getTraceIdHigh());
   }
 
   @Test(expected = SenderException.class)
