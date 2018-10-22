@@ -73,7 +73,7 @@ public class BaggageSetterTest {
     assertBaggageLogs(jaegerSpan, KEY, value, false, false, true);
     assertNull(ctx.getBaggageItem(KEY));
 
-    assertEquals(1, metricsFactory.getCounter("jaeger:baggage_updates", "result=err"));
+    assertEquals(1, metricsFactory.getCounter("jaeger_tracer_baggage_updates", "result=err"));
   }
 
   @Test
@@ -86,8 +86,8 @@ public class BaggageSetterTest {
     assertBaggageLogs(jaegerSpan, KEY, expected, true, false, false);
     assertEquals(expected, ctx.getBaggageItem(KEY));
 
-    assertEquals(1, metricsFactory.getCounter("jaeger:baggage_truncations", ""));
-    assertEquals(1, metricsFactory.getCounter("jaeger:baggage_updates", "result=ok"));
+    assertEquals(1, metricsFactory.getCounter("jaeger_tracer_baggage_truncations", ""));
+    assertEquals(1, metricsFactory.getCounter("jaeger_tracer_baggage_updates", "result=ok"));
   }
 
   @Test
@@ -101,7 +101,7 @@ public class BaggageSetterTest {
     assertBaggageLogs(child, KEY, value, false, true, false);
     assertEquals(value, ctx.getBaggageItem(KEY));
 
-    assertEquals(2, metricsFactory.getCounter("jaeger:baggage_updates", "result=ok"));
+    assertEquals(2, metricsFactory.getCounter("jaeger_tracer_baggage_updates", "result=ok"));
   }
 
   @Test
@@ -146,7 +146,7 @@ public class BaggageSetterTest {
     assertBaggageLogs(child, KEY, null, false, true, false);
     assertNull(child.getBaggageItem(KEY));
 
-    assertEquals(2, metricsFactory.getCounter("jaeger:baggage_updates", "result=ok"));
+    assertEquals(2, metricsFactory.getCounter("jaeger_tracer_baggage_updates", "result=ok"));
   }
 
   private void assertBaggageLogs(JaegerSpan jaegerSpan, String key, String value,

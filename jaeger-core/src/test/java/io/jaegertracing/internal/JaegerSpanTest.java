@@ -94,8 +94,8 @@ public class JaegerSpanTest {
 
   @Test
   public void testSpanMetrics() {
-    assertEquals(1, metricsFactory.getCounter("jaeger:started_spans", "sampled=y"));
-    assertEquals(1, metricsFactory.getCounter("jaeger:traces", "sampled=y,state=started"));
+    assertEquals(1, metricsFactory.getCounter("jaeger_tracer_started_spans", "sampled=y"));
+    assertEquals(1, metricsFactory.getCounter("jaeger_tracer_traces", "sampled=y,state=started"));
   }
 
   @Test

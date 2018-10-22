@@ -90,10 +90,10 @@ public class JaegerTracerTest {
   public void testTracerMetrics() {
     String expectedOperation = "fry";
     tracer.buildSpan(expectedOperation).start();
-    assertEquals(1, metricsFactory.getCounter("jaeger:started_spans", "sampled=y"));
-    assertEquals(0, metricsFactory.getCounter("jaeger:started_spans", "sampled=n"));
-    assertEquals(1, metricsFactory.getCounter("jaeger:traces", "sampled=y,state=started"));
-    assertEquals(0, metricsFactory.getCounter("jaeger:traces", "sampled=n,state=started"));
+    assertEquals(1, metricsFactory.getCounter("jaeger_tracer_started_spans", "sampled=y"));
+    assertEquals(0, metricsFactory.getCounter("jaeger_tracer_started_spans", "sampled=n"));
+    assertEquals(1, metricsFactory.getCounter("jaeger_tracer_traces", "sampled=y,state=started"));
+    assertEquals(0, metricsFactory.getCounter("jaeger_tracer_traces", "sampled=n,state=started"));
   }
 
   @Test
@@ -152,7 +152,7 @@ public class JaegerTracerTest {
     final String key = "key";
     tracer.setBaggage(span, key, "value");
 
-    assertEquals(1, metricsFactory.getCounter("jaeger:baggage_updates", "result=ok"));
+    assertEquals(1, metricsFactory.getCounter("jaeger_tracer_baggage_updates", "result=ok"));
   }
 
   @Test
@@ -179,9 +179,9 @@ public class JaegerTracerTest {
     JaegerSpan first = tracer.buildSpan(expectedOperation).start();
     tracer.buildSpan(expectedOperation).asChildOf((first.context()).withFlags((byte) 0)).start();
 
-    assertEquals(1, metricsFactory.getCounter("jaeger:started_spans", "sampled=y"));
-    assertEquals(1, metricsFactory.getCounter("jaeger:started_spans", "sampled=n"));
-    assertEquals(1, metricsFactory.getCounter("jaeger:traces", "sampled=y,state=started"));
-    assertEquals(0, metricsFactory.getCounter("jaeger:traces", "sampled=n,state=started"));
+    assertEquals(1, metricsFactory.getCounter("jaeger_tracer_started_spans", "sampled=y"));
+    assertEquals(1, metricsFactory.getCounter("jaeger_tracer_started_spans", "sampled=n"));
+    assertEquals(1, metricsFactory.getCounter("jaeger_tracer_traces", "sampled=y,state=started"));
+    assertEquals(0, metricsFactory.getCounter("jaeger_tracer_traces", "sampled=n,state=started"));
   }
 }

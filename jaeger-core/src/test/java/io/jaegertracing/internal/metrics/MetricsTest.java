@@ -34,13 +34,13 @@ public class MetricsTest {
   @Test
   public void testCounterWithoutExplicitTags() {
     metrics.tracesJoinedSampled.inc(1);
-    assertEquals(1, metricsFactory.getCounter("jaeger:traces", "sampled=y,state=joined"));
+    assertEquals(1, metricsFactory.getCounter("jaeger_tracer_traces", "sampled=y,state=joined"));
   }
 
   @Test
   public void testGaugeWithoutExplicitTags() {
     metrics.reporterQueueLength.update(1);
-    assertEquals(1, metricsFactory.getGauge("jaeger:reporter_queue_length", ""));
+    assertEquals(1, metricsFactory.getGauge("jaeger_tracer_reporter_queue_length", ""));
   }
 
   @Test
@@ -48,6 +48,14 @@ public class MetricsTest {
     Map<String, String> tags = new HashMap<>();
     tags.put("foo", "bar");
     assertEquals("thecounter.foo=bar", Metrics.addTagsToMetricName("thecounter", tags));
-    assertEquals("jaeger:thecounter.foo=bar", Metrics.addTagsToMetricName("jaeger:thecounter", tags));
+    assertEquals("jaeger_tracer_thecounter.foo=bar", Metrics.addTagsToMetricName("jaeger_tracer_thecounter", tags));
   }
+
+  @Test
+  public void testCounterWithCustomPrefix() {
+    Metrics customPrefixMetrics = new Metrics(metricsFactory, "custom_");
+    customPrefixMetrics.tracesJoinedSampled.inc(1);
+    assertEquals(1, metricsFactory.getCounter("custom_traces", "sampled=y,state=joined"));
+  }
+
 }
