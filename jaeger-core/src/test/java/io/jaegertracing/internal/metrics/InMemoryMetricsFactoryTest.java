@@ -109,8 +109,8 @@ public class InMemoryMetricsFactoryTest {
             .build();
 
     tracer.buildSpan("theoperation").start();
-    assertEquals(-1, metricsFactory.getCounter("jaeger:started_spans", "sampled"));
-    assertEquals(-1, metricsFactory.getCounter("jaeger:started_spans", ""));
+    assertEquals(-1, metricsFactory.getCounter("jaeger_tracer_started_spans", "sampled"));
+    assertEquals(-1, metricsFactory.getCounter("jaeger_tracer_started_spans", ""));
   }
 
   @Test
@@ -123,9 +123,9 @@ public class InMemoryMetricsFactoryTest {
             .build();
 
     tracer.buildSpan("theoperation").start();
-    assertEquals(1, metricsFactory.getCounter("jaeger:started_spans", "sampled=y"));
-    assertEquals(0, metricsFactory.getCounter("jaeger:started_spans", "sampled=n"));
-    assertEquals(1, metricsFactory.getCounter("jaeger:traces", "sampled=y,state=started"));
-    assertEquals(0, metricsFactory.getCounter("jaeger:traces", "sampled=n,state=started"));
+    assertEquals(1, metricsFactory.getCounter("jaeger_tracer_started_spans", "sampled=y"));
+    assertEquals(0, metricsFactory.getCounter("jaeger_tracer_started_spans", "sampled=n"));
+    assertEquals(1, metricsFactory.getCounter("jaeger_tracer_traces", "sampled=y,state=started"));
+    assertEquals(0, metricsFactory.getCounter("jaeger_tracer_traces", "sampled=n,state=started"));
   }
 }

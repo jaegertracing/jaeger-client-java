@@ -25,10 +25,14 @@ import java.util.TreeMap;
 public class Metrics {
 
   public Metrics(MetricsFactory factory) {
-    createMetrics(factory);
+    this(factory, "jaeger_tracer_");
   }
 
-  private void createMetrics(MetricsFactory factory) {
+  public Metrics(MetricsFactory factory, String metricsPrefix) {
+    createMetrics(factory, metricsPrefix);
+  }
+
+  private void createMetrics(MetricsFactory factory, String metricsPrefix) {
     for (Field field : Metrics.class.getDeclaredFields()) {
       if (!Counter.class.isAssignableFrom(field.getType())
           && !Timer.class.isAssignableFrom(field.getType())
@@ -38,7 +42,7 @@ public class Metrics {
         continue;
       }
 
-      StringBuilder metricBuilder = new StringBuilder("jaeger:");
+      StringBuilder metricBuilder = new StringBuilder(metricsPrefix);
       HashMap<String, String> tags = new HashMap<String, String>();
 
       Annotation[] annotations = field.getAnnotations();

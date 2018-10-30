@@ -54,17 +54,17 @@ public class MicrometerTest {
 
   @BeforeClass
   public static void initial() {
-    expectedMetricCounts.put("jaeger:sampler_updates", 2L);
-    expectedMetricCounts.put("jaeger:finished_spans", 1L);
-    expectedMetricCounts.put("jaeger:baggage_restrictions_updates", 2L);
-    expectedMetricCounts.put("jaeger:started_spans", 2L);
-    expectedMetricCounts.put("jaeger:baggage_updates", 2L);
-    expectedMetricCounts.put("jaeger:sampler_queries", 2L);
-    expectedMetricCounts.put("jaeger:baggage_truncations", 1L);
-    expectedMetricCounts.put("jaeger:reporter_spans", 3L);
-    expectedMetricCounts.put("jaeger:traces", 4L);
-    expectedMetricCounts.put("jaeger:span_context_decoding_errors", 1L);
-    expectedMetricCounts.put("jaeger:reporter_queue_length", 1L);
+    expectedMetricCounts.put("jaeger_tracer_sampler_updates", 2L);
+    expectedMetricCounts.put("jaeger_tracer_finished_spans", 1L);
+    expectedMetricCounts.put("jaeger_tracer_baggage_restrictions_updates", 2L);
+    expectedMetricCounts.put("jaeger_tracer_started_spans", 2L);
+    expectedMetricCounts.put("jaeger_tracer_baggage_updates", 2L);
+    expectedMetricCounts.put("jaeger_tracer_sampler_queries", 2L);
+    expectedMetricCounts.put("jaeger_tracer_baggage_truncations", 1L);
+    expectedMetricCounts.put("jaeger_tracer_reporter_spans", 3L);
+    expectedMetricCounts.put("jaeger_tracer_traces", 4L);
+    expectedMetricCounts.put("jaeger_tracer_span_context_decoding_errors", 1L);
+    expectedMetricCounts.put("jaeger_tracer_reporter_queue_length", 1L);
   }
 
 
@@ -84,18 +84,18 @@ public class MicrometerTest {
   @Test
   public void testCounterWithoutExplicitTags() {
     metrics.decodingErrors.inc(1);
-    assertThat(registry.get("jaeger:span_context_decoding_errors").counter().count(), IsEqual.equalTo(1d));
-    assertTrue(prometheusRegistry.scrape().contains("jaeger:span_context_decoding_errors"));
+    assertThat(registry.get("jaeger_tracer_span_context_decoding_errors").counter().count(), IsEqual.equalTo(1d));
+    assertTrue(prometheusRegistry.scrape().contains("jaeger_tracer_span_context_decoding_errors"));
   }
 
   @Test
   public void testCounterWithExplicitTags() {
     metrics.tracesJoinedSampled.inc(1);
-    assertThat(registry.get("jaeger:traces").tags("sampled", "y", "state", "joined").counter().count(),
+    assertThat(registry.get("jaeger_tracer_traces").tags("sampled", "y", "state", "joined").counter().count(),
           IsEqual.equalTo(1d)
     );
     String output = prometheusRegistry.scrape();
-    assertTrue(output.contains("jaeger:traces"));
+    assertTrue(output.contains("jaeger_tracer_traces"));
     assertTrue(output.contains("sampled=\"y\""));
     assertTrue(output.contains("state=\"joined\""));
   }
@@ -103,8 +103,8 @@ public class MicrometerTest {
   @Test
   public void testGaugeWithoutExplicitTags() {
     metrics.reporterQueueLength.update(1);
-    assertThat(registry.get("jaeger:reporter_queue_length").gauge().value(), IsEqual.equalTo(1d));
-    assertTrue(prometheusRegistry.scrape().contains("jaeger:reporter_queue_length"));
+    assertThat(registry.get("jaeger_tracer_reporter_queue_length").gauge().value(), IsEqual.equalTo(1d));
+    assertTrue(prometheusRegistry.scrape().contains("jaeger_tracer_reporter_queue_length"));
   }
 
   @Test
@@ -112,11 +112,12 @@ public class MicrometerTest {
     // we have no timers on the Metrics class yet, so, we simulate one
     Map<String, String> tags = new HashMap<>(1);
     tags.put("akey", "avalue");
-    Timer timer = new MicrometerMetricsFactory().createTimer("jaeger:timed_operation", tags);
+    Timer timer = new MicrometerMetricsFactory().createTimer("jaeger_tracer_timed_operation", tags);
     timer.durationMicros(100);
 
-    assertThat(registry.get("jaeger:timed_operation").timer().totalTime(TimeUnit.MICROSECONDS), IsEqual.equalTo(100d));
-    assertTrue(prometheusRegistry.scrape().contains("jaeger:timed_operation_seconds"));
+    assertThat(registry.get("jaeger_tracer_timed_operation").timer().totalTime(TimeUnit.MICROSECONDS),
+        IsEqual.equalTo(100d));
+    assertTrue(prometheusRegistry.scrape().contains("jaeger_tracer_timed_operation_seconds"));
   }
 
 
@@ -164,16 +165,16 @@ public class MicrometerTest {
     createSomeSpans(tracer);
     tracer.close();
 
-    double finishedSpans = registry.get("jaeger:finished_spans")
+    double finishedSpans = registry.get("jaeger_tracer_finished_spans")
             .counter()
             .count();
 
-    double startedSpans = registry.get("jaeger:started_spans")
+    double startedSpans = registry.get("jaeger_tracer_started_spans")
             .tag("sampled", "y")
             .counter()
             .count();
 
-    double traces = registry.get("jaeger:traces")
+    double traces = registry.get("jaeger_tracer_traces")
             .tag("sampled", "y")
             .tag("state", "started")
             .counter()
@@ -204,7 +205,7 @@ public class MicrometerTest {
         .next();
 
     configuration.getTracer().buildSpan("theoperation").start().finish(100);
-    assertEquals(1, registry.find("jaeger:started_spans").counter().count(), 0);
+    assertEquals(1, registry.find("jaeger_tracer_started_spans").counter().count(), 0);
   }
 
   private void createSomeSpans(JaegerTracer tracer) {
@@ -212,7 +213,7 @@ public class MicrometerTest {
       JaegerSpan span = tracer.buildSpan("metricstest")
               .withTag("foo", "bar" + i)
               .start();
-      // Only finish every 3rd span so jaeger:started_spans and finished_spans counts are different
+      // Only finish every 3rd span so jaeger_tracer_started_spans and finished_spans counts are different
       if (i % 3 == 0) {
         span.finish();
       }
