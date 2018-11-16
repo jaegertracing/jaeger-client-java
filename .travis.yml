@@ -43,7 +43,7 @@ jobs:
 
     - stage: test
       env: [ NAME=crossdock ]
-      script: make crossdock-fresh
+      script: make crossdock-fresh || make crossdock-logs
 
     - stage: deploy
       env: [ NAME=deploy-to-maven ]
