@@ -69,18 +69,21 @@ public class HttpSender extends ThriftSender {
       throw new SenderException(String.format("Could not send %d spans", spans.size()), e, spans.size());
     }
 
-    if (!response.isSuccessful()) {
-      String responseBody;
-      try {
-        responseBody = response.body() != null ? response.body().string() : "null";
-      } catch (IOException e) {
-        responseBody = "unable to read response";
-      }
-
-      String exceptionMessage = String.format("Could not send %d spans, response %d: %s",
-          spans.size(), response.code(), responseBody);
-      throw new SenderException(exceptionMessage, null, spans.size());
+    if (response.isSuccessful()) {
+      response.close();
+      return;
     }
+
+    String responseBody;
+    try {
+      responseBody = response.body() != null ? response.body().string() : "null";
+    } catch (IOException e) {
+      responseBody = "unable to read response";
+    }
+
+    String exceptionMessage = String.format("Could not send %d spans, response %d: %s",
+        spans.size(), response.code(), responseBody);
+    throw new SenderException(exceptionMessage, null, spans.size());
   }
 
   public static class Builder {
