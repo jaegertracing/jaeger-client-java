@@ -1,7 +1,7 @@
 PROJECT=jaeger-crossdock
 XDOCK_YAML=$(PROJECT)/docker-compose.yml
 
-JAEGER_COMPOSE_URL=https://raw.githubusercontent.com/jaegertracing/jaeger/master/docker-compose/jaeger-docker-compose.yml
+JAEGER_COMPOSE_URL=https://raw.githubusercontent.com/jaegertracing/jaeger/master/crossdock/jaeger-docker-compose.yml
 XDOCK_JAEGER_YAML=$(PROJECT)/jaeger-docker-compose.yml
 
 .PHONY: crossdock
