@@ -279,6 +279,52 @@ public class RemoteReporterTest {
     assertEquals("mySpan", (sender.getReceived().get(0)).getOperationName());
   }
 
+  @Test
+  public void testUpdateSuccessMetricWhenAppendFlushed() throws InterruptedException {
+    int totalSpans = 3;
+    int flushSize = 2;
+
+    CountDownLatch latch = new CountDownLatch(1);
+    sender = new InMemorySender() {
+      @Override
+      public int append(JaegerSpan span) {
+        try {
+          super.append(span);
+          if (getAppended().size() >= flushSize) {
+            return flush();
+          }
+          if (getReceived().size() == totalSpans) {
+            latch.countDown();
+          }
+          return 0;
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    };
+    reporter = new Builder()
+            .withSender(sender)
+            // disable scheduled flush
+            .withFlushInterval(Integer.MAX_VALUE)
+            .withMaxQueueSize(maxQueueSize)
+            .withMetrics(metrics)
+            .build();
+    tracer = new JaegerTracer.Builder("test-remote-reporter")
+            .withReporter(reporter)
+            .withSampler(new ConstSampler(true))
+            .withMetrics(metrics)
+            .build();
+
+    for (int i = 0; i < totalSpans; i++) {
+      reporter.report(newSpan());
+    }
+
+    latch.await(1, TimeUnit.SECONDS);
+    assertEquals(flushSize, metricsFactory.getCounter("jaeger_tracer_reporter_spans", "result=ok"));
+    assertEquals(0, metricsFactory.getCounter("jaeger_tracer_reporter_spans", "result=err"));
+    assertEquals(0, metricsFactory.getCounter("jaeger_tracer_reporter_spans", "result=dropped"));
+  }
+
   private JaegerSpan newSpan() {
     return tracer.buildSpan("x").start();
   }

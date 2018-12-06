@@ -137,7 +137,10 @@ public class RemoteReporter implements Reporter {
 
     @Override
     public void execute() throws SenderException {
-      sender.append(span);
+      int n = sender.append(span);
+      if (n > 0) {
+        metrics.reporterSuccess.inc(n);
+      }
     }
   }
 
