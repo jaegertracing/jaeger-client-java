@@ -1,8 +1,14 @@
 Changes by Version
 ==================
 
-0.32.1 (unreleased)
+0.33.0 (2018-12-14)
 -------------------
+
+- Point to tchannel-based docker-compose ([#573](https://github.com/jaegertracing/jaeger-client-java/pull/573), [@yurishkuros](https://github.com/yurishkuro))
+- Update reporter success metric on append in RemoteReporter ([#572](https://github.com/jaegertracing/jaeger-client-java/pull/572), [@objectiser](https://github.com/objectiser))
+- Always close HTTP responses in HttpSender ([#571](https://github.com/jaegertracing/jaeger-client-java/pull/571), [@mpetazzoni](https://github.com/mpetazzoni))
+- Normalise metric names ([#564](https://github.com/jaegertracing/jaeger-client-java/pull/564), [@objectiser](https://github.com/objectiser))
+- Refer to valid `sampler type` values (doc link) ([#557](https://github.com/jaegertracing/jaeger-client-java/pull/557), [@sjoerdtalsma](https://github.com/sjoerdtalsma))
 
 0.32.0 (2018-10-15)
 -------------------
