@@ -23,6 +23,7 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -62,7 +63,7 @@ public class JaegerSpan implements Span {
     this.startTimeMicroseconds = startTimeMicroseconds;
     this.startTimeNanoTicks = startTimeNanoTicks;
     this.computeDurationViaNanoTicks = computeDurationViaNanoTicks;
-    this.tags = new HashMap<String, Object>();
+    this.tags = new LinkedHashMap<String, Object>();
     this.references = references != null ? new ArrayList<Reference>(references) : null;
 
     for (Map.Entry<String, Object> tag : tags.entrySet()) {
@@ -93,7 +94,7 @@ public class JaegerSpan implements Span {
 
   public Map<String, Object> getTags() {
     synchronized (this) {
-      return Collections.unmodifiableMap(new HashMap<String, Object>(tags));
+      return Collections.unmodifiableMap(new LinkedHashMap<String, Object>(tags));
     }
   }
 

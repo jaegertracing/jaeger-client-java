@@ -219,7 +219,7 @@ public class ThriftSpanConverterTest {
 
     com.twitter.zipkin.thriftjava.Span zipkinSpan = ThriftSpanConverter.convertSpan(span);
     String actualComponent =
-        new String(zipkinSpan.getBinary_annotations().get(3).getValue(), StandardCharsets.UTF_8);
+        new String(zipkinSpan.getBinary_annotations().get(2).getValue(), StandardCharsets.UTF_8);
     assertEquals(expectedComponentName, actualComponent);
   }
 

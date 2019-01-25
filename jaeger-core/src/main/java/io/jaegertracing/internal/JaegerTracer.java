@@ -52,6 +52,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -227,7 +228,7 @@ public class JaegerTracer implements Tracer, Closeable {
      */
     private List<Reference> references = Collections.emptyList();
 
-    private final Map<String, Object> tags = new HashMap<String, Object>();
+    private final Map<String, Object> tags = new LinkedHashMap<String, Object>();
     private boolean ignoreActiveSpan = false;
 
     protected SpanBuilder(String operationName) {
