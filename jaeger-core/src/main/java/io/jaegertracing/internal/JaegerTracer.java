@@ -123,13 +123,21 @@ public class JaegerTracer implements Tracer, Closeable {
     this.ipv4 = ipv4;
     this.tags = Collections.unmodifiableMap(tags);
 
-    // register this tracer with a shutdown hook, to flush the spans before the VM shuts down
-    Runtime.getRuntime().addShutdownHook(new Thread() {
-      @Override
-      public void run() {
-        JaegerTracer.this.close();
-      }
-    });
+    if (runsInGlassFish()) {
+      log.info("No shutdown hook registered: Please call close() manually on application shutdown.");
+    } else {
+      // register this tracer with a shutdown hook, to flush the spans before the VM shuts down
+      Runtime.getRuntime().addShutdownHook(new Thread() {
+        @Override
+        public void run() {
+          JaegerTracer.this.close();
+        }
+      });
+    }
+  }
+
+  private boolean runsInGlassFish() {
+    return System.getProperty("com.sun.aas.instanceRoot") != null;
   }
 
   public String getVersion() {
