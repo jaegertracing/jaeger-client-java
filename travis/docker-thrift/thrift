@@ -2,7 +2,7 @@
 
 pwd=$(dirname ${PWD})
 
-THRIFT_VER=0.11.0
+THRIFT_VER=0.12.0
 THRIFT_IMG=thrift:${THRIFT_VER}
 THRIFT="docker run --rm -u $(id -u) -v ${pwd}:/data ${THRIFT_IMG} thrift"
 
