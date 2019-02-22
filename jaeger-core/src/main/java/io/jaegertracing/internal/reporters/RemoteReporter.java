@@ -177,7 +177,7 @@ public class RemoteReporter implements Reporter {
           } catch (SenderException e) {
             metrics.reporterFailure.inc(e.getDroppedSpanCount());
           }
-        } catch (InterruptedException e) {
+        } catch (Exception e) {
           log.error("QueueProcessor error:", e);
           // Do nothing, and try again on next span.
         }
