@@ -614,6 +614,11 @@ public class Configuration {
      */
     private String authPassword;
 
+    /**
+     * The comma-separated certificate list for the endpoint which is self-signed, for example
+     */
+    private String certificates;
+
     public SenderConfiguration() {
     }
 
@@ -643,6 +648,16 @@ public class Configuration {
     }
 
     public SenderConfiguration withAuthPassword(String password) {
+      this.authPassword = password;
+      return this;
+    }
+
+    public SenderConfiguration withCertificate(String certs) {
+      this.certificates = certs;
+      return this;
+    }
+
+    public SenderConfiguration withTls(String password) {
       this.authPassword = password;
       return this;
     }

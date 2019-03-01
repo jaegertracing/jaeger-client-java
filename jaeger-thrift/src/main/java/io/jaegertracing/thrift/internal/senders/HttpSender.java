@@ -19,8 +19,10 @@ import io.jaegertracing.thriftjava.Batch;
 import io.jaegertracing.thriftjava.Process;
 import io.jaegertracing.thriftjava.Span;
 import java.io.IOException;
+import java.net.URI;
 import java.util.List;
 import lombok.ToString;
+import okhttp3.CertificatePinner;
 import okhttp3.Credentials;
 import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
@@ -46,6 +48,7 @@ public class HttpSender extends ThriftSender {
     if (collectorUrl == null) {
       throw new IllegalArgumentException("Could not parse url.");
     }
+
     this.httpClient = builder.clientBuilder.build();
     this.requestBuilder = new Request.Builder().url(collectorUrl);
   }
@@ -88,6 +91,8 @@ public class HttpSender extends ThriftSender {
 
   public static class Builder {
     private final String endpoint;
+    private CertificatePinner.Builder certificatePinnerBuilder = new CertificatePinner.Builder();
+    private boolean tls;
     private int maxPacketSize = ONE_MB_IN_BYTES;
     private Interceptor authInterceptor;
     private OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder();
@@ -119,9 +124,27 @@ public class HttpSender extends ThriftSender {
       return this;
     }
 
+    public Builder withCertificate(String sha256certs /* comma separated */) {
+      String hostname;
+      try {
+        URI uri = new URI(endpoint);
+        hostname = uri.getHost();
+        tls = true;
+        String certs[] = sha256certs.split(",");
+        for (String cert: certs) {
+          certificatePinnerBuilder.add(hostname, String.format("sha256/%s", cert));
+        }
+      } finally {
+        return this;
+      }
+    }
+
     public HttpSender build() {
       if (authInterceptor != null) {
         clientBuilder.addInterceptor(authInterceptor);
+      }
+      if (tls) {
+        clientBuilder.certificatePinner(certificatePinnerBuilder.build());
       }
       return new HttpSender(this);
     }
