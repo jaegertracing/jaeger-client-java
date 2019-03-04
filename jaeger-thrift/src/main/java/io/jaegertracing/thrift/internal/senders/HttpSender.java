@@ -124,15 +124,17 @@ public class HttpSender extends ThriftSender {
       return this;
     }
 
-    public Builder withCertificate(String sha256certs /* comma separated */) {
+    public Builder withCertificates(String sha256certs /* comma separated */) {
       String hostname;
       try {
         URI uri = new URI(endpoint);
-        hostname = uri.getHost();
-        tls = true;
-        String certs[] = sha256certs.split(",");
-        for (String cert: certs) {
-          certificatePinnerBuilder.add(hostname, String.format("sha256/%s", cert));
+        if (uri.getScheme() == "https") {
+            hostname = uri.getHost();
+            this.tls = true;
+            String certs[] = sha256certs.split(",");
+            for (String cert: certs) {
+              certificatePinnerBuilder.add(hostname, String.format("sha256/%s", cert));
+            }
         }
       } finally {
         return this;

@@ -153,6 +153,12 @@ public class Configuration {
   public static final String JAEGER_TRACEID_128BIT = JAEGER_PREFIX + "TRACEID_128BIT";
 
   /**
+   *  TLS certificates (in comma-separated BASE64 SHA256 Hash) for certificates pinning,
+   *  used in case of HTTPS communication to the endpoint.
+   */
+  public static final String JAEGER_TLS_CERTIFICATES = JAEGER_PREFIX + "TLS_CERTIFICATES";
+
+  /**
    * The supported trace context propagation formats.
    */
   public enum Propagation {
@@ -657,11 +663,6 @@ public class Configuration {
       return this;
     }
 
-    public SenderConfiguration withTls(String password) {
-      this.authPassword = password;
-      return this;
-    }
-
     /**
      * Returns a sender if one was given when creating the configuration, or attempts to create a sender based on the
      * configuration's state.
@@ -686,6 +687,7 @@ public class Configuration {
       String authToken = getProperty(JAEGER_AUTH_TOKEN);
       String authUsername = getProperty(JAEGER_USER);
       String authPassword = getProperty(JAEGER_PASSWORD);
+      String certificates = getProperty(JAEGER_TLS_CERTIFICATES);
 
       return new SenderConfiguration()
               .withAgentHost(agentHost)
@@ -693,6 +695,7 @@ public class Configuration {
               .withEndpoint(collectorEndpoint)
               .withAuthToken(authToken)
               .withAuthUsername(authUsername)
+              .withCertificate(certificates)
               .withAuthPassword(authPassword);
     }
   }
