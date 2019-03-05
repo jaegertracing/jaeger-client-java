@@ -21,6 +21,12 @@ import io.jaegertracing.thriftjava.Span;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.X509TrustManager;
+import javax.net.ssl.TrustManager;
 import lombok.ToString;
 import okhttp3.CertificatePinner;
 import okhttp3.Credentials;
@@ -92,7 +98,7 @@ public class HttpSender extends ThriftSender {
   public static class Builder {
     private final String endpoint;
     private CertificatePinner.Builder certificatePinnerBuilder = new CertificatePinner.Builder();
-    private boolean tls;
+    private boolean pinning;
     private int maxPacketSize = ONE_MB_IN_BYTES;
     private Interceptor authInterceptor;
     private OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder();
@@ -124,13 +130,13 @@ public class HttpSender extends ThriftSender {
       return this;
     }
 
-    public Builder withCertificates(String sha256certs /* comma separated */) {
+    public Builder withCertificatePinning(String sha256certs /* comma separated */) {
       String hostname;
       try {
-        URI uri = new URI(endpoint);
+        final URI uri = new URI(endpoint);
         if (uri.getScheme() == "https") {
             hostname = uri.getHost();
-            this.tls = true;
+            this.pinning = true;
             String certs[] = sha256certs.split(",");
             for (String cert: certs) {
               certificatePinnerBuilder.add(hostname, String.format("sha256/%s", cert));
@@ -141,11 +147,32 @@ public class HttpSender extends ThriftSender {
       }
     }
 
+    public Builder disableCertVerification() {
+      try {
+        final TrustManager[] unsafeNoopVerificator = new TrustManager[] {
+            new X509TrustManager() {
+                @Override public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {}
+                @Override public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {}
+                @Override public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                  return new X509Certificate[0];
+                }
+            }
+        };
+        final SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(null, unsafeNoopVerificator, null);
+        clientBuilder.sslSocketFactory(sslContext.getSocketFactory(), (X509TrustManager) unsafeNoopVerificator[0]);
+
+      } catch (Exception e) {
+          throw new RuntimeException(e);
+      }
+      return this;
+    }
+
     public HttpSender build() {
       if (authInterceptor != null) {
         clientBuilder.addInterceptor(authInterceptor);
       }
-      if (tls) {
+      if (pinning) {
         clientBuilder.certificatePinner(certificatePinnerBuilder.build());
       }
       return new HttpSender(this);
