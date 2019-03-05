@@ -52,6 +52,7 @@ public class HttpSenderTest extends JerseyTest {
     System.clearProperty(Configuration.JAEGER_AUTH_TOKEN);
     System.clearProperty(Configuration.JAEGER_USER);
     System.clearProperty(Configuration.JAEGER_PASSWORD);
+    System.clearProperty(Configuration.JAEGER_TLS_CERTIFICATE_PINNING);
   }
 
   @Override

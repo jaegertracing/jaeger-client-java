@@ -156,7 +156,7 @@ public class Configuration {
    *  TLS certificates (in comma-separated BASE64 SHA256 Hash) for certificates pinning,
    *  used in case of HTTPS communication to the endpoint.
    */
-  public static final String JAEGER_TLS_CERTIFICATES = JAEGER_PREFIX + "TLS_CERTIFICATES";
+  public static final String JAEGER_TLS_CERTIFICATE_PINNING = JAEGER_PREFIX + "TLS_CERTIFICATE_PINNING";
 
   /**
    * The supported trace context propagation formats.
@@ -623,7 +623,7 @@ public class Configuration {
     /**
      * The comma-separated certificate list for the endpoint which is self-signed, for example
      */
-    private String certificates;
+    private String[] serverCertificateHashes;
 
     public SenderConfiguration() {
     }
@@ -658,8 +658,10 @@ public class Configuration {
       return this;
     }
 
-    public SenderConfiguration withCertificate(String certs) {
-      this.certificates = certs;
+    public SenderConfiguration withCertificatePinning(String certs) {
+      if (certs != null) {
+        this.serverCertificateHashes = certs.split(",");
+      }
       return this;
     }
 
@@ -687,7 +689,7 @@ public class Configuration {
       String authToken = getProperty(JAEGER_AUTH_TOKEN);
       String authUsername = getProperty(JAEGER_USER);
       String authPassword = getProperty(JAEGER_PASSWORD);
-      String certificates = getProperty(JAEGER_TLS_CERTIFICATES);
+      String certHashes = getProperty(JAEGER_TLS_CERTIFICATE_PINNING);
 
       return new SenderConfiguration()
               .withAgentHost(agentHost)
@@ -695,7 +697,7 @@ public class Configuration {
               .withEndpoint(collectorEndpoint)
               .withAuthToken(authToken)
               .withAuthUsername(authUsername)
-              .withCertificate(certificates)
+              .withCertificatePinning(certHashes)
               .withAuthPassword(authPassword);
     }
   }
