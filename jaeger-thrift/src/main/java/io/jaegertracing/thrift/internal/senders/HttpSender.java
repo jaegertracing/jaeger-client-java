@@ -98,7 +98,8 @@ public class HttpSender extends ThriftSender {
   public static class Builder {
     private final String endpoint;
     private CertificatePinner.Builder certificatePinnerBuilder = new CertificatePinner.Builder();
-    private boolean pinning = false;
+    private boolean pinning;
+    private boolean disableVerification = false;
     private int maxPacketSize = ONE_MB_IN_BYTES;
     private Interceptor authInterceptor;
     private OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder();
@@ -146,17 +147,26 @@ public class HttpSender extends ThriftSender {
       }
     }
 
+    public Builder disableCertVerification() {
+      /* This dangerous operation will only take effect if pinning is used. */
+      this.disableVerification = true;
+      return this;
+    }
+
     public HttpSender build() {
       if (authInterceptor != null) {
         clientBuilder.addInterceptor(authInterceptor);
       }
       if (pinning) {
         clientBuilder.certificatePinner(certificatePinnerBuilder.build());
+        if (disableVerification) {
+          disableCertVerification(clientBuilder);
+        }
       }
       return new HttpSender(this);
     }
 
-    public Builder disableCertVerification() {
+    private void disableCertVerification(OkHttpClient.Builder clientBuilder) {
       try {
         final TrustManager[] unsafeNoopVerificator = new TrustManager[] {
             new X509TrustManager() {
@@ -174,7 +184,6 @@ public class HttpSender extends ThriftSender {
       } catch (Exception e) {
           throw new RuntimeException(e);
       }
-      return this;
     }
 
     private Interceptor getAuthInterceptor(final String headerValue) {

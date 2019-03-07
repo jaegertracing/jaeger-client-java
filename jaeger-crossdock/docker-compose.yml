@@ -71,6 +71,7 @@ services:
             - "8080-8082"
         environment:
             - SENDER=https
+            - COLLETCOR_HOST_PIN="sha256/n6Ovey/sJws9vKJpESmWyQf9Oocak9J51mmPKGm4S0E="
         depends_on:
             - jaeger-collector
 

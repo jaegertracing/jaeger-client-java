@@ -53,6 +53,7 @@ public class JerseyServer {
   private static final String SAMPLING_HOST_PORT = "SAMPLING_HOST_PORT";
   private static final String AGENT_HOST = "AGENT_HOST";
   private static final String COLLECTOR_HOST_PORT = "COLLECTOR_HOST_PORT";
+  private static final String COLLECTOR_HOST_PIN = "COLLECTOR_HOST_PIN";
 
   // TODO should not be static, should be final
   public static Client client;
@@ -126,6 +127,7 @@ public class JerseyServer {
                 "crossdock-" + serviceName,
                 senderFromEnv(getEvn(COLLECTOR_HOST_PORT, "jaeger-collector:14268"),
                     getEvn(COLLECTOR_HOST_PORT, "jaeger-collector-https-proxy:14443"),
+                    getEvn(COLLECTOR_HOST_PIN, "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="),
                     getEvn(AGENT_HOST, "jaeger-agent")))),
             new HealthResource()));
 
@@ -142,13 +144,14 @@ public class JerseyServer {
     return env;
   }
 
-  private static Sender senderFromEnv(String collectorHostPort, String collectorHttpsHostPort, String agentHost) {
+  private static Sender senderFromEnv(String collectorHostPort, String collectorHttpsHostPort, String collectorHttpsPin, String agentHost) {
     String senderEnvVar = System.getenv(Constants.ENV_PROP_SENDER_TYPE);
     if ("http".equalsIgnoreCase(senderEnvVar)) {
       return new HttpSender.Builder(String.format("http://%s/api/traces", collectorHostPort))
           .build();
     } else if ("https".equalsIgnoreCase(senderEnvVar)) {
       return new HttpSender.Builder(String.format("https://%s/api/traces", collectorHttpsHostPort))
+          .withCertificatePinning(new String[] {collectorHttpsPin})
           .disableCertVerification()
           .build();
     } else if ("udp".equalsIgnoreCase(senderEnvVar) || senderEnvVar == null || senderEnvVar.isEmpty()) {
