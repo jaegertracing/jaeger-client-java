@@ -149,6 +149,7 @@ public class JerseyServer {
           .build();
     } else if ("https".equalsIgnoreCase(senderEnvVar)) {
       return new HttpSender.Builder(String.format("https://%s/api/traces", collectorHttpsHostPort))
+          .disableCertVerification()
           .build();
     } else if ("udp".equalsIgnoreCase(senderEnvVar) || senderEnvVar == null || senderEnvVar.isEmpty()) {
       return new UdpSender(agentHost, 0, 0);
