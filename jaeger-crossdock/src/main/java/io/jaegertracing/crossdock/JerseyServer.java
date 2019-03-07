@@ -144,7 +144,8 @@ public class JerseyServer {
     return env;
   }
 
-  private static Sender senderFromEnv(String collectorHostPort, String collectorHttpsHostPort, String collectorHttpsPin, String agentHost) {
+  private static Sender senderFromEnv(String collectorHostPort,
+      String collectorHttpsHostPort, String collectorHttpsPin, String agentHost) {
     String senderEnvVar = System.getenv(Constants.ENV_PROP_SENDER_TYPE);
     if ("http".equalsIgnoreCase(senderEnvVar)) {
       return new HttpSender.Builder(String.format("http://%s/api/traces", collectorHostPort))
