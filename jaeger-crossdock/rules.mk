@@ -5,7 +5,7 @@ JAEGER_COMPOSE_URL=https://raw.githubusercontent.com/jaegertracing/jaeger/master
 XDOCK_JAEGER_YAML=$(PROJECT)/jaeger-docker-compose.yml
 
 .PHONY: crossdock
-crossdock: gradle-compile proxy-secret-gen crossdock-download-jaeger
+crossdock: gradle-compile crossdock-proxy-secret-gen crossdock-download-jaeger
 	docker-compose -f $(XDOCK_YAML) -f $(XDOCK_JAEGER_YAML) kill java-udp java-http java-https
 	docker-compose -f $(XDOCK_YAML) -f $(XDOCK_JAEGER_YAML) rm -f java-udp java-http java-https
 	docker-compose -f $(XDOCK_YAML) -f $(XDOCK_JAEGER_YAML) build java-udp java-http java-https
@@ -31,6 +31,6 @@ crossdock-clean:
 crossdock-download-jaeger:
 	curl -o $(XDOCK_JAEGER_YAML) $(JAEGER_COMPOSE_URL)
 
-.PHONY: proxy-secret-gen
-proxy-secret-gen:
+.PHONY: crossdock-proxy-secret-gen
+crossdock-proxy-secret-gen:
 	$(PROJECT)/https-proxy/gen.sh jaeger-collector-https-proxy jaeger-collector:14268

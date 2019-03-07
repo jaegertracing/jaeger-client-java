@@ -159,9 +159,9 @@ public class HttpSender extends ThriftSender {
       }
       if (pinning) {
         clientBuilder.certificatePinner(certificatePinnerBuilder.build());
-        if (disableVerification) {
-          disableCertVerification(clientBuilder);
-        }
+      }
+      if (disableVerification) {
+        disableCertVerification(clientBuilder);
       }
       return new HttpSender(this);
     }

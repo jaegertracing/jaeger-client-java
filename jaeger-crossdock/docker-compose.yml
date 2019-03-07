@@ -83,6 +83,7 @@ services:
             - ./https-proxy/build/proxy.conf:/etc/nginx/conf.d/proxy.conf
             - ./https-proxy/build/proxy.crt:/etc/nginx/proxy.crt
             - ./https-proxy/build/proxy.key:/etc/nginx/proxy.key
+        restart: on-failure
         depends_on:
             - jaeger-collector
         command: ["nginx", "-g", "daemon off;"]
