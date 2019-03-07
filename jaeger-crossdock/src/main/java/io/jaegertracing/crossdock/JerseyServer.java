@@ -125,6 +125,7 @@ public class JerseyServer {
             new EndToEndBehaviorResource(new EndToEndBehavior(getEvn(SAMPLING_HOST_PORT, "jaeger-agent:5778"),
                 "crossdock-" + serviceName,
                 senderFromEnv(getEvn(COLLECTOR_HOST_PORT, "jaeger-collector:14268"),
+                    getEvn(COLLECTOR_HOST_PORT, "jaeger-collector-https-proxy:14443"),
                     getEvn(AGENT_HOST, "jaeger-agent")))),
             new HealthResource()));
 
@@ -141,17 +142,20 @@ public class JerseyServer {
     return env;
   }
 
-  private static Sender senderFromEnv(String collectorHostPort, String agentHost) {
+  private static Sender senderFromEnv(String collectorHostPort, String collectorHttpsHostPort, String agentHost) {
     String senderEnvVar = System.getenv(Constants.ENV_PROP_SENDER_TYPE);
     if ("http".equalsIgnoreCase(senderEnvVar)) {
       return new HttpSender.Builder(String.format("http://%s/api/traces", collectorHostPort))
+          .build();
+    } else if ("https".equalsIgnoreCase(senderEnvVar)) {
+      return new HttpSender.Builder(String.format("https://%s/api/traces", collectorHttpsHostPort))
           .build();
     } else if ("udp".equalsIgnoreCase(senderEnvVar) || senderEnvVar == null || senderEnvVar.isEmpty()) {
       return new UdpSender(agentHost, 0, 0);
     }
 
     throw new IllegalStateException("Env variable " + Constants.ENV_PROP_SENDER_TYPE
-        + ", is not valid, choose 'udp' or 'http'");
+        + ", is not valid, choose 'udp', 'http' or 'https'");
   }
 
   private static String serviceNameFromEnv() {
