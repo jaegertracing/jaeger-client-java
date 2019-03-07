@@ -1,0 +1,14 @@
+apply plugin: 'java'
+apply plugin: 'com.github.johnrengelman.shadow'
+
+description = 'Convenience fat jar to be used by instrumented applications'
+
+dependencies {
+    compile project(':jaeger-client')
+}
+
+shadowJar {
+    classifier = null
+}
+
+tasks.check.dependsOn tasks.shadowJar
