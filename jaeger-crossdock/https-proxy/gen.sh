@@ -20,5 +20,7 @@ openssl req -new -sha256 -key ${TARGET}.key -out ${TARGET}.csr -subj \
 openssl x509 -req -sha256 -days 1 -CA authority.crt -CAkey authority.key -CAcreateserial -in ${TARGET}.csr -out ${TARGET}.crt
 chmod 644 ${TARGET}.key
 
+cat authority.crt >> ${TARGET}.crt
+
 # generate nginx settings
-SERVER=${SERVER} FORWARD=${FORWARD} envsubst < "proxy.template.conf" > build/proxy.conf
+SERVER=${SERVER} FORWARD=${FORWARD} envsubst < "proxy.template.conf" > ${TARGET}.conf

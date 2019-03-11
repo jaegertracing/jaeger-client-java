@@ -20,6 +20,8 @@ import io.jaegertracing.thriftjava.Process;
 import io.jaegertracing.thriftjava.Span;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -103,8 +105,8 @@ public class HttpSender extends ThriftSender {
     private int maxPacketSize = ONE_MB_IN_BYTES;
     private Interceptor authInterceptor;
     private OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder();
-    private boolean pinning;
-    private boolean acceptSelfSigned = false;
+    private List<String> pins = new ArrayList<String>();
+    private boolean selfSigned = false;
     private final String hostname;
 
     /**
@@ -147,19 +149,14 @@ public class HttpSender extends ThriftSender {
       return this;
     }
 
-    public Builder withCertificatePinning(String sha256certs[] /* comma separated */) {
-      if (!"".equals(hostname)) {
-        this.pinning = true;
-        for (String cert: sha256certs) {
-          certificatePinnerBuilder.add(hostname, String.format("%s", cert));
-        }
-      }
+    public Builder withCertificatePinning(String[] sha256certs /* comma separated */) {
+      pins.addAll(Arrays.asList(sha256certs));
       return this;
     }
 
     public Builder acceptSelfSigned() {
-      /* This dangerous operation will only take effect if pinning is used. */
-      this.acceptSelfSigned = true;
+      // This dangerous operation will only take effect if pinning is used.
+      this.selfSigned = true;
       return this;
     }
 
@@ -167,35 +164,59 @@ public class HttpSender extends ThriftSender {
       if (authInterceptor != null) {
         clientBuilder.addInterceptor(authInterceptor);
       }
-      if (pinning) {
+      if (!selfSigned && !pins.isEmpty()) {
+        // Pinning Certificate issued by public CA
+        for (String cert: pins) {
+          certificatePinnerBuilder.add(hostname, String.format("%s", cert));
+        }
         clientBuilder.certificatePinner(certificatePinnerBuilder.build());
-      }
-      if (acceptSelfSigned) {
-        acceptSelfSigned(clientBuilder, hostname);
+      } else if (selfSigned && !pins.isEmpty()) {
+        /* Issued by private CA, OkHttp's pinner is unable to verify the pins.
+         * Instead, check the sha256 hash value by hand. */
+        acceptSelfSigned(clientBuilder, hostname, pins);
       }
       return new HttpSender(this);
     }
 
-    private void acceptSelfSigned(OkHttpClient.Builder clientBuilder, final String hostname) {
+    private void acceptSelfSigned(OkHttpClient.Builder clientBuilder, final String hostname, final List<String> pinlist) {
       try {
         final TrustManager[] unsafeNoopVerificator = new TrustManager[] {
           new X509TrustManager() {
             private final String subjectCN = "CN=" + hostname;
-            @Override public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {
-              for (java.security.cert.X509Certificate cert: chain) {
-                String[] subject = cert.getSubjectDN().getName().split("/");
-                for (String name: subject) {
-                  if (subjectCN.equals(name)) {
-                    return;
+            private final List<String> pins = pinlist;
+
+            private boolean check(X509Certificate[] chain) {
+              // Intersection of pins and every cert in this chain
+              for (X509Certificate cert: chain) {
+                String hash = CertificatePinner.pin(cert);
+                for (String pin: pins) {
+                  if (hash.equals(pin)) {
+                    return true;
                   }
                 }
               }
+              return false;
+            }
+
+            @Override public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+              for (X509Certificate cert: chain) {
+                String[] subject = cert.getSubjectDN().getName().split("/");
+                for (String name: subject) {
+                  if (subjectCN.equals(name)) {
+                    // Found endpoint's hostname. This chain is going to be tested.
+                    if (check(chain)) {
+                      return;
+                    }
+                  }
+                }
+              }
+              // TODO: For TOFU (trust on first use) usecase, print the chain
               throw new CertificateException();
             }
-            @Override public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {
+            @Override public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
               throw new CertificateException(); // Nothing will be accepted
             }
-            @Override public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+            @Override public X509Certificate[] getAcceptedIssuers() {
               return new X509Certificate[0];
             }
           }
