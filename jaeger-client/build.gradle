@@ -19,6 +19,7 @@ shadowJar {
     relocate 'okhttp'           , 'io.jaegertracing.vendor.okhttp'
     relocate 'okio'             , 'io.jaegertracing.vendor.okio'
     relocate 'org.apache'       , 'io.jaegertracing.vendor.org.apache'
+    relocate 'org.slf4j'        , 'io.jaegertracing.vendor.org.slf4j'
     classifier 'bundle'
     dependencies {
         exclude(dependency('org.projectlombok:lombok'))
