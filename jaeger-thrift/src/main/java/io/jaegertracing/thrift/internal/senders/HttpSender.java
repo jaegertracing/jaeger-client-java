@@ -76,7 +76,6 @@ public class HttpSender extends ThriftSender {
       response = httpClient.newCall(request).execute();
     } catch (IOException e) {
       e.printStackTrace();
-      System.out.println("Test:" + e.toString() + e.getMessage() + e.getCause());
       throw new SenderException(String.format("Could not send %d spans", spans.size()), e, spans.size());
     }
 
@@ -153,7 +152,6 @@ public class HttpSender extends ThriftSender {
         this.pinning = true;
         for (String cert: sha256certs) {
           certificatePinnerBuilder.add(hostname, String.format("%s", cert));
-          System.out.println(String.format("hostname: %s, cert: %s", hostname, cert));
         }
       }
       return this;
@@ -185,7 +183,6 @@ public class HttpSender extends ThriftSender {
             private final String subjectCN = "CN=" + hostname;
             @Override public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {
               for (java.security.cert.X509Certificate cert: chain) {
-                System.out.println("pin:" + CertificatePinner.pin(cert));
                 String[] subject = cert.getSubjectDN().getName().split("/");
                 for (String name: subject) {
                   if (subjectCN.equals(name)) {
