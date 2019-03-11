@@ -71,7 +71,7 @@ services:
             - "8080-8082"
         environment:
             - SENDER=https
-            - COLLECTOR_HOST_PIN="sha256/n6Ovey/sJws9vKJpESmWyQf9Oocak9J51mmPKGm4S0E="
+            - COLLECTOR_HOST_PIN=sha256/9I2vVk9bdSZF5Oy0AfvTDpOYhGMB9jc4RwyL4vWjix0=
         depends_on:
             - jaeger-collector
 

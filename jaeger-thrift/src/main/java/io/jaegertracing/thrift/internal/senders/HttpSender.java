@@ -75,6 +75,8 @@ public class HttpSender extends ThriftSender {
     try {
       response = httpClient.newCall(request).execute();
     } catch (IOException e) {
+      e.printStackTrace();
+      System.out.println("Test:" + e.toString() + e.getMessage() + e.getCause());
       throw new SenderException(String.format("Could not send %d spans", spans.size()), e, spans.size());
     }
 
@@ -92,23 +94,38 @@ public class HttpSender extends ThriftSender {
 
     String exceptionMessage = String.format("Could not send %d spans, response %d: %s",
         spans.size(), response.code(), responseBody);
+
     throw new SenderException(exceptionMessage, null, spans.size());
   }
 
   public static class Builder {
     private final String endpoint;
     private CertificatePinner.Builder certificatePinnerBuilder = new CertificatePinner.Builder();
-    private boolean pinning;
-    private boolean disableVerification = false;
     private int maxPacketSize = ONE_MB_IN_BYTES;
     private Interceptor authInterceptor;
     private OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder();
+    private boolean pinning;
+    private boolean acceptSelfSigned = false;
+    private final String hostname;
 
     /**
      * @param endpoint jaeger-collector HTTP endpoint e.g. http://localhost:14268/api/traces
      */
     public Builder(String endpoint) {
       this.endpoint = endpoint;
+      String hostname = "";
+      try {
+        // Just obtain hostname for SSL feature. Failure is OK if plain http is used.
+        final URI uri = new URI(endpoint);
+        if ("https".equals(uri.getScheme())) {
+          hostname = uri.getHost();
+        }
+      } catch (Exception e) {
+        // Won't validate the endpoint name.
+        // True moment comes at Sender's Build.
+      } finally {
+        this.hostname = hostname;
+      }
     }
 
     public Builder withClient(OkHttpClient client) {
@@ -132,24 +149,19 @@ public class HttpSender extends ThriftSender {
     }
 
     public Builder withCertificatePinning(String sha256certs[] /* comma separated */) {
-      String hostname;
-      try {
-        final URI uri = new URI(endpoint);
-        if ("https".equals(uri.getScheme())) {
-            hostname = uri.getHost();
-            this.pinning = true;
-            for (String cert: sha256certs) {
-              certificatePinnerBuilder.add(hostname, String.format("sha256/%s", cert));
-            }
+      if (!"".equals(hostname)) {
+        this.pinning = true;
+        for (String cert: sha256certs) {
+          certificatePinnerBuilder.add(hostname, String.format("%s", cert));
+          System.out.println(String.format("hostname: %s, cert: %s", hostname, cert));
         }
-      } finally {
-        return this;
       }
+      return this;
     }
 
-    public Builder disableCertVerification() {
+    public Builder acceptSelfSigned() {
       /* This dangerous operation will only take effect if pinning is used. */
-      this.disableVerification = true;
+      this.acceptSelfSigned = true;
       return this;
     }
 
@@ -160,22 +172,36 @@ public class HttpSender extends ThriftSender {
       if (pinning) {
         clientBuilder.certificatePinner(certificatePinnerBuilder.build());
       }
-      if (disableVerification) {
-        disableCertVerification(clientBuilder);
+      if (acceptSelfSigned) {
+        acceptSelfSigned(clientBuilder, hostname);
       }
       return new HttpSender(this);
     }
 
-    private void disableCertVerification(OkHttpClient.Builder clientBuilder) {
+    private void acceptSelfSigned(OkHttpClient.Builder clientBuilder, final String hostname) {
       try {
         final TrustManager[] unsafeNoopVerificator = new TrustManager[] {
-            new X509TrustManager() {
-                @Override public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {}
-                @Override public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {}
-                @Override public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-                  return new X509Certificate[0];
+          new X509TrustManager() {
+            private final String subjectCN = "CN=" + hostname;
+            @Override public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {
+              for (java.security.cert.X509Certificate cert: chain) {
+                System.out.println("pin:" + CertificatePinner.pin(cert));
+                String[] subject = cert.getSubjectDN().getName().split("/");
+                for (String name: subject) {
+                  if (subjectCN.equals(name)) {
+                    return;
+                  }
                 }
+              }
+              throw new CertificateException();
             }
+            @Override public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {
+              throw new CertificateException(); // Nothing will be accepted
+            }
+            @Override public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+              return new X509Certificate[0];
+            }
+          }
         };
         final SSLContext sslContext = SSLContext.getInstance("TLS");
         sslContext.init(null, unsafeNoopVerificator, null);
