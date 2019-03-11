@@ -135,7 +135,7 @@ public class HttpSender extends ThriftSender {
       String hostname;
       try {
         final URI uri = new URI(endpoint);
-        if (uri.getScheme() == "https") {
+        if ("https".equals(uri.getScheme())) {
             hostname = uri.getHost();
             this.pinning = true;
             for (String cert: sha256certs) {
