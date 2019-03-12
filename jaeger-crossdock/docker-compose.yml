@@ -76,18 +76,13 @@ services:
             - jaeger-collector
 
     jaeger-collector-https-proxy:
-        image: nginx:alpine
+        build: https-proxy
         ports:
-            - "8080:8080"
-            - "14443:14443"
-        volumes:
-            - ./https-proxy/build/proxy.conf:/etc/nginx/conf.d/proxy.conf
-            - ./https-proxy/build/proxy.crt:/etc/nginx/proxy.crt
-            - ./https-proxy/build/proxy.key:/etc/nginx/proxy.key
+            - "8080"
+            - "14443"
         restart: on-failure
         depends_on:
             - jaeger-collector
-        command: ["sh", "-c", "while ! { wget --spider -S http://jaeger-collector:14269; }; do echo waiting...; sleep 10; done; nginx -g 'daemon off;'"]
 
     test_driver:
         image: jaegertracing/test-driver

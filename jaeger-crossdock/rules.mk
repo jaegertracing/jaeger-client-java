@@ -12,7 +12,7 @@ crossdock: gradle-compile crossdock-proxy-secret-gen crossdock-download-jaeger
 	docker-compose -f $(XDOCK_YAML) -f $(XDOCK_JAEGER_YAML) run crossdock
 
 .PHONY: crossdock-fresh
-crossdock-fresh: gradle-compile crossdock-download-jaeger
+crossdock-fresh: gradle-compile crossdock-proxy-secret-gen crossdock-download-jaeger
 	docker-compose -f $(XDOCK_YAML) -f $(XDOCK_JAEGER_YAML) down --rmi all
 	docker-compose -f $(XDOCK_YAML) -f $(XDOCK_JAEGER_YAML) run crossdock
 
