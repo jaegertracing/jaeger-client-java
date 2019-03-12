@@ -12,7 +12,7 @@ services:
             - python
             - nodejs
         environment:
-            - WAIT_FOR=test_driver,go,java-udp,java-http,java-https,python,nodejs
+            - WAIT_FOR=test_driver,go,java-udp,java-http,java-https,python,nodejs,jaeger-collector-https-proxy
             - WAIT_FOR_TIMEOUT=60s
 
             - CALL_TIMEOUT=60s
@@ -76,8 +76,9 @@ services:
             - jaeger-collector
 
     jaeger-collector-https-proxy:
-        image: nginx
+        image: nginx:alpine
         ports:
+            - "8080:8080"
             - "14443:14443"
         volumes:
             - ./https-proxy/build/proxy.conf:/etc/nginx/conf.d/proxy.conf
@@ -86,7 +87,7 @@ services:
         restart: on-failure
         depends_on:
             - jaeger-collector
-        command: ["nginx", "-g", "daemon off;"]
+        command: ["sh", "-c", "while ! { wget --spider -S http://jaeger-collector:14269; }; do echo waiting...; sleep 10; done; nginx -g 'daemon off;'"]
 
     test_driver:
         image: jaegertracing/test-driver
