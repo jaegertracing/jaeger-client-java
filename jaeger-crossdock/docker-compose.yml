@@ -13,9 +13,9 @@ services:
             - nodejs
         environment:
             - WAIT_FOR=test_driver,go,java-udp,java-http,java-https,python,nodejs,jaeger-collector-https-proxy
-            - WAIT_FOR_TIMEOUT=60s
+            - WAIT_FOR_TIMEOUT=90s
 
-            - CALL_TIMEOUT=60s
+            - CALL_TIMEOUT=90s
 
             - AXIS_CLIENT=go
             - AXIS_S1NAME=go,java-udp,python,nodejs
