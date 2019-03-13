@@ -1,15 +1,22 @@
 Changes by Version
 ==================
 
-0.34.0 (unreleased)
+0.34.1 (unreleased)
+-------------------
+- Nothing yet.
+
+0.34.0 (2018-03-04)
 -------------------
 
-- Nothing yet
+- exclude apache httpclient deps from libthrift ([#596](https://github.com/jaegertracing/jaeger-client-java/pull/596), [@t-8ch](https://github.com/t-8ch))
+- Handle all exceptions during queue processing ([#591](https://github.com/jaegertracing/jaeger-client-java/pull/591), [@dignati](https://github.com/dignati))
+- Added option to disable the shutdown hook ([#586](https://github.com/jaegertracing/jaeger-client-java/pull/586), [@supersven](https://github.com/supersven))
+- Updated thrift to 0.12 ([#587](https://github.com/jaegertracing/jaeger-client-java/pull/587), [@jpkrohling](https://github.com/jpkrohling))
 
 0.33.0 (2018-12-14)
 -------------------
 
-- Point to tchannel-based docker-compose ([#573](https://github.com/jaegertracing/jaeger-client-java/pull/573), [@yurishkuros](https://github.com/yurishkuro))
+- Point to tchannel-based docker-compose ([#573](https://github.com/jaegertracing/jaeger-client-java/pull/573), [@yurishkuro](https://github.com/yurishkuro))
 - Update reporter success metric on append in RemoteReporter ([#572](https://github.com/jaegertracing/jaeger-client-java/pull/572), [@objectiser](https://github.com/objectiser))
 - Always close HTTP responses in HttpSender ([#571](https://github.com/jaegertracing/jaeger-client-java/pull/571), [@mpetazzoni](https://github.com/mpetazzoni))
 - Normalise metric names ([#564](https://github.com/jaegertracing/jaeger-client-java/pull/564), [@objectiser](https://github.com/objectiser))

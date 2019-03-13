@@ -7,7 +7,10 @@ dependencies {
     compile project(':jaeger-core')
 
     compile group: 'org.slf4j', name: 'slf4j-api', version: slf4jVersion
-    compile group: 'org.apache.thrift', name: 'libthrift', version: apacheThriftVersion
+    compile(group: 'org.apache.thrift', name: 'libthrift', version: apacheThriftVersion) {
+        exclude group: 'org.apache.httpcomponents', module: 'httpclient'
+        exclude group: 'org.apache.httpcomponents', module: 'httpcore'
+    }
     compile group: 'com.squareup.okhttp3', name: 'okhttp', version: okhttpVersion
 
     testCompile group: 'junit', name: 'junit', version: junitVersion
