@@ -11,7 +11,6 @@ dependencies {
 }
 
 /* Shaded the same libraries as jaeger-thrift,
- * leaving the slf4j dependency in place, as a *requirement*
  * for a standalone fat jar. */
 shadowJar {
     relocate 'com.google.gson'  , 'io.jaegertracing.vendor.com.google.gson'
@@ -19,8 +18,7 @@ shadowJar {
     relocate 'okhttp'           , 'io.jaegertracing.vendor.okhttp'
     relocate 'okio'             , 'io.jaegertracing.vendor.okio'
     relocate 'org.apache'       , 'io.jaegertracing.vendor.org.apache'
-    relocate 'org.slf4j'        , 'io.jaegertracing.vendor.org.slf4j'
-    classifier 'bundle'
+    classifier 'all'
     dependencies {
         exclude(dependency('org.projectlombok:lombok'))
         exclude(dependency('org.codehaus.mojo:animal-sniffer-annotations'))
