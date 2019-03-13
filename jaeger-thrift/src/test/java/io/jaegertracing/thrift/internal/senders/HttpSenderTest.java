@@ -126,6 +126,17 @@ public class HttpSenderTest extends JerseyTest {
   }
 
   @Test
+  public void setTLSCertificatePinning() throws Exception {
+    System.setProperty(Configuration.JAEGER_ENDPOINT, target("/api/traces").getUri().toString());
+    // Just confirm this is settable. Crossdock is used for TLS-level test.
+    System.setProperty(Configuration.JAEGER_TLS_CERTIFICATE_PINNING,
+            "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=,sha256/BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=");
+
+    HttpSender sender = (HttpSender) Configuration.SenderConfiguration.fromEnv().getSender();
+    sender.send(new Process("robotrock"), generateSpans());
+  }
+
+  @Test
   public void sanityTestForTokenAuthTest() throws Exception {
     System.setProperty(Configuration.JAEGER_ENDPOINT, target("/api/bearer").getUri().toString());
     System.setProperty(Configuration.JAEGER_AUTH_TOKEN, "invalid-token");

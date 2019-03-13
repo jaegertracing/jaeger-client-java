@@ -107,26 +107,12 @@ public class HttpSender extends ThriftSender {
     private OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder();
     private List<String> pins = new ArrayList<String>();
     private boolean selfSigned = false;
-    private final String hostname;
 
     /**
      * @param endpoint jaeger-collector HTTP endpoint e.g. http://localhost:14268/api/traces
      */
     public Builder(String endpoint) {
       this.endpoint = endpoint;
-      String hostname = "";
-      try {
-        // Just obtain hostname for SSL feature. Failure is OK if plain http is used.
-        final URI uri = new URI(endpoint);
-        if ("https".equals(uri.getScheme())) {
-          hostname = uri.getHost();
-        }
-      } catch (Exception e) {
-        // Won't validate the endpoint name.
-        // True moment comes at Sender's Build.
-      } finally {
-        this.hostname = hostname;
-      }
     }
 
     public Builder withClient(OkHttpClient client) {
@@ -164,23 +150,32 @@ public class HttpSender extends ThriftSender {
       if (authInterceptor != null) {
         clientBuilder.addInterceptor(authInterceptor);
       }
-      if (!selfSigned && !pins.isEmpty()) {
-        // Pinning Certificate issued by public CA
-        for (String cert: pins) {
-          certificatePinnerBuilder.add(hostname, String.format("%s", cert));
+      try {
+        // Just obtain hostname for SSL feature. Failure is OK if plain http is used.
+        final URI uri = new URI(endpoint);
+        String hostname = hostname = uri.getHost();
+
+        if (!selfSigned && !pins.isEmpty()) {
+          // Pinning Certificate issued by public CA
+          for (String cert: pins) {
+            certificatePinnerBuilder.add(hostname, String.format("%s", cert));
+          }
+          clientBuilder.certificatePinner(certificatePinnerBuilder.build());
+        } else if (selfSigned && !pins.isEmpty()) {
+          /* Issued by private CA, OkHttp's pinner is unable to verify the pins.
+           * Instead, check the sha256 hash value by custom verifier. */
+          acceptSelfSigned(clientBuilder, hostname, pins);
         }
-        clientBuilder.certificatePinner(certificatePinnerBuilder.build());
-      } else if (selfSigned && !pins.isEmpty()) {
-        /* Issued by private CA, OkHttp's pinner is unable to verify the pins.
-         * Instead, check the sha256 hash value by hand. */
-        acceptSelfSigned(clientBuilder, hostname, pins);
+      } catch (Exception e) {
+        // Won't validate the endpoint name.
+        // True moment comes at Sender's Build.
       }
       return new HttpSender(this);
     }
 
     private void acceptSelfSigned(OkHttpClient.Builder clientBuilder, final String hostname, final List<String> pinlist) {
       try {
-        final TrustManager[] unsafeNoopVerificator = new TrustManager[] {
+        final TrustManager[] selfSignedServerTrustManager = new TrustManager[] {
           new X509TrustManager() {
             private final String subjectCN = "CN=" + hostname;
             private final List<String> pins = pinlist;
@@ -222,8 +217,8 @@ public class HttpSender extends ThriftSender {
           }
         };
         final SSLContext sslContext = SSLContext.getInstance("TLS");
-        sslContext.init(null, unsafeNoopVerificator, null);
-        clientBuilder.sslSocketFactory(sslContext.getSocketFactory(), (X509TrustManager) unsafeNoopVerificator[0]);
+        sslContext.init(null, selfSignedServerTrustManager, null);
+        clientBuilder.sslSocketFactory(sslContext.getSocketFactory(), (X509TrustManager) selfSignedServerTrustManager[0]);
 
       } catch (Exception e) {
           throw new RuntimeException(e);
