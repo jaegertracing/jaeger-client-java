@@ -77,7 +77,6 @@ public class HttpSender extends ThriftSender {
     try {
       response = httpClient.newCall(request).execute();
     } catch (IOException e) {
-      e.printStackTrace();
       throw new SenderException(String.format("Could not send %d spans", spans.size()), e, spans.size());
     }
 
@@ -140,8 +139,10 @@ public class HttpSender extends ThriftSender {
       return this;
     }
 
+    /**
+     * Enable accepting self-signed certificates. This will only take effect if pinning is provided.
+     */
     public Builder acceptSelfSigned() {
-      // This dangerous operation will only take effect if pinning is used.
       this.selfSigned = true;
       return this;
     }
