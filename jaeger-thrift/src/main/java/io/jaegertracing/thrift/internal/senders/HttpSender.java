@@ -156,20 +156,22 @@ public class HttpSender extends ThriftSender {
         final URI uri = new URI(endpoint);
         String hostname = hostname = uri.getHost();
 
-        if (!selfSigned && !pins.isEmpty()) {
-          // Pinning Certificate issued by public CA
-          for (String cert: pins) {
-            certificatePinnerBuilder.add(hostname, String.format("%s", cert));
+        if (uri.getScheme().equals("https")) {
+          if (!selfSigned && !pins.isEmpty()) {
+            // Pinning Certificate issued by public CA
+            for (String cert: pins) {
+              certificatePinnerBuilder.add(hostname, String.format("%s", cert));
+            }
+            clientBuilder.certificatePinner(certificatePinnerBuilder.build());
+          } else if (selfSigned && !pins.isEmpty()) {
+            /* Issued by private CA, OkHttp's pinner is unable to verify the pins.
+             * Instead, check the sha256 hash value by custom verifier. */
+            acceptSelfSigned(clientBuilder, hostname, pins);
           }
-          clientBuilder.certificatePinner(certificatePinnerBuilder.build());
-        } else if (selfSigned && !pins.isEmpty()) {
-          /* Issued by private CA, OkHttp's pinner is unable to verify the pins.
-           * Instead, check the sha256 hash value by custom verifier. */
-          acceptSelfSigned(clientBuilder, hostname, pins);
         }
-      } catch (Exception e) {
-        // Won't validate the endpoint name.
-        // True moment comes at Sender's Build.
+      } catch (java.net.URISyntaxException e) {
+        // Early but similar validation & exception as what happens when HttpSender is called.
+        throw new IllegalArgumentException("Could not parse endpoint.", e);
       }
       return new HttpSender(this);
     }
@@ -221,7 +223,15 @@ public class HttpSender extends ThriftSender {
         sslContext.init(null, selfSignedServerTrustManager, null);
         clientBuilder.sslSocketFactory(sslContext.getSocketFactory(), (X509TrustManager) selfSignedServerTrustManager[0]);
 
-      } catch (Exception e) {
+      } catch (java.security.NoSuchAlgorithmException e) {
+          // TLS is hardcoded abave. No occasion to come here.
+          throw new RuntimeException(e);
+      } catch (java.security.KeyManagementException e) {
+          /* KeyManagementException will not occurs because sslContext uses default KeyManager (first argument).
+           *
+           * > Either of the first two parameters may be null in which case the installed security providers
+           * > will be searched for the highest priority implementation of the appropriate factory.
+           */
           throw new RuntimeException(e);
       }
     }
