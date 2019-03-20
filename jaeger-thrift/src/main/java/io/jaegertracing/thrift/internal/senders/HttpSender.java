@@ -29,6 +29,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509TrustManager;
 import javax.net.ssl.TrustManager;
+import lombok.extern.slf4j.Slf4j;
 import lombok.ToString;
 import okhttp3.CertificatePinner;
 import okhttp3.Credentials;
@@ -98,6 +99,7 @@ public class HttpSender extends ThriftSender {
     throw new SenderException(exceptionMessage, null, spans.size());
   }
 
+  @Slf4j
   public static class Builder {
     private final String endpoint;
     private CertificatePinner.Builder certificatePinnerBuilder = new CertificatePinner.Builder();
@@ -196,6 +198,14 @@ public class HttpSender extends ThriftSender {
               return false;
             }
 
+            private String describePins(X509Certificate[] chain) {
+                String message = "No pins matched with remote certificate chain. The pins are:";
+                for (X509Certificate cert: chain) {
+                    message = message + "\n\t" + CertificatePinner.pin(cert);
+                }
+                return message + "\n";
+            }
+
             @Override public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
               for (X509Certificate cert: chain) {
                 String[] subject = cert.getSubjectDN().getName().split("/");
@@ -204,11 +214,13 @@ public class HttpSender extends ThriftSender {
                     // Found endpoint's hostname. This chain is going to be tested.
                     if (check(chain)) {
                       return;
+                    } else {
+                      // For TOFU (trust on first use) usecase, print the chain
+                      log.warn(describePins(chain));
                     }
                   }
                 }
               }
-              // TODO: For TOFU (trust on first use) usecase, print the chain
               throw new CertificateException();
             }
             @Override public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
