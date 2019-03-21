@@ -86,8 +86,7 @@ public class HttpSenderTest extends JerseyTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void misconfiguredQuery() throws Exception {
-    HttpSender sender = new HttpSender.Builder("http://some-server/api/traces?there=is&another=query")
-        .build();
+    new HttpSender.Builder("http://some-server/api/traces^there=is&another=query").build();
   }
   @Test(expected = Exception.class)
   public void serverDoesntExist() throws Exception {

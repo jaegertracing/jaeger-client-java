@@ -29,7 +29,6 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509TrustManager;
 import javax.net.ssl.TrustManager;
-import lombok.extern.slf4j.Slf4j;
 import lombok.ToString;
 import okhttp3.CertificatePinner;
 import okhttp3.Credentials;
@@ -99,7 +98,6 @@ public class HttpSender extends ThriftSender {
     throw new SenderException(exceptionMessage, null, spans.size());
   }
 
-  @Slf4j
   public static class Builder {
     private final String endpoint;
     private CertificatePinner.Builder certificatePinnerBuilder = new CertificatePinner.Builder();
@@ -158,7 +156,7 @@ public class HttpSender extends ThriftSender {
         final URI uri = new URI(endpoint);
         String hostname = hostname = uri.getHost();
 
-        if (uri.getScheme().equals("https")) {
+        if (uri.getScheme() != null && uri.getScheme().equals("https")) {
           if (!selfSigned && !pins.isEmpty()) {
             // Pinning Certificate issued by public CA
             for (String cert: pins) {
@@ -180,57 +178,7 @@ public class HttpSender extends ThriftSender {
 
     private void acceptSelfSigned(OkHttpClient.Builder clientBuilder, final String hostname, final List<String> pinlist) {
       try {
-        final TrustManager[] selfSignedServerTrustManager = new TrustManager[] {
-          new X509TrustManager() {
-            private final String subjectCN = "CN=" + hostname;
-            private final List<String> pins = pinlist;
-
-            private boolean check(X509Certificate[] chain) {
-              // Intersection of pins and every cert in this chain
-              for (X509Certificate cert: chain) {
-                String hash = CertificatePinner.pin(cert);
-                for (String pin: pins) {
-                  if (hash.equals(pin)) {
-                    return true;
-                  }
-                }
-              }
-              return false;
-            }
-
-            private String describePins(X509Certificate[] chain) {
-                String message = "No pins matched with remote certificate chain. The pins are:";
-                for (X509Certificate cert: chain) {
-                    message = message + "\n\t" + CertificatePinner.pin(cert);
-                }
-                return message + "\n";
-            }
-
-            @Override public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-              for (X509Certificate cert: chain) {
-                String[] subject = cert.getSubjectDN().getName().split("/");
-                for (String name: subject) {
-                  if (subjectCN.equals(name)) {
-                    // Found endpoint's hostname. This chain is going to be tested.
-                    if (check(chain)) {
-                      return;
-                    } else {
-                      // For TOFU (trust on first use) usecase, print the chain
-                      log.warn(describePins(chain));
-                    }
-                  }
-                }
-              }
-              throw new CertificateException();
-            }
-            @Override public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-              throw new CertificateException(); // Nothing will be accepted
-            }
-            @Override public X509Certificate[] getAcceptedIssuers() {
-              return new X509Certificate[0];
-            }
-          }
-        };
+        final TrustManager[] selfSignedServerTrustManager = new TrustManager[] { new SelfSignedTrustManager(hostname, pinlist) };
         final SSLContext sslContext = SSLContext.getInstance("TLS");
         sslContext.init(null, selfSignedServerTrustManager, null);
         clientBuilder.sslSocketFactory(sslContext.getSocketFactory(), (X509TrustManager) selfSignedServerTrustManager[0]);
@@ -260,6 +208,61 @@ public class HttpSender extends ThriftSender {
           );
         }
       };
+    }
+
+    private static class SelfSignedTrustManager implements javax.net.ssl.X509TrustManager {
+      private final String subjectCN;
+      private final List<String> pins;
+
+      protected SelfSignedTrustManager(String hostname, List<String> pins) {
+          this.subjectCN = "CN=" + hostname;
+          this.pins = pins;
+      }
+
+      private boolean check(X509Certificate[] chain) {
+        // Intersection of pins and every cert in this chain
+        for (X509Certificate cert: chain) {
+          String hash = CertificatePinner.pin(cert);
+          for (String pin: pins) {
+            if (hash.equals(pin)) {
+              return true;
+            }
+          }
+        }
+        return false;
+      }
+
+      private String describePins(X509Certificate[] chain) {
+          String message = "No pins matched with remote certificate chain. The pins are:";
+          for (X509Certificate cert: chain) {
+              message = message + "\n\t" + CertificatePinner.pin(cert);
+          }
+          return message + "\n";
+      }
+
+      public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+        for (X509Certificate cert: chain) {
+          String[] subject = cert.getSubjectDN().getName().split("/");
+          for (String name: subject) {
+            if (subjectCN.equals(name)) {
+              // Found endpoint's hostname. This chain is going to be tested.
+              if (check(chain)) {
+                return;
+              } else {
+                // For TOFU (trust on first use) usecase, print the chain
+                throw new RuntimeException(describePins(chain));
+              }
+            }
+          }
+        }
+        throw new CertificateException();
+      }
+      public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+        throw new CertificateException(); // Nothing will be accepted
+      }
+      public X509Certificate[] getAcceptedIssuers() {
+        return new X509Certificate[0];
+      }
     }
   }
 }
