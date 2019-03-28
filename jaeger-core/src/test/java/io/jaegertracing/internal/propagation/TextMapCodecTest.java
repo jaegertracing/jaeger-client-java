@@ -22,12 +22,9 @@ import io.jaegertracing.internal.JaegerSpanContext;
 import io.jaegertracing.internal.exceptions.EmptyTracerStateStringException;
 import io.jaegertracing.internal.exceptions.MalformedTracerStateStringException;
 import io.jaegertracing.internal.exceptions.TraceIdOutOfBoundException;
-import io.opentracing.propagation.TextMap;
-import io.opentracing.propagation.TextMapExtractAdapter;
-import io.opentracing.propagation.TextMapInjectAdapter;
+import io.opentracing.propagation.TextMapAdapter;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import org.junit.Test;
@@ -134,14 +131,13 @@ public class TextMapCodecTest {
   @Test
   public void testAdhocBaggageWithTraceId() {
     TextMapCodec codec = new TextMapCodec(false);
-    Map<String, String> headers = new HashMap<>();
+    Map<String, String> headers = new HashMap<String, String>();
     long traceIdLow = 42;
     long spanId = 1;
     long parentId = 0;
-    TextMap textMap = new TestTextMap(headers);
-    codec.inject(new JaegerSpanContext(0L, traceIdLow, spanId, parentId, (byte)1), textMap);
+    codec.inject(new JaegerSpanContext(0L, traceIdLow, spanId, parentId, (byte)1), new TextMapAdapter(headers));
     headers.put("jaeger-baggage", "k1=v1, k2 = v2");
-    JaegerSpanContext context = codec.extract(textMap);
+    JaegerSpanContext context = codec.extract(new TextMapAdapter(headers));
     assertEquals("must have trace ID", 42, context.getTraceIdLow());
     assertEquals("must have trace ID", 0L, context.getTraceIdHigh());
     assertEquals("must have bagggae", "v1", context.getBaggageItem("k1"));
@@ -155,35 +151,11 @@ public class TextMapCodecTest {
   @Test
   public void testAdhocBaggageWithoutTraceId() {
     Map<String, String> headers = new HashMap<String, String>();
-    TextMap textMap = new TestTextMap(headers);
     headers.put("jaeger-baggage", "k1=v1, k2 = v2, k3=v3=d3");
     TextMapCodec codec = new TextMapCodec(false);
-    JaegerSpanContext context = codec.extract(textMap);
+    JaegerSpanContext context = codec.extract(new TextMapAdapter(headers));
     assertEquals("v1", context.getBaggageItem("k1"));
     assertEquals("v2", context.getBaggageItem("k2"));
     assertEquals(null, context.getBaggageItem("k3"));
-  }
-
-  private static class TestTextMap implements TextMap {
-
-    private final Map<String,String> values;
-
-    public TestTextMap(Map<String, String> values) {
-      this.values = values;
-    }
-
-    @Override
-    public Iterator<Map.Entry<String, String>> iterator() {
-      return values.entrySet().iterator();
-    }
-
-    @Override
-    public void put(String key, String value) {
-      values.put(key, value);
-    }
-
-    public String get(String key) {
-      return values.get(key);
-    }
   }
 }

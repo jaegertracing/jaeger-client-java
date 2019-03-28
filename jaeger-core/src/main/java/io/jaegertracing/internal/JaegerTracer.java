@@ -303,19 +303,9 @@ public class JaegerTracer implements Tracer, Closeable {
 
     @Override
     public <T> Tracer.SpanBuilder withTag(Tag<T> tag, T value) {
-      if (value instanceof Number) {
-        return this.withTag(tag.getKey(), (Number) value);
+      if (tag != null && tag.getKey() != null) {
+        this.tags.put(tag.getKey(), value);
       }
-
-      if (value instanceof String) {
-        return this.withTag(tag.getKey(), (String) value);
-      }
-
-      if (value instanceof Boolean) {
-        return this.withTag(tag.getKey(), (Boolean) value);
-      }
-
-      this.tags.put(tag.getKey(), value);
       return this;
     }
 

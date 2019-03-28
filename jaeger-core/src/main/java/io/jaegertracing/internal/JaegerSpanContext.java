@@ -34,8 +34,8 @@ public class JaegerSpanContext implements SpanContext {
   private final Map<String, String> baggage;
   private final String debugId;
   private final JaegerObjectFactory objectFactory;
-  private final String traceIdTextMapCodec;
-  private final String spanIdTextMapCodec;
+  private final String traceIdAsString;
+  private final String spanIdAsString;
 
   public JaegerSpanContext(long traceIdHigh, long traceIdLow, long spanId, long parentId, byte flags) {
     this(
@@ -69,8 +69,8 @@ public class JaegerSpanContext implements SpanContext {
     this.baggage = baggage;
     this.debugId = debugId;
     this.objectFactory = objectFactory;
-    this.traceIdTextMapCodec = convertTraceId();
-    this.spanIdTextMapCodec = Long.toHexString(spanId);
+    this.traceIdAsString = convertTraceId();
+    this.spanIdAsString = Long.toHexString(spanId);
   }
 
   @Override
@@ -102,7 +102,7 @@ public class JaegerSpanContext implements SpanContext {
   }
 
   public String getTraceId() {
-    return this.traceIdTextMapCodec;
+    return this.traceIdAsString;
   }
 
   public long getTraceIdLow() {
@@ -181,11 +181,11 @@ public class JaegerSpanContext implements SpanContext {
 
   @Override
   public String toTraceId() {
-    return traceIdTextMapCodec;
+    return traceIdAsString;
   }
 
   @Override
   public String toSpanId() {
-    return spanIdTextMapCodec;
+    return spanIdAsString;
   }
 }
