@@ -34,6 +34,7 @@ import io.jaegertracing.zipkin.internal.ConverterUtil;
 import io.jaegertracing.zipkin.internal.V2SpanConverter;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
+import io.opentracing.propagation.TextMapAdapter;
 import io.opentracing.propagation.TextMapExtractAdapter;
 import io.opentracing.propagation.TextMapInjectAdapter;
 import io.opentracing.tag.Tags;
@@ -258,7 +259,7 @@ public class V2SpanConverterTest {
         .start();
 
     Map<String, String> map = new HashMap<>();
-    TextMap carrier = new TestTextMap(map);
+    TextMap carrier = new TextMapAdapter(map);
     tracer.inject(client.context(), Format.Builtin.TEXT_MAP, carrier);
 
     JaegerSpanContext ctx = tracer.extract(Format.Builtin.TEXT_MAP, carrier);
@@ -310,28 +311,5 @@ public class V2SpanConverterTest {
     zipkin2.Span zipkinSpan = V2SpanConverter.convertSpan(span);
     assertNotEquals(0, span.context().getTraceIdHigh());
     assertEquals(span.context().getTraceId(), zipkinSpan.traceId());
-  }
-
-  static class TestTextMap implements TextMap {
-
-    private final Map<String,String> values;
-
-    public TestTextMap() {
-      this(new HashMap<>());
-    }
-
-    public TestTextMap(Map<String, String> values) {
-      this.values = values;
-    }
-
-    @Override
-    public Iterator<Map.Entry<String, String>> iterator() {
-      return values.entrySet().iterator();
-    }
-
-    @Override
-    public void put(String key, String value) {
-      values.put(key, value);
-    }
   }
 }
