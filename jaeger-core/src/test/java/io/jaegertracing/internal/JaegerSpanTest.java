@@ -37,6 +37,10 @@ import io.opentracing.Span;
 import io.opentracing.SpanContext;
 import io.opentracing.log.Fields;
 import io.opentracing.noop.NoopSpan;
+import io.opentracing.tag.AbstractTag;
+import io.opentracing.tag.BooleanTag;
+import io.opentracing.tag.IntTag;
+import io.opentracing.tag.StringTag;
 import io.opentracing.tag.Tags;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -153,6 +157,35 @@ public class JaegerSpanTest {
     jaegerSpan.setTag(key, expected);
     assertEquals(expected, jaegerSpan.getTags().get(key));
   }
+
+  @Test
+  public void testSetTag() {
+    jaegerSpan.setTag(new StringTag("stringTag"), "stringTagValue")
+              .setTag(new IntTag("numberTag"), 1)
+              .setTag(new BooleanTag("booleanTag"), true)
+              .setTag(new AbstractTag<Object>("objectTag") {
+                @Override
+                public void set(Span span, Object tagValue) {
+                }
+              }, this);
+
+    Map<String, Object> tags = jaegerSpan.getTags();
+    assertEquals("stringTagValue", tags.get("stringTag"));
+    assertEquals(1, tags.get("numberTag"));
+    assertEquals(true, tags.get("booleanTag"));
+    assertEquals(this, tags.get("objectTag"));
+  }
+
+  @Test
+  public void testToTraceId() {
+    assertEquals(jaegerSpan.context().getTraceId(), jaegerSpan.context().toTraceId());
+  }
+
+  @Test
+  public void testToSpanId() {
+    assertEquals(Long.toHexString(jaegerSpan.context().getSpanId()), jaegerSpan.context().toSpanId());
+  }
+
 
   @Test
   public void testWithTimestampAccurateClock() {

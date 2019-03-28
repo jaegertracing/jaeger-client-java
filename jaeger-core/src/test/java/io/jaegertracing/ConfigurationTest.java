@@ -479,14 +479,15 @@ public class ConfigurationTest {
   @SuppressWarnings("unchecked")
   private <C> void assertInjectExtract(JaegerTracer tracer, Format<C> format, JaegerSpanContext contextToInject,
                                        boolean injectMapIsEmpty) {
-    HashMap<String, String> injectMap = new HashMap<>();
-    tracer.inject(contextToInject, format, (C) new TextMapInjectAdapter(injectMap));
+    Map<String, String> injectMap = new HashMap<>();
+    TextMap textMap = new TestTextMap(injectMap);
+    tracer.inject(contextToInject, format, (C) textMap);
     assertEquals(injectMapIsEmpty, injectMap.isEmpty());
     if (injectMapIsEmpty) {
       return;
     }
 
-    JaegerSpanContext extractedContext = tracer.extract(format, (C) new TextMapExtractAdapter(injectMap));
+    JaegerSpanContext extractedContext = tracer.extract(format, (C) textMap);
     assertEquals(contextToInject.getTraceId(), extractedContext.getTraceId());
     assertEquals(contextToInject.getSpanId(), extractedContext.getSpanId());
   }
@@ -502,7 +503,15 @@ public class ConfigurationTest {
 
   static class TestTextMap implements TextMap {
 
-    private Map<String,String> values = new HashMap<>();
+    private final Map<String,String> values;
+
+    public TestTextMap() {
+      this(new HashMap<>());
+    }
+
+    public TestTextMap(Map<String, String> values) {
+      this.values = values;
+    }
 
     @Override
     public Iterator<Entry<String, String>> iterator() {

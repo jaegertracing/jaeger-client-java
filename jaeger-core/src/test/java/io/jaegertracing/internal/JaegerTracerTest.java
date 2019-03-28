@@ -34,9 +34,14 @@ import io.opentracing.ScopeManager;
 import io.opentracing.Span;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
+import io.opentracing.tag.AbstractTag;
+import io.opentracing.tag.BooleanTag;
+import io.opentracing.tag.IntTag;
+import io.opentracing.tag.StringTag;
 import io.opentracing.tag.Tags;
 
 import java.io.Closeable;
+import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -184,4 +189,26 @@ public class JaegerTracerTest {
     assertEquals(1, metricsFactory.getCounter("jaeger_tracer_traces", "sampled=y,state=started"));
     assertEquals(0, metricsFactory.getCounter("jaeger_tracer_traces", "sampled=n,state=started"));
   }
+
+  @Test
+  public void testWithTagObject() {
+    JaegerTracer.SpanBuilder spanBuilder = tracer.buildSpan("ndnd");
+    spanBuilder.withTag(new StringTag("stringTag"), "stringTagValue")
+               .withTag(new IntTag("numberTag"), 1)
+               .withTag(new BooleanTag("booleanTag"), true)
+               .withTag(new AbstractTag<Object>("objectTag") {
+                 @Override
+                 public void set(Span span, Object tagValue) {
+                 }
+               }, this);
+
+    Span span = spanBuilder.start();
+    Map<String, Object> tags = ((JaegerSpan) span).getTags();
+    assertEquals("stringTagValue", tags.get("stringTag"));
+    assertEquals(1, tags.get("numberTag"));
+    assertEquals(true, tags.get("booleanTag"));
+    assertEquals(this, tags.get("objectTag"));
+    span.finish();
+  }
+
 }

@@ -30,6 +30,7 @@ import io.opentracing.propagation.TextMapInjectAdapter;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.junit.Before;
@@ -50,7 +51,7 @@ public class AdhocHeadersTest {
   @Test
   public void testDebugCorrelationId() {
     Map<String, String> headers = Collections.singletonMap(Constants.DEBUG_ID_HEADER_KEY, "Coraline");
-    TextMap carrier = new TextMapExtractAdapter(headers);
+    TextMap carrier = new TestTextMap(headers);
 
     JaegerSpanContext inboundSpanContext = tracer.extract(Format.Builtin.TEXT_MAP, carrier);
     assertNotNull(inboundSpanContext);
@@ -74,7 +75,7 @@ public class AdhocHeadersTest {
   public void testJoinTraceWithAdhocBaggage() {
     Span span = tracer.buildSpan("test").start();
     Map<String, String> headers = new HashMap<String, String>();
-    tracer.inject(span.context(), Format.Builtin.HTTP_HEADERS, new TextMapInjectAdapter(headers));
+    tracer.inject(span.context(), Format.Builtin.HTTP_HEADERS, new TestTextMap(headers));
     assertEquals(1, headers.size());
 
     traceWithAdhocBaggage(headers);
@@ -83,11 +84,34 @@ public class AdhocHeadersTest {
   private void traceWithAdhocBaggage(Map<String, String> headers) {
     headers.put("jaeger-baggage", "k1=v1, k2 = v2");
 
-    JaegerSpanContext parent = tracer.extract(Format.Builtin.HTTP_HEADERS, new TextMapExtractAdapter(headers));
+    JaegerSpanContext parent = tracer.extract(Format.Builtin.HTTP_HEADERS, new TestTextMap(headers));
     JaegerSpan span = tracer.buildSpan("test").asChildOf(parent).start();
 
     assertTrue(span.context().isSampled());
     assertEquals("must have baggage", "v1", span.getBaggageItem("k1"));
     assertEquals("must have baggage", "v2", span.getBaggageItem("k2"));
+  }
+
+  private static class TestTextMap implements TextMap {
+
+    private final Map<String,String> values;
+
+    public TestTextMap(Map<String, String> values) {
+      this.values = values;
+    }
+
+    @Override
+    public Iterator<Map.Entry<String, String>> iterator() {
+      return values.entrySet().iterator();
+    }
+
+    @Override
+    public void put(String key, String value) {
+      values.put(key, value);
+    }
+
+    public String get(String key) {
+      return values.get(key);
+    }
   }
 }

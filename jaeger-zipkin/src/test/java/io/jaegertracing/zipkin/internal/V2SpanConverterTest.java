@@ -39,6 +39,7 @@ import io.opentracing.propagation.TextMapInjectAdapter;
 import io.opentracing.tag.Tags;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -257,10 +258,9 @@ public class V2SpanConverterTest {
         .start();
 
     Map<String, String> map = new HashMap<>();
-    TextMap carrier = new TextMapInjectAdapter(map);
+    TextMap carrier = new TestTextMap(map);
     tracer.inject(client.context(), Format.Builtin.TEXT_MAP, carrier);
 
-    carrier = new TextMapExtractAdapter(map);
     JaegerSpanContext ctx = tracer.extract(Format.Builtin.TEXT_MAP, carrier);
 
     JaegerSpanContext clientCtx = client.context();
@@ -310,5 +310,28 @@ public class V2SpanConverterTest {
     zipkin2.Span zipkinSpan = V2SpanConverter.convertSpan(span);
     assertNotEquals(0, span.context().getTraceIdHigh());
     assertEquals(span.context().getTraceId(), zipkinSpan.traceId());
+  }
+
+  static class TestTextMap implements TextMap {
+
+    private final Map<String,String> values;
+
+    public TestTextMap() {
+      this(new HashMap<>());
+    }
+
+    public TestTextMap(Map<String, String> values) {
+      this.values = values;
+    }
+
+    @Override
+    public Iterator<Map.Entry<String, String>> iterator() {
+      return values.entrySet().iterator();
+    }
+
+    @Override
+    public void put(String key, String value) {
+      values.put(key, value);
+    }
   }
 }
