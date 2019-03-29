@@ -170,25 +170,4 @@ public class RemoteControlledSamplerTest {
     assertEquals(new ProbabilisticSampler(0.001), undertest.getSampler());
   }
 
-  @Test
-  public void testConcurrentSampling() {
-    Sampler sampler = new Sampler() {
-
-      @Override
-      public SamplingStatus sample(String operation, long id) {
-        return null;
-      }
-
-      @Override
-      public void close() {
-
-      }
-    };
-    undertest = new RemoteControlledSampler.Builder(SERVICE_NAME)
-        .withSamplingManager(samplingManager)
-        .withInitialSampler(sampler)
-        .withMetrics(metrics)
-        .build();
-  }
-
 }
