@@ -41,14 +41,15 @@ public class RemoteControlledSampler implements Sampler {
   private final int maxOperations = 2000;
   private final SamplingManager manager;
 
-  @Getter(AccessLevel.PACKAGE)
-  private Sampler sampler;
+  // initialized in constructor and updated from a single (poll timer) thread
+  // volatile to guarantee immediate visibility of the updated sampler to other threads (remove if not a requirement)
+  @Getter(AccessLevel.PACKAGE) // visible for testing
+  private volatile Sampler sampler;
 
   // most of the time, toString here is called from the JaegerTracer, which holds this as well
   @ToString.Exclude private final String serviceName;
 
   @ToString.Exclude private final Timer pollTimer;
-  @ToString.Exclude private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
   @ToString.Exclude private final Metrics metrics;
 
   private RemoteControlledSampler(Builder builder) {
@@ -67,22 +68,21 @@ public class RemoteControlledSampler implements Sampler {
         new TimerTask() {
           @Override
           public void run() {
-            updateSampler();
+            try {
+              updateSampler();
+            } catch (Exception e) {
+              // keep timer thread alive
+            }
           }
         },
         0,
-        builder.poolingIntervalMs);
-    return;
-  }
-
-  public ReentrantReadWriteLock getLock() {
-    return lock;
+        builder.pollingIntervalMs);
   }
 
   /**
    * Updates {@link #sampler} to a new sampler when it is different.
    */
-  void updateSampler() {
+  void updateSampler() { // visible for testing
     SamplingStrategyResponse response;
     try {
       response = manager.getSamplingStrategy(serviceName);
@@ -117,29 +117,27 @@ public class RemoteControlledSampler implements Sampler {
       return;
     }
 
-    synchronized (this) {
-      if (!this.sampler.equals(sampler)) {
-        this.sampler = sampler;
-        metrics.samplerUpdated.inc(1);
-      }
+    if (!this.sampler.equals(sampler)) {
+      this.sampler = sampler;
+      metrics.samplerUpdated.inc(1);
     }
   }
 
-  private synchronized void updatePerOperationSampler(OperationSamplingParameters samplingParameters) {
-    if (sampler instanceof PerOperationSampler) {
-      if (((PerOperationSampler) sampler).update(samplingParameters)) {
+  private void updatePerOperationSampler(OperationSamplingParameters samplingParameters) {
+    Sampler currentSampler = sampler;
+    if (currentSampler instanceof PerOperationSampler) {
+      if (((PerOperationSampler) currentSampler).update(samplingParameters)) {
         metrics.samplerUpdated.inc(1);
       }
     } else {
       sampler = new PerOperationSampler(maxOperations, samplingParameters);
+      metrics.samplerUpdated.inc(1);
     }
   }
 
   @Override
   public SamplingStatus sample(String operation, long id) {
-    synchronized (this) {
-      return sampler.sample(operation, id);
-    }
+    return sampler.sample(operation, id);
   }
 
   @Override
@@ -149,24 +147,14 @@ public class RemoteControlledSampler implements Sampler {
     }
     if (sampler instanceof RemoteControlledSampler) {
       RemoteControlledSampler remoteSampler = ((RemoteControlledSampler) sampler);
-      synchronized (this) {
-        ReentrantReadWriteLock.ReadLock readLock = remoteSampler.getLock().readLock();
-        readLock.lock();
-        try {
-          return this.sampler.equals(remoteSampler.sampler);
-        } finally {
-          readLock.unlock();
-        }
-      }
+      return this.sampler.equals(remoteSampler.sampler);
     }
     return false;
   }
 
   @Override
   public void close() {
-    synchronized (this) {
-      pollTimer.cancel();
-    }
+    pollTimer.cancel();
   }
 
   public static class Builder {
@@ -174,7 +162,7 @@ public class RemoteControlledSampler implements Sampler {
     private SamplingManager samplingManager;
     private Sampler initialSampler;
     private Metrics metrics;
-    private int poolingIntervalMs = DEFAULT_POLLING_INTERVAL_MS;
+    private int pollingIntervalMs = DEFAULT_POLLING_INTERVAL_MS;
 
     public Builder(String serviceName) {
       this.serviceName = serviceName;
@@ -196,7 +184,7 @@ public class RemoteControlledSampler implements Sampler {
     }
 
     public Builder withPollingInterval(int pollingIntervalMs) {
-      this.poolingIntervalMs = pollingIntervalMs;
+      this.pollingIntervalMs = pollingIntervalMs;
       return this;
     }
 

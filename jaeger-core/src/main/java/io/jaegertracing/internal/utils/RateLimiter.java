@@ -17,12 +17,14 @@ package io.jaegertracing.internal.utils;
 import io.jaegertracing.internal.clock.Clock;
 import io.jaegertracing.internal.clock.SystemClock;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 public class RateLimiter {
-  private final double creditsPerNanosecond;
   private final Clock clock;
-  private double balance;
-  private double maxBalance;
-  private long lastTick;
+  private final double creditsPerNanosecond;
+  private final long maxBalance;
+  private final AtomicLong balance; // grows over time at creditsPerNanosecond rate up to maxBalance
+  private final AtomicLong lastTick;
 
   public RateLimiter(double creditsPerSecond, double maxBalance) {
     this(creditsPerSecond, maxBalance, new SystemClock());
@@ -30,23 +32,42 @@ public class RateLimiter {
 
   public RateLimiter(double creditsPerSecond, double maxBalance, Clock clock) {
     this.clock = clock;
-    this.balance = maxBalance;
-    this.maxBalance = maxBalance;
     this.creditsPerNanosecond = creditsPerSecond / 1.0e9;
+    this.maxBalance = (long) (maxBalance / creditsPerNanosecond);
+    this.balance = new AtomicLong(this.maxBalance);
+    this.lastTick = new AtomicLong(clock.currentNanoTicks());
   }
 
   public boolean checkCredit(double itemCost) {
     long currentTime = clock.currentNanoTicks();
-    double elapsedTime = currentTime - lastTick;
-    lastTick = currentTime;
-    balance += elapsedTime * creditsPerNanosecond;
-    if (balance > maxBalance) {
-      balance = maxBalance;
-    }
-    if (balance >= itemCost) {
-      balance -= itemCost;
-      return true;
-    }
-    return false;
+    long accruedNanos = currentTime - lastTick.getAndSet(currentTime); // may be negative
+    long nanoCost = (long) (itemCost / creditsPerNanosecond);
+    return updateBalance(accruedNanos, nanoCost);
+  }
+
+  /**
+   * Update the balance with accrued credits (up to max balance) and operation cost (if updated balance is sufficient).
+   *
+   * @param accrued accrued nanos since last check
+   * @param cost operation cost (in nanos)
+   *
+   * @return {@code true} iff there was sufficient balance (given the operation cost)
+   */
+  private boolean updateBalance(long accrued, long cost) {
+    long currentBalance;
+    long newBalance;
+    boolean enoughBalance;
+    do {
+      currentBalance = balance.get();
+      newBalance = currentBalance + accrued;
+      if (newBalance > maxBalance) {
+        newBalance = maxBalance;
+      }
+      enoughBalance = newBalance >= cost;
+      if (enoughBalance) {
+        newBalance -= cost;
+      }
+    } while (!balance.compareAndSet(currentBalance, newBalance));
+    return enoughBalance;
   }
 }
