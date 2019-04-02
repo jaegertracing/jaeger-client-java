@@ -38,16 +38,13 @@ public class RateLimiter {
 
   public boolean checkCredit(double itemCost) {
     long cost = (long) (itemCost / creditsPerNanosecond);
-    long credit = clock.currentNanoTicks();
+    long credit;
     long currentDebit;
     long balance;
     do {
       currentDebit = debit.get();
+      credit = clock.currentNanoTicks();
       balance = credit - currentDebit;
-      if (balance < 0) { // in a very unlikely (but theoretically possible) race case
-        credit = System.nanoTime();
-        balance = credit - currentDebit;
-      }
       if (balance > maxBalance) {
         balance = maxBalance;
       }
