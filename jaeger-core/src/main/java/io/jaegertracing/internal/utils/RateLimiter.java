@@ -22,9 +22,8 @@ import java.util.concurrent.atomic.AtomicLong;
 public class RateLimiter {
   private final Clock clock;
   private final double creditsPerNanosecond;
-  private final long maxBalance;
-  private final AtomicLong balance; // grows over time at creditsPerNanosecond rate up to maxBalance
-  private final AtomicLong lastTick;
+  private final long maxBalance; // max balance in nano ticks
+  private final AtomicLong debit; // last op nano time less remaining balance
 
   public RateLimiter(double creditsPerSecond, double maxBalance) {
     this(creditsPerSecond, maxBalance, new SystemClock());
@@ -34,40 +33,29 @@ public class RateLimiter {
     this.clock = clock;
     this.creditsPerNanosecond = creditsPerSecond / 1.0e9;
     this.maxBalance = (long) (maxBalance / creditsPerNanosecond);
-    this.balance = new AtomicLong(this.maxBalance);
-    this.lastTick = new AtomicLong(clock.currentNanoTicks());
+    this.debit = new AtomicLong(clock.currentNanoTicks() - this.maxBalance);
   }
 
   public boolean checkCredit(double itemCost) {
-    long currentTime = clock.currentNanoTicks();
-    long accruedNanos = currentTime - lastTick.getAndSet(currentTime); // may be negative
-    long nanoCost = (long) (itemCost / creditsPerNanosecond);
-    return updateBalance(accruedNanos, nanoCost);
-  }
-
-  /**
-   * Update the balance with accrued credits (up to max balance) and operation cost (if updated balance is sufficient).
-   *
-   * @param accrued accrued nanos since last check
-   * @param cost operation cost (in nanos)
-   *
-   * @return {@code true} iff there was sufficient balance (given the operation cost)
-   */
-  private boolean updateBalance(long accrued, long cost) {
-    long currentBalance;
-    long newBalance;
-    boolean enoughBalance;
+    long cost = (long) (itemCost / creditsPerNanosecond);
+    long credit = clock.currentNanoTicks();
+    long currentDebit;
+    long balance;
     do {
-      currentBalance = balance.get();
-      newBalance = currentBalance + accrued;
-      if (newBalance > maxBalance) {
-        newBalance = maxBalance;
+      currentDebit = debit.get();
+      balance = credit - currentDebit;
+      if (balance < 0) { // in a very unlikely (but theoretically possible) race case
+        credit = System.nanoTime();
+        balance = credit - currentDebit;
       }
-      enoughBalance = newBalance >= cost;
-      if (enoughBalance) {
-        newBalance -= cost;
+      if (balance > maxBalance) {
+        balance = maxBalance;
       }
-    } while (!balance.compareAndSet(currentBalance, newBalance));
-    return enoughBalance;
+      balance -= cost;
+      if (balance < 0) {
+        return false;
+      }
+    } while (!debit.compareAndSet(currentDebit, credit - balance));
+    return true;
   }
 }
