@@ -70,8 +70,8 @@ public class RemoteControlledSampler implements Sampler {
           public void run() {
             try {
               updateSampler();
-            } catch (Exception e) {
-              // keep timer thread alive
+            } catch (Exception e) { // keep the timer thread alive
+              log.error("Failed to update sampler", e);
             }
           }
         },

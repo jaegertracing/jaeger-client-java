@@ -180,7 +180,7 @@ public class RateLimiterTest {
         }
       });
     }
-    ForkJoinPool.commonPool().awaitQuiescence(1000, TimeUnit.MILLISECONDS);
+    ForkJoinPool.commonPool().awaitQuiescence(1, TimeUnit.SECONDS);
 
     assertEquals("Exactly the allocated number of credits must be consumed", numWorkers * creditsPerWorker,count.get());
     assertFalse(limiter.checkCredit(1));
