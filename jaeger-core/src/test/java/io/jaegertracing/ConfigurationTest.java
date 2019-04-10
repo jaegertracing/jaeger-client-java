@@ -40,8 +40,7 @@ import io.jaegertracing.spi.Sampler;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.Format.Builtin;
 import io.opentracing.propagation.TextMap;
-import io.opentracing.propagation.TextMapExtractAdapter;
-import io.opentracing.propagation.TextMapInjectAdapter;
+import io.opentracing.propagation.TextMapAdapter;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -480,13 +479,13 @@ public class ConfigurationTest {
   private <C> void assertInjectExtract(JaegerTracer tracer, Format<C> format, JaegerSpanContext contextToInject,
                                        boolean injectMapIsEmpty) {
     HashMap<String, String> injectMap = new HashMap<>();
-    tracer.inject(contextToInject, format, (C) new TextMapInjectAdapter(injectMap));
+    tracer.inject(contextToInject, format, (C) new TextMapAdapter(injectMap));
     assertEquals(injectMapIsEmpty, injectMap.isEmpty());
     if (injectMapIsEmpty) {
       return;
     }
 
-    JaegerSpanContext extractedContext = tracer.extract(format, (C) new TextMapExtractAdapter(injectMap));
+    JaegerSpanContext extractedContext = tracer.extract(format, (C) new TextMapAdapter(injectMap));
     assertEquals(contextToInject.getTraceId(), extractedContext.getTraceId());
     assertEquals(contextToInject.getSpanId(), extractedContext.getSpanId());
   }

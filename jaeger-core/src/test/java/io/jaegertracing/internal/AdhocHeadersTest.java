@@ -25,8 +25,7 @@ import io.jaegertracing.internal.samplers.ConstSampler;
 import io.opentracing.Span;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
-import io.opentracing.propagation.TextMapExtractAdapter;
-import io.opentracing.propagation.TextMapInjectAdapter;
+import io.opentracing.propagation.TextMapAdapter;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -50,7 +49,7 @@ public class AdhocHeadersTest {
   @Test
   public void testDebugCorrelationId() {
     Map<String, String> headers = Collections.singletonMap(Constants.DEBUG_ID_HEADER_KEY, "Coraline");
-    TextMap carrier = new TextMapExtractAdapter(headers);
+    TextMap carrier = new TextMapAdapter(headers);
 
     JaegerSpanContext inboundSpanContext = tracer.extract(Format.Builtin.TEXT_MAP, carrier);
     assertNotNull(inboundSpanContext);
@@ -74,7 +73,7 @@ public class AdhocHeadersTest {
   public void testJoinTraceWithAdhocBaggage() {
     Span span = tracer.buildSpan("test").start();
     Map<String, String> headers = new HashMap<String, String>();
-    tracer.inject(span.context(), Format.Builtin.HTTP_HEADERS, new TextMapInjectAdapter(headers));
+    tracer.inject(span.context(), Format.Builtin.HTTP_HEADERS, new TextMapAdapter(headers));
     assertEquals(1, headers.size());
 
     traceWithAdhocBaggage(headers);
@@ -83,7 +82,7 @@ public class AdhocHeadersTest {
   private void traceWithAdhocBaggage(Map<String, String> headers) {
     headers.put("jaeger-baggage", "k1=v1, k2 = v2");
 
-    JaegerSpanContext parent = tracer.extract(Format.Builtin.HTTP_HEADERS, new TextMapExtractAdapter(headers));
+    JaegerSpanContext parent = tracer.extract(Format.Builtin.HTTP_HEADERS, new TextMapAdapter(headers));
     JaegerSpan span = tracer.buildSpan("test").asChildOf(parent).start();
 
     assertTrue(span.context().isSampled());

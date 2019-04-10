@@ -17,6 +17,7 @@ package io.jaegertracing.internal;
 
 import io.opentracing.Span;
 import io.opentracing.log.Fields;
+import io.opentracing.tag.Tag;
 import io.opentracing.tag.Tags;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -204,6 +205,11 @@ public class JaegerSpan implements Span {
   @Override
   public synchronized JaegerSpan setTag(String key, Number value) {
     return setTagAsObject(key, value);
+  }
+
+  @Override
+  public synchronized <T> Span setTag(Tag<T> tag, T value) {
+    return setTagAsObject(tag.getKey(), value);
   }
 
   private JaegerSpan setTagAsObject(String key, Object value) {

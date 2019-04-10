@@ -22,8 +22,7 @@ import io.jaegertracing.internal.JaegerSpanContext;
 import io.jaegertracing.internal.exceptions.EmptyTracerStateStringException;
 import io.jaegertracing.internal.exceptions.MalformedTracerStateStringException;
 import io.jaegertracing.internal.exceptions.TraceIdOutOfBoundException;
-import io.opentracing.propagation.TextMapExtractAdapter;
-import io.opentracing.propagation.TextMapInjectAdapter;
+import io.opentracing.propagation.TextMapAdapter;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -136,15 +135,15 @@ public class TextMapCodecTest {
     long traceIdLow = 42;
     long spanId = 1;
     long parentId = 0;
-    codec.inject(new JaegerSpanContext(0L, traceIdLow, spanId, parentId, (byte)1), new TextMapInjectAdapter(headers));
+    codec.inject(new JaegerSpanContext(0L, traceIdLow, spanId, parentId, (byte)1), new TextMapAdapter(headers));
     headers.put("jaeger-baggage", "k1=v1, k2 = v2");
-    JaegerSpanContext context = codec.extract(new TextMapExtractAdapter(headers));
+    JaegerSpanContext context = codec.extract(new TextMapAdapter(headers));
     assertEquals("must have trace ID", 42, context.getTraceIdLow());
     assertEquals("must have trace ID", 0L, context.getTraceIdHigh());
     assertEquals("must have bagggae", "v1", context.getBaggageItem("k1"));
     assertEquals("must have bagggae", "v2", context.getBaggageItem("k2"));
   }
-  
+
   /**
    * Tests that the codec will return non-null SpanContext even if the only header
    * present is "jaeger-baggage".
@@ -154,7 +153,7 @@ public class TextMapCodecTest {
     Map<String, String> headers = new HashMap<String, String>();
     headers.put("jaeger-baggage", "k1=v1, k2 = v2, k3=v3=d3");
     TextMapCodec codec = new TextMapCodec(false);
-    JaegerSpanContext context = codec.extract(new TextMapExtractAdapter(headers));
+    JaegerSpanContext context = codec.extract(new TextMapAdapter(headers));
     assertEquals("v1", context.getBaggageItem("k1"));
     assertEquals("v2", context.getBaggageItem("k2"));
     assertEquals(null, context.getBaggageItem("k3"));

@@ -35,8 +35,7 @@ import io.jaegertracing.zipkin.internal.ConverterUtil;
 import io.jaegertracing.zipkin.internal.ThriftSpanConverter;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
-import io.opentracing.propagation.TextMapExtractAdapter;
-import io.opentracing.propagation.TextMapInjectAdapter;
+import io.opentracing.propagation.TextMapAdapter;
 import io.opentracing.tag.Tags;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -264,10 +263,9 @@ public class ThriftSpanConverterTest {
         .start();
 
     Map<String, String> map = new HashMap<>();
-    TextMap carrier = new TextMapInjectAdapter(map);
+    TextMap carrier = new TextMapAdapter(map);
     tracer.inject(client.context(), Format.Builtin.TEXT_MAP, carrier);
 
-    carrier = new TextMapExtractAdapter(map);
     JaegerSpanContext ctx = tracer.extract(Format.Builtin.TEXT_MAP, carrier);
     JaegerSpanContext clientCtx = client.context();
     assertEquals(clientCtx.getSpanId(), ctx.getSpanId());

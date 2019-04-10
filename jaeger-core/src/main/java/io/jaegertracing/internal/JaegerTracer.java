@@ -42,6 +42,7 @@ import io.opentracing.Span;
 import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
+import io.opentracing.tag.Tag;
 import io.opentracing.tag.Tags;
 import io.opentracing.util.ThreadLocalScopeManager;
 import java.io.Closeable;
@@ -189,8 +190,7 @@ public class JaegerTracer implements Tracer, Closeable {
   public Span activeSpan() {
     // the active scope might have been added there through an API extension, similar to what the OT java-metrics
     // library does -- therefore, we can't guarantee that we are returning a JaegerSpan here.
-    Scope scope = this.scopeManager.active();
-    return scope == null ? null : scope.span();
+    return this.scopeManager.activeSpan();
   }
 
   @Override
@@ -298,6 +298,14 @@ public class JaegerTracer implements Tracer, Closeable {
     @Override
     public JaegerTracer.SpanBuilder withTag(String key, Number value) {
       tags.put(key, value);
+      return this;
+    }
+
+    @Override
+    public <T> Tracer.SpanBuilder withTag(Tag<T> tag, T value) {
+      if (tag != null && tag.getKey() != null) {
+        this.tags.put(tag.getKey(), value);
+      }
       return this;
     }
 
@@ -428,8 +436,8 @@ public class JaegerTracer implements Tracer, Closeable {
       JaegerSpanContext context;
 
       // Check if active span should be established as CHILD_OF relationship
-      if (references.isEmpty() && !ignoreActiveSpan && null != scopeManager.active()) {
-        asChildOf(scopeManager.active().span());
+      if (references.isEmpty() && !ignoreActiveSpan && null != scopeManager.activeSpan()) {
+        asChildOf(scopeManager.activeSpan());
       }
 
       if (references.isEmpty() || !references.get(0).getSpanContext().hasTrace()) {
@@ -486,6 +494,7 @@ public class JaegerTracer implements Tracer, Closeable {
     private JaegerObjectFactory getObjectFactory() {
       return JaegerTracer.this.objectFactory;
     }
+
   }
 
   /**
@@ -699,5 +708,10 @@ public class JaegerTracer implements Tracer, Closeable {
 
   public boolean isUseTraceId128Bit() {
     return this.useTraceId128Bit;
+  }
+
+  @Override
+  public Scope activateSpan(Span span) {
+    return scopeManager().activate(span);
   }
 }
