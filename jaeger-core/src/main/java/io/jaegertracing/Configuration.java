@@ -19,6 +19,7 @@ import io.jaegertracing.internal.JaegerTracer;
 import io.jaegertracing.internal.metrics.Metrics;
 import io.jaegertracing.internal.metrics.NoopMetricsFactory;
 import io.jaegertracing.internal.propagation.B3TextMapCodec;
+import io.jaegertracing.internal.propagation.BinaryCodec;
 import io.jaegertracing.internal.propagation.CompositeCodec;
 import io.jaegertracing.internal.propagation.TextMapCodec;
 import io.jaegertracing.internal.reporters.CompositeReporter;
@@ -36,6 +37,7 @@ import io.jaegertracing.spi.Reporter;
 import io.jaegertracing.spi.Sampler;
 import io.jaegertracing.spi.Sender;
 import io.jaegertracing.spi.SenderFactory;
+import io.opentracing.propagation.Binary;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
 import java.text.NumberFormat;
@@ -424,9 +426,11 @@ public class Configuration {
    */
   public static class CodecConfiguration {
     private final Map<Format<?>, List<Codec<TextMap>>> codecs;
+    private final Map<Format<?>, List<Codec<Binary>>> binaryCodecs;
 
     public CodecConfiguration() {
       codecs = new HashMap<Format<?>, List<Codec<TextMap>>>();
+      binaryCodecs = new HashMap<Format<?>, List<Codec<Binary>>>();
     }
 
     public static CodecConfiguration fromEnv() {
@@ -457,6 +461,7 @@ public class Configuration {
         case JAEGER:
           addCodec(codecs, Format.Builtin.HTTP_HEADERS, new TextMapCodec(true));
           addCodec(codecs, Format.Builtin.TEXT_MAP, new TextMapCodec(false));
+          addBinaryCodec(binaryCodecs, Format.Builtin.BINARY, new BinaryCodec());
           break;
         case B3:
           addCodec(codecs, Format.Builtin.HTTP_HEADERS, new B3TextMapCodec.Builder().build());
@@ -473,8 +478,17 @@ public class Configuration {
       return this;
     }
 
+    public CodecConfiguration withBinaryCodec(Format<?> format, Codec<Binary> codec) {
+      addBinaryCodec(binaryCodecs, format, codec);
+      return this;
+    }
+
     public Map<Format<?>, List<Codec<TextMap>>> getCodecs() {
       return Collections.unmodifiableMap(codecs);
+    }
+
+    public Map<Format<?>, List<Codec<Binary>>> getBinaryCodecs() {
+      return Collections.unmodifiableMap(binaryCodecs);
     }
 
     private static void addCodec(Map<Format<?>, List<Codec<TextMap>>> codecs, Format<?> format, Codec<TextMap> codec) {
@@ -486,11 +500,23 @@ public class Configuration {
       codecList.add(codec);
     }
 
+    private static void addBinaryCodec(Map<Format<?>, List<Codec<Binary>>> codecs,
+        Format<?> format, Codec<Binary> codec) {
+
+      List<Codec<Binary>> codecList = codecs.get(format);
+      if (codecList == null) {
+        codecList = new LinkedList<Codec<Binary>>();
+        codecs.put(format, codecList);
+      }
+      codecList.add(codec);
+    }
+
     public void apply(JaegerTracer.Builder builder) {
       // Replace existing TEXT_MAP and HTTP_HEADERS codec with one that represents the
       // configured propagation formats
       registerCodec(builder, Format.Builtin.HTTP_HEADERS);
       registerCodec(builder, Format.Builtin.TEXT_MAP);
+      registerBinaryCodec(builder, Format.Builtin.BINARY);
     }
 
     protected void registerCodec(JaegerTracer.Builder builder, Format<TextMap> format) {
@@ -498,6 +524,16 @@ public class Configuration {
         List<Codec<TextMap>> codecsForFormat = codecs.get(format);
         Codec<TextMap> codec = codecsForFormat.size() == 1
             ? codecsForFormat.get(0) : new CompositeCodec<TextMap>(codecsForFormat);
+        builder.registerInjector(format, codec);
+        builder.registerExtractor(format, codec);
+      }
+    }
+
+    protected void registerBinaryCodec(JaegerTracer.Builder builder, Format<Binary> format) {
+      if (codecs.containsKey(format)) {
+        List<Codec<Binary>> codecsForFormat = binaryCodecs.get(format);
+        Codec<Binary> codec = codecsForFormat.size() == 1
+            ? codecsForFormat.get(0) : new CompositeCodec<Binary>(codecsForFormat);
         builder.registerInjector(format, codec);
         builder.registerExtractor(format, codec);
       }

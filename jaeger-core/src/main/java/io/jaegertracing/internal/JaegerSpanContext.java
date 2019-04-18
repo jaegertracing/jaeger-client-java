@@ -133,6 +133,13 @@ public class JaegerSpanContext implements SpanContext {
     return (flags & flagDebug) == flagDebug;
   }
 
+  /**
+   * @return the number of items in baggage.
+   */
+  public int baggageCount() {
+    return baggage.size();
+  }
+
   @Override
   public String toString() {
     return TextMapCodec.contextAsString(this);

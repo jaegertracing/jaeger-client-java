@@ -27,6 +27,7 @@ import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
 import io.opentracing.propagation.TextMapAdapter;
 
+import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -62,7 +63,6 @@ public class AdhocHeadersTest {
     assertTrue(serverSpanContext.isDebug());
     assertEquals("Coraline", span.getTags().get(Constants.DEBUG_ID_HEADER_KEY));
   }
-
 
   @Test
   public void testStartTraceWithAdhocBaggage() {
