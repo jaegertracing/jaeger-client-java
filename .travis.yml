@@ -47,7 +47,7 @@ jobs:
 
     - stage: deploy
       env: [ NAME=deploy-to-maven ]
-      script: ./gradlew upload
+      script: ./gradlew publish
 
     - stage: deploy
       env: [ NAME=deploy-crossdock-to-dockerhub ]
