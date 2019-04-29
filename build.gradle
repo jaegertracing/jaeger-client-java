@@ -6,16 +6,19 @@ import java.util.regex.Pattern
 plugins {
     id "org.jruyi.thrift" version "0.4.0"
     id "jacoco"
-    id "com.github.hierynomus.license" version "0.14.0"
-    id 'com.github.sherter.google-java-format' version '0.6'
-    id "com.github.johnrengelman.shadow" version "2.0.4"
+    id "com.github.hierynomus.license" version "0.15.0"
+    id "com.github.johnrengelman.shadow" version "5.0.0"
     id "net.ltgt.errorprone" version "0.0.14"
-    id 'ru.vyarus.animalsniffer' version '1.4.3'
-    id 'io.codearte.nexus-staging' version '0.11.0'
-    id 'com.github.ben-manes.versions' version '0.17.0'
+    id 'ru.vyarus.animalsniffer' version '1.5.0'
+    id 'java-library'
+    id 'maven-publish'
+    id 'signing'
+    id 'io.codearte.nexus-staging' version '0.20.0'
+    id "de.marcphilipp.nexus-publish" version "0.2.0"
+    id 'com.github.ben-manes.versions' version '0.21.0'
 }
 
-ext.developmentVersion = getProperty('developmentVersion','0.34.1-SNAPSHOT')
+ext.developmentVersion = getProperty('developmentVersion','0.35.1-SNAPSHOT')
 
 ext.opentracingVersion = getProperty('opentracingVersion','0.32.0')
 ext.guavaVersion = getProperty('guavaVersion','18.0')
@@ -35,10 +38,6 @@ ext.awaitilityVersion = '3.0.0'
 ext.logbackVersion = '1.2.3'
 
 ext.skipSigning = project.hasProperty('skipSigning') && skipSigning.toBoolean()
-
-task wrapper(type: Wrapper) {
-    gradleVersion = '4.0'
-}
 
 allprojects {
     apply plugin: 'idea' // intellij support
@@ -60,6 +59,7 @@ subprojects {
     apply plugin: 'maven'
     apply plugin: 'signing'
     apply plugin: 'checkstyle'
+    apply plugin: 'maven-publish'
 
 
     compileJava {
@@ -86,7 +86,7 @@ subprojects {
             delayBetweenRetriesInMillis = 3000
         }
 
-        uploadArchives.finalizedBy closeAndReleaseRepository
+        publish.finalizedBy closeAndReleaseRepository
     }
 
     animalsniffer {

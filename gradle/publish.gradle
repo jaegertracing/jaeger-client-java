@@ -8,80 +8,77 @@ def getRepositoryPassword() {
     return hasProperty('ossrhPassword') ? ossrhPassword : ""
 }
 
-// central maven release
-uploadArchives {
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    archiveClassifier = 'javadoc'
+    from javadoc.destinationDir
+}
 
+task sourcesJar(type: Jar) {
+    archiveClassifier = 'sources'
+    from sourceSets.main.allJava
+}
+
+publishing {
     repositories {
-        mavenDeployer {
-            if (isReleaseVersion) {
-                beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+        maven {
+            def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+            def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
+            url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+            credentials {
+                username = getRepositoryUsername()
+                password = getRepositoryPassword()
             }
+        }
+    }
+    publications {
+        mavenJava(MavenPublication) {
+            groupId = 'io.jaegertracing'
+            version = getVersionForBuild()
 
-            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-                authentication(userName:getRepositoryUsername(), password:getRepositoryPassword())
-            }
+            from components.java
+            artifact sourcesJar
+            artifact javadocJar
 
-            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-                authentication(userName:getRepositoryUsername(), password:getRepositoryPassword())
-            }
-
-            pom.project {
-                name 'jaeger-client'
-                packaging 'jar'
-                description 'Jaeger Java bindings for OpenTracing API'
-                url 'https://github.com/jaegertracing/jaeger-client-java'
-
-                scm {
-                    connection 'scm:git:git@github.com:jaegertracing/jaeger-client-java.git'
-                    developerConnection 'scm:git:git@github.com:jaegertracing/jaeger-client-java.git'
-                    url 'git@github.com:jaegertracing/jaeger-client-java.git'
-                }
-
+            pom {
+                name = 'jaeger-client'
+                packaging = 'jar'
+                description = 'Jaeger Java bindings for OpenTracing API'
+                url = 'https://github.com/jaegertracing/jaeger-client-java'
                 licenses {
                     license {
-                        name 'Apache 2.0 License'
-                        url 'http://www.apache.org/licenses/LICENSE-2.0'
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
                     }
                 }
-
                 developers {
                     developer {
-                        id 'oibe'
-                        name 'Onwukike Ibe'
-                        email 'oibe@uber.com'
+                        id = 'oibe'
+                        name = 'Onwukike Ibe'
+                        email = 'oibe@uber.com'
                     }
                     developer {
-                        id 'yurishkuro'
-                        name 'Yuri Shkuro'
-                        email 'ys@uber.com'
+                        id = 'yurishkuro'
+                        name = 'Yuri Shkuro'
+                        email = 'ys@uber.com'
                     }
+                }
+                scm {
+                    connection = 'scm:git:git@github.com:jaegertracing/jaeger-client-java.git'
+                    developerConnection = 'scm:git:git@github.com:jaegertracing/jaeger-client-java.git'
+                    url = 'git@github.com:jaegertracing/jaeger-client-java.git'
                 }
             }
         }
     }
 }
 
-// add javadocs to our jar
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
-    from javadoc.destinationDir
-}
-
-// add sources to our jar
-task sourcesJar(type: Jar) {
-    classifier = 'sources'
-    from sourceSets.main.allSource
-}
-
-// add the jars as artifacts
-artifacts {
-    archives jar
-    archives sourcesJar
-    archives javadocJar
+nexusPublishing {
+    username = getRepositoryUsername()
+    password = getRepositoryPassword()
 }
 
 signing {
     if (isReleaseVersion) {
-        sign configurations.archives
+        sign publishing.publications.mavenJava
     }
 }
