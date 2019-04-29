@@ -12,7 +12,6 @@ Changes by Version
 
 - Concurrency improvements to RemoteControlledSampler ([#609](https://github.com/jaegertracing/jaeger-client-java/pull/609), [@yborovikov](https://github.com/yborovikov))
 - Adding support for opentracing 0.32 ([#567](https://github.com/jaegertracing/jaeger-client-java/pull/567), [@dougEfresh](https://github.com/dougEfresh))
-- Replacing the wrong link with the correct. ([#604](https://github.com/jaegertracing/jaeger-client-java/pull/604), [@sosiska](https://github.com/sosiska))
 
 0.34.0 (2019-03-04)
 -------------------
