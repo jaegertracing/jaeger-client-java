@@ -17,12 +17,13 @@ package io.jaegertracing.internal.utils;
 import io.jaegertracing.internal.clock.Clock;
 import io.jaegertracing.internal.clock.SystemClock;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 public class RateLimiter {
-  private final double creditsPerNanosecond;
   private final Clock clock;
-  private double balance;
-  private double maxBalance;
-  private long lastTick;
+  private final double creditsPerNanosecond;
+  private final long maxBalance; // max balance in nano ticks
+  private final AtomicLong debit; // last op nano time less remaining balance
 
   public RateLimiter(double creditsPerSecond, double maxBalance) {
     this(creditsPerSecond, maxBalance, new SystemClock());
@@ -30,23 +31,28 @@ public class RateLimiter {
 
   public RateLimiter(double creditsPerSecond, double maxBalance, Clock clock) {
     this.clock = clock;
-    this.balance = maxBalance;
-    this.maxBalance = maxBalance;
     this.creditsPerNanosecond = creditsPerSecond / 1.0e9;
+    this.maxBalance = (long) (maxBalance / creditsPerNanosecond);
+    this.debit = new AtomicLong(clock.currentNanoTicks() - this.maxBalance);
   }
 
   public boolean checkCredit(double itemCost) {
-    long currentTime = clock.currentNanoTicks();
-    double elapsedTime = currentTime - lastTick;
-    lastTick = currentTime;
-    balance += elapsedTime * creditsPerNanosecond;
-    if (balance > maxBalance) {
-      balance = maxBalance;
-    }
-    if (balance >= itemCost) {
-      balance -= itemCost;
-      return true;
-    }
-    return false;
+    long cost = (long) (itemCost / creditsPerNanosecond);
+    long credit;
+    long currentDebit;
+    long balance;
+    do {
+      currentDebit = debit.get();
+      credit = clock.currentNanoTicks();
+      balance = credit - currentDebit;
+      if (balance > maxBalance) {
+        balance = maxBalance;
+      }
+      balance -= cost;
+      if (balance < 0) {
+        return false;
+      }
+    } while (!debit.compareAndSet(currentDebit, credit - balance));
+    return true;
   }
 }

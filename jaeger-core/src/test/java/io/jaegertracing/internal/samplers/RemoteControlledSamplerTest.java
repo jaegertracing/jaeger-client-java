@@ -16,6 +16,7 @@ package io.jaegertracing.internal.samplers;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -33,6 +34,9 @@ import io.jaegertracing.spi.Sampler;
 import io.jaegertracing.spi.SamplingManager;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -52,6 +56,7 @@ public class RemoteControlledSamplerTest {
   @Before
   public void setUp() throws Exception {
     metrics = new Metrics(new InMemoryMetricsFactory());
+    // TODO this starts the timer with mocks not yet configured, causing NPEs; refactor to .build() from tests
     undertest = new RemoteControlledSampler.Builder(SERVICE_NAME)
         .withSamplingManager(samplingManager)
         .withInitialSampler(initialSampler)
@@ -107,6 +112,7 @@ public class RemoteControlledSamplerTest {
 
   @Test
   public void testUpdatePerOperationSamplerUpdatesExistingPerOperationSampler() throws Exception {
+    undertest.close();
     PerOperationSampler perOperationSampler = mock(PerOperationSampler.class);
     OperationSamplingParameters parameters = mock(OperationSamplingParameters.class);
     when(samplingManager.getSamplingStrategy(SERVICE_NAME)).thenReturn(
@@ -139,6 +145,23 @@ public class RemoteControlledSamplerTest {
   }
 
   @Test
+  public void testUpdateFailureKeepsTimerRunning() throws InterruptedException {
+    undertest.close();
+    CountDownLatch latch = new CountDownLatch(3);
+    SamplingManager failingManager = serviceName -> {
+      latch.countDown();
+      throw new RuntimeException("test update failure");
+    };
+    undertest = new RemoteControlledSampler.Builder(SERVICE_NAME)
+        .withSamplingManager(failingManager)
+        .withInitialSampler(initialSampler)
+        .withMetrics(metrics)
+        .withPollingInterval(1)
+        .build();
+    assertTrue(latch.await(1, TimeUnit.SECONDS));
+  }
+
+  @Test
   public void testSample() throws Exception {
     undertest.sample("op", 1L);
     verify(initialSampler).sample("op", 1L);
@@ -160,6 +183,7 @@ public class RemoteControlledSamplerTest {
 
   @Test
   public void testDefaultProbabilisticSampler() {
+    undertest.close();
     undertest = new RemoteControlledSampler.Builder(SERVICE_NAME)
         .withSamplingManager(samplingManager)
         .withInitialSampler(null)
