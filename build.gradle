@@ -15,7 +15,7 @@ plugins {
     id 'com.github.ben-manes.versions' version '0.17.0'
 }
 
-ext.developmentVersion = getProperty('developmentVersion','0.34.1-SNAPSHOT')
+ext.developmentVersion = getProperty('developmentVersion','0.35.0')
 
 ext.opentracingVersion = getProperty('opentracingVersion','0.32.0')
 ext.guavaVersion = getProperty('guavaVersion','18.0')
