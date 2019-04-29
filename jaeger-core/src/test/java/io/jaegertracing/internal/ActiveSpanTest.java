@@ -52,6 +52,13 @@ public class ActiveSpanTest {
   }
 
   @Test
+  public void testActivateSpan() {
+    JaegerSpan mockSpan = Mockito.mock(JaegerSpan.class);
+    tracer.activateSpan(mockSpan);
+    assertEquals(mockSpan, tracer.activeSpan());
+  }
+
+  @Test
   public void testActiveSpanPropagation() {
     try (Scope parent = tracer.buildSpan("parent").startActive(true)) {
       assertEquals(parent, tracer.scopeManager().active());
@@ -159,11 +166,22 @@ public class ActiveSpanTest {
           }
 
           @Override
+          public Scope activate(Span span) {
+            return activate(span, false);
+          }
+
+          @Override
           public Scope active() {
             return scope;
           }
+
+          @Override
+          public Span activeSpan() {
+            return null;
+          }
         }).build();
     assertEquals(scope, tracer.scopeManager().active());
+    assertEquals(scope, tracer.scopeManager().activate(mock(Span.class)));
   }
 
 
