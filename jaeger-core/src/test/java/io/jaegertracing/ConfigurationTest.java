@@ -44,7 +44,6 @@ import io.opentracing.propagation.Format;
 import io.opentracing.propagation.Format.Builtin;
 import io.opentracing.propagation.TextMap;
 import io.opentracing.propagation.TextMapAdapter;
-import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -532,7 +531,6 @@ public class ConfigurationTest {
     assertEquals(contextToInject.getSpanId(), extractedContext.getSpanId());
   }
 
-  @SuppressWarnings("unchecked")
   private void assertBinaryInjectExtract(JaegerTracer tracer, JaegerSpanContext contextToInject) {
     TestBinaryCarrier carrier = new TestBinaryCarrier();
     tracer.inject(contextToInject, Format.Builtin.BINARY, carrier);
