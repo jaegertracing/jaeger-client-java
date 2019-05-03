@@ -14,15 +14,19 @@
 
 package io.jaegertracing.internal.utils;
 
-import static junit.framework.TestCase.assertFalse;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import io.jaegertracing.internal.clock.Clock;
+
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.junit.Test;
 
 public class RateLimiterTest {
-  RateLimiter limiter;
 
   private static class MockClock implements Clock {
 
@@ -127,4 +131,59 @@ public class RateLimiterTest {
     assertTrue(limiter.checkCredit(1.0));
     assertFalse(limiter.checkCredit(1.0));
   }
+
+  /**
+   * Validates rate limiter behavior with {@link System#nanoTime()}-like (non-zero) initial nano ticks.
+   */
+  @Test
+  public void testRateLimiterInitial() {
+    MockClock clock = new MockClock();
+    clock.timeNanos = TimeUnit.MILLISECONDS.toNanos(-1_000_000);
+    RateLimiter limiter = new RateLimiter(1000, 100, clock);
+
+    assertTrue(limiter.checkCredit(100)); // consume initial (max) balance
+    assertFalse(limiter.checkCredit(1));
+
+    clock.timeNanos += TimeUnit.MILLISECONDS.toNanos(49); // add 49 credits
+    assertFalse(limiter.checkCredit(50));
+
+    clock.timeNanos += TimeUnit.MILLISECONDS.toNanos(1); // add one credit
+    assertTrue(limiter.checkCredit(50)); // consume accrued balance
+    assertFalse(limiter.checkCredit(1));
+
+    clock.timeNanos += TimeUnit.MILLISECONDS.toNanos(1_000_000); // add a lot of credits (max out balance)
+    assertTrue(limiter.checkCredit(1)); // take one credit
+
+    clock.timeNanos += TimeUnit.MILLISECONDS.toNanos(1_000_000); // add a lot of credits (max out balance)
+    assertFalse(limiter.checkCredit(101)); // can't consume more than max balance
+    assertTrue(limiter.checkCredit(100)); // consume max balance
+    assertFalse(limiter.checkCredit(1));
+  }
+
+  /**
+   * Validates concurrent credit check correctness.
+   */
+  @Test
+  public void testRateLimiterConcurrency() {
+    int numWorkers = ForkJoinPool.getCommonPoolParallelism();
+    int creditsPerWorker = 1000;
+    MockClock clock = new MockClock();
+    RateLimiter limiter = new RateLimiter(1, numWorkers * creditsPerWorker, clock);
+
+    AtomicInteger count = new AtomicInteger();
+    for (int w = 0; w < numWorkers; ++w) {
+      ForkJoinPool.commonPool().execute(() -> {
+        for (int i = 0; i < creditsPerWorker * 2; ++i) {
+          if (limiter.checkCredit(1)) {
+            count.getAndIncrement(); // count allowed operations
+          }
+        }
+      });
+    }
+    ForkJoinPool.commonPool().awaitQuiescence(1, TimeUnit.SECONDS);
+
+    assertEquals("Exactly the allocated number of credits must be consumed", numWorkers * creditsPerWorker,count.get());
+    assertFalse(limiter.checkCredit(1));
+  }
+
 }

@@ -1,11 +1,19 @@
 Changes by Version
 ==================
 
-0.34.1 (unreleased)
+0.35.1 (unreleased)
 -------------------
+
 - Nothing yet.
 
-0.34.0 (2018-03-04)
+
+0.35.0 (2019-04-29)
+-------------------
+
+- Concurrency improvements to RemoteControlledSampler ([#609](https://github.com/jaegertracing/jaeger-client-java/pull/609), [@yborovikov](https://github.com/yborovikov))
+- Adding support for opentracing 0.32 ([#567](https://github.com/jaegertracing/jaeger-client-java/pull/567), [@dougEfresh](https://github.com/dougEfresh))
+
+0.34.0 (2019-03-04)
 -------------------
 
 - exclude apache httpclient deps from libthrift ([#596](https://github.com/jaegertracing/jaeger-client-java/pull/596), [@t-8ch](https://github.com/t-8ch))
