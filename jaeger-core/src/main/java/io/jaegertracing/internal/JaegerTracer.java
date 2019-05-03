@@ -24,6 +24,7 @@ import io.jaegertracing.internal.exceptions.NotFourOctetsException;
 import io.jaegertracing.internal.exceptions.UnsupportedFormatException;
 import io.jaegertracing.internal.metrics.Metrics;
 import io.jaegertracing.internal.metrics.NoopMetricsFactory;
+import io.jaegertracing.internal.propagation.BinaryCodec;
 import io.jaegertracing.internal.propagation.TextMapCodec;
 import io.jaegertracing.internal.reporters.RemoteReporter;
 import io.jaegertracing.internal.samplers.RemoteControlledSampler;
@@ -538,7 +539,12 @@ public class JaegerTracer implements Tracer, Closeable {
               .build();
       this.registerInjector(Format.Builtin.HTTP_HEADERS, httpCodec);
       this.registerExtractor(Format.Builtin.HTTP_HEADERS, httpCodec);
-      // TODO binary codec not implemented
+      BinaryCodec binaryCodec =
+          BinaryCodec.builder()
+              .withObjectFactory(this.objectFactory)
+              .build();
+      this.registerInjector(Format.Builtin.BINARY, binaryCodec);
+      this.registerExtractor(Format.Builtin.BINARY, binaryCodec);
     }
 
     /**

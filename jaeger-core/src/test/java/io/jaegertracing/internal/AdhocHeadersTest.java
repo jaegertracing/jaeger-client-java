@@ -63,7 +63,6 @@ public class AdhocHeadersTest {
     assertEquals("Coraline", span.getTags().get(Constants.DEBUG_ID_HEADER_KEY));
   }
 
-
   @Test
   public void testStartTraceWithAdhocBaggage() {
     traceWithAdhocBaggage(new HashMap<String, String>());

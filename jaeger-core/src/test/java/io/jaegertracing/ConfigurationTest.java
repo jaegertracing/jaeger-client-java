@@ -31,12 +31,15 @@ import io.jaegertracing.internal.metrics.InMemoryMetricsFactory;
 import io.jaegertracing.internal.metrics.Metrics;
 import io.jaegertracing.internal.metrics.MockMetricsFactory;
 import io.jaegertracing.internal.propagation.B3TextMapCodec;
+import io.jaegertracing.internal.propagation.BinaryCodec;
+import io.jaegertracing.internal.propagation.TestBinaryCarrier;
 import io.jaegertracing.internal.propagation.TextMapCodec;
 import io.jaegertracing.internal.samplers.ConstSampler;
 import io.jaegertracing.internal.samplers.ProbabilisticSampler;
 import io.jaegertracing.internal.samplers.RateLimitingSampler;
 import io.jaegertracing.spi.Codec;
 import io.jaegertracing.spi.Sampler;
+import io.opentracing.propagation.Binary;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.Format.Builtin;
 import io.opentracing.propagation.TextMap;
@@ -258,6 +261,25 @@ public class ConfigurationTest {
   }
 
   @Test
+  public void testPropagationBinary() {
+    System.setProperty(Configuration.JAEGER_PROPAGATION, "jaeger");
+    System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
+
+    long traceIdLow = 1234L;
+    long spanId = 5678L;
+
+    TestBinaryCarrier buffer = new TestBinaryCarrier();
+    JaegerSpanContext spanContext = new JaegerSpanContext(0, traceIdLow, spanId, 0, (byte)0);
+
+    JaegerTracer tracer = Configuration.fromEnv().getTracer();
+    tracer.inject(spanContext, Format.Builtin.BINARY, buffer);
+    JaegerSpanContext extractedContext = tracer.extract(Format.Builtin.BINARY, buffer);
+    assertEquals(traceIdLow, extractedContext.getTraceIdLow());
+    assertEquals(0, extractedContext.getTraceIdHigh());
+    assertEquals(spanId, extractedContext.getSpanId());
+  }
+
+  @Test
   public void testPropagationDefault() {
     System.setProperty(Configuration.JAEGER_SERVICE_NAME, "Test");
 
@@ -385,12 +407,24 @@ public class ConfigurationTest {
       }
     };
 
+    Codec<Binary> codec3 = new Codec<Binary>() {
+      @Override
+      public JaegerSpanContext extract(Binary carrier) {
+        return null;
+      }
+
+      @Override
+      public void inject(JaegerSpanContext spanContext, Binary carrier) {
+      }
+    };
     CodecConfiguration codecConfiguration = new CodecConfiguration()
         .withCodec(Builtin.HTTP_HEADERS, codec1)
-        .withCodec(Builtin.HTTP_HEADERS, codec2);
+        .withCodec(Builtin.HTTP_HEADERS, codec2)
+        .withBinaryCodec(Builtin.BINARY, codec3);
     assertEquals(2, codecConfiguration.getCodecs().get(Builtin.HTTP_HEADERS).size());
     assertEquals(codec1, codecConfiguration.getCodecs().get(Builtin.HTTP_HEADERS).get(0));
     assertEquals(codec2, codecConfiguration.getCodecs().get(Builtin.HTTP_HEADERS).get(1));
+    assertEquals(codec3, codecConfiguration.getBinaryCodecs().get(Builtin.BINARY).get(0));
 
     Configuration configuration = new Configuration("foo")
         .withCodec(codecConfiguration);
@@ -412,6 +446,7 @@ public class ConfigurationTest {
     JaegerSpanContext spanContext = new JaegerSpanContext(0, traceIdLow, spanId, parentId, (byte) 0);
     assertInjectExtract(configuration.getTracer(), Builtin.TEXT_MAP, spanContext, false);
     assertInjectExtract(configuration.getTracer(), Builtin.HTTP_HEADERS, spanContext, false);
+    assertBinaryInjectExtract(configuration.getTracer(), spanContext);
   }
 
   @Test
@@ -424,6 +459,7 @@ public class ConfigurationTest {
     JaegerSpanContext spanContext = new JaegerSpanContext(traceIdHigh, traceIdLow, spanId, parentId, (byte) 0);
     assertInjectExtract(configuration.getTracer(), Builtin.TEXT_MAP, spanContext, false);
     assertInjectExtract(configuration.getTracer(), Builtin.HTTP_HEADERS, spanContext, false);
+    assertBinaryInjectExtract(configuration.getTracer(), spanContext);
   }
 
   @Test
@@ -438,6 +474,7 @@ public class ConfigurationTest {
     JaegerSpanContext spanContext = new JaegerSpanContext(traceIdHigh, traceIdLow, spanId, parentId, (byte) 0);
     assertInjectExtract(configuration.getTracer(), Builtin.TEXT_MAP, spanContext, false);
     assertInjectExtract(configuration.getTracer(), Builtin.HTTP_HEADERS, spanContext, false);
+    assertBinaryInjectExtract(configuration.getTracer(), spanContext);
   }
 
   @Test
@@ -447,10 +484,12 @@ public class ConfigurationTest {
     assertEquals(2, codecConfiguration.getCodecs().size());
     assertEquals(2, codecConfiguration.getCodecs().get(Builtin.HTTP_HEADERS).size());
     assertEquals(2, codecConfiguration.getCodecs().get(Builtin.TEXT_MAP).size());
+    assertEquals(1, codecConfiguration.getBinaryCodecs().get(Builtin.BINARY).size());
     assertTrue(codecConfiguration.getCodecs().get(Builtin.HTTP_HEADERS).get(0) instanceof B3TextMapCodec);
     assertTrue(codecConfiguration.getCodecs().get(Builtin.HTTP_HEADERS).get(1) instanceof TextMapCodec);
     assertTrue(codecConfiguration.getCodecs().get(Builtin.TEXT_MAP).get(0) instanceof B3TextMapCodec);
     assertTrue(codecConfiguration.getCodecs().get(Builtin.TEXT_MAP).get(1) instanceof TextMapCodec);
+    assertTrue(codecConfiguration.getBinaryCodecs().get(Builtin.BINARY).get(0) instanceof BinaryCodec);
   }
 
   @Test
@@ -462,6 +501,8 @@ public class ConfigurationTest {
     assertEquals(1, codecConfiguration.getCodecs().get(Builtin.TEXT_MAP).size());
     assertTrue(codecConfiguration.getCodecs().get(Builtin.HTTP_HEADERS).get(0) instanceof TextMapCodec);
     assertTrue(codecConfiguration.getCodecs().get(Builtin.TEXT_MAP).get(0) instanceof TextMapCodec);
+    assertEquals(1, codecConfiguration.getBinaryCodecs().size());
+    assertTrue(codecConfiguration.getBinaryCodecs().get(Builtin.BINARY).get(0) instanceof BinaryCodec);
   }
 
   @Test
@@ -486,6 +527,14 @@ public class ConfigurationTest {
     }
 
     JaegerSpanContext extractedContext = tracer.extract(format, (C) new TextMapAdapter(injectMap));
+    assertEquals(contextToInject.getTraceId(), extractedContext.getTraceId());
+    assertEquals(contextToInject.getSpanId(), extractedContext.getSpanId());
+  }
+
+  private void assertBinaryInjectExtract(JaegerTracer tracer, JaegerSpanContext contextToInject) {
+    TestBinaryCarrier carrier = new TestBinaryCarrier();
+    tracer.inject(contextToInject, Format.Builtin.BINARY, carrier);
+    JaegerSpanContext extractedContext = tracer.extract(Format.Builtin.BINARY, carrier);
     assertEquals(contextToInject.getTraceId(), extractedContext.getTraceId());
     assertEquals(contextToInject.getSpanId(), extractedContext.getSpanId());
   }
