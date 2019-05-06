@@ -1,10 +1,16 @@
 Changes by Version
 ==================
 
-0.35.1 (unreleased)
+0.36.0 (unreleased)
 -------------------
 
 - Nothing yet.
+
+
+0.35.2 (2019-05-06)
+-------------------
+
+- Add binary codec ([#613](https://github.com/jaegertracing/jaeger-client-java/pull/613), [@ColinSullivan1](https://github.com/ColinSullivan1))
 
 
 0.35.0 (2019-04-29)
