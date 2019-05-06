@@ -19,17 +19,6 @@ task sourcesJar(type: Jar) {
 }
 
 publishing {
-    repositories {
-        maven {
-            def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
-            def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
-            url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
-            credentials {
-                username = getRepositoryUsername()
-                password = getRepositoryPassword()
-            }
-        }
-    }
     publications {
         mavenJava(MavenPublication) {
             groupId = 'io.jaegertracing'
@@ -74,8 +63,6 @@ publishing {
 
 
 nexusPublishing {
-    serverUrl = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
-    snapshotRepositoryUrl = uri("https://oss.sonatype.org/content/repositories/snapshots/")
     username = getRepositoryUsername()
     password = getRepositoryPassword()
 }
