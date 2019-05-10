@@ -4,19 +4,20 @@
 
 The release process consists of these steps:
   1. Create a pull request with:
-     * Change the version in [`build.gradle`](build.gradle) to match the release version e.g. `0.20.0`
      * Add an entry to [`CHANGELOG`](CHANGELOG.md) with changes since the last release
-  1. Commit your `CHANGELOG` changes
-  1. Create and push tag with the new version `git tag v0.20.0 && git push origin v0.20.0`
-  1. Once the *tag* build finishes in Travis, the artifacts should have been uploaded to Sonatype staging,
-     the staging repository closed, and the artifacts on the way to Maven Central (it takes 20min+ to get there).
-     In case of failures it is safe to retry by restarting the maven-deploy job. If it keeps
-     failing, sometimes it may be necessary to close the staging repository manually.
-  1. Create a release on GitHub for the new tag. Use the changes from the `CHANGELOG` as the description.
-  1. Once the artifacts are available on Maven
-     * bump the version in `build.gradle` to `major.minor.(patch+1)-SNAPSHOT`
      * add a new section to the CHANGELOG with that version as `(unreleased)` and a bullet point `- Nothing yet`
-     * commit with the comment "Back to development" (for example, https://github.com/jaegertracing/jaeger-client-java/commit/da9726d3ba7309947882e3c621516c70b4bc83dc)
+  1. Commit your `CHANGELOG` changes as `git commit -m "Preparing release 0.20.0" -s`
+  1. Create and push tag with the new version `git tag release-0.20.0 && git push origin release-0.20.0`. 
+  Do not update the version in `gradle.properties` manually.
+  1. The build for the `release-` tag does following:
+     * It updates the version in `gradle.properties` and creates commit and tag `v0.20.0`
+     * It updates version to the next `SNAPSHOT` and commits it
+     * The next build for the tag publishes artifact to Nexus. If the build fails it might 
+     be necessary to drop staging repositories and restart the build or just close the repository.
+  1. Create a release on GitHub for the new tag `v0.20.0`. Use the changes from the `CHANGELOG` as the description.
+
+
+Maintenance branches should follow naming convention: `release-major.minor` (e.g.`release-0.20`).
 
 ## Local setup and release
 

@@ -1,6 +1,9 @@
 sudo: required
 language: java
 dist: trusty
+git:
+  # pull everything for safe commits comparison before deploying
+  depth: false
 services:
 - docker
 env:
@@ -8,6 +11,8 @@ env:
   - DOCKER_VERSION=1.11.1-0~trusty
   - DOCKER_COMPOSE_VERSION=1.7.0
   - COMMIT=${TRAVIS_COMMIT::8}
+  # GH_TOKEN
+  - secure: "U5MNSISi7mUv+oDT9wwnrv2i90CaD6mSHrkkzW9tChikMsssq8cnWO8KwQ226Qbv2V16dLHr8sq504At2dKOzsxbBxLOkH7OXEt1uCrMErrMVL82XmKkThD6KTWSiDRdYLFoNbGv/q0B+U6ZZwPdTDibVquBw71cNDUuq8GdivCyT9f/7GQNUTVHjHmFRlU3lTAx9Z5rSKW6ZyL4tVFheTNNYO758Swg2pVVXRQbO9ZOfW7Mg5OKuR1i1gtpB4gpTtcVPykE3hEPd/loOHUZSQZu91c8uSk3Oxp1Pk8vKsUseebQoyaGXxnL1LZtNpbZHz+6p9PzlAEWIWNmUme0ji1B42zXgMxY2QNNj4Y27aNj9eiOqI6oUBjN1qyErgH467DEzMsbMs/weYW9KlwiJ9OfIHvRZ+BM5uxyeBs/xSb5UBlULmecsTDI5xWYJmv70iOLmSNZ4eRjFUkge89sGi/EgJEbLKE4Z8BXRbmdIMVycsZTfirS0k85NkWgNIQ4dMBhm5V28kZaPiO/kri4FXoge/Zbvqt1FkTY/puEh+AC7cP9S+PjpdTe9vtHc78BXP0cIrS/JL/wELiQumSDqXSnnQ+1OCB8+LLAMIr2tfA5YXC44UoyyaoMSWk7RO6KyUVgYDk3tTU7SFwsyeYVBGXr8X21tMxHE0Yu4nbS/FM="
   # travis encrypt -r <repo> SONATYPE_USERNAME=<username>
   - secure: "szUKwXCryzn9J59+K8E3/mvxmH1pVgpXkoXKN4tWNU5Tu9yht43agyYQ6JK388Ik2oYAo0P0qD4Tablrpv6aMFrw2YWh7hZ1YfCmTkgTyZ7TL7jdQIwOLSgy96ttRZxxJwk+bwKHBYSRSQMBcveDmxaRz7q1tKPV7HJIIjbbpHPZOf0mGkPWgSmCuFG35w7m22ZudgyjwlaiBvddMywobIQDkyrThro7VoVLh/IvTRwpHWa1JfQeCO3r81Z6VHmz06LO/82fczra2AldVjpyldFq+Ow5S+fYoFe065nbyWl19OFy1mSgYoS3VUNueY76WfmvSMkp3NfpJMFrtSYY2jHesdqMi8daKCHPuT223CTU83fBs+rHwdA8iE23TSxCgOkm3RS85Zz+s/WbuyJojh5GrqB1+lWCE+LHIPlZqmnd4vR95MP07324EaJ0lZyFT1WzrdhfLMl07+sYQCb7EEp5lt2PjIdRyAOuIf5fdV5sf3E0gm4cfdNNIKuThNTqIXKcaOP7UjZSysfeskt1oDJA5qtsftaeaiAsNTrDjY3ay6jT5W1eV2hBgcOfUeu/eVQ8TlXu8JkxUolntEh0L9FSmiJc7+nppkqKjGFEHzqCfFwm2rHLprnwCrUQl/FLmYJVeBczIRYwkb3u/SXLFqjxmrgjyE0jooPnj9PF30I="
   # travis encrypt -r <repo> SONATYPE_PASSWORD=<password>
@@ -29,6 +34,12 @@ cache:
   - "$HOME/.gradle/wrapper/"
 before_install:
 - ./travis/prepare-signing.sh $encrypted_677f232983c0_key $encrypted_677f232983c0_iv
+- git config user.name "jaegertracingci"
+- git config user.email "jaegertracingci+jaeger-tracing@googlegroups.com"
+# setup https authentication credentials, used by ./gradlew publish
+- git config credential.helper "store --file=.git/credentials"
+- echo "https://$GH_TOKEN:@github.com" > .git/credentials
+
 
 stages:
   - name: test
@@ -47,7 +58,7 @@ jobs:
 
     - stage: deploy
       env: [ NAME=deploy-to-maven ]
-      script: ./gradlew publish
+      script: ./travis/deploy.sh
 
     - stage: deploy
       env: [ NAME=deploy-crossdock-to-dockerhub ]

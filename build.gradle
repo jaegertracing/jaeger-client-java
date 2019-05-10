@@ -1,8 +1,6 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
-import java.util.regex.Pattern
-
 plugins {
     id "org.jruyi.thrift" version "0.4.0"
     id "jacoco"
@@ -16,9 +14,8 @@ plugins {
     id 'io.codearte.nexus-staging' version '0.20.0'
     id "de.marcphilipp.nexus-publish" version "0.2.0" apply false
     id 'com.github.ben-manes.versions' version '0.21.0'
+    id 'net.researchgate.release' version '2.6.0'
 }
-
-ext.developmentVersion = getProperty('developmentVersion','0.35.2-SNAPSHOT')
 
 ext.opentracingVersion = getProperty('opentracingVersion','0.32.0')
 ext.guavaVersion = getProperty('guavaVersion','18.0')
@@ -44,13 +41,21 @@ allprojects {
     apply plugin: 'jacoco'
 
     group = 'io.jaegertracing'
-    version = getVersionForBuild()
 
     repositories {
         mavenLocal()
         mavenCentral()
     }
 }
+
+def getRepositoryUsername() {
+    return hasProperty('ossrhUsername') ? ossrhUsername : ""
+}
+
+def getRepositoryPassword() {
+    return hasProperty('ossrhPassword') ? ossrhPassword : ""
+}
+
 
 subprojects {
     apply plugin: 'ru.vyarus.animalsniffer'
@@ -79,8 +84,8 @@ subprojects {
     if (!version.endsWith("SNAPSHOT")) {
         nexusStaging {
             packageGroup = "io.jaegertracing"
-            username = ossrhUsername
-            password = ossrhPassword
+            username = getRepositoryUsername()
+            password = getRepositoryPassword()
             // Dealing with error "Wrong number of received repositories in state 'open'" (http://bit.ly/2ybracm)
             numberOfRetries = 50
             delayBetweenRetriesInMillis = 3000
@@ -177,7 +182,7 @@ task codeCoverageReport(type: JacocoReport, group: 'Coverage reports') {
 }
 
 task printVersion {
-    println getVersionForBuild()
+    println project.version
 }
 
 configure(subprojects.findAll {it.name != 'jaeger-thrift'}) {
@@ -196,20 +201,14 @@ configure(subprojects.findAll {it.name != 'jaeger-thrift'}) {
     }
 }
 
-def getVersionForBuild() {
-    String candidateVersion = System.env.TRAVIS_TAG
-
-    if (null == candidateVersion || candidateVersion.isEmpty()) {
-        return ext.developmentVersion
-    }
-
-    if (Pattern.compile("[v]?((\\d+)\\.(\\d+)\\.(\\d+))(\\-RC\\d+)?").matcher(candidateVersion).matches()) {
-        return candidateVersion.drop(1)
-    }
-
-    return ext.developmentVersion
-}
-
 def getProperty(name, defaultValue) {
     project.properties[name] ?: defaultValue
+}
+
+release {
+    git {
+        requireBranch = 'master|release-*'
+    }
+    // default is x.x.x
+    tagTemplate = "v" + project.properties["release.releaseVersion"]
 }
