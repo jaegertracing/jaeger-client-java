@@ -127,3 +127,5 @@ gradle-app.setting
 # gradle/wrapper/gradle-wrapper.properties
 
 jaeger-crossdock/jaeger-docker-compose.yml
+
+signing-key.asc
