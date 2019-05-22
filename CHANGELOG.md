@@ -7,6 +7,12 @@ Changes by Version
 - Nothing yet.
 
 
+0.35.5 (2019-05-22)
+-------------------
+
+- Fix RemoteBaggageRestrictionManager NullPointerException on empty response ([#631](https://github.com/jaegertracing/jaeger-client-java/pull/631)) [@ravirajj](https://github.com/ravirajj)
+
+
 0.35.2 (2019-05-06)
 -------------------
 
