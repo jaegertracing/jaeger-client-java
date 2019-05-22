@@ -51,11 +51,6 @@ public class RemoteBaggageRestrictionManagerTest {
   public void setUp() throws Exception {
     metricsFactory = new InMemoryMetricsFactory();
     metrics = new Metrics(metricsFactory);
-    undertest = new RemoteBaggageRestrictionManager.Builder(SERVICE_NAME)
-        .withProxy(baggageRestrictionProxy)
-        .withMetrics(metrics)
-        .withDenyBaggageInitializationFailure(false)
-        .build();
   }
 
   @After
@@ -66,14 +61,51 @@ public class RemoteBaggageRestrictionManagerTest {
   @Test
   public void testUpdateBaggageRestrictions() throws Exception {
     when(baggageRestrictionProxy.getBaggageRestrictions(SERVICE_NAME))
-        .thenReturn(new ArrayList<BaggageRestrictionResponse>(Arrays.asList(RESTRICTION)));
-    undertest.updateBaggageRestrictions();
+        .thenReturn(new ArrayList<>(Arrays.asList(RESTRICTION)));
+    undertest = new RemoteBaggageRestrictionManager.Builder(SERVICE_NAME)
+        .withProxy(baggageRestrictionProxy)
+        .withMetrics(metrics)
+        .withDenyBaggageInitializationFailure(false)
+        .build();
 
+    undertest.updateBaggageRestrictions();
     assertEquals(Restriction.of(true, MAX_VALUE_LENGTH), undertest.getRestriction(SERVICE_NAME, BAGGAGE_KEY));
     assertFalse(undertest.getRestriction(SERVICE_NAME, "bad-key").isKeyAllowed());
     assertTrue(
         metricsFactory.getCounter("jaeger_tracer_baggage_restrictions_updates.result=ok",
             Collections.emptyMap()) > 0L);
+  }
+
+  @Test
+  public void testEmptyBaggageRestrictions() throws Exception {
+    when(baggageRestrictionProxy.getBaggageRestrictions(SERVICE_NAME))
+        .thenReturn(new ArrayList<>(Arrays.asList(RESTRICTION)))
+        .thenReturn(null);
+    undertest = new RemoteBaggageRestrictionManager.Builder(SERVICE_NAME)
+        .withProxy(baggageRestrictionProxy)
+        .withMetrics(metrics)
+        .withDenyBaggageInitializationFailure(false)
+        .withRefreshIntervalMs(60000)
+        .withInitialDelayMs(60000)
+        .build();
+
+    // Initialized successfully
+    undertest.updateBaggageRestrictions();
+    assertEquals(Restriction.of(true, MAX_VALUE_LENGTH), undertest.getRestriction(SERVICE_NAME, BAGGAGE_KEY));
+    assertFalse(undertest.getRestriction(SERVICE_NAME, "bad-key").isKeyAllowed());
+    assertEquals(1L, metricsFactory.getCounter("jaeger_tracer_baggage_restrictions_updates.result=ok",
+        Collections.emptyMap()));
+    assertEquals(0L, metricsFactory.getCounter("jaeger_tracer_baggage_restrictions_updates.result=err",
+        Collections.emptyMap()));
+
+    // Empty restrictions response use previously initialized restriction
+    undertest.updateBaggageRestrictions();
+    assertEquals(Restriction.of(true, MAX_VALUE_LENGTH), undertest.getRestriction(SERVICE_NAME, BAGGAGE_KEY));
+    assertFalse(undertest.getRestriction(SERVICE_NAME, "bad-key").isKeyAllowed());
+    assertEquals(1L, metricsFactory.getCounter("jaeger_tracer_baggage_restrictions_updates.result=ok",
+        Collections.emptyMap()));
+    assertEquals(1L, metricsFactory.getCounter("jaeger_tracer_baggage_restrictions_updates.result=err",
+        Collections.emptyMap()));
   }
 
   @Test
@@ -100,7 +132,7 @@ public class RemoteBaggageRestrictionManagerTest {
   @Test
   public void testDenyBaggageOnInitializationFailure() throws Exception {
     when(baggageRestrictionProxy.getBaggageRestrictions(SERVICE_NAME))
-        .thenReturn(new ArrayList<BaggageRestrictionResponse>(Arrays.asList(RESTRICTION)));
+        .thenReturn(new ArrayList<>(Arrays.asList(RESTRICTION)));
     undertest = new RemoteBaggageRestrictionManager.Builder(SERVICE_NAME)
         .withProxy(baggageRestrictionProxy)
         .withMetrics(metrics)
