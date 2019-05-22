@@ -79,6 +79,9 @@ public class RemoteBaggageRestrictionManager implements BaggageRestrictionManage
     List<BaggageRestrictionResponse> response;
     try {
       response = proxy.getBaggageRestrictions(serviceName);
+      if (response == null || response.isEmpty()) {
+        throw new BaggageRestrictionManagerException("empty restrictions response");
+      }
     } catch (BaggageRestrictionManagerException e) {
       metrics.baggageRestrictionsUpdateFailure.inc(1);
       return;
