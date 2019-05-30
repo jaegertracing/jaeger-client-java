@@ -75,6 +75,10 @@ public class JaegerSpan implements Span {
     return startTimeMicroseconds;
   }
 
+  public boolean isFinished() {
+    return finished;
+  }
+
   public long getDuration() {
     synchronized (this) {
       return durationMicroseconds;

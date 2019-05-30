@@ -159,6 +159,12 @@ public class JaegerSpanTest {
   }
 
   @Test
+  public void testFinished() {
+    jaegerSpan.finish();
+    assertTrue(jaegerSpan.isFinished());
+  }
+
+  @Test
   public void testSetTag() {
     jaegerSpan.setTag(new StringTag("stringTag"), "stringTagValue")
               .setTag(new IntTag("numberTag"), 1)
