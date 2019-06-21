@@ -23,6 +23,8 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
+import java.security.NoSuchAlgorithmException;
+import java.security.KeyManagementException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import javax.net.ssl.SSLContext;
@@ -134,7 +136,7 @@ public class HttpSender extends ThriftSender {
       return this;
     }
 
-    public Builder withCertificatePinning(String[] sha256certs /* comma separated */) {
+    public Builder withCertificatePinning(String[] sha256certs) {
       pins.addAll(Arrays.asList(sha256certs));
       return this;
     }
@@ -156,7 +158,7 @@ public class HttpSender extends ThriftSender {
         final URI uri = new URI(endpoint);
         String hostname = hostname = uri.getHost();
 
-        if (uri.getScheme() != null && uri.getScheme().equals("https")) {
+        if ("https".equals(uri.getScheme())) {
           if (!selfSigned && !pins.isEmpty()) {
             // Pinning Certificate issued by public CA
             for (String cert: pins) {
@@ -183,10 +185,10 @@ public class HttpSender extends ThriftSender {
         sslContext.init(null, selfSignedServerTrustManager, null);
         clientBuilder.sslSocketFactory(sslContext.getSocketFactory(), (X509TrustManager) selfSignedServerTrustManager[0]);
 
-      } catch (java.security.NoSuchAlgorithmException e) {
-          // TLS is hardcoded abave. No occasion to come here.
+      } catch (NoSuchAlgorithmException e) {
+          // TLS is hardcoded above. No occasion to come here.
           throw new RuntimeException(e);
-      } catch (java.security.KeyManagementException e) {
+      } catch (KeyManagementException e) {
           /* KeyManagementException will not occurs because sslContext uses default KeyManager (first argument).
            *
            * > Either of the first two parameters may be null in which case the installed security providers
@@ -210,7 +212,7 @@ public class HttpSender extends ThriftSender {
       };
     }
 
-    private static class SelfSignedTrustManager implements javax.net.ssl.X509TrustManager {
+    private static class SelfSignedTrustManager implements X509TrustManager {
       private final String subjectCN;
       private final List<String> pins;
 
