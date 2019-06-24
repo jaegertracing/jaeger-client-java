@@ -130,7 +130,7 @@ public class HttpSenderTest extends JerseyTest {
   }
 
   @Test
-  public void setTLSCertificatePinning() throws Exception {
+  public void sendPlainHttpWithCertificatePinning() throws Exception {
     System.setProperty(Configuration.JAEGER_ENDPOINT, target("/api/traces").getUri().toString());
     // Just confirm this is settable. Crossdock is used for TLS-level test.
     System.setProperty(Configuration.JAEGER_TLS_CERTIFICATE_PINNING,
