@@ -30,7 +30,13 @@ compileThrift {
 }
 
 tasks.withType(Javadoc) {
-   enabled = false
+    enabled = false
+}
+
+tasks.withType(Jar) {
+    manifest {
+        attributes('Implementation-Title': project.name, 'Implementation-Version': project.version, 'Specification-Version': project.version)
+    }
 }
 
 sourceSets {

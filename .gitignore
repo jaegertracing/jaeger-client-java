@@ -1,6 +1,9 @@
 gen-java/
 jaeger-core/src/main/resources/io/jaegertracing/internal/jaeger.properties
 
+### VSCode ###
+.vscode/
+
 ### Eclipse ###
 
 .metadata
