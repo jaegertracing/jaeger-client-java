@@ -476,7 +476,7 @@ public class JaegerTracer implements Tracer, Closeable {
     }
 
     @Deprecated
-    // @Override keeping for compatibility with 0.32.0
+    // @Override keep compatibility with 0.32.0
     public Scope startActive(final boolean finishSpanOnClose) {
       final Span span = start();
       final Scope wrapped = scopeManager.activate(span);
