@@ -32,6 +32,7 @@ import io.jaegertracing.crossdock.resources.behavior.TraceBehavior;
 import io.jaegertracing.internal.JaegerSpanContext;
 import io.jaegertracing.internal.samplers.ConstSampler;
 import io.opentracing.Scope;
+import io.opentracing.Span;
 import io.opentracing.noop.NoopTracerFactory;
 import io.opentracing.tag.Tags;
 import io.opentracing.util.GlobalTracer;
@@ -103,58 +104,62 @@ public class TraceBehaviorResourceTest {
 
   @Test
   public void testStartTraceHttp() throws Exception {
-    Scope scope = server.getTracer().buildSpan("root").startActive(true);
-    String expectedTraceId = ((JaegerSpanContext)scope.span().context()).getTraceId();
+    Span root = server.getTracer().buildSpan("root").start();
+    String expectedTraceId = ((JaegerSpanContext) root.context()).getTraceId();
     String expectedBaggage = "baggage-example";
 
-    Downstream downstream =
-        new Downstream(SERVICE_NAME, "127.0.0.1", String.valueOf(port), Constants.TRANSPORT_HTTP, "server", null);
-    StartTraceRequest startTraceRequest =
-        new StartTraceRequest("server-role", expectedSampled, expectedBaggage, downstream);
+    try (Scope scope = server.getTracer().activateSpan(root)) {
+      Downstream downstream =
+          new Downstream(SERVICE_NAME, "127.0.0.1", String.valueOf(port), Constants.TRANSPORT_HTTP,
+              "server", null);
+      StartTraceRequest startTraceRequest =
+          new StartTraceRequest("server-role", expectedSampled, expectedBaggage, downstream);
 
-    Response resp =
-        JerseyServer.client
-            .target(String.format("http://%s/start_trace", hostPort))
-            .request(MediaType.APPLICATION_JSON)
-            .post(Entity.json(startTraceRequest));
+      Response resp =
+          JerseyServer.client
+              .target(String.format("http://%s/start_trace", hostPort))
+              .request(MediaType.APPLICATION_JSON)
+              .post(Entity.json(startTraceRequest));
 
-    TraceResponse traceResponse = resp.readEntity(TraceResponse.class);
-
-    assertNotNull(traceResponse.getDownstream());
-    validateTraceResponse(traceResponse, expectedTraceId, expectedBaggage, 1);
-    scope.close();
+      TraceResponse traceResponse = resp.readEntity(TraceResponse.class);
+      assertNotNull(traceResponse.getDownstream());
+      validateTraceResponse(traceResponse, expectedTraceId, expectedBaggage, 1);
+    }
   }
 
   @Test
   public void testJoinTraceHttp() throws Exception {
-    Scope scope = server.getTracer().buildSpan("root").startActive(true);
+    Span root = server.getTracer().buildSpan("root").start();
 
     String expectedBaggage = "baggage-example";
-    scope.span().setBaggageItem(Constants.BAGGAGE_KEY, expectedBaggage);
+    root.setBaggageItem(Constants.BAGGAGE_KEY, expectedBaggage);
     if (expectedSampled) {
-      Tags.SAMPLING_PRIORITY.set(scope.span(), 1);
+      Tags.SAMPLING_PRIORITY.set(root, 1);
     }
 
-    Downstream bottomDownstream =
-        new Downstream(SERVICE_NAME, "127.0.0.1", String.valueOf(port), Constants.TRANSPORT_HTTP, "server", null);
-    Downstream topDownstream =
-        new Downstream(
-            SERVICE_NAME, "127.0.0.1", String.valueOf(port), Constants.TRANSPORT_HTTP, "server", bottomDownstream);
+    try (Scope scope = server.getTracer().activateSpan(root)) {
+      Downstream bottomDownstream =
+          new Downstream(SERVICE_NAME, "127.0.0.1", String.valueOf(port), Constants.TRANSPORT_HTTP,
+              "server", null);
+      Downstream topDownstream =
+          new Downstream(
+              SERVICE_NAME, "127.0.0.1", String.valueOf(port), Constants.TRANSPORT_HTTP, "server",
+              bottomDownstream);
 
-    JoinTraceRequest joinTraceRequest = new JoinTraceRequest("server-role", topDownstream);
+      JoinTraceRequest joinTraceRequest = new JoinTraceRequest("server-role", topDownstream);
 
-    Response resp =
-        JerseyServer.client
-            .target(String.format("http://%s/join_trace", hostPort))
-            .request(MediaType.APPLICATION_JSON)
-            .post(Entity.json(joinTraceRequest));
+      Response resp =
+          JerseyServer.client
+              .target(String.format("http://%s/join_trace", hostPort))
+              .request(MediaType.APPLICATION_JSON)
+              .post(Entity.json(joinTraceRequest));
 
-    TraceResponse traceResponse = resp.readEntity(TraceResponse.class);
+      TraceResponse traceResponse = resp.readEntity(TraceResponse.class);
 
-    assertNotNull(traceResponse.getDownstream());
-    validateTraceResponse(traceResponse,
-            ((JaegerSpanContext)scope.span().context()).getTraceId(), expectedBaggage, 2);
-    scope.close();
+      assertNotNull(traceResponse.getDownstream());
+      validateTraceResponse(traceResponse,
+          ((JaegerSpanContext) root.context()).getTraceId(), expectedBaggage, 2);
+    }
   }
 
   private void validateTraceResponse(

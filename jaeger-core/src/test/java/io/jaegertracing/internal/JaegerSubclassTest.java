@@ -17,6 +17,7 @@ package io.jaegertracing.internal;
 import io.jaegertracing.Configuration;
 import io.opentracing.Scope;
 
+import io.opentracing.Span;
 import java.util.List;
 import java.util.Map;
 
@@ -165,11 +166,12 @@ public class JaegerSubclassTest {
     final CustomConfiguration config = new CustomConfiguration("test-service");
     final CustomTracer.CustomBuilder builder = config.getTracerBuilder();
     final CustomTracer tracer = builder.build();
-    final Scope scope = tracer.buildSpan("test-operation").startActive(true);
-    Assert.assertNotNull(tracer.scopeManager().active());
-    Assert.assertTrue(tracer.scopeManager().active().span() instanceof CustomSpan);
-    Assert.assertTrue(tracer.scopeManager().active().span().context() instanceof CustomSpanContext);
-    scope.close();
+    final Span span = tracer.buildSpan("test-operation").start();
+    try (Scope scope = tracer.activateSpan(span)) {
+      Assert.assertNotNull(tracer.scopeManager().activeSpan());
+      Assert.assertTrue(tracer.scopeManager().activeSpan() instanceof CustomSpan);
+      Assert.assertTrue(tracer.scopeManager().activeSpan().context() instanceof CustomSpanContext);
+    }
     config.closeTracer();
   }
 }
