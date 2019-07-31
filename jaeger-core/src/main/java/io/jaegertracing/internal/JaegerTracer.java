@@ -475,9 +475,26 @@ public class JaegerTracer implements Tracer, Closeable {
       return jaegerSpan;
     }
 
-    @Override
-    public Scope startActive(boolean finishSpanOnClose) {
-      return scopeManager.activate(start(), finishSpanOnClose);
+    @Deprecated
+    // @Override keep compatibility with 0.32.0
+    public Scope startActive(final boolean finishSpanOnClose) {
+      if (!finishSpanOnClose) {
+        return scopeManager.activate(start());
+      }
+      return new Scope() {
+        Span span = start();
+        Scope wrapped = scopeManager.activate(span);
+        @Override
+        public void close() {
+          wrapped.close();
+            span.finish();
+        }
+
+        // @Override keep compatibility with 0.32.0
+        public Span span() {
+          return span;
+        }
+      };
     }
 
     @Override
@@ -486,9 +503,9 @@ public class JaegerTracer implements Tracer, Closeable {
       return this;
     }
 
-    @Override
     @Deprecated
-    public JaegerSpan startManual() {
+    // @Override keep compatibility with 0.32.0
+    public Span startManual() {
       return start();
     }
 

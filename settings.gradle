@@ -1,5 +1,6 @@
 rootProject.name = 'jaeger-client'
 include 'jaeger-core'
+include 'jaeger-core-ot-0.32.0-itest'
 include 'jaeger-zipkin'
 include 'jaeger-crossdock'
 include 'jaeger-thrift'

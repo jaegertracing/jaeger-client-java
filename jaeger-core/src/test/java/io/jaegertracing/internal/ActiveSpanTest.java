@@ -31,8 +31,8 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 public class ActiveSpanTest {
-  InMemoryReporter reporter;
-  JaegerTracer tracer;
+  protected InMemoryReporter reporter;
+  protected JaegerTracer tracer;
 
   @Before
   public void setUp() {
@@ -47,8 +47,9 @@ public class ActiveSpanTest {
   @Test
   public void testActiveSpan() {
     JaegerSpan mockSpan = Mockito.mock(JaegerSpan.class);
-    tracer.scopeManager().activate(mockSpan, true);
-    assertEquals(mockSpan, tracer.activeSpan());
+    try (Scope scope = tracer.scopeManager().activate(mockSpan)) {
+      assertEquals(mockSpan, tracer.activeSpan());
+    }
   }
 
   @Test
@@ -60,15 +61,19 @@ public class ActiveSpanTest {
 
   @Test
   public void testActiveSpanPropagation() {
-    try (Scope parent = tracer.buildSpan("parent").startActive(true)) {
-      assertEquals(parent, tracer.scopeManager().active());
+    Span span = tracer.buildSpan("parent").start();
+    try (Scope parent = tracer.activateSpan(span)) {
+      assertEquals(span, tracer.scopeManager().activeSpan());
     }
   }
 
   @Test
   public void testActiveSpanAutoReference() {
-    try (Scope ignored = tracer.buildSpan("parent").startActive(true)) {
-      tracer.buildSpan("child").startActive(true).close();
+    Span span = tracer.buildSpan("parent").start();
+    try (Scope ignored = tracer.activateSpan(span)) {
+      tracer.buildSpan("child").start().finish();
+    } finally {
+      span.finish();
     }
     assertEquals(2, reporter.getSpans().size());
 
@@ -89,6 +94,7 @@ public class ActiveSpanTest {
   }
 
   @Test
+  @SuppressWarnings("deprecation")
   public void testActiveSpanAutoFinishOnClose() {
     tracer.buildSpan("parent").startActive(true).close();
     assertEquals(1, reporter.getSpans().size());
@@ -96,9 +102,10 @@ public class ActiveSpanTest {
 
   @Test
   public void testActiveSpanNotAutoFinishOnClose() {
-    Scope scope = tracer.buildSpan("parent").startActive(false);
-    Span span = scope.span();
-    scope.close();
+    Span span = tracer.buildSpan("parent").start();
+    try (Scope ignored = tracer.activateSpan(span)) {
+      // noop
+    }
     assertTrue(reporter.getSpans().isEmpty());
     span.finish();
     assertEquals(1, reporter.getSpans().size());
@@ -106,8 +113,11 @@ public class ActiveSpanTest {
 
   @Test
   public void testIgnoreActiveSpan() {
-    try (Scope ignored = tracer.buildSpan("parent").startActive(true)) {
-      tracer.buildSpan("child").ignoreActiveSpan().startActive(true).close();
+    Span span = tracer.buildSpan("parent").start();
+    try (Scope ignored = tracer.activateSpan(span)) {
+      tracer.buildSpan("child").ignoreActiveSpan().start().finish();
+    } finally {
+      span.finish();
     }
     assertEquals(2, reporter.getSpans().size());
 
@@ -125,9 +135,12 @@ public class ActiveSpanTest {
   @Test
   public void testNoAutoRefWithExistingRefs() {
     JaegerSpan initialSpan = tracer.buildSpan("initial").start();
-
-    try (Scope ignored = tracer.buildSpan("parent").startActive(true)) {
-      tracer.buildSpan("child").asChildOf(initialSpan.context()).startActive(true).close();
+    JaegerSpan parent = tracer.buildSpan("parent").start();
+    try (Scope ignored = tracer.activateSpan(parent)) {
+      tracer.buildSpan("child").asChildOf(initialSpan.context()).start().finish();
+    } finally {
+      parent.finish();
+      initialSpan.finish();
     }
 
     initialSpan.finish();
@@ -154,6 +167,7 @@ public class ActiveSpanTest {
 
   @Test
   public void testCustomScopeManager() {
+    Span span = mock(Span.class);
     Scope scope = mock(Scope.class);
     JaegerTracer tracer = new JaegerTracer.Builder("test")
         .withReporter(new InMemoryReporter())
@@ -161,27 +175,17 @@ public class ActiveSpanTest {
         .withScopeManager(new ScopeManager() {
 
           @Override
-          public Scope activate(Span span, boolean finishSpanOnClose) {
-            return scope;
-          }
-
-          @Override
           public Scope activate(Span span) {
-            return activate(span, false);
-          }
-
-          @Override
-          public Scope active() {
             return scope;
           }
 
           @Override
           public Span activeSpan() {
-            return null;
+            return span;
           }
         }).build();
-    assertEquals(scope, tracer.scopeManager().active());
-    assertEquals(scope, tracer.scopeManager().activate(mock(Span.class)));
+    assertEquals(span, tracer.scopeManager().activeSpan());
+    assertEquals(scope, tracer.scopeManager().activate(span));
   }
 
 
@@ -192,7 +196,7 @@ public class ActiveSpanTest {
     ScopeManager scopeManager = tracer.scopeManager();
 
     // test
-    scopeManager.activate(activeSpan, false);
+    scopeManager.activate(activeSpan);
 
     // check
     assertEquals(activeSpan, tracer.activeSpan());
