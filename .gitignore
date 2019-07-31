@@ -53,6 +53,7 @@ local.properties
 # IntelliJ
 /out/
 /jaeger-core/out/
+/jaeger-core-ot-0.32.0-itest/out/
 
 ### Intellij Patch ###
 # Comment Reason: https://github.com/joeblau/gitignore.io/issues/186#issuecomment-215987721

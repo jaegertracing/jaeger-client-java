@@ -31,8 +31,8 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 public class ActiveSpanTest {
-  InMemoryReporter reporter;
-  JaegerTracer tracer;
+  protected InMemoryReporter reporter;
+  protected JaegerTracer tracer;
 
   @Before
   public void setUp() {
@@ -94,6 +94,7 @@ public class ActiveSpanTest {
   }
 
   @Test
+  @SuppressWarnings("deprecation")
   public void testActiveSpanAutoFinishOnClose() {
     tracer.buildSpan("parent").startActive(true).close();
     assertEquals(1, reporter.getSpans().size());
