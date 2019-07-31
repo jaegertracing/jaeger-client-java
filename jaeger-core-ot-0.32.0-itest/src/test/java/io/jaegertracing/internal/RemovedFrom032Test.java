@@ -59,6 +59,18 @@ public class RemovedFrom032Test {
   }
 
   @Test
+  public void testScopeManager_activate_and_not_finish() {
+    Span span = tracer.buildSpan(SPAN_NAME).start();
+    Scope scope = tracer.scopeManager().activate(span, false);
+    try {
+      assertEquals(scope, tracer.scopeManager().active());
+    } finally {
+      scope.close();
+    }
+    assertEquals(0, reporter.getSpans().size());
+  }
+
+  @Test
   public void testScopeManager_activate_and_finish() {
     Span span = tracer.buildSpan(SPAN_NAME).start();
     Scope scope = tracer.scopeManager().activate(span, true);
