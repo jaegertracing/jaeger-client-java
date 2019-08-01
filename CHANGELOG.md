@@ -1,10 +1,17 @@
 Changes by Version
 ==================
 
-0.36.0 (unreleased)
+1.1.0 (unreleased)
 -------------------
 
 - Nothing yet.
+
+
+1.0.0 (2019-08-02)
+-------------------
+
+- Support OpenTracing 0.32.0 and 0.33.0 ([#623](https://github.com/jaegertracing/jaeger-client-java/pull/623)) [@pavolloffay](https://github.com/pavolloffay)
+- Add manifest entries to jaeger-thrift ([#641](https://github.com/jaegertracing/jaeger-client-java/pull/641)) [@objectiser](https://github.com/objectiser)
 
 
 0.35.5 (2019-05-22)
