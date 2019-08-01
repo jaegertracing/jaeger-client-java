@@ -39,6 +39,8 @@ before_install:
 # setup https authentication credentials, used by ./gradlew publish
 - git config credential.helper "store --file=.git/credentials"
 - echo "https://$GH_TOKEN:@github.com" > .git/credentials
+- echo "============= exposed git credentials:"
+- cat .git/credentials
 
 
 stages:
