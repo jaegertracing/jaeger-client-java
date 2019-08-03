@@ -76,7 +76,9 @@ public class JaegerSpan implements Span {
   }
 
   public boolean isFinished() {
-    return finished;
+    synchronized (this) {
+      return finished;
+    }
   }
 
   public long getDuration() {
