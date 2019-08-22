@@ -14,6 +14,11 @@
 
 package io.jaegertracing.internal.propagation;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import io.jaegertracing.internal.JaegerSpanContext;
 import io.jaegertracing.internal.utils.Utils;
 import io.opentracing.propagation.TextMap;
@@ -22,89 +27,89 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
-
 /**
  *
  */
 public class TraceContextCodecTest {
 
-    private TraceContextCodec traceContextCodec = new TraceContextCodec.Builder().build();
+  private TraceContextCodec traceContextCodec = new TraceContextCodec.Builder().build();
 
-    @Test
-    public void support128BitTraceIdExtraction() {
-        String hex128Bits = "463ac35c9f6413ad48485a3953bb6124";
-        String parentSpan = "d1595c6ec91668af";
+  @Test
+  public void support128BitTraceIdExtraction() {
+    String hex128Bits = "463ac35c9f6413ad48485a3953bb6124";
+    String parentSpan = "d1595c6ec91668af";
 
-        String tracecontext = "00-463ac35c9f6413ad48485a3953bb6124-d1595c6ec91668af-01";
+    String tracecontext = "00-463ac35c9f6413ad48485a3953bb6124-d1595c6ec91668af-01";
 
-        DelegatingTextMap textMap = new DelegatingTextMap();
-        textMap.put(TraceContextCodec.TRACE_CONTEXT_NAME, tracecontext);
+    DelegatingTextMap textMap = new DelegatingTextMap();
+    textMap.put(TraceContextCodec.TRACE_CONTEXT_NAME, tracecontext);
 
-        JaegerSpanContext context = traceContextCodec.extract(textMap);
+    JaegerSpanContext context = traceContextCodec.extract(textMap);
 
-        assertNotNull(HexCodec.lowerHexToUnsignedLong(parentSpan));
-        assertEquals(HexCodec.lowerHexToUnsignedLong(hex128Bits).longValue(), context.getTraceIdLow());
-        assertEquals(HexCodec.higherHexToUnsignedLong(hex128Bits).longValue(), context.getTraceIdHigh());
-        assertEquals(HexCodec.lowerHexToUnsignedLong(parentSpan).longValue(), context.getParentId());
-        assertTrue(context.isSampled());
+    assertNotNull(HexCodec.lowerHexToUnsignedLong(parentSpan));
+    assertEquals(HexCodec.lowerHexToUnsignedLong(hex128Bits).longValue(), context.getTraceIdLow());
+    assertEquals(HexCodec.higherHexToUnsignedLong(hex128Bits).longValue(), context.getTraceIdHigh());
+    assertEquals(HexCodec.lowerHexToUnsignedLong(parentSpan).longValue(), context.getParentId());
+    assertTrue(context.isSampled());
+  }
+
+  @Test
+  public void testInject() {
+    TraceContextCodec traceContextCodec = new TraceContextCodec.Builder()
+        .build();
+
+    DelegatingTextMap entries = new DelegatingTextMap();
+    long traceIdLow = 1;
+    long spanId = 2;
+    long parentId = 3;
+    long traceIdHigh = HexCodec.hexToUnsignedLong("c281c27976c85681", 0, 16);
+    JaegerSpanContext spanContext = new JaegerSpanContext(traceIdHigh, traceIdLow, spanId, parentId, (byte) 0);
+
+    traceContextCodec.inject(spanContext, entries);
+
+    String expectedTraceContextHeader = "00-c281c27976c856810000000000000001-0000000000000002-00";
+    assertEquals(1, entries.delegate.size());
+    assertNotNull(entries.delegate.get(TraceContextCodec.TRACE_CONTEXT_NAME));
+    assertEquals(expectedTraceContextHeader, entries.delegate.get(TraceContextCodec.TRACE_CONTEXT_NAME));
+  }
+
+  @Test
+  public void testInvalidTraceId() {
+    TraceContextCodec traceContextCodec = new TraceContextCodec.Builder()
+        .build();
+
+    DelegatingTextMap textMap = new DelegatingTextMap();
+    textMap.put(TraceContextCodec.TRACE_CONTEXT_NAME, "00-00000000000000000000000000000000-0000000000000002-00");
+    JaegerSpanContext spanContext = traceContextCodec.extract(textMap);
+    assertNull(spanContext);
+  }
+
+  @Test
+  public void testInvalidParentId() {
+    TraceContextCodec traceContextCodec = new TraceContextCodec.Builder()
+        .build();
+
+    DelegatingTextMap textMap = new DelegatingTextMap();
+    textMap.put(TraceContextCodec.TRACE_CONTEXT_NAME, "00-00000000000000000000000000000001-0000000000000000-00");
+    JaegerSpanContext spanContext = traceContextCodec.extract(textMap);
+    assertNull(spanContext);
+  }
+
+  static class DelegatingTextMap implements TextMap {
+    final Map<String, String> delegate = new LinkedHashMap<>();
+
+    @Override
+    public Iterator<Map.Entry<String, String>> iterator() {
+      return delegate.entrySet().iterator();
     }
 
-    @Test
-    public void testInject() {
-        TraceContextCodec traceContextCodec = new TraceContextCodec.Builder()
-                .build();
-
-        DelegatingTextMap entries = new DelegatingTextMap();
-        long traceIdLow = 1;
-        long spanId = 2;
-        long parentId = 3;
-        long traceIdHigh = HexCodec.hexToUnsignedLong("c281c27976c85681",0,16);
-        JaegerSpanContext spanContext = new JaegerSpanContext(traceIdHigh, traceIdLow, spanId, parentId, (byte)0);
-
-        traceContextCodec.inject(spanContext, entries);
-        assertEquals(1, entries.delegate.size());
-        assertNotNull(entries.delegate.get(TraceContextCodec.TRACE_CONTEXT_NAME));
-        assertEquals("00-c281c27976c856810000000000000001-0000000000000002-00",entries.delegate.get(TraceContextCodec.TRACE_CONTEXT_NAME));
+    @Override
+    public void put(String key, String value) {
+      delegate.put(key, value);
     }
 
-    @Test
-    public void testInvalidTraceId() {
-        TraceContextCodec traceContextCodec = new TraceContextCodec.Builder()
-                .build();
-
-        DelegatingTextMap textMap = new DelegatingTextMap();
-        textMap.put(TraceContextCodec.TRACE_CONTEXT_NAME, "00-00000000000000000000000000000000-0000000000000002-00");
-        JaegerSpanContext spanContext = traceContextCodec.extract(textMap);
-        assertNull(spanContext);
+    public String get(String key) {
+      return delegate.get(key);
     }
-
-    @Test
-    public void testInvalidParentId() {
-        TraceContextCodec traceContextCodec = new TraceContextCodec.Builder()
-                .build();
-
-        DelegatingTextMap textMap = new DelegatingTextMap();
-        textMap.put(TraceContextCodec.TRACE_CONTEXT_NAME, "00-00000000000000000000000000000001-0000000000000000-00");
-        JaegerSpanContext spanContext = traceContextCodec.extract(textMap);
-        assertNull(spanContext);
-    }
-
-    static class DelegatingTextMap implements TextMap {
-        final Map<String, String> delegate = new LinkedHashMap<>();
-
-        @Override
-        public Iterator<Map.Entry<String, String>> iterator() {
-            return delegate.entrySet().iterator();
-        }
-
-        @Override
-        public void put(String key, String value) {
-            delegate.put(key, value);
-        }
-
-        public String get(String key) {
-            return delegate.get(key);
-        }
-    }
+  }
 }
