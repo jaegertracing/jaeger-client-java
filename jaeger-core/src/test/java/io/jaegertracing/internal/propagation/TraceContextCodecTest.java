@@ -15,6 +15,7 @@
 package io.jaegertracing.internal.propagation;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -74,6 +75,30 @@ public class TraceContextCodecTest {
   }
 
   @Test
+  public void testInjectWith64bit() {
+    TraceContextCodec traceContextCodec = new TraceContextCodec.Builder()
+        .build();
+
+    DelegatingTextMap entries = new DelegatingTextMap();
+    long traceIdLow = 1;
+    long spanId = 2;
+    long parentId = 3;
+    long traceIdHigh = 0L;
+    JaegerSpanContext spanContext = new JaegerSpanContext(traceIdHigh, traceIdLow, spanId, parentId, (byte) 0);
+
+    traceContextCodec.inject(spanContext, entries);
+
+    assertEquals(1, entries.delegate.size());
+
+    String traceContextHeader = entries.delegate.get(TraceContextCodec.TRACE_CONTEXT_NAME);
+    assertNotNull(traceContextHeader);
+    assertTrue(traceContextHeader.contains("0000000000000001"));
+    //For 64 bit traces, we need to pad the left side with a random number to conform with the specification.
+    //It should not contain all zeros.
+    assertFalse(traceContextHeader.contains("00000000000000000000000000000001"));
+  }
+
+  @Test
   public void testInvalidTraceId() {
     TraceContextCodec traceContextCodec = new TraceContextCodec.Builder()
         .build();
@@ -83,6 +108,17 @@ public class TraceContextCodecTest {
     JaegerSpanContext spanContext = traceContextCodec.extract(textMap);
     assertNull(spanContext);
   }
+
+  @Test
+  public void testNoTraceHeader() {
+    TraceContextCodec traceContextCodec = new TraceContextCodec.Builder()
+        .build();
+
+    DelegatingTextMap textMap = new DelegatingTextMap();
+    JaegerSpanContext spanContext = traceContextCodec.extract(textMap);
+    assertNull(spanContext);
+  }
+
 
   @Test
   public void testInvalidParentId() {

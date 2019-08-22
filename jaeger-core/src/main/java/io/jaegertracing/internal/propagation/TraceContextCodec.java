@@ -55,19 +55,11 @@ public class TraceContextCodec implements Codec<TextMap> {
       SPAN_ID_OFFSET + SPAN_ID_HEX_SIZE + TRACEPARENT_DELIMITER_SIZE;
   private static final int SAMPLED_FLAG = 1;
 
-  private static final int JAEGER_SAMPLED_FLAG = 1;
+  private static final byte JAEGER_SAMPLED_FLAG = 1;
 
 
   private final JaegerObjectFactory objectFactory;
   private final Long version;
-
-  /**
-   * @deprecated use {@link Builder} instead
-   */
-  @Deprecated
-  public TraceContextCodec() {
-    this(new Builder());
-  }
 
   private TraceContextCodec(Builder builder) {
     this.objectFactory = builder.objectFactory;
