@@ -131,6 +131,28 @@ public class TraceContextCodecTest {
     assertNull(spanContext);
   }
 
+  @Test
+  public void testWithVersion() {
+    TraceContextCodec traceContextCodec = new TraceContextCodec.Builder()
+        .withVersion(1L)
+        .build();
+
+    DelegatingTextMap entries = new DelegatingTextMap();
+    long traceIdLow = 1;
+    long spanId = 2;
+    long parentId = 3;
+    long traceIdHigh = 1L;
+    JaegerSpanContext spanContext = new JaegerSpanContext(traceIdHigh, traceIdLow, spanId, parentId, (byte) 0);
+
+    traceContextCodec.inject(spanContext, entries);
+
+    assertEquals(1, entries.delegate.size());
+
+    String traceContextHeader = entries.delegate.get(TraceContextCodec.TRACE_CONTEXT_NAME);
+    assertNotNull(traceContextHeader);
+    assertTrue(traceContextHeader.substring(0,2).equals("01"));
+  }
+
   static class DelegatingTextMap implements TextMap {
     final Map<String, String> delegate = new LinkedHashMap<>();
 
