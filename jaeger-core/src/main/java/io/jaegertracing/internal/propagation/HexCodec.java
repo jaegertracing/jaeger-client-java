@@ -92,9 +92,18 @@ final class HexCodec {
   }
 
   /**
+   * Inspired by {@code okio.Buffer.writeLong}
+   */
+  static String toLowerHex(long v) {
+    char[] data = new char[16];
+    writeHexLong(data, 0, v);
+    return new String(data);
+  }
+
+  /**
    * Returns a 32 character hex string
    */
-  static String toUpperHex(long high, long low) {
+  static String toLowerHexWithLength32(long high, long low) {
     char[] result = new char[32];
     int pos = 0;
     writeHexLong(result, pos, high);
@@ -103,15 +112,6 @@ final class HexCodec {
     return new String(result);
   }
 
-
-  /**
-   * Inspired by {@code okio.Buffer.writeLong}
-   */
-  static String toLowerHex(long v) {
-    char[] data = new char[16];
-    writeHexLong(data, 0, v);
-    return new String(data);
-  }
 
   /**
    * Inspired by {@code okio.Buffer.writeLong}
