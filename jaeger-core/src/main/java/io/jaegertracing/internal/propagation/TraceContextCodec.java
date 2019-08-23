@@ -42,7 +42,7 @@ import java.util.Map;
  * <p>
  */
 public class TraceContextCodec implements Codec<TextMap> {
-  protected static final String TRACE_CONTEXT_NAME = "tracecontext";
+  protected static final String TRACE_CONTEXT_NAME = "traceparent";
 
   private static final int VERSION_SIZE = 2;
   private static final int TRACEPARENT_DELIMITER_SIZE = 1;
