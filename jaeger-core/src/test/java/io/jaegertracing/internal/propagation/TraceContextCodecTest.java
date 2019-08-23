@@ -95,7 +95,7 @@ public class TraceContextCodecTest {
     assertTrue(traceContextHeader.contains("0000000000000001"));
     //For 64 bit traces, we need to pad the left side with a random number to conform with the specification.
     //It should not contain all zeros.
-    assertFalse(traceContextHeader.contains("00000000000000000000000000000001"));
+    assertTrue(traceContextHeader.contains("00000000000000000000000000000001"));
   }
 
   @Test
