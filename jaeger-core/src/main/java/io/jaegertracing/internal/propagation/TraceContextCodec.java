@@ -68,21 +68,9 @@ public class TraceContextCodec implements Codec<TextMap> {
 
   @Override
   public void inject(JaegerSpanContext spanContext, TextMap carrier) {
-    long traceIdHigh = spanContext.getTraceIdHigh();
-
-    //From the specification:
-    //When a system operates with a trace-id that is shorter than 16 bytes,
-    // it SHOULD fill-in the extra bytes with random values rather than zeroes.
-    // Let's say the system works with an 8-byte trace-id like 3ce929d0e0e4736.
-    // Instead of setting trace-id value to 0000000000000003ce929d0e0e4736,
-    // it SHOULD generate a value like 4bf92f3577b34da6a3ce929d0e0e4736.
-    // where 4bf92f3577b34da6a is a random value or a function of time and host value.
-    if (traceIdHigh == 0L) {
-      traceIdHigh = Utils.uniqueId();
-    }
     carrier.put(TRACE_CONTEXT_NAME, String.format("%02d-%s-%s-%s",
         version,
-        HexCodec.toLowerHexWithLength32(traceIdHigh, spanContext.getTraceIdLow()),
+        HexCodec.toLowerHexWithLength32(spanContext.getTraceIdHigh(), spanContext.getTraceIdLow()),
         HexCodec.toLowerHex(spanContext.getSpanId()),
         spanContext.isSampled() ? "01" : "00"
     ));
