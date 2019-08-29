@@ -205,7 +205,7 @@ public class MicrometerTest {
         .next();
 
     configuration.getTracer().buildSpan("theoperation").start().finish(100);
-    assertEquals(1, registry.find("jaeger_tracer_started_spans").counter().count(), 0);
+    assertEquals(1, registry.get("jaeger_tracer_started_spans").tag("sampled", "y").counter().count(), 0);
   }
 
   private void createSomeSpans(JaegerTracer tracer) {
