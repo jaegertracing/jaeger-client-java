@@ -24,7 +24,7 @@ ext.jerseyVersion = getProperty('jerseyVersion','2.22.2')
 ext.slf4jVersion = getProperty('slf4jVersion','1.7.25')
 ext.gsonVersion = getProperty('gsonVersion','2.8.2')
 ext.tracerResolverVersion = getProperty('tracerResolverVersion','0.1.8')
-ext.micrometerVersion = getProperty('micrometerVersion','1.0.0')
+ext.micrometerVersion = getProperty('micrometerVersion','1.2.0')
 ext.okhttpVersion = getProperty('okhttpVersion','3.9.0')
 
 ext.junitVersion = '4.12'
