@@ -18,12 +18,14 @@ import io.jaegertracing.internal.samplers.http.OperationSamplingParameters;
 import io.jaegertracing.internal.samplers.http.PerOperationSamplingParameters;
 import io.jaegertracing.spi.Sampler;
 import java.util.HashMap;
+import java.util.Map;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+
 
 /**
  * Computes {@link #sample(String, long)} using the name of the operation, and maintains a specific
@@ -36,7 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 @Getter(AccessLevel.PACKAGE) //Visible for testing
 public class PerOperationSampler implements Sampler {
   private final int maxOperations;
-  private final HashMap<String, GuaranteedThroughputSampler> operationNameToSampler;
+  private Map<String, GuaranteedThroughputSampler> operationNameToSampler;
   private ProbabilisticSampler defaultSampler;
   private double lowerBound;
 
@@ -51,9 +53,9 @@ public class PerOperationSampler implements Sampler {
   /**
    * Updates the GuaranteedThroughputSampler for each operation
    * @param strategies The parameters for operation sampling
-   * @return true iff any samplers were updated
+   * @return true if any samplers were updated
    */
-  public synchronized boolean update(OperationSamplingParameters strategies) {
+  public synchronized boolean update(final OperationSamplingParameters strategies) {
     boolean isUpdated = false;
 
     lowerBound = strategies.getDefaultLowerBoundTracesPerSecond();
@@ -64,16 +66,19 @@ public class PerOperationSampler implements Sampler {
       isUpdated = true;
     }
 
+    Map<String, GuaranteedThroughputSampler> newOpsSamplers = new HashMap<String, GuaranteedThroughputSampler>();
+    //add or update operation samples using given strategies
     for (PerOperationSamplingParameters strategy : strategies.getPerOperationStrategies()) {
       String operation = strategy.getOperation();
       double samplingRate = strategy.getProbabilisticSampling().getSamplingRate();
       GuaranteedThroughputSampler sampler = operationNameToSampler.get(operation);
       if (sampler != null) {
         isUpdated = sampler.update(samplingRate, lowerBound) || isUpdated;
+        newOpsSamplers.put(operation, sampler);
       } else {
-        if (operationNameToSampler.size() < maxOperations) {
+        if (newOpsSamplers.size() < maxOperations) {
           sampler = new GuaranteedThroughputSampler(samplingRate, lowerBound);
-          operationNameToSampler.put(operation, sampler);
+          newOpsSamplers.put(operation, sampler);
           isUpdated = true;
         } else {
           log.info("Exceeded the maximum number of operations({}) for per operations sampling",
@@ -81,6 +86,8 @@ public class PerOperationSampler implements Sampler {
         }
       }
     }
+
+    operationNameToSampler = newOpsSamplers;
     return isUpdated;
   }
 
