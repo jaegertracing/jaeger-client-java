@@ -154,8 +154,8 @@ public class PerOperationSamplerTest {
     undertest.update(new OperationSamplingParameters(DEFAULT_SAMPLING_PROBABILITY,
                                                      DEFAULT_LOWER_BOUND_TRACES_PER_SECOND, parametersList));
 
-    assertEquals(1, operationToSamplers.size());
-    assertNotNull(operationToSamplers.get(OPERATION));
+    assertEquals(1, undertest.getOperationNameToSampler().size());
+    assertNotNull(undertest.getOperationNameToSampler().get(OPERATION));
   }
 
   @Test
@@ -169,10 +169,29 @@ public class PerOperationSamplerTest {
                                                      DEFAULT_LOWER_BOUND_TRACES_PER_SECOND,
                                                      parametersList));
 
-    assertEquals(1, operationToSamplers.size());
+    assertEquals(1, undertest.getOperationNameToSampler().size());
     assertEquals(new GuaranteedThroughputSampler(SAMPLING_RATE,
                                                  DEFAULT_LOWER_BOUND_TRACES_PER_SECOND),
-                 operationToSamplers.get(OPERATION));
+            undertest.getOperationNameToSampler().get(OPERATION));
   }
 
+  @Test
+  public void testAbsentOperationIsRemoved() {
+    String absentOp = "ShouldBeRemoved";
+    operationToSamplers.put(absentOp, mock(GuaranteedThroughputSampler.class));
+    PerOperationSamplingParameters perOperationSamplingParameters1 =
+            new PerOperationSamplingParameters(OPERATION, new ProbabilisticSamplingStrategy(SAMPLING_RATE));
+    List<PerOperationSamplingParameters> parametersList = new ArrayList<>();
+    parametersList.add(perOperationSamplingParameters1);
+
+    undertest.update(new OperationSamplingParameters(DEFAULT_SAMPLING_PROBABILITY,
+            DEFAULT_LOWER_BOUND_TRACES_PER_SECOND,
+            parametersList));
+
+    assertEquals(1, undertest.getOperationNameToSampler().size());
+    assertEquals(new GuaranteedThroughputSampler(SAMPLING_RATE,
+                    DEFAULT_LOWER_BOUND_TRACES_PER_SECOND),
+            undertest.getOperationNameToSampler().get(OPERATION));
+    assertFalse(undertest.getOperationNameToSampler().containsKey(absentOp));
+  }
 }
