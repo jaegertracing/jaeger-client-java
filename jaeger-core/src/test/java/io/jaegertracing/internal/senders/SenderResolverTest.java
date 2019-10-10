@@ -82,6 +82,22 @@ public class SenderResolverTest {
   }
 
   @Test
+  public void testMultipleFactoriesButFactoryNotSpecified() throws Exception {
+    SenderFactoryToBeLoaded.sender = new CustomSender();
+    Sender sender = getSenderForServiceFileContents("\nio.jaegertracing.internal.senders.InMemorySenderFactory", true);
+    assertTrue(sender instanceof NoopSender);
+  }
+
+  @Test
+  public void testSpecifiedFactoryNotInList() throws Exception {
+    System.setProperty(Configuration.JAEGER_SENDER_FACTORY, "SpecifiedFactory");
+    SenderFactoryToBeLoaded.sender = new CustomSender();
+    Sender sender = getSenderForServiceFileContents("\nio.jaegertracing.internal.senders.InMemorySenderFactory", true);
+    assertTrue(sender instanceof NoopSender);
+    System.clearProperty(Configuration.JAEGER_SENDER_FACTORY);
+  }
+
+  @Test
   public void testMultipleImplementationsNotAmbiguous() throws Exception {
     System.setProperty(Configuration.JAEGER_SENDER_FACTORY, "to-be-loaded");
     CustomSender customSender = new CustomSender();
