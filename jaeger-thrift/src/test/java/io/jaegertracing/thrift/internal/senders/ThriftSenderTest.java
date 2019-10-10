@@ -14,6 +14,7 @@
 
 package io.jaegertracing.thrift.internal.senders;
 
+import io.jaegertracing.internal.JaegerTracer;
 import io.jaegertracing.internal.exceptions.SenderException;
 import io.jaegertracing.thrift.internal.senders.ThriftSenderBase.ProtocolType;
 import io.jaegertracing.thriftjava.Process;
@@ -46,6 +47,20 @@ public class ThriftSenderTest {
     };
 
     sender.calculateSpanSize(null);
+  }
+
+  @Test(expected = SenderException.class)
+  public void flushFail() throws Exception {
+    ThriftSender sender = new ThriftSender(ProtocolType.Compact, 0) {
+      @Override
+      public void send(Process process, List<Span> spans) throws SenderException {
+        throw new SenderException("", null, spans.size());
+      }
+    };
+
+    JaegerTracer tracer = new JaegerTracer.Builder("failure").build();
+    sender.append(tracer.buildSpan("flush-fail").start());
+    sender.flush();
   }
 
 }
