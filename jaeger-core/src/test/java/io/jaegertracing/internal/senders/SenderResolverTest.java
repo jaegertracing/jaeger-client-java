@@ -30,6 +30,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Scanner;
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class SenderResolverTest {
@@ -76,13 +77,6 @@ public class SenderResolverTest {
 
   @Test
   public void testMultipleImplementationsAmbiguous() throws Exception {
-    SenderFactoryToBeLoaded.sender = new CustomSender();
-    Sender sender = getSenderForServiceFileContents("\nio.jaegertracing.internal.senders.InMemorySenderFactory", true);
-    assertTrue(sender instanceof NoopSender);
-  }
-
-  @Test
-  public void testMultipleFactoriesButFactoryNotSpecified() throws Exception {
     SenderFactoryToBeLoaded.sender = new CustomSender();
     Sender sender = getSenderForServiceFileContents("\nio.jaegertracing.internal.senders.InMemorySenderFactory", true);
     assertTrue(sender instanceof NoopSender);

@@ -55,12 +55,15 @@ public class SenderResolver {
         SenderFactory.class.getClassLoader());
     Iterator<SenderFactory> senderFactoryIterator = senderFactoryServiceLoader.iterator();
 
-    boolean hasMultipleFactories = false;
-    String requestedFactory = System.getProperty(Configuration.JAEGER_SENDER_FACTORY);
-    boolean isRequestedFactoryAvailable = false;
     if (!senderFactoryIterator.hasNext()) {
-      log.warn("No sender factories available");
+      log.warn("No sender factories available. Using NoopSender, meaning that data will not be sent anywhere!");
+      return new NoopSender();
     }
+
+    String requestedFactory = System.getProperty(Configuration.JAEGER_SENDER_FACTORY);
+    boolean hasMultipleFactories = false;
+    boolean isRequestedFactoryAvailable = false;
+
     while (senderFactoryIterator.hasNext()) {
       SenderFactory senderFactory = senderFactoryIterator.next();
 
