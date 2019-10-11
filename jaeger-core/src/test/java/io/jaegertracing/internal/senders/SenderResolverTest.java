@@ -21,7 +21,6 @@ import static org.junit.Assert.assertTrue;
 import io.jaegertracing.Configuration;
 import io.jaegertracing.internal.JaegerSpan;
 import io.jaegertracing.spi.Sender;
-import io.jaegertracing.spi.SenderFactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -30,7 +29,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Scanner;
 import org.junit.After;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class SenderResolverTest {
