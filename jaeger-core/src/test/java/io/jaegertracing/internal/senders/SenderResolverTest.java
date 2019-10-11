@@ -21,7 +21,6 @@ import static org.junit.Assert.assertTrue;
 import io.jaegertracing.Configuration;
 import io.jaegertracing.internal.JaegerSpan;
 import io.jaegertracing.spi.Sender;
-import io.jaegertracing.spi.SenderFactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -79,6 +78,15 @@ public class SenderResolverTest {
     SenderFactoryToBeLoaded.sender = new CustomSender();
     Sender sender = getSenderForServiceFileContents("\nio.jaegertracing.internal.senders.InMemorySenderFactory", true);
     assertTrue(sender instanceof NoopSender);
+  }
+
+  @Test
+  public void testSpecifiedFactoryNotInList() throws Exception {
+    System.setProperty(Configuration.JAEGER_SENDER_FACTORY, "SpecifiedFactory");
+    SenderFactoryToBeLoaded.sender = new CustomSender();
+    Sender sender = getSenderForServiceFileContents("\nio.jaegertracing.internal.senders.InMemorySenderFactory", true);
+    assertTrue(sender instanceof NoopSender);
+    System.clearProperty(Configuration.JAEGER_SENDER_FACTORY);
   }
 
   @Test

@@ -55,7 +55,15 @@ public class SenderResolver {
         SenderFactory.class.getClassLoader());
     Iterator<SenderFactory> senderFactoryIterator = senderFactoryServiceLoader.iterator();
 
+    if (!senderFactoryIterator.hasNext()) {
+      log.warn("No sender factories available. Using NoopSender, meaning that data will not be sent anywhere!");
+      return new NoopSender();
+    }
+
+    String requestedFactory = System.getProperty(Configuration.JAEGER_SENDER_FACTORY);
     boolean hasMultipleFactories = false;
+    boolean isRequestedFactoryAvailable = false;
+
     while (senderFactoryIterator.hasNext()) {
       SenderFactory senderFactory = senderFactoryIterator.next();
 
@@ -67,14 +75,13 @@ public class SenderResolver {
       if (hasMultipleFactories) {
         // we compare the factory name with JAEGER_SENDER_FACTORY, as a way to know which
         // factory the user wants:
-        String requestedFactory = System.getProperty(Configuration.JAEGER_SENDER_FACTORY);
         if (senderFactory.getType().equals(requestedFactory)) {
           log.debug(
               String.format("Found the requested (%s) sender factory: %s",
                   requestedFactory,
                   senderFactory)
           );
-
+          isRequestedFactoryAvailable = true;
           sender = getSenderFromFactory(senderFactory, senderConfiguration);
         }
       } else {
@@ -85,10 +92,16 @@ public class SenderResolver {
     if (null != sender) {
       log.debug(String.format("Using sender %s", sender));
       return sender;
+    } else if (requestedFactory == null && hasMultipleFactories) {
+      log.warn("Multiple factories available but JAEGER_SENDER_FACTORY property not specified.");
+    } else if (requestedFactory != null && hasMultipleFactories && !isRequestedFactoryAvailable) {
+      log.warn(
+          String.format("%s not available, using NoopSender, hence data will not be sent anywhere!",requestedFactory)
+      );
     } else {
       log.warn("No suitable sender found. Using NoopSender, meaning that data will not be sent anywhere!");
-      return new NoopSender();
     }
+    return new NoopSender();
   }
 
   private static Sender getSenderFromFactory(SenderFactory senderFactory,
