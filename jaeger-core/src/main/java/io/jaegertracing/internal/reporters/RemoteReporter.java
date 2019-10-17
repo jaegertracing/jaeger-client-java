@@ -104,6 +104,7 @@ public class RemoteReporter implements Reporter {
         metrics.reporterSuccess.inc(n);
       } catch (SenderException e) {
         metrics.reporterFailure.inc(e.getDroppedSpanCount());
+        log.error("Remote reporter error", e);
       }
       flushTimer.cancel();
     }
