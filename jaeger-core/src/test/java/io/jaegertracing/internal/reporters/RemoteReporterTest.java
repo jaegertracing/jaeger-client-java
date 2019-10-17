@@ -21,7 +21,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Appender;
 import io.jaegertracing.internal.JaegerSpan;
 import io.jaegertracing.internal.JaegerTracer;
 import io.jaegertracing.internal.exceptions.SenderException;
@@ -31,6 +37,7 @@ import io.jaegertracing.internal.reporters.RemoteReporter.Builder;
 import io.jaegertracing.internal.samplers.ConstSampler;
 import io.jaegertracing.internal.senders.InMemorySender;
 import io.jaegertracing.spi.Reporter;
+import io.jaegertracing.spi.Sender;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -40,6 +47,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.mockito.ArgumentMatcher;
+import org.slf4j.LoggerFactory;
 
 public class RemoteReporterTest {
   private Reporter reporter;
@@ -201,6 +210,40 @@ public class RemoteReporterTest {
     reporter.close();
 
     // expect no exception thrown
+  }
+
+  @Test
+  public void testCloseLogSenderException() throws SenderException {
+
+    // set up mocking
+    ch.qos.logback.classic.Logger root =
+        (ch.qos.logback.classic.Logger) LoggerFactory
+          .getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
+
+    @SuppressWarnings("unchecked") final Appender<ILoggingEvent> mockAppender =
+        mock(Appender.class);
+    when(mockAppender.getName()).thenReturn("MOCK");
+    root.addAppender(mockAppender);
+
+    final Sender mockedSender = mock(Sender.class);
+    when(mockedSender.close()).thenThrow(SenderException.class);
+
+    final RemoteReporter testReporter = new RemoteReporter.Builder()
+        .withSender(mockedSender)
+        .build();
+
+    // call the to be tested code path
+    testReporter.close();
+
+    // verify the actual log was written
+    verify(mockAppender).doAppend(argThat(new ArgumentMatcher<ILoggingEvent>() {
+
+      @Override
+      public boolean matches(ILoggingEvent event) {
+        return event.getFormattedMessage().startsWith("Remote reporter error");
+      }
+
+    }));
   }
 
   @Test
