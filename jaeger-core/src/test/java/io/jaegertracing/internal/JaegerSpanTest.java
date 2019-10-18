@@ -192,7 +192,6 @@ public class JaegerSpanTest {
     assertEquals(Long.toHexString(jaegerSpan.context().getSpanId()), jaegerSpan.context().toSpanId());
   }
 
-
   @Test
   public void testWithTimestampAccurateClock() {
     testWithTimestamp(true);
@@ -578,11 +577,9 @@ public class JaegerSpanTest {
         .withSampler(new ConstSampler(true))
         .build();
 
-    JaegerSpan span = tracer.buildSpan("foo").start();
+    JaegerSpan span = tracer.buildSpan("bar").start();
     span.log("foo");
-    for (LogData log: span.getLogs()) {
-      span.log("foo2");
-    }
+    span.getLogs().forEach(spanLog -> span.log("foo2"));
   }
 
   @Test
@@ -593,9 +590,7 @@ public class JaegerSpanTest {
 
     JaegerSpan span = tracer.buildSpan("foo").start();
     span.setTag("foo", "bar");
-    for (Map.Entry<String, ?> tag: span.getTags().entrySet()) {
-      span.setTag("foo2", "bar");
-    }
+    span.getTags().forEach((k, v) -> span.setTag("foo2", "bar"));
   }
 
   @Test
@@ -607,8 +602,6 @@ public class JaegerSpanTest {
 
     JaegerSpan span = tracer.buildSpan("foo").start();
     span.setBaggageItem("foo", "bar");
-    for (Map.Entry<String, ?> baggage: span.context().baggageItems()) {
-      span.setBaggageItem("foo2", "bar");
-    }
+    span.context().baggageItems().forEach(entry -> span.setBaggageItem("foo2", "bar"));
   }
 }
