@@ -116,8 +116,8 @@ public class UdpSenderTest {
     // create a sender thats a multiple of the span size (accounting for span overhead)
     // this allows us to test the boundary conditions of writing spans.
     int expectedNumSpans = 11;
-    int maxPacketSize = (spanSize * expectedNumSpans) + sender.EMIT_BATCH_OVERHEAD + processSize;
-    int maxPacketSizeLeft = maxPacketSize - sender.EMIT_BATCH_OVERHEAD - processSize;
+    int maxPacketSize = (spanSize * expectedNumSpans) + UdpSender.EMIT_BATCH_OVERHEAD + processSize;
+    int maxPacketSizeLeft = maxPacketSize - UdpSender.EMIT_BATCH_OVERHEAD - processSize;
     // add enough spans to be under buffer limit
     sender = new UdpSender(destHost, destPort, maxPacketSize);
     while (spanSize < maxPacketSizeLeft) {

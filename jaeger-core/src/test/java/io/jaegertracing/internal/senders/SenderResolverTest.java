@@ -108,11 +108,13 @@ public class SenderResolverTest {
 
     String newContent;
     if (append) {
-      Scanner s = new Scanner(
-          new FileInputStream(original), Charset.defaultCharset().name()
-      ).useDelimiter("\\A");
-      String originalContents = s.hasNext() ? s.next() : "";
-      newContent = originalContents + contents;
+      try (
+        Scanner s = new Scanner(new FileInputStream(original), Charset.defaultCharset().name());
+      ) {
+        s.useDelimiter("\\A");
+        String originalContents = s.hasNext() ? s.next() : "";
+        newContent = originalContents + contents;
+      }
     } else {
       newContent = contents;
     }

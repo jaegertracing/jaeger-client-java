@@ -30,7 +30,6 @@ import io.jaegertracing.internal.samplers.ConstSampler;
 import io.jaegertracing.spi.Injector;
 import io.jaegertracing.spi.Reporter;
 import io.jaegertracing.spi.Sampler;
-import io.opentracing.ScopeManager;
 import io.opentracing.Span;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
@@ -45,7 +44,6 @@ import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 public class JaegerTracerTest {
 

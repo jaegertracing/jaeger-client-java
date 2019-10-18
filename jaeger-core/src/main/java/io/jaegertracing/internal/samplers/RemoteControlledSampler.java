@@ -25,7 +25,6 @@ import io.jaegertracing.spi.Sampler;
 import io.jaegertracing.spi.SamplingManager;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.ToString;

@@ -23,6 +23,7 @@ import io.opentracing.propagation.TextMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import org.junit.Test;
 
@@ -60,7 +61,7 @@ public class B3TextMapCodecTest {
     assertEquals(HexCodec.lowerHexToUnsignedLong(lower64Bits).longValue(), context.getSpanId());
     assertEquals(0, context.getParentId());
     assertEquals(B3TextMapCodec.SAMPLED_FLAG | B3TextMapCodec.DEBUG_FLAG, context.getFlags());
-    assertEquals(1, ((Set)context.baggageItems()).size());
+    assertEquals(1, ((Set<Entry<String, String>>)context.baggageItems()).size());
     assertEquals("bar", context.getBaggageItem("foo"));
   }
 
