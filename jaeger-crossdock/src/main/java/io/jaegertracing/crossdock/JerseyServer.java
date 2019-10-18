@@ -79,7 +79,7 @@ public class JerseyServer {
     WebappContext context = new WebappContext("grizzly web context", "");
     context.addServlet("jaxrs", new ServletContainer(rc))
         .addMapping("/", "/*");
-    context.addFilter("tracingFilter", new SpanFinishingFilter(configuration.getTracer()))
+    context.addFilter("tracingFilter", new SpanFinishingFilter())
         .addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), "/*");
 
     server = HttpServer.createSimpleServer(".", host, port);

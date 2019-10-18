@@ -48,12 +48,12 @@ public class ProbabilisticSamplerTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testSamplerThrowsInvalidSamplingRangeExceptionUnder() {
-    Sampler sampler = new ProbabilisticSampler(-0.1);
+    new ProbabilisticSampler(-0.1);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testSamplerThrowsInvalidSamplingRangeExceptionOver() {
-    Sampler sampler = new ProbabilisticSampler(1.1);
+    new ProbabilisticSampler(1.1);
   }
 
   @Test

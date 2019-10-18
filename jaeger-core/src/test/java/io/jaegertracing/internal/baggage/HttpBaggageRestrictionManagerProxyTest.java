@@ -32,7 +32,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-
 public class HttpBaggageRestrictionManagerProxyTest extends JerseyTest {
 
   private HttpBaggageRestrictionManagerProxy undertest;
@@ -42,7 +41,7 @@ public class HttpBaggageRestrictionManagerProxyTest extends JerseyTest {
 
   @BeforeClass
   public static void beforeClass() {
-    Properties originalProps = new Properties(System.getProperties());
+    originalProps = new Properties(System.getProperties());
     if (System.getProperty(TestProperties.CONTAINER_PORT) == null) {
       System.setProperty(TestProperties.CONTAINER_PORT, "0");
     }
