@@ -369,9 +369,7 @@ public class JaegerTracer implements Tracer, Closeable {
       return baggage;
     }
 
-    private JaegerSpanContext createChildContext() {
-      JaegerSpanContext preferredReference = preferredReference();
-
+    private JaegerSpanContext createChildContext(JaegerSpanContext preferredReference) {
       if (isRpcServer()) {
         if (isSampled()) {
           metrics.tracesJoinedSampled.inc(1);
@@ -401,17 +399,26 @@ public class JaegerTracer implements Tracer, Closeable {
       return Tags.SPAN_KIND_SERVER.equals(tags.get(Tags.SPAN_KIND.getKey()));
     }
 
-    private JaegerSpanContext preferredReference() {
-      Reference preferredReference = references.get(0);
+    protected JaegerSpanContext preferredParentReference() {
+      if (references.isEmpty() || !references.get(0).getSpanContext().hasTrace()) {
+        return null;
+      } else if (references.size() == 1) {
+        return references.get(0).getSpanContext();
+      }
+      Reference initial = null;
+      boolean diffTraces = false;
       for (Reference reference: references) {
-        // childOf takes precedence as a preferred parent
-        if (References.CHILD_OF.equals(reference.getType())
-            && !References.CHILD_OF.equals(preferredReference.getType())) {
-          preferredReference = reference;
-          break;
+        if (References.CHILD_OF.equals(reference.getType())) {
+          return reference.getSpanContext();
+        }
+        if (initial == null) {
+          initial = reference;
+        } else if (!(initial.getSpanContext().getTraceIdHigh() == reference.getSpanContext().getTraceIdHigh()
+            && initial.getSpanContext().getTraceIdLow() == reference.getSpanContext().getTraceIdLow())) {
+          diffTraces = true;
         }
       }
-      return preferredReference.getSpanContext();
+      return diffTraces ? null : initial.getSpanContext();
     }
 
     private boolean isSampled() {
@@ -441,10 +448,12 @@ public class JaegerTracer implements Tracer, Closeable {
         asChildOf(scopeManager.activeSpan());
       }
 
-      if (references.isEmpty() || !references.get(0).getSpanContext().hasTrace()) {
+      JaegerSpanContext preferredParentReference = preferredParentReference();
+
+      if (preferredParentReference == null) {
         context = createNewContext();
       } else {
-        context = createChildContext();
+        context = createChildContext(preferredParentReference);
       }
 
       long startTimeNanoTicks = 0;
