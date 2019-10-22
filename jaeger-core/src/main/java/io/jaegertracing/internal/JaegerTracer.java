@@ -71,6 +71,7 @@ public class JaegerTracer implements Tracer, Closeable {
   private final boolean zipkinSharedRpcSpan;
   private final boolean expandExceptionLogs;
   private final boolean useTraceId128Bit;
+  private final boolean allowTraceJoins;
 
   @ToString.Exclude private final PropagationRegistry registry;
   @ToString.Exclude private final Clock clock;
@@ -93,6 +94,7 @@ public class JaegerTracer implements Tracer, Closeable {
     this.expandExceptionLogs = builder.expandExceptionLogs;
     this.objectFactory = builder.objectFactory;
     this.useTraceId128Bit = builder.useTraceId128Bit;
+    this.allowTraceJoins = builder.allowTraceJoins;
 
     this.version = loadVersion();
 
@@ -406,19 +408,20 @@ public class JaegerTracer implements Tracer, Closeable {
         return references.get(0).getSpanContext();
       }
       Reference initial = null;
-      boolean diffTraces = false;
+      boolean traceJoin = false;
       for (Reference reference: references) {
         if (References.CHILD_OF.equals(reference.getType())) {
           return reference.getSpanContext();
         }
         if (initial == null) {
           initial = reference;
-        } else if (!(initial.getSpanContext().getTraceIdHigh() == reference.getSpanContext().getTraceIdHigh()
+        } else if (isAllowTraceJoins()
+            && !(initial.getSpanContext().getTraceIdHigh() == reference.getSpanContext().getTraceIdHigh()
             && initial.getSpanContext().getTraceIdLow() == reference.getSpanContext().getTraceIdLow())) {
-          diffTraces = true;
+          traceJoin = true;
         }
       }
-      return diffTraces ? null : initial.getSpanContext();
+      return traceJoin ? null : initial.getSpanContext();
     }
 
     private boolean isSampled() {
@@ -542,6 +545,7 @@ public class JaegerTracer implements Tracer, Closeable {
     private final JaegerObjectFactory objectFactory;
     private boolean useTraceId128Bit;
     private boolean manualShutdown;
+    private boolean allowTraceJoins;
 
     public Builder(String serviceName) {
       this(serviceName, new JaegerObjectFactory());
@@ -636,6 +640,11 @@ public class JaegerTracer implements Tracer, Closeable {
 
     public Builder withTraceId128Bit() {
       this.useTraceId128Bit = true;
+      return this;
+    }
+
+    public Builder withTraceJoins() {
+      this.allowTraceJoins = true;
       return this;
     }
 
@@ -740,6 +749,10 @@ public class JaegerTracer implements Tracer, Closeable {
 
   public boolean isUseTraceId128Bit() {
     return this.useTraceId128Bit;
+  }
+
+  public boolean isAllowTraceJoins() {
+    return this.allowTraceJoins;
   }
 
   @Override

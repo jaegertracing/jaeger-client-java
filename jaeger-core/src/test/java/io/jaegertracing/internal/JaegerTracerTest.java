@@ -255,7 +255,48 @@ public class JaegerTracerTest {
     Span parent1 = tracer.buildSpan("parent1").start();
     Span parent2 = tracer.buildSpan("parent2").start();
     Span parent3 = tracer.buildSpan("parent3").start();
-    // Should be no parent reference (i.e. null), as the non-childof references belong to different traces
+    // Should return the first reference as all of the non-childof refs belong to the different traces, as
+    // "allow trace join" is disabled by default
+    assertEquals(parent1.context(),
+        tracer.buildSpan("child1").addReference(References.FOLLOWS_FROM, parent1.context())
+        .addReference(References.FOLLOWS_FROM, parent2.context()).addReference(References.FOLLOWS_FROM,
+        parent3.context()).preferredParentReference());
+  }
+
+  @Test
+  public void testTraceJoinFalse() {
+    JaegerTracer tracer = new Builder("name").build();
+    assertFalse(tracer.isAllowTraceJoins());
+  }
+
+  @Test
+  public void testTraceJoinTrue() {
+    JaegerTracer tracer = new Builder("name").withTraceJoins().build();
+    assertTrue(tracer.isAllowTraceJoins());
+  }
+
+  @Test
+  public void testPreferredParentReferenceSameTraceMultiRefsNoChildOfAllowJoin() {
+    JaegerTracer tracer = new Builder("name").withTraceJoins().build();
+    Span parent = tracer.buildSpan("parent").start();
+    Span mid1 = tracer.buildSpan("mid1").asChildOf(parent).start();
+    Span mid2 = tracer.buildSpan("mid2").asChildOf(parent).start();
+    Span mid3 = tracer.buildSpan("mid3").asChildOf(parent).start();
+    // Should return the first reference as all of the non-childof refs belong to the same trace
+    assertEquals(mid1.context(),
+        tracer.buildSpan("child1").addReference(References.FOLLOWS_FROM, mid1.context())
+        .addReference(References.FOLLOWS_FROM, mid2.context()).addReference(References.FOLLOWS_FROM,
+        mid3.context()).preferredParentReference());
+  }
+
+  @Test
+  public void testPreferredParentReferenceDiffTraceMultiRefsNoChildOfAllowJoin() {
+    JaegerTracer tracer = new Builder("name").withTraceJoins().build();
+    Span parent1 = tracer.buildSpan("parent1").start();
+    Span parent2 = tracer.buildSpan("parent2").start();
+    Span parent3 = tracer.buildSpan("parent3").start();
+    // Should be no parent reference (i.e. null), as the non-childof references belong to different traces and
+    // "allow trace join" is enabled
     assertNull(tracer.buildSpan("child1").addReference(References.FOLLOWS_FROM, parent1.context())
         .addReference(References.FOLLOWS_FROM, parent2.context()).addReference(References.FOLLOWS_FROM,
         parent3.context()).preferredParentReference());
