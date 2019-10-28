@@ -41,13 +41,10 @@ public class ThriftUdpTransport extends TTransport implements Closeable {
   @ToString.Exclude public ByteBuffer writeBuffer;
 
   // Create a UDP client for sending data to specific host and port
-  // TODO Accept maxPacketSize to set the writeBuffer, otherwise write method always sets it to MAX_PACKET_SIZE
-  public static ThriftUdpTransport newThriftUdpClient(String host, int port, int maxPacketSize ) {
+  public static ThriftUdpTransport newThriftUdpClient(String host, int port) {
     ThriftUdpTransport t;
     try {
       t = new ThriftUdpTransport();
-      //TODO Uncomment after the review
-      //t.writeBuffer = ByteBuffer.allocate(maxPacketSize);
       t.socket.connect(new InetSocketAddress(host, port));
     } catch (SocketException e) {
       throw new RuntimeException("TUDPTransport cannot connect: ", e);
@@ -131,9 +128,6 @@ public class ThriftUdpTransport extends TTransport implements Closeable {
     if (this.writeBuffer == null) {
       this.writeBuffer = ByteBuffer.allocate(MAX_PACKET_SIZE);
     }
-    /*TODO Once the writeBuffer is set to user provided packet size, we would have to handle
-     this.writeBuffer.position() + len > this.writeBuffer.limit(), otherwise, it leads to
-     BufferOverflowException*/
     if (this.writeBuffer.position() + len > MAX_PACKET_SIZE) {
       throw new TTransportException(
           TTransportException.UNKNOWN, "Message size too large: " + len + " > " + MAX_PACKET_SIZE);

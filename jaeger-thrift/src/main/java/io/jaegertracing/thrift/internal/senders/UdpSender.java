@@ -53,8 +53,7 @@ public class UdpSender extends ThriftSender {
     if (port == 0) {
       port = DEFAULT_AGENT_UDP_COMPACT_PORT;
     }
-    // maxPacketSize sent to super constructor does not reflect during the transport
-    udpTransport = ThriftUdpTransport.newThriftUdpClient(host, port,getMaxSpanBytes());
+    udpTransport = ThriftUdpTransport.newThriftUdpClient(host, port);
     agentClient = new Agent.Client(protocolFactory.getProtocol(udpTransport));
   }
 
