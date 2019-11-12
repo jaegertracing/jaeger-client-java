@@ -171,19 +171,7 @@ public class UdpSenderTest {
     JaegerSpan expectedSpan = tracer.buildSpan("raza").start();
     Process process = new Process(tracer.getServiceName())
             .setTags(JaegerThriftSpanConverter.buildTags(tracer.tags()));
-    io.jaegertracing.thriftjava.Span span = JaegerThriftSpanConverter.convertSpan(expectedSpan);
-    int processSize = sender.getSize(process);
-    int spanSize = sender.getSize(span);
-
-    // create a sender thats a multiple of the span size plus one (accounting for span overhead)
-    // this allows us to test the boundary conditions of writing spans.
-    int maxPacketSize = (spanSize * expectedNumSpans) + sender.EMIT_BATCH_OVERHEAD + processSize;
-    sender = new UdpSender(destHost, destPort, maxPacketSize);
-
-    List<Span> spans = new ArrayList<>();
-    for (int i = 0; i < expectedNumSpans; i++) {
-        spans.add(span);
-    }
+    List<Span> spans = createSpans(expectedNumSpans, expectedSpan, process);
     sender.send(process,spans);
     int flushNum = sender.flush();
     assertEquals(flushNum, 0);
@@ -212,23 +200,26 @@ public class UdpSenderTest {
     JaegerSpan expectedSpan = tracer.buildSpan(longOperationName).start();
     Process process = new Process(tracer.getServiceName())
             .setTags(JaegerThriftSpanConverter.buildTags(tracer.tags()));
-    io.jaegertracing.thriftjava.Span span = JaegerThriftSpanConverter.convertSpan(expectedSpan);
-    int processSize = sender.getSize(process);
-    int spanSize = sender.getSize(span);
-
-    int maxPacketSize = (spanSize * expectedNumSpans+1) + sender.EMIT_BATCH_OVERHEAD + processSize;
-
-    sender = new UdpSender(destHost, destPort, maxPacketSize);
-    List<Span> spans = new ArrayList<>();
-    for (int i = 0; i < expectedNumSpans; i++) {
-      spans.add(span);
-    }
-     try {
+    List<Span> spans = createSpans(expectedNumSpans, expectedSpan, process);
+    try {
       sender.send(process, spans);
     } catch(SenderException exception){
       assertEquals(exception.getCause().toString(),"org.apache.thrift.transport.TTransportException: Message size too large: "+largeMessageLength+" > 65000");
      throw exception.getCause();
     }
+  }
+
+  private List<Span> createSpans(int expectedNumSpans, JaegerSpan expectedSpan, Process process) throws Exception {
+    Span span = JaegerThriftSpanConverter.convertSpan(expectedSpan);
+    int processSize = sender.getSize(process);
+    int spanSize = sender.getSize(span);
+    int maxPacketSize = (spanSize * expectedNumSpans+1) + sender.EMIT_BATCH_OVERHEAD + processSize;
+    sender = new UdpSender(destHost, destPort, maxPacketSize);
+    List<Span> spans = new ArrayList<>();
+    for (int i = 0; i < expectedNumSpans; i++) {
+      spans.add(span);
+    }
+    return spans;
   }
 
 
