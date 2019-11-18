@@ -14,39 +14,16 @@
 
 package io.jaegertracing.tracerresolver.internal;
 
-import io.jaegertracing.Configuration;
-import io.jaegertracing.internal.JaegerTracer;
+import io.opentracing.Tracer;
 import io.opentracing.contrib.tracerresolver.TracerFactory;
 
-import java.util.logging.*;
-
 public class JaegerTracerFactory implements TracerFactory {
+
+	@Override
+	public Tracer getTracer() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 	
-	private final static Logger logr = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
-  @Override
-  public JaegerTracer getTracer() {
-	  
-	  LogManager.getLogManager().reset();
-	  logr.setLevel(Level.ALL);
-	  
-	  ConsoleHandler ch = new ConsoleHandler();
-	  ch.setLevel(Level.SEVERE);
-	  logr.addHandler(ch);
-	  
-	  try {
-		  FileHandler fh = new FileHandler("getTracer", true);
-		  fh.setLevel(Level.FINE);
-		  logr.addHandler(fh);
-		  
-	  }
-	  catch (java.io.IOException e) {
-		  
-		  logr.log(Level.SEVERE, "File Logger not working", e);
-		  
-	  }
-	  
-	  
-	  logr.info("Logged Exception");
-    return Configuration.fromEnv().getTracer();
   }
-}
+

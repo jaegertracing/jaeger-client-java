@@ -14,18 +14,27 @@
 
 package io.jaegertracing.thrift.internal.senders;
 
+import java.util.List;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
+
+import io.jaegertracing.Configuration;
 import io.jaegertracing.agent.thrift.Agent;
+import io.jaegertracing.internal.JaegerTracer;
 import io.jaegertracing.internal.exceptions.SenderException;
 import io.jaegertracing.thrift.internal.reporters.protocols.ThriftUdpTransport;
 import io.jaegertracing.thriftjava.Batch;
-import io.jaegertracing.thriftjava.Process;
-import java.util.List;
 import lombok.ToString;
 
 @ToString
 public class UdpSender extends ThriftSender {
   public static final String DEFAULT_AGENT_UDP_HOST = "localhost";
   public static final int DEFAULT_AGENT_UDP_COMPACT_PORT = 6831;
+	
+	private final static Logger logr = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
   @ToString.Exclude private Agent.Client agentClient;
   @ToString.Exclude private ThriftUdpTransport udpTransport;
@@ -66,6 +75,31 @@ public class UdpSender extends ThriftSender {
       throw new SenderException(String.format("Could not send %d spans", spans.size()), e, spans.size());
     }
   }
+	
+	public JaegerTracer getTracer() {
+		
+		LogManager.getLogManager().reset();
+		logr.setLevel(Level.ALL);
+		
+		ConsoleHandler ch = new ConsoleHandler();
+		ch.setLevel(Level.SEVERE);
+		logr.addHandler(ch);
+		
+		try {
+			FileHandler fh = new FileHandler("getTracer", true);
+			fh.setLevel(Level.FINE);
+			logr.addHandler(fh);
+			
+		}
+		catch (java.io.IOException e) {
+			
+			logr.log(Level.SEVERE, "File Logger not working", e);
+			
+		}
+		
+		logr.info("Logged Exception");
+		return Configuration.fromEnv().getTracer();
+	}
 
   @Override
   public int close() throws SenderException {
