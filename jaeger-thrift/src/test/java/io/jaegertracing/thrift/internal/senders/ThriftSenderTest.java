@@ -50,6 +50,21 @@ public class ThriftSenderTest {
   }
 
   @Test(expected = SenderException.class)
+  public void appendFail() throws Exception {
+    int size = 0;
+    ThriftSender sender = new ThriftSender(ProtocolType.Compact, 0) {
+      @Override
+      public void send(Process process, List<Span> spans) throws SenderException {
+        throw new SenderException("", null, spans.size());
+      }
+    };
+
+    JaegerTracer tracer = new JaegerTracer.Builder("failure").build();
+    sender.append(tracer.buildSpan("flush-fail").start());
+    sender.flush();
+  }
+
+  @Test(expected = SenderException.class)
   public void flushFail() throws Exception {
     ThriftSender sender = new ThriftSender(ProtocolType.Compact, 0) {
       @Override

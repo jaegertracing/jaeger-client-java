@@ -54,9 +54,9 @@ public abstract class ThriftSender extends ThriftSenderBase implements Sender {
 
     io.jaegertracing.thriftjava.Span thriftSpan = JaegerThriftSpanConverter.convertSpan(span);
     int spanSize = calculateSpanSize(thriftSpan);
-    if (spanSize > getMaxSpanBytes()) {
+    if ((processBytesSize + spanSize) > getMaxSpanBytes()) {
       throw new SenderException(String.format("ThriftSender received a span that was too large, size = %d, max = %d",
-          spanSize, getMaxSpanBytes()), null, 1);
+          (processBytesSize + spanSize), getMaxSpanBytes()), null, 1);
     }
 
     byteBufferSize += spanSize;

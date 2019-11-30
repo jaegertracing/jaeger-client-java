@@ -84,21 +84,30 @@ public class UdpSenderTest {
     reporter.close();
   }
 
-  @Test(expected = SenderException.class)
-  public void testAppendSpanTooLarge() throws Exception {
+  /**
+   * create a mock span with target size
+   */
+  private JaegerSpan buildSpanWithSize(int targetSpanSize) throws Exception {
     JaegerSpan jaegerSpan = tracer.buildSpan("raza").start();
-    String msg = "";
-    for (int i = 0; i < 10001; i++) {
-      msg += ".";
-      jaegerSpan.log(msg);
+    jaegerSpan.setTag("mock", "");
+
+    // contains mock span tag with empty string value, which is later used to match target span size
+    io.jaegertracing.thriftjava.Span emptySpan = JaegerThriftSpanConverter.convertSpan(jaegerSpan);
+
+    int emptySpanSize = sender.getSize(emptySpan);
+    int freePacketSizeLeft = targetSpanSize - emptySpanSize;
+
+    // each "0" takes 1 byte in UTF-8
+    String mockStr = String.join("", Collections.nCopies(freePacketSizeLeft, "0"));
+    jaegerSpan.setTag("mock", mockStr);
+
+    // subtract some chars since the actual encoding takes a few extra bytes
+    while (targetSpanSize != sender.getSize(JaegerThriftSpanConverter.convertSpan(jaegerSpan))) {
+      mockStr = mockStr.substring(1);
+      jaegerSpan.setTag("mock", mockStr);
     }
 
-    try {
-      sender.append(jaegerSpan);
-    } catch (SenderException e) {
-      assertEquals(e.getDroppedSpanCount(), 1);
-      throw e;
-    }
+    return jaegerSpan;
   }
 
   @Test
@@ -129,6 +138,39 @@ public class UdpSenderTest {
     int result = sender.append(jaegerSpan);
 
     assertEquals(expectedNumSpans, result);
+  }
+
+  @Test
+  public void testAppendMaxSize() throws Exception {
+    Process process = new Process(tracer.getServiceName())
+            .setTags(JaegerThriftSpanConverter.buildTags(tracer.tags()));
+
+    int processSize = sender.getSize(process);
+
+    JaegerSpan jaegerSpan = buildSpanWithSize(maxPacketSize - UdpSender.EMIT_BATCH_OVERHEAD - processSize);
+
+    sender.append(jaegerSpan);
+
+    // add a span that overflows the limit to hit the last branch
+    int result = sender.append(jaegerSpan);
+
+    assertEquals(1, result);
+  }
+
+  @Test(expected = SenderException.class)
+  public void testAppendSpanTooLarge() throws Exception {
+    Process process = new Process(tracer.getServiceName())
+            .setTags(JaegerThriftSpanConverter.buildTags(tracer.tags()));
+    int processSize = sender.getSize(process);
+
+    JaegerSpan jaegerSpan = buildSpanWithSize(maxPacketSize - UdpSender.EMIT_BATCH_OVERHEAD - processSize + 1);
+
+    try {
+      sender.append(jaegerSpan);
+    } catch (SenderException e) {
+      assertEquals(e.getDroppedSpanCount(), 1);
+      throw e;
+    }
   }
 
   @Test
