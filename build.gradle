@@ -19,7 +19,7 @@ plugins {
 
 ext.opentracingVersion = getProperty('opentracingVersion','0.33.0')
 ext.guavaVersion = getProperty('guavaVersion','18.0')
-ext.apacheThriftVersion = getProperty('apacheThriftVersion','0.12.0')
+ext.apacheThriftVersion = getProperty('apacheThriftVersion','0.13.0')
 ext.jerseyVersion = getProperty('jerseyVersion','2.22.2')
 ext.slf4jVersion = getProperty('slf4jVersion','1.7.28')
 ext.gsonVersion = getProperty('gsonVersion','2.8.6')
