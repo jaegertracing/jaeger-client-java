@@ -79,7 +79,7 @@ public abstract class ThriftSenderBase {
   public int getSize(TBase<?,?> thriftBase) throws Exception {
     memoryTransport.reset();
     thriftBase.write(protocolFactory.getProtocol(memoryTransport));
-    return memoryTransport.getPos();
+    return memoryTransport.getLength();
   }
 
 }
