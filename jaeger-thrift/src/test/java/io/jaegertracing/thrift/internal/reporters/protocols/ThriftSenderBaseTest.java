@@ -55,13 +55,13 @@ public class ThriftSenderBaseTest {
     }
 
     memoryClient.emitBatch(new Batch(new io.jaegertracing.thriftjava.Process(SERVICE_NAME), spans));
-    int emitBatchOverheadMultipleSpans = memoryTransport.getPos();
+    int emitBatchOverheadMultipleSpans = memoryTransport.getLength();
 
     memoryTransport.reset();
     for (int j = 0; j < numberOfSpans; j++) {
       span.write(new TCompactProtocol(memoryTransport));
     }
-    int writeBatchOverheadMultipleSpans = memoryTransport.getPos();
+    int writeBatchOverheadMultipleSpans = memoryTransport.getLength();
 
     return emitBatchOverheadMultipleSpans - writeBatchOverheadMultipleSpans;
   }
