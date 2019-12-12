@@ -9,6 +9,7 @@ Changes by Version
 1.1.0 (2019-12-12)
 -------------------
 
+* Bump okhttp and zipkin reporter versions ([#674](https://github.com/jaegertracing/jaeger-client-java/pull/674), [@pavolloffay](https://github.com/pavolloffay))
 - Update libthrift to 0.13.0 ([#672](https://github.com/jaegertracing/jaeger-client-java/pull/672), [@ehsavoie](https://github.com/ehsavoie))
 - Upgrade GSON and slf4j-api version ([#663](https://github.com/jaegertracing/jaeger-client-java/pull/663), [@chandresh-pancholi](https://github.com/chandresh-pancholi))
 - Add logging for SenderException in RemoteReporter ([#662](https://github.com/jaegertracing/jaeger-client-java/pull/662), [@esukram](https://github.com/esukram))
