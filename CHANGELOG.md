@@ -21,14 +21,14 @@ Changes by Version
 1.0.0 (2019-08-02)
 -------------------
 
-- Support OpenTracing 0.32.0 and 0.33.0 ([#623](https://github.com/jaegertracing/jaeger-client-java/pull/623)) [@pavolloffay](https://github.com/pavolloffay)
-- Add manifest entries to jaeger-thrift ([#641](https://github.com/jaegertracing/jaeger-client-java/pull/641)) [@objectiser](https://github.com/objectiser)
+- Support OpenTracing 0.32.0 and 0.33.0 ([#623](https://github.com/jaegertracing/jaeger-client-java/pull/623), [@pavolloffay](https://github.com/pavolloffay))
+- Add manifest entries to jaeger-thrift ([#641](https://github.com/jaegertracing/jaeger-client-java/pull/641), [@objectiser](https://github.com/objectiser))
 
 
 0.35.5 (2019-05-22)
 -------------------
 
-- Fix RemoteBaggageRestrictionManager NullPointerException on empty response ([#631](https://github.com/jaegertracing/jaeger-client-java/pull/631)) [@ravirajj](https://github.com/ravirajj)
+- Fix RemoteBaggageRestrictionManager NullPointerException on empty response ([#631](https://github.com/jaegertracing/jaeger-client-java/pull/631), [@ravirajj](https://github.com/ravirajj))
 
 
 0.35.2 (2019-05-06)
