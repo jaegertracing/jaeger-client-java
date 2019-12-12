@@ -3,10 +3,10 @@ description = 'Integration library for Zipkin'
 dependencies {
     compile project(':jaeger-client')
 
-    compile group: 'io.zipkin.reporter2', name: 'zipkin-sender-urlconnection', version: '2.7.6'
+    compile group: 'io.zipkin.reporter2', name: 'zipkin-sender-urlconnection', version: '2.12.0'
     compile group: 'org.apache.thrift', name: 'libthrift', version: apacheThriftVersion
 
-    testCompile group: 'io.zipkin.zipkin2', name: 'zipkin-junit', version: '2.9.4'
+    testCompile group: 'io.zipkin.zipkin2', name: 'zipkin-junit', version: '2.19.2'
     testCompile group: 'com.tngtech.java', name: 'junit-dataprovider', version: junitDataProviderVersion
 
     signature 'org.codehaus.mojo.signature:java16:1.1@signature'
