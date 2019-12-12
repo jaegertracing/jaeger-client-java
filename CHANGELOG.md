@@ -1,10 +1,21 @@
 Changes by Version
 ==================
 
-1.1.0 (unreleased)
+1.2.0 (unreleased)
 -------------------
 
 - Nothing yet.
+
+1.1.0 (2019-12-12)
+-------------------
+
+- Update libthrift to 0.13.0 ([#672](https://github.com/jaegertracing/jaeger-client-java/pull/672), [@ehsavoie](https://github.com/ehsavoie))
+- Upgrade GSON and slf4j-api version ([#663](https://github.com/jaegertracing/jaeger-client-java/pull/663), [@chandresh-pancholi](https://github.com/chandresh-pancholi))
+- Add logging for SenderException in RemoteReporter ([#662](https://github.com/jaegertracing/jaeger-client-java/pull/662), [@esukram](https://github.com/esukram))
+- Enhance logs for non-standard sender factory usage ([#657](https://github.com/jaegertracing/jaeger-client-java/pull/657), [@vpbhargav](https://github.com/vpbhargav))
+- Cleanup operation samplers if absent from strategy response ([#655](https://github.com/jaegertracing/jaeger-client-java/pull/655), [@guo0693](https://github.com/guo0693))
+- Update micrometer dependency and fix test ([#650](https://github.com/jaegertracing/jaeger-client-java/pull/650), [@objectiser](https://github.com/objectiser))
+- Add public method `isFinished()` on JaegerSpan ([#634](https://github.com/jaegertracing/jaeger-client-java/pull/634), [@dougEfresh](https://github.com/dougEfresh))
 
 
 1.0.0 (2019-08-02)
