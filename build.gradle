@@ -207,7 +207,7 @@ def getProperty(name, defaultValue) {
 
 release {
     git {
-        requireBranch = 'master|release-*'
+        requireBranch = 'master|release-.*'
     }
     // default is x.x.x
     tagTemplate = "v" + project.properties["release.releaseVersion"]
