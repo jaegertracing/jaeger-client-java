@@ -37,7 +37,7 @@ public abstract class ThriftSenderBase {
 
   protected final TProtocolFactory protocolFactory;
   private final TSerializer serializer;
-  private final int maxSpanBytes;
+  private final int maxBatchBytes;
 
   @ToString.Exclude private AutoExpandingBufferWriteTransport memoryTransport;
 
@@ -63,13 +63,13 @@ public abstract class ThriftSenderBase {
       maxPacketSize = ThriftUdpTransport.MAX_PACKET_SIZE;
     }
 
-    maxSpanBytes = maxPacketSize - EMIT_BATCH_OVERHEAD;
+    maxBatchBytes = maxPacketSize - EMIT_BATCH_OVERHEAD;
     memoryTransport = new AutoExpandingBufferWriteTransport(maxPacketSize, 2);
     serializer = new TSerializer(protocolFactory);
   }
 
-  protected int getMaxSpanBytes() {
-    return maxSpanBytes;
+  protected int getMaxBatchBytes() {
+    return maxBatchBytes;
   }
 
   protected byte[] serialize(TBase<?,?> thriftBase) throws Exception {

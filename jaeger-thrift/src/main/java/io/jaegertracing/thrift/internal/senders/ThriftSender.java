@@ -54,15 +54,15 @@ public abstract class ThriftSender extends ThriftSenderBase implements Sender {
 
     io.jaegertracing.thriftjava.Span thriftSpan = JaegerThriftSpanConverter.convertSpan(span);
     int spanSize = calculateSpanSize(thriftSpan);
-    if ((processBytesSize + spanSize) > getMaxSpanBytes()) {
+    if (spanSize > getMaxSpanBytes()) {
       throw new SenderException(String.format("ThriftSender received a span that was too large, size = %d, max = %d",
-          (processBytesSize + spanSize), getMaxSpanBytes()), null, 1);
+          spanSize, getMaxSpanBytes()), null, 1);
     }
 
     byteBufferSize += spanSize;
-    if (byteBufferSize <= getMaxSpanBytes()) {
+    if (byteBufferSize <= getMaxBatchBytes()) {
       spanBuffer.add(thriftSpan);
-      if (byteBufferSize < getMaxSpanBytes()) {
+      if (byteBufferSize < getMaxBatchBytes()) {
         return 0;
       }
       return flush();
@@ -95,6 +95,10 @@ public abstract class ThriftSender extends ThriftSenderBase implements Sender {
     } catch (Exception e) {
       throw new SenderException("ThriftSender failed writing Span to memory buffer.", e, 1);
     }
+  }
+
+  protected int getMaxSpanBytes() {
+    return getMaxBatchBytes() - processBytesSize;
   }
 
   public abstract void send(Process process, List<io.jaegertracing.thriftjava.Span> spans) throws SenderException;
