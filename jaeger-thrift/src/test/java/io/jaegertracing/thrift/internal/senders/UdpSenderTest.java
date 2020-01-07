@@ -149,9 +149,6 @@ public class UdpSenderTest {
 
     JaegerSpan jaegerSpan = buildSpanWithSize(maxPacketSize - UdpSender.EMIT_BATCH_OVERHEAD - processSize);
 
-    sender.append(jaegerSpan);
-
-    // add a span that overflows the limit to hit the last branch
     int result = sender.append(jaegerSpan);
 
     assertEquals(1, result);

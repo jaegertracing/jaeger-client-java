@@ -29,7 +29,7 @@ public abstract class ThriftSender extends ThriftSenderBase implements Sender {
 
   private Process process;
   private int processBytesSize;
-  private int byteBufferSize;
+  private int spanBytesSize;
 
   @ToString.Exclude private List<io.jaegertracing.thriftjava.Span> spanBuffer;
 
@@ -49,7 +49,6 @@ public abstract class ThriftSender extends ThriftSenderBase implements Sender {
       process = new Process(span.getTracer().getServiceName());
       process.setTags(JaegerThriftSpanConverter.buildTags(span.getTracer().tags()));
       processBytesSize = calculateProcessSize(process);
-      byteBufferSize += processBytesSize;
     }
 
     io.jaegertracing.thriftjava.Span thriftSpan = JaegerThriftSpanConverter.convertSpan(span);
@@ -59,10 +58,10 @@ public abstract class ThriftSender extends ThriftSenderBase implements Sender {
           spanSize, getMaxSpanBytes()), null, 1);
     }
 
-    byteBufferSize += spanSize;
-    if (byteBufferSize <= getMaxBatchBytes()) {
+    spanBytesSize += spanSize;
+    if (spanBytesSize <= getMaxSpanBytes()) {
       spanBuffer.add(thriftSpan);
-      if (byteBufferSize < getMaxBatchBytes()) {
+      if (spanBytesSize < getMaxSpanBytes()) {
         return 0;
       }
       return flush();
@@ -77,7 +76,7 @@ public abstract class ThriftSender extends ThriftSenderBase implements Sender {
     }
 
     spanBuffer.add(thriftSpan);
-    byteBufferSize = processBytesSize + spanSize;
+    spanBytesSize = spanSize;
     return n;
   }
 
@@ -116,7 +115,7 @@ public abstract class ThriftSender extends ThriftSenderBase implements Sender {
       throw new SenderException("Failed to flush spans.", e, n);
     } finally {
       spanBuffer.clear();
-      byteBufferSize = processBytesSize;
+      spanBytesSize = processBytesSize;
     }
     return n;
   }
