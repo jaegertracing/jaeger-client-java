@@ -79,6 +79,7 @@ public class JaegerTracer implements Tracer, Closeable {
   @ToString.Exclude private final BaggageSetter baggageSetter;
   @ToString.Exclude private final JaegerObjectFactory objectFactory;
   @ToString.Exclude private final int ipv4; // human readable representation is present within the tag map
+  @ToString.Exclude private Thread shutdownHook;
 
   protected JaegerTracer(JaegerTracer.Builder builder) {
     this.serviceName = builder.serviceName;
@@ -129,12 +130,13 @@ public class JaegerTracer implements Tracer, Closeable {
       log.info("No shutdown hook registered: Please call close() manually on application shutdown.");
     } else {
       // register this tracer with a shutdown hook, to flush the spans before the VM shuts down
-      Runtime.getRuntime().addShutdownHook(new Thread() {
+      shutdownHook = new Thread() {
         @Override
         public void run() {
           JaegerTracer.this.close();
         }
-      });
+      };
+      Runtime.getRuntime().addShutdownHook(shutdownHook);
     }
   }
 
@@ -224,6 +226,9 @@ public class JaegerTracer implements Tracer, Closeable {
   public void close() {
     reporter.close();
     sampler.close();
+    if (shutdownHook != null) {
+      Runtime.getRuntime().removeShutdownHook(shutdownHook);
+    }
   }
 
   public class SpanBuilder implements Tracer.SpanBuilder {
