@@ -115,7 +115,7 @@ public abstract class ThriftSender extends ThriftSenderBase implements Sender {
       throw new SenderException("Failed to flush spans.", e, n);
     } finally {
       spanBuffer.clear();
-      spanBytesSize = processBytesSize;
+      spanBytesSize = 0;
     }
     return n;
   }

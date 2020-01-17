@@ -152,6 +152,11 @@ public class UdpSenderTest {
     int result = sender.append(jaegerSpan);
 
     assertEquals(1, result);
+
+    // test if the buffer is reinitialized correctly
+    result = sender.append(jaegerSpan);
+
+    assertEquals(1, result);
   }
 
   @Test(expected = SenderException.class)
