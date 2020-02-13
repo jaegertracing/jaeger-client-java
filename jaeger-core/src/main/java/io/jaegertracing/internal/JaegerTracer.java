@@ -131,6 +131,7 @@ public class JaegerTracer implements Tracer, Closeable {
       shutdownHook = new Thread() {
         @Override
         public void run() {
+          shutdownHook = null;
           JaegerTracer.this.close();
         }
       };
