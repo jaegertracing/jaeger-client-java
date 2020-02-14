@@ -313,8 +313,11 @@ public class ConfigurationTest {
   @Test
   public void testDefaultTracer() {
     Configuration configuration = new Configuration("name");
-    assertNotNull(configuration.getTracer());
-    assertNotNull(configuration.getTracer());
+    JaegerTracer tracer = configuration.getTracer();
+    assertNotNull(tracer);
+    configuration.closeTracer();
+    tracer = configuration.getTracer();
+    assertNotNull(tracer);
     configuration.closeTracer();
   }
 
