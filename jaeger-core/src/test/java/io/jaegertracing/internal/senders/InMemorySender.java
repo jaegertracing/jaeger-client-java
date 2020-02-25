@@ -51,7 +51,7 @@ public class InMemorySender implements Sender {
   }
 
   @Override
-  public int append(JaegerSpan span) {
+  public int append(JaegerSpan span) throws SenderException {
     try {
       semaphore.acquire();
     } catch (InterruptedException e) {

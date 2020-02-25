@@ -368,6 +368,31 @@ public class RemoteReporterTest {
     assertEquals(0, metricsFactory.getCounter("jaeger_tracer_reporter_spans", "result=dropped"));
   }
 
+  @Test
+  public void testUpdateErrorMetricWhenCommandExecuteFails() throws Exception {
+
+    int reporterFailures = 5;
+
+    sender = new InMemorySender() {
+      @Override
+      public int append(JaegerSpan span) throws SenderException {
+        throw new SenderException("", reporterFailures);
+      }
+    };
+
+    RemoteReporter reporter = new Builder()
+            .withSender(sender)
+            .withFlushInterval(flushInterval)
+            .withMaxQueueSize(maxQueueSize)
+            .withMetrics(metrics)
+            .build();
+
+    reporter.report(newSpan());
+    reporter.close();
+
+    assertEquals(reporterFailures, metricsFactory.getCounter("jaeger_tracer_reporter_spans", "result=err"));
+  }
+
   private JaegerSpan newSpan() {
     return tracer.buildSpan("x").start();
   }
