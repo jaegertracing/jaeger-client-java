@@ -22,6 +22,8 @@ import static org.junit.Assert.assertTrue;
 
 import io.jaegertracing.internal.JaegerSpanContext;
 import io.opentracing.propagation.TextMap;
+import io.opentracing.propagation.TextMapAdapter;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -41,7 +43,7 @@ public class TraceContextCodecTest {
 
     String tracecontext = String.format("00-%s-%s-01", hex128Bits, parentSpan);
 
-    DelegatingTextMap textMap = new DelegatingTextMap();
+    TextMapAdapter textMap = new TextMapAdapter(new HashMap<>());
     textMap.put(TRACE_PARENT, tracecontext);
 
     JaegerSpanContext context = traceContextCodec.extract(textMap);
@@ -55,35 +57,37 @@ public class TraceContextCodecTest {
 
   @Test
   public void testInject() {
-    DelegatingTextMap entries = new DelegatingTextMap();
+    HashMap<String, String> carrier = new HashMap<>();
+    TextMapAdapter textMap = new TextMapAdapter(carrier);
     long traceIdLow = 1;
     long spanId = 2;
     long parentId = 3;
     long traceIdHigh = HexCodec.hexToUnsignedLong("c281c27976c85681", 0, 16);
     JaegerSpanContext spanContext = new JaegerSpanContext(traceIdHigh, traceIdLow, spanId, parentId, (byte) 0);
 
-    traceContextCodec.inject(spanContext, entries);
+    traceContextCodec.inject(spanContext, textMap);
 
     String expectedTraceContextHeader = "00-c281c27976c856810000000000000001-0000000000000002-00";
-    assertEquals(1, entries.delegate.size());
-    assertNotNull(entries.delegate.get(TRACE_PARENT));
-    assertEquals(expectedTraceContextHeader, entries.delegate.get(TRACE_PARENT));
+    assertEquals(1, carrier.size());
+    assertNotNull(carrier.get(TRACE_PARENT));
+    assertEquals(expectedTraceContextHeader, carrier.get(TRACE_PARENT));
   }
 
   @Test
   public void testInjectWith64bit() {
-    DelegatingTextMap entries = new DelegatingTextMap();
+    HashMap<String, String> carrier = new HashMap<>();
+    TextMapAdapter textMap = new TextMapAdapter(carrier);
     long traceIdLow = 1;
     long spanId = 2;
     long parentId = 3;
     long traceIdHigh = 0L;
     JaegerSpanContext spanContext = new JaegerSpanContext(traceIdHigh, traceIdLow, spanId, parentId, (byte) 0);
 
-    traceContextCodec.inject(spanContext, entries);
+    traceContextCodec.inject(spanContext, textMap);
 
-    assertEquals(1, entries.delegate.size());
+    assertEquals(1, carrier.size());
 
-    String traceContextHeader = entries.delegate.get(TRACE_PARENT);
+    String traceContextHeader = carrier.get(TRACE_PARENT);
     assertNotNull(traceContextHeader);
     assertTrue(traceContextHeader.contains("0000000000000001"));
     //For 64 bit traces, we need to pad the left side with a random number to conform with the specification.
@@ -93,7 +97,7 @@ public class TraceContextCodecTest {
 
   @Test
   public void testInvalidTraceId() {
-    DelegatingTextMap textMap = new DelegatingTextMap();
+    TextMapAdapter textMap = new TextMapAdapter(new HashMap<>());
     textMap.put(TRACE_PARENT, "00-00000000000000000000000000000000-0000000000000002-00");
     JaegerSpanContext spanContext = traceContextCodec.extract(textMap);
     assertNull(spanContext);
@@ -101,7 +105,7 @@ public class TraceContextCodecTest {
 
   @Test
   public void testNoTraceHeader() {
-    DelegatingTextMap textMap = new DelegatingTextMap();
+    TextMapAdapter textMap = new TextMapAdapter(new HashMap<>());
     JaegerSpanContext spanContext = traceContextCodec.extract(textMap);
     assertNull(spanContext);
   }
@@ -109,27 +113,9 @@ public class TraceContextCodecTest {
 
   @Test
   public void testInvalidParentId() {
-    DelegatingTextMap textMap = new DelegatingTextMap();
+    TextMapAdapter textMap = new TextMapAdapter(new HashMap<>());
     textMap.put(TRACE_PARENT, "00-00000000000000000000000000000001-0000000000000000-00");
     JaegerSpanContext spanContext = traceContextCodec.extract(textMap);
     assertNull(spanContext);
-  }
-
-  static class DelegatingTextMap implements TextMap {
-    final Map<String, String> delegate = new LinkedHashMap<>();
-
-    @Override
-    public Iterator<Map.Entry<String, String>> iterator() {
-      return delegate.entrySet().iterator();
-    }
-
-    @Override
-    public void put(String key, String value) {
-      delegate.put(key, value);
-    }
-
-    public String get(String key) {
-      return delegate.get(key);
-    }
   }
 }
