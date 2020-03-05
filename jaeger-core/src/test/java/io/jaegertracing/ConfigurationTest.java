@@ -34,6 +34,7 @@ import io.jaegertracing.internal.propagation.B3TextMapCodec;
 import io.jaegertracing.internal.propagation.BinaryCodec;
 import io.jaegertracing.internal.propagation.TestBinaryCarrier;
 import io.jaegertracing.internal.propagation.TextMapCodec;
+import io.jaegertracing.internal.propagation.TraceContextCodec;
 import io.jaegertracing.internal.samplers.ConstSampler;
 import io.jaegertracing.internal.samplers.ProbabilisticSampler;
 import io.jaegertracing.internal.samplers.RateLimitingSampler;
@@ -480,15 +481,20 @@ public class ConfigurationTest {
   @Test
   public void testCodecFromString() {
     CodecConfiguration codecConfiguration = CodecConfiguration
-        .fromString(String.format("%s,%s", Propagation.B3.name(), Propagation.JAEGER.name()));
+        .fromString(String.format("%s,%s,%s",
+            Propagation.B3.name(),
+            Propagation.JAEGER.name(),
+            Propagation.TRACE_CONTEXT.name()));
     assertEquals(2, codecConfiguration.getCodecs().size());
-    assertEquals(2, codecConfiguration.getCodecs().get(Builtin.HTTP_HEADERS).size());
-    assertEquals(2, codecConfiguration.getCodecs().get(Builtin.TEXT_MAP).size());
+    assertEquals(3, codecConfiguration.getCodecs().get(Builtin.HTTP_HEADERS).size());
+    assertEquals(3, codecConfiguration.getCodecs().get(Builtin.TEXT_MAP).size());
     assertEquals(1, codecConfiguration.getBinaryCodecs().get(Builtin.BINARY).size());
     assertTrue(codecConfiguration.getCodecs().get(Builtin.HTTP_HEADERS).get(0) instanceof B3TextMapCodec);
     assertTrue(codecConfiguration.getCodecs().get(Builtin.HTTP_HEADERS).get(1) instanceof TextMapCodec);
+    assertTrue(codecConfiguration.getCodecs().get(Builtin.HTTP_HEADERS).get(2) instanceof TraceContextCodec);
     assertTrue(codecConfiguration.getCodecs().get(Builtin.TEXT_MAP).get(0) instanceof B3TextMapCodec);
     assertTrue(codecConfiguration.getCodecs().get(Builtin.TEXT_MAP).get(1) instanceof TextMapCodec);
+    assertTrue(codecConfiguration.getCodecs().get(Builtin.TEXT_MAP).get(2) instanceof TraceContextCodec);
     assertTrue(codecConfiguration.getBinaryCodecs().get(Builtin.BINARY).get(0) instanceof BinaryCodec);
   }
 
