@@ -74,19 +74,16 @@ public class TraceContextCodecTest {
     long traceIdLow = 1;
     long spanId = 2;
     long parentId = 3;
-    long traceIdHigh = 0L;
+    long traceIdHigh = 0;
     JaegerSpanContext spanContext = new JaegerSpanContext(traceIdHigh, traceIdLow, spanId, parentId, (byte) 0);
 
     traceContextCodec.inject(spanContext, textMap);
-
     assertEquals(1, carrier.size());
 
-    String traceContextHeader = carrier.get(TRACE_PARENT);
-    assertNotNull(traceContextHeader);
-    assertTrue(traceContextHeader.contains("0000000000000001"));
-    //For 64 bit traces, we need to pad the left side with a random number to conform with the specification.
-    //It should not contain all zeros.
-    assertTrue(traceContextHeader.contains("00000000000000000000000000000001"));
+    String traceParent = carrier.get(TRACE_PARENT);
+    assertEquals("00-00000000000000000000000000000001-0000000000000002-00", traceParent);
+    JaegerSpanContext extractedContext = traceContextCodec.extract(textMap);
+    assertEquals("1:2:0:0", extractedContext.toString());
   }
 
   @Test
@@ -103,7 +100,6 @@ public class TraceContextCodecTest {
     JaegerSpanContext spanContext = traceContextCodec.extract(textMap);
     assertNull(spanContext);
   }
-
 
   @Test
   public void testInvalidParentId() {
