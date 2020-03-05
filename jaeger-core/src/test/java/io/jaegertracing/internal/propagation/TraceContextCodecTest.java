@@ -21,12 +21,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import io.jaegertracing.internal.JaegerSpanContext;
-import io.opentracing.propagation.TextMap;
 import io.opentracing.propagation.TextMapAdapter;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import org.junit.Test;
 
 /**
@@ -40,12 +36,10 @@ public class TraceContextCodecTest {
   public void support128BitTraceIdExtraction() {
     String hex128Bits = "463ac35c9f6413ad48485a3953bb6124";
     String parentSpan = "d1595c6ec91668af";
-
     String tracecontext = String.format("00-%s-%s-01", hex128Bits, parentSpan);
 
     TextMapAdapter textMap = new TextMapAdapter(new HashMap<>());
     textMap.put(TRACE_PARENT, tracecontext);
-
     JaegerSpanContext context = traceContextCodec.extract(textMap);
 
     assertNotNull(HexCodec.lowerHexToUnsignedLong(parentSpan));

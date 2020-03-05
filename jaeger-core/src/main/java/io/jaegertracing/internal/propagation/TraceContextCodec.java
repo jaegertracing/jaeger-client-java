@@ -16,8 +16,6 @@
 
 package io.jaegertracing.internal.propagation;
 
-import static io.jaegertracing.internal.propagation.B3TextMapCodec.SAMPLED_FLAG;
-
 import io.jaegertracing.internal.JaegerObjectFactory;
 import io.jaegertracing.internal.JaegerSpanContext;
 import io.jaegertracing.spi.Codec;
@@ -52,7 +50,7 @@ public class TraceContextCodec implements Codec<TextMap> {
       SPAN_ID_OFFSET + SPAN_ID_HEX_SIZE + TRACEPARENT_DELIMITER_SIZE;
   private static final int TRACEPARENT_HEADER_SIZE = TRACE_OPTION_OFFSET + TRACE_OPTION_HEX_SIZE;
 
-  private static final byte JAEGER_SAMPLED_FLAG = 1;
+  private static final byte SAMPLED_FLAG = 1;
 
   private final JaegerObjectFactory objectFactory;
 
@@ -79,10 +77,10 @@ public class TraceContextCodec implements Codec<TextMap> {
     Long traceIdLow = HexCodec.hexToUnsignedLong(traceparent, TRACE_ID_OFFSET + 16, TRACE_ID_OFFSET + 32);
     Long spanId = HexCodec.hexToUnsignedLong(traceparent, SPAN_ID_OFFSET, SPAN_ID_OFFSET + 16);
 
-    byte flags = 0;
+    boolean sampled = false;
     long traceContextFlags = HexCodec.hexToUnsignedLong(traceparent, TRACE_OPTION_OFFSET, TRACE_OPTION_OFFSET + 2);
     if ((traceContextFlags & SAMPLED_FLAG) == SAMPLED_FLAG) {
-      flags |= JAEGER_SAMPLED_FLAG;
+      sampled = true;
     }
 
     if (traceIdLow == null || traceIdLow == 0 || spanId == null || spanId == 0) {
@@ -95,7 +93,7 @@ public class TraceContextCodec implements Codec<TextMap> {
         traceIdLow,
         spanId,
         0,
-        flags,
+        sampled ? (byte)1 : (byte)0,
         Collections.<String, String>emptyMap(), null);
   }
 
