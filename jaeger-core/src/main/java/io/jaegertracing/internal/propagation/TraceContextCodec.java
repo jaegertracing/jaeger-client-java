@@ -21,7 +21,9 @@ import io.jaegertracing.internal.JaegerSpanContext;
 import io.jaegertracing.spi.Codec;
 import io.opentracing.propagation.TextMap;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -35,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 public class TraceContextCodec implements Codec<TextMap> {
 
   static final String TRACE_PARENT = "traceparent";
+  static final String TRACE_STATE = "tracestate";
 
   private static final String VERSION = "00";
   private static final int VERSION_SIZE = 2;
@@ -49,8 +52,15 @@ public class TraceContextCodec implements Codec<TextMap> {
   private static final int TRACE_OPTION_OFFSET =
       SPAN_ID_OFFSET + SPAN_ID_HEX_SIZE + TRACEPARENT_DELIMITER_SIZE;
   private static final int TRACEPARENT_HEADER_SIZE = TRACE_OPTION_OFFSET + TRACE_OPTION_HEX_SIZE;
-
   private static final byte SAMPLED_FLAG = 1;
+
+  private static final int TRACESTATE_MAX_SIZE = 512;
+  static final int TRACESTATE_MAX_MEMBERS = 32;
+  private static final char TRACESTATE_KEY_VALUE_DELIMITER = '=';
+  private static final char TRACESTATE_ENTRY_DELIMITER = ',';
+  private static final Pattern TRACESTATE_ENTRY_DELIMITER_SPLIT_PATTERN =
+      Pattern.compile("[ \t]*" + TRACESTATE_ENTRY_DELIMITER + "[ \t]*");
+
 
   private final JaegerObjectFactory objectFactory;
 
@@ -62,7 +72,8 @@ public class TraceContextCodec implements Codec<TextMap> {
     // TODO(bdrutu): Do we need to verify that version is hex and that
     // for the version the length is the expected one?
     boolean isValid =
-        traceparent.charAt(TRACE_OPTION_OFFSET - 1) == TRACEPARENT_DELIMITER
+        traceparent != null
+        && traceparent.charAt(TRACE_OPTION_OFFSET - 1) == TRACEPARENT_DELIMITER
             && (traceparent.length() == TRACEPARENT_HEADER_SIZE
                 || (traceparent.length() > TRACEPARENT_HEADER_SIZE
                     && traceparent.charAt(TRACEPARENT_HEADER_SIZE) == TRACEPARENT_DELIMITER))
@@ -97,14 +108,52 @@ public class TraceContextCodec implements Codec<TextMap> {
         Collections.<String, String>emptyMap(), null);
   }
 
+  private static Map<String, String> extractTraceState(String traceStateHeader) {
+    Map<String, String> baggage = new HashMap<String, String>();
+    String[] listMembers = TRACESTATE_ENTRY_DELIMITER_SPLIT_PATTERN.split(traceStateHeader);
+    if (listMembers.length > TRACESTATE_MAX_MEMBERS) {
+      log.warn("Could not extract tracestate, it has too many elements");
+      return Collections.emptyMap();
+    }
+    // Iterate in reverse order because when call builder set the elements is added in the
+    // front of the list.
+    for (int i = listMembers.length - 1; i >= 0; i--) {
+      String listMember = listMembers[i];
+      int index = listMember.indexOf(TRACESTATE_KEY_VALUE_DELIMITER);
+      if (index == -1) {
+        log.warn("Invalid tracestate list-member format");
+        return Collections.emptyMap();
+      }
+      baggage.put(listMember.substring(0, index), listMember.substring(index + 1));
+    }
+    return baggage;
+  }
+
   @Override
   public JaegerSpanContext extract(TextMap carrier) {
+    String traceParent = null;
+    String traceState = null;
     for (Map.Entry<String, String> entry: carrier) {
       if (TRACE_PARENT.equals(entry.getKey())) {
-        return extractContextFromTraceParent(entry.getValue());
+        traceParent = entry.getValue();
+      }
+      if (TRACE_STATE.equals(entry.getKey())) {
+        traceState = entry.getValue();
       }
     }
-    return null;
+
+    JaegerSpanContext extractedContext = extractContextFromTraceParent(traceParent);
+    if (extractedContext == null) {
+      return null;
+    }
+
+    if (traceState != null && !traceState.isEmpty()) {
+      Map<String, String> baggage = extractTraceState(traceState);
+      if (!baggage.isEmpty()) {
+        extractedContext = extractedContext.withBaggage(baggage);
+      }
+    }
+    return extractedContext;
   }
 
   @Override
@@ -121,6 +170,21 @@ public class TraceContextCodec implements Codec<TextMap> {
     chars[TRACE_OPTION_OFFSET] = '0';
     chars[TRACE_OPTION_OFFSET + 1] = spanContext.isSampled() ? '1' : '0';
     carrier.put(TRACE_PARENT, new String(chars));
+
+    if (spanContext.baggageCount() == 0) {
+      return;
+    }
+    StringBuilder stringBuilder = new StringBuilder(TRACESTATE_MAX_SIZE);
+    for (Map.Entry<String, String> entry: spanContext.baggageItems()) {
+      if (stringBuilder.length() != 0) {
+        stringBuilder.append(TRACESTATE_ENTRY_DELIMITER);
+      }
+      stringBuilder
+          .append(entry.getKey())
+          .append(TRACESTATE_KEY_VALUE_DELIMITER)
+          .append(entry.getValue());
+    }
+    carrier.put(TRACE_STATE, stringBuilder.toString());
   }
 
   public static class Builder {
