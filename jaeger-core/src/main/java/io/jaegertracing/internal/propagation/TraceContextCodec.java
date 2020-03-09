@@ -21,9 +21,7 @@ import io.jaegertracing.internal.JaegerSpanContext;
 import io.jaegertracing.spi.Codec;
 import io.opentracing.propagation.TextMap;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 
 /**

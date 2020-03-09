@@ -27,13 +27,8 @@ import java.util.HashMap;
 import java.util.Map;
 import org.junit.Test;
 
-/**
- *
- */
 public class TraceContextCodecTest {
 
-  private static final String TRACE_ID_BASE16 = "ff000000000000000000000000000041";
-  private static final String SPAN_ID_BASE16 = "ff00000000000041";
   private static final JaegerSpanContext SPAN_CONTEXT =
       new JaegerSpanContext(0, 1, 2, 3, (byte)0);
   private static final String EXAMPLE_TRACE_PARENT = "00-00000000000000000000000000000001-0000000000000002-00";
