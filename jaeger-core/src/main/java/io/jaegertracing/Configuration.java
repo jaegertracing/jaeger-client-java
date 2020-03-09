@@ -173,7 +173,7 @@ public class Configuration {
     /**
      * The W3C TraceContext propagation format.
      */
-    TRACE_CONTEXT
+    W3C
   }
 
   /**
@@ -473,7 +473,7 @@ public class Configuration {
           addCodec(codecs, Format.Builtin.HTTP_HEADERS, new B3TextMapCodec.Builder().build());
           addCodec(codecs, Format.Builtin.TEXT_MAP, new B3TextMapCodec.Builder().build());
           break;
-        case TRACE_CONTEXT:
+        case W3C:
           addCodec(codecs, Format.Builtin.HTTP_HEADERS, new TraceContextCodec.Builder().build());
           addCodec(codecs, Format.Builtin.TEXT_MAP, new TraceContextCodec.Builder().build());
           break;

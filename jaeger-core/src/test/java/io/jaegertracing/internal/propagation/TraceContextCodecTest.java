@@ -14,7 +14,6 @@
 
 package io.jaegertracing.internal.propagation;
 
-import static io.jaegertracing.internal.propagation.TraceContextCodec.TRACESTATE_MAX_MEMBERS;
 import static io.jaegertracing.internal.propagation.TraceContextCodec.TRACE_PARENT;
 import static io.jaegertracing.internal.propagation.TraceContextCodec.TRACE_STATE;
 import static org.junit.Assert.assertEquals;
@@ -23,7 +22,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import io.jaegertracing.internal.JaegerSpanContext;
-import io.jaegertracing.internal.propagation.TraceContextCodec.Builder;
 import io.opentracing.propagation.TextMapAdapter;
 import java.util.HashMap;
 import java.util.Map;
@@ -39,13 +37,6 @@ public class TraceContextCodecTest {
   private static final JaegerSpanContext SPAN_CONTEXT =
       new JaegerSpanContext(0, 1, 2, 3, (byte)0);
   private static final String EXAMPLE_TRACE_PARENT = "00-00000000000000000000000000000001-0000000000000002-00";
-  private static final String STRING_VALUE_630 = "11111111111111111111111111111111111111111111111111111111111111111"
-      + "11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111"
-      + "11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111"
-      + "11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111"
-      + "11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111"
-      + "1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111"
-      + "1111111111111111111111111111111";
 
   private TraceContextCodec traceContextCodec = new TraceContextCodec.Builder().build();
 
@@ -121,68 +112,30 @@ public class TraceContextCodecTest {
     assertNull(spanContext);
   }
 
-
   @Test
-  public void testExtractTraceState() {
-    JaegerSpanContext spanContext = SPAN_CONTEXT
-        .withBaggageItem("foo", "bar");
+  public void testTraceStatePropagation() {
+    Map<String, String> extractCarrier = new HashMap<>();
+    TextMapAdapter textMap = new TextMapAdapter(extractCarrier);
+    textMap.put(TRACE_PARENT, EXAMPLE_TRACE_PARENT);
+    textMap.put(TRACE_STATE, "whatever");
+    JaegerSpanContext spanContext = traceContextCodec.extract(textMap);
 
-    Map<String, String> carrier = new  HashMap<>();
-    TraceContextCodec traceContextCodec = new TraceContextCodec.Builder().build();
-    traceContextCodec.inject(spanContext, new TextMapAdapter(carrier));
-
-    assertEquals(2, carrier.size());
-    String traceState = carrier.get(TRACE_STATE);
-    assertEquals("foo=bar", traceState);
+    Map<String, String> injectCarrier = new HashMap<>();
+    traceContextCodec.inject(spanContext, new TextMapAdapter(injectCarrier));
+    assertEquals(extractCarrier, injectCarrier);
   }
 
   @Test
-  public void testExtractTraceStateInvalidDelimiter() {
-    Map<String, String> invalidHeaders = new HashMap<>();
-    invalidHeaders.put(TRACE_PARENT, "00-" + TRACE_ID_BASE16 + "-" + SPAN_ID_BASE16 + "-01");
-    invalidHeaders.put(TRACE_STATE, "foo=bar,test-test");
-    TraceContextCodec traceContextCodec = new Builder().build();
+  public void testEmptyTraceStateNotPropagated() {
+    Map<String, String> extractCarrier = new HashMap<>();
+    TextMapAdapter textMap = new TextMapAdapter(extractCarrier);
+    textMap.put(TRACE_PARENT, EXAMPLE_TRACE_PARENT);
+    textMap.put(TRACE_STATE, "");
+    JaegerSpanContext spanContext = traceContextCodec.extract(textMap);
 
-    JaegerSpanContext spanContext = traceContextCodec.extract(new TextMapAdapter(invalidHeaders));
-    assertEquals(0, spanContext.baggageCount());
-  }
-
-  @Test
-  public void testExtractTraceStateLongerThan512() {
-    Map<String, String> headers = new HashMap<>();
-    String key = "item";
-    headers.put(TRACE_STATE, String.format("%s=%s", key, STRING_VALUE_630));
-    headers.put(TRACE_PARENT, EXAMPLE_TRACE_PARENT);
-    TraceContextCodec traceContextCodec = new Builder().build();
-    JaegerSpanContext extractedContext = traceContextCodec.extract(new TextMapAdapter(headers));
-    assertEquals(1, extractedContext.baggageCount());
-    assertEquals(STRING_VALUE_630, extractedContext.getBaggageItem(key));
-  }
-
-  @Test
-  public void testExtractTraceState33Elements() {
-    Map<String, String> invalidHeaders = new HashMap<>();
-    StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < 33; i++) {
-      if (sb.length() != 0) {
-        sb.append(",");
-      }
-      sb.append(String.format("item%d=%d", i, i));
-    }
-    invalidHeaders.put(TRACE_STATE, sb.toString());
-    invalidHeaders.put(TRACE_PARENT, EXAMPLE_TRACE_PARENT);
-    TraceContextCodec traceContextCodec = new Builder().build();
-    JaegerSpanContext extractedContext = traceContextCodec.extract(new TextMapAdapter(invalidHeaders));
-    assertEquals(0, extractedContext.baggageCount());
-  }
-
-  @Test
-  public void testInjectTraceState33Elements() {
-    JaegerSpanContext jaegerSpanContext = SPAN_CONTEXT.withBaggageItem("item", STRING_VALUE_630);
-    TraceContextCodec traceContextCodec = new Builder().build();
-    Map<String, String> carrier = new HashMap<>();
-    traceContextCodec.inject(jaegerSpanContext, new TextMapAdapter(carrier));
-    assertEquals(2, carrier.size());
-    assertEquals(String.format("%s=%s", "item", STRING_VALUE_630), carrier.get(TRACE_STATE));
+    Map<String, String> injectCarrier = new HashMap<>();
+    traceContextCodec.inject(spanContext, new TextMapAdapter(injectCarrier));
+    assertEquals(1, injectCarrier.size());
+    assertEquals(EXAMPLE_TRACE_PARENT, injectCarrier.get(TRACE_PARENT));
   }
 }

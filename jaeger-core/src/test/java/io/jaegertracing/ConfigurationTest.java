@@ -484,7 +484,7 @@ public class ConfigurationTest {
         .fromString(String.format("%s,%s,%s",
             Propagation.B3.name(),
             Propagation.JAEGER.name(),
-            Propagation.TRACE_CONTEXT.name()));
+            Propagation.W3C.name()));
     assertEquals(2, codecConfiguration.getCodecs().size());
     assertEquals(3, codecConfiguration.getCodecs().get(Builtin.HTTP_HEADERS).size());
     assertEquals(3, codecConfiguration.getCodecs().get(Builtin.TEXT_MAP).size());

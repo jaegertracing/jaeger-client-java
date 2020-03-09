@@ -36,6 +36,7 @@ public class JaegerSpanContext implements SpanContext {
   private final JaegerObjectFactory objectFactory;
   private final String traceIdAsString;
   private final String spanIdAsString;
+  private final String traceState;
 
   public JaegerSpanContext(long traceIdHigh, long traceIdLow, long spanId, long parentId, byte flags) {
     this(
@@ -44,6 +45,7 @@ public class JaegerSpanContext implements SpanContext {
         spanId,
         parentId,
         flags,
+        null,
         Collections.<String, String>emptyMap(),
         null, // debugId
         new JaegerObjectFactory());
@@ -58,6 +60,19 @@ public class JaegerSpanContext implements SpanContext {
       Map<String, String> baggage,
       String debugId,
       JaegerObjectFactory objectFactory) {
+    this(traceIdHigh, traceIdLow, spanId, parentId, flags, null, baggage, debugId, objectFactory);
+  }
+
+  protected JaegerSpanContext(
+      long traceIdHigh,
+      long traceIdLow,
+      long spanId,
+      long parentId,
+      byte flags,
+      String traceState,
+      Map<String, String> baggage,
+      String debugId,
+      JaegerObjectFactory objectFactory) {
     if (baggage == null) {
       baggage = Collections.<String, String>emptyMap();
     }
@@ -66,6 +81,7 @@ public class JaegerSpanContext implements SpanContext {
     this.spanId = spanId;
     this.parentId = parentId;
     this.flags = flags;
+    this.traceState = traceState;
     this.baggage = baggage;
     this.debugId = debugId;
     this.objectFactory = objectFactory;
@@ -123,6 +139,10 @@ public class JaegerSpanContext implements SpanContext {
 
   public byte getFlags() {
     return flags;
+  }
+
+  public String getTraceState() {
+    return traceState;
   }
 
   public boolean isSampled() {

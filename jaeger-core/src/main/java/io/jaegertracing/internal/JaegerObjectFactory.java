@@ -62,9 +62,21 @@ public class JaegerObjectFactory {
       long spanId,
       long parentId,
       byte flags,
+      String traceState,
       Map<String, String> baggage,
       String debugId) {
-    return new JaegerSpanContext(traceIdHigh, traceIdLow, spanId, parentId, flags, baggage, debugId, this);
+    return new JaegerSpanContext(traceIdHigh, traceIdLow, spanId, parentId, flags, traceState, baggage, debugId, this);
+  }
+
+  public JaegerSpanContext createSpanContext(
+      long traceIdHigh,
+      long traceIdLow,
+      long spanId,
+      long parentId,
+      byte flags,
+      Map<String, String> baggage,
+      String debugId) {
+    return new JaegerSpanContext(traceIdHigh, traceIdLow, spanId, parentId, flags, null, baggage, debugId, this);
   }
 
   public JaegerTracer.SpanBuilder createSpanBuilder(JaegerTracer tracer, String operationName) {
