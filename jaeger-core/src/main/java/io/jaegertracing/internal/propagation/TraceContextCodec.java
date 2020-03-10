@@ -1,5 +1,5 @@
 /*
- * Copyright 2019, OpenTelemetry Authors
+ * Copyright 2020, OpenTelemetry Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,13 +43,13 @@ public class TraceContextCodec implements Codec<TextMap> {
   private static final int TRACEPARENT_DELIMITER_SIZE = 1;
   private static final int TRACE_ID_HEX_SIZE = 2 * 16;
   private static final int SPAN_ID_HEX_SIZE = 2 * 8;
-  private static final int TRACE_OPTION_HEX_SIZE = 2;
+  private static final int TRACE_FLAGS_HEX_SIZE = 2;
   private static final int TRACE_ID_OFFSET = VERSION_SIZE + TRACEPARENT_DELIMITER_SIZE;
   private static final int SPAN_ID_OFFSET =
       TRACE_ID_OFFSET + TRACE_ID_HEX_SIZE + TRACEPARENT_DELIMITER_SIZE;
   private static final int TRACE_OPTION_OFFSET =
       SPAN_ID_OFFSET + SPAN_ID_HEX_SIZE + TRACEPARENT_DELIMITER_SIZE;
-  private static final int TRACEPARENT_HEADER_SIZE = TRACE_OPTION_OFFSET + TRACE_OPTION_HEX_SIZE;
+  private static final int TRACEPARENT_HEADER_SIZE = TRACE_OPTION_OFFSET + TRACE_FLAGS_HEX_SIZE;
   private static final byte SAMPLED_FLAG = 1;
 
   private final JaegerObjectFactory objectFactory;
@@ -89,14 +89,14 @@ public class TraceContextCodec implements Codec<TextMap> {
       return null;
     }
 
-    return this.objectFactory.createSpanContext(
+    JaegerSpanContext spanContext = this.objectFactory.createSpanContext(
         traceIdHigh,
         traceIdLow,
         spanId,
         0,
-        sampled ? (byte)1 : (byte)0,
-        tracestate,
+        sampled ? (byte) 1 : (byte) 0,
         Collections.<String, String>emptyMap(), null);
+    return spanContext.withTraceState(tracestate);
   }
 
   @Override
