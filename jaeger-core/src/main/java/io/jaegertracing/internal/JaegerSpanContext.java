@@ -36,6 +36,7 @@ public class JaegerSpanContext implements SpanContext {
   private final JaegerObjectFactory objectFactory;
   private final String traceIdAsString;
   private final String spanIdAsString;
+  private String traceState;
 
   public JaegerSpanContext(long traceIdHigh, long traceIdLow, long spanId, long parentId, byte flags) {
     this(
@@ -125,6 +126,10 @@ public class JaegerSpanContext implements SpanContext {
     return flags;
   }
 
+  public String getTraceState() {
+    return traceState;
+  }
+
   public boolean isSampled() {
     return (flags & flagSampled) == flagSampled;
   }
@@ -161,6 +166,13 @@ public class JaegerSpanContext implements SpanContext {
 
   public JaegerSpanContext withFlags(byte flags) {
     return objectFactory.createSpanContext(traceIdHigh, traceIdLow, spanId, parentId, flags, baggage, debugId);
+  }
+
+  public JaegerSpanContext withTraceState(String traceState) {
+    JaegerSpanContext spanContext = objectFactory
+        .createSpanContext(traceIdHigh, traceIdLow, spanId, parentId, flags, baggage, debugId);
+    spanContext.traceState = traceState;
+    return spanContext;
   }
 
   /**

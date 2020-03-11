@@ -22,6 +22,7 @@ import io.jaegertracing.internal.propagation.B3TextMapCodec;
 import io.jaegertracing.internal.propagation.BinaryCodec;
 import io.jaegertracing.internal.propagation.CompositeCodec;
 import io.jaegertracing.internal.propagation.TextMapCodec;
+import io.jaegertracing.internal.propagation.TraceContextCodec;
 import io.jaegertracing.internal.reporters.CompositeReporter;
 import io.jaegertracing.internal.reporters.LoggingReporter;
 import io.jaegertracing.internal.reporters.RemoteReporter;
@@ -167,7 +168,12 @@ public class Configuration {
     /**
      * The Zipkin B3 trace context propagation format.
      */
-    B3
+    B3,
+
+    /**
+     * The W3C TraceContext propagation format.
+     */
+    W3C
   }
 
   /**
@@ -466,6 +472,10 @@ public class Configuration {
         case B3:
           addCodec(codecs, Format.Builtin.HTTP_HEADERS, new B3TextMapCodec.Builder().build());
           addCodec(codecs, Format.Builtin.TEXT_MAP, new B3TextMapCodec.Builder().build());
+          break;
+        case W3C:
+          addCodec(codecs, Format.Builtin.HTTP_HEADERS, new TraceContextCodec.Builder().build());
+          addCodec(codecs, Format.Builtin.TEXT_MAP, new TraceContextCodec.Builder().build());
           break;
         default:
           log.error("Unhandled propagation format '" + propagation + "'");
