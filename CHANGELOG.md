@@ -1,10 +1,17 @@
 Changes by Version
 ==================
 
-1.2.0 (unreleased)
+1.3.0 (unreleased)
 -------------------
 
-- Nothing yet.
+1.2.0 (2020-03-11)
+-------------------
+
+* Add W3C TraceContext codec/propagation  ([#694](https://github.com/jaegertracing/jaeger-client-java/pull/694), [@pavolloffay](https://github.com/pavolloffay))
+* Configuration do not cache sender instance ([#685](https://github.com/jaegertracing/jaeger-client-java/pull/685), [@ehsavoie](https://github.com/ehsavoie))
+* Prevent a shutdown hook from being removed in JaegerTracer when a shutdown is in progress ([#689](https://github.com/jaegertracing/jaeger-client-java/pull/689), [@TomasHofman](https://github.com/TomasHofman))
+* Fix ThriftSender max span size check ([#670](https://github.com/jaegertracing/jaeger-client-java/pull/670), [@yhpark](https://github.com/yhpark))
+* Unregister shutdown hook when tracer is closed ([#679](https://github.com/jaegertracing/jaeger-client-java/pull/679), [@TomasHofman](https://github.com/TomasHofman))
 
 1.1.0 (2019-12-12)
 -------------------
