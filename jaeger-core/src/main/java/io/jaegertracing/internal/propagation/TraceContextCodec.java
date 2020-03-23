@@ -111,6 +111,9 @@ public class TraceContextCodec implements Codec<TextMap> {
         traceState = entry.getValue();
       }
     }
+    if (traceParent == null) {
+      return null;
+    }
     return extractContextFromTraceParent(traceParent, traceState);
   }
 
