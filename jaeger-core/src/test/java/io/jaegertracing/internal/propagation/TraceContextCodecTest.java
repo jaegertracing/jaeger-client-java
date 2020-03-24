@@ -20,20 +20,43 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import io.jaegertracing.internal.JaegerSpanContext;
 import io.opentracing.propagation.TextMapAdapter;
+
+import java.io.IOException;
+import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 
 public class TraceContextCodecTest {
 
   private static final JaegerSpanContext SPAN_CONTEXT =
       new JaegerSpanContext(0, 1, 2, 3, (byte)0);
   private static final String EXAMPLE_TRACE_PARENT = "00-00000000000000000000000000000001-0000000000000002-00";
+  private static PrintStream sysout;
 
   private TraceContextCodec traceContextCodec = new TraceContextCodec.Builder().build();
+
+  @BeforeClass
+  public static void setup() {
+    sysout = System.out;
+    System.setOut(Mockito.spy(sysout));
+  }
+
+  @AfterClass
+  public static void cleanup() {
+    System.setOut(sysout);
+  }
 
   @Test
   public void support128BitTraceIdExtraction() {
@@ -90,6 +113,7 @@ public class TraceContextCodecTest {
     textMap.put(TRACE_PARENT, "00-00000000000000000000000000000000-0000000000000002-00");
     JaegerSpanContext spanContext = traceContextCodec.extract(textMap);
     assertNull(spanContext);
+    verifyWarningPresent();
   }
 
   @Test
@@ -97,6 +121,7 @@ public class TraceContextCodecTest {
     TextMapAdapter textMap = new TextMapAdapter(new HashMap<>());
     JaegerSpanContext spanContext = traceContextCodec.extract(textMap);
     assertNull(spanContext);
+    verifyWarningNotPresent();
   }
 
   @Test
@@ -105,6 +130,7 @@ public class TraceContextCodecTest {
     textMap.put(TRACE_PARENT, "00-00000000000000000000000000000001-0000000000000000-00");
     JaegerSpanContext spanContext = traceContextCodec.extract(textMap);
     assertNull(spanContext);
+    verifyWarningPresent();
   }
 
   @Test
@@ -132,5 +158,28 @@ public class TraceContextCodecTest {
     traceContextCodec.inject(spanContext, new TextMapAdapter(injectCarrier));
     assertEquals(1, injectCarrier.size());
     assertEquals(EXAMPLE_TRACE_PARENT, injectCarrier.get(TRACE_PARENT));
+  }
+
+  private void verifyWarningPresent() {
+    ArgumentCaptor<byte[]> captor = ArgumentCaptor.forClass(byte[].class);
+    try {
+      verify(System.out).write(captor.capture());
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    } finally {
+      reset(System.out);
+    }
+    String message = new String(captor.getValue());
+    assertTrue(message.contains("Unparseable traceparent header."));
+  }
+
+  private void verifyWarningNotPresent() {
+    try {
+      verify(System.out, times(0)).write(any());
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    } finally {
+      reset(System.out);
+    }
   }
 }
