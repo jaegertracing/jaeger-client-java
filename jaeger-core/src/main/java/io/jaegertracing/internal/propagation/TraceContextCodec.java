@@ -34,8 +34,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class TraceContextCodec implements Codec<TextMap> {
 
-  static final String TRACE_PARENT = "traceparent";
-  static final String TRACE_STATE = "tracestate";
+  public static final String TRACE_PARENT = "traceparent";
+  public static final String TRACE_STATE = "tracestate";
 
   private static final String VERSION = "00";
   private static final int VERSION_SIZE = 2;
