@@ -1,4 +1,5 @@
-[![Build Status][ci-img]][ci] [![Coverage Status][cov-img]][cov] [![Released Version][maven-img]][maven] [![FOSSA Status][fossa-img]][fossa]
+[![Build Status][ci-img]][ci] [![Coverage Status][cov-img]][cov] [![Released Version][maven-img]][maven] [![javadoc](https://javadoc.io/badge2/io.jaegertracing/jaeger-client/javadoc.svg)](https://javadoc.io/doc/io.jaegertracing/jaeger-client)
+ [![FOSSA Status][fossa-img]][fossa]
 
 # Jaeger's Tracing Instrumentation Library for Java
 
