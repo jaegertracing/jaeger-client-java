@@ -330,17 +330,19 @@ public class JaegerTracer implements Tracer, Closeable {
 
       byte flags = 0;
       if (debugId != null) {
-        flags = (byte) (flags | JaegerSpanContext.flagSampled | JaegerSpanContext.flagDebug);
+        flags = (byte) (flags
+                | JaegerSpanContext.flagSampled | JaegerSpanContext.flagDebug | JaegerSpanContext.flagSampledSet);
         tags.put(Constants.DEBUG_ID_HEADER_KEY, debugId);
         metrics.traceStartedSampled.inc(1);
       } else {
         // TODO: (prithvi) Don't assume operationName is set on creation
         SamplingStatus samplingStatus = sampler.sample(operationName, spanId);
         if (samplingStatus.isSampled()) {
-          flags |= JaegerSpanContext.flagSampled;
+          flags = (byte) (flags | JaegerSpanContext.flagSampled | JaegerSpanContext.flagSampledSet);
           tags.putAll(samplingStatus.getTags());
           metrics.traceStartedSampled.inc(1);
         } else {
+          flags |= JaegerSpanContext.flagSampledSet;
           metrics.traceStartedNotSampled.inc(1);
         }
       }
@@ -420,13 +422,26 @@ public class JaegerTracer implements Tracer, Closeable {
                   mergedBaggage,
                   null);
         } else {
+          // TODO: Optimize duplicated codes
           long traceIdHigh = isUseTraceId128Bit() ? Utils.uniqueId() : 0;
           long traceIdLow = spanId;
           String debugId = getDebugId();
           byte flags = preferredReference.getFlags();
           if (debugId != null) {
-            flags = (byte) (flags | JaegerSpanContext.flagSampled | JaegerSpanContext.flagDebug);
+            flags = (byte) (flags
+                    | JaegerSpanContext.flagSampled | JaegerSpanContext.flagDebug | JaegerSpanContext.flagSampledSet);
             tags.put(Constants.DEBUG_ID_HEADER_KEY, debugId);
+            metrics.traceStartedSampled.inc(1);
+          } else if (preferredReference.isSampled() == null) {
+            // TODO: (prithvi) Don't assume operationName is set on creation
+            SamplingStatus samplingStatus = sampler.sample(operationName, spanId);
+            if (samplingStatus.isSampled()) {
+              flags =  (byte) (flags | JaegerSpanContext.flagSampled | JaegerSpanContext.flagSampledSet);
+              tags.putAll(samplingStatus.getTags());
+              metrics.traceStartedSampled.inc(1);
+            } else {
+              metrics.traceStartedNotSampled.inc(1);
+            }
           }
           return getObjectFactory().createSpanContext(
                   traceIdHigh,

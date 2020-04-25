@@ -50,6 +50,7 @@ public class TraceContextCodec implements Codec<TextMap> {
   private static final int TRACE_OPTION_OFFSET =
       SPAN_ID_OFFSET + SPAN_ID_HEX_SIZE + TRACEPARENT_DELIMITER_SIZE;
   private static final int TRACEPARENT_HEADER_SIZE = TRACE_OPTION_OFFSET + TRACE_FLAGS_HEX_SIZE;
+  // sampled flag plus sampled set
   private static final byte SAMPLED_FLAG = 1;
 
   private final JaegerObjectFactory objectFactory;
@@ -94,7 +95,7 @@ public class TraceContextCodec implements Codec<TextMap> {
         traceIdLow,
         spanId,
         0,
-        sampled ? (byte) 1 : (byte) 0,
+        sampled ? (byte) (1 | (1 << 2)) : (byte) (1 << 2),
         Collections.<String, String>emptyMap(), null);
     return spanContext.withTraceState(tracestate);
   }

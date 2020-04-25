@@ -35,7 +35,8 @@ import org.junit.Test;
  *
  */
 public class B3TextMapCodecTest {
-  static final byte SAMPLED = 1;
+  static final byte SAMPLED = B3TextMapCodec.SAMPLED_FLAG;
+  static final byte NOT_SAMPLED = B3TextMapCodec.NOT_SAMPLED_FLAG;
 
   B3TextMapCodec b3Codec = new B3TextMapCodec.Builder().build();
 
@@ -74,7 +75,7 @@ public class B3TextMapCodecTest {
     long traceIdLow = 1;
     long spanId = 2;
     long parentId = 3;
-    JaegerSpanContext spanContext = new JaegerSpanContext(0L, traceIdLow, spanId, parentId, (byte)0)
+    JaegerSpanContext spanContext = new JaegerSpanContext(0L, traceIdLow, spanId, parentId, NOT_SAMPLED)
         .withBaggageItem("foo", "bar");
 
     b3Codec.inject(spanContext, entries);
@@ -96,7 +97,7 @@ public class B3TextMapCodecTest {
     long traceIdLow = 1;
     long spanId = 2;
     long parentId = 3;
-    JaegerSpanContext spanContext = new JaegerSpanContext(0L, traceIdLow, spanId, parentId, (byte)0)
+    JaegerSpanContext spanContext = new JaegerSpanContext(0L, traceIdLow, spanId, parentId, NOT_SAMPLED)
         .withBaggageItem("foo", "bar");
 
     b3Codec.inject(spanContext, entries);

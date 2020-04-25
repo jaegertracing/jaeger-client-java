@@ -47,6 +47,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class JaegerTracerTest {
+  private static final byte NOT_SAMPLED_FLAG = 1 << 2;
+  private static final byte SAMPLED_FLAG = 1 | 1 << 2;
 
   JaegerTracer tracer;
   InMemoryMetricsFactory metricsFactory;
@@ -181,7 +183,7 @@ public class JaegerTracerTest {
   public void testSpanContextNotSampled() {
     String expectedOperation = "fry";
     JaegerSpan first = tracer.buildSpan(expectedOperation).start();
-    tracer.buildSpan(expectedOperation).asChildOf((first.context()).withFlags((byte) 0)).start();
+    tracer.buildSpan(expectedOperation).asChildOf((first.context()).withFlags(NOT_SAMPLED_FLAG)).start();
 
     assertEquals(1, metricsFactory.getCounter("jaeger_tracer_started_spans", "sampled=y"));
     assertEquals(1, metricsFactory.getCounter("jaeger_tracer_started_spans", "sampled=n"));
@@ -191,11 +193,13 @@ public class JaegerTracerTest {
 
   @Test
   public void testOnlySamplingDecision() {
-    String expectedOperation = "onlyTrueSamplingDecision";
-    JaegerSpanContext spanContext = new JaegerSpanContext(0L, 0L, 0L, 0L, (byte) 1);
+    final String expectedOperation = "onlyTrueSamplingDecision";
+    JaegerSpanContext spanContext = new JaegerSpanContext(0L, 0L, 0L, 0L,
+            SAMPLED_FLAG);
     spanContext = spanContext.withBaggageItem("foo", "bar");
 
     assertFalse(spanContext.hasTrace());
+    assertTrue(spanContext.isSampled());
 
     JaegerSpan span = tracer.buildSpan(expectedOperation).asChildOf(spanContext).start();
 
@@ -208,9 +212,11 @@ public class JaegerTracerTest {
   @Test
   public void testFalseSamplingDecision() {
     String expectedOperation = "falseSamplingDecision";
-    JaegerSpanContext spanContext = new JaegerSpanContext(0L, 0L, 0L, 0L, (byte) 0);
+    JaegerSpanContext spanContext = new JaegerSpanContext(0L, 0L, 0L, 0L,
+            NOT_SAMPLED_FLAG);
 
     assertFalse(spanContext.hasTrace());
+    assertFalse(spanContext.isSampled());
 
     JaegerSpan span = tracer.buildSpan(expectedOperation).asChildOf(spanContext).start();
 
@@ -226,11 +232,13 @@ public class JaegerTracerTest {
     parentSpan.setBaggageItem("parentFoo", "parentBar");
     final Scope scope = tracer.activateSpan(parentSpan);
 
-    String expectedOperation = "onlyTrueSamplingDecision";
-    JaegerSpanContext spanContext = new JaegerSpanContext(0L, 0L, 0L, 0L, (byte) 1);
+    final String expectedOperation = "onlyTrueSamplingDecision";
+    JaegerSpanContext spanContext = new JaegerSpanContext(0L, 0L, 0L, 0L,
+            SAMPLED_FLAG);
     spanContext = spanContext.withBaggageItem("foo", "bar");
 
     assertFalse(spanContext.hasTrace());
+    assertTrue(spanContext.isSampled());
 
     JaegerSpan span = tracer.buildSpan(expectedOperation).asChildOf(spanContext).start();
 

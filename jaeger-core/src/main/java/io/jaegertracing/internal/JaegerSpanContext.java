@@ -24,7 +24,8 @@ import java.util.Map;
 
 public class JaegerSpanContext implements SpanContext {
   protected static final byte flagSampled = 1;
-  protected static final byte flagDebug = 2;
+  protected static final byte flagDebug = 1 << 1;
+  protected static final byte flagSampledSet = 1 << 2;
 
   private final long traceIdLow;
   private final long traceIdHigh;
@@ -130,8 +131,8 @@ public class JaegerSpanContext implements SpanContext {
     return traceState;
   }
 
-  public boolean isSampled() {
-    return (flags & flagSampled) == flagSampled;
+  public Boolean isSampled() {
+    return (flags & flagSampledSet) == flagSampledSet ? (flags & flagSampled) == flagSampled : null;
   }
 
   public boolean isDebug() {

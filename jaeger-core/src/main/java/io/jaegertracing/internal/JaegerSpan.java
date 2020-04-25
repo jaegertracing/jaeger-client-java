@@ -223,9 +223,12 @@ public class JaegerSpan implements Span {
       int priority = ((Number) value).intValue();
       byte newFlags;
       if (priority > 0) {
-        newFlags = (byte) (context.getFlags() | JaegerSpanContext.flagSampled | JaegerSpanContext.flagDebug);
+        newFlags = (byte) (context.getFlags()
+                | JaegerSpanContext.flagSampled | JaegerSpanContext.flagSampledSet | JaegerSpanContext.flagDebug);
       } else {
-        newFlags = (byte) (context.getFlags() & (~JaegerSpanContext.flagSampled));
+        // https://github.com/opentracing/specification/blob/master/semantic_conventions.md
+        // If 0, a hint to the trace to not-capture the trace.
+        newFlags = (byte) ((context.getFlags() & (~JaegerSpanContext.flagSampled)) | JaegerSpanContext.flagSampledSet);
       }
 
       context = context.withFlags(newFlags);

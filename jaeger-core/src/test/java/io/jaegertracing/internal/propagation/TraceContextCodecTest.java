@@ -41,7 +41,7 @@ import org.mockito.Mockito;
 public class TraceContextCodecTest {
 
   private static final JaegerSpanContext SPAN_CONTEXT =
-      new JaegerSpanContext(0, 1, 2, 3, (byte)0);
+      new JaegerSpanContext(0, 1, 2, 3, (byte) (1 << 2));
   private static final String EXAMPLE_TRACE_PARENT = "00-00000000000000000000000000000001-0000000000000002-00";
   private static PrintStream sysout;
 
@@ -83,7 +83,7 @@ public class TraceContextCodecTest {
     long spanId = 2;
     long parentId = 3;
     long traceIdHigh = HexCodec.hexToUnsignedLong("c281c27976c85681", 0, 16);
-    JaegerSpanContext spanContext = new JaegerSpanContext(traceIdHigh, traceIdLow, spanId, parentId, (byte) 0);
+    JaegerSpanContext spanContext = new JaegerSpanContext(traceIdHigh, traceIdLow, spanId, parentId, (byte) (1 << 2));
 
     traceContextCodec.inject(spanContext, textMap);
 
@@ -104,7 +104,7 @@ public class TraceContextCodecTest {
     String traceParent = carrier.get(TRACE_PARENT);
     assertEquals(EXAMPLE_TRACE_PARENT, traceParent);
     JaegerSpanContext extractedContext = traceContextCodec.extract(textMap);
-    assertEquals("1:2:0:0", extractedContext.toString());
+    assertEquals("1:2:0:4", extractedContext.toString());
   }
 
   @Test

@@ -55,8 +55,10 @@ public class B3TextMapCodec implements Codec<TextMap> {
   protected static final String FLAGS_NAME = "X-B3-Flags";
   protected static final String BAGGAGE_PREFIX = "baggage-";
   // NOTE: uber's flags aren't the same as B3/Finagle ones
-  protected static final byte SAMPLED_FLAG = 1;
-  protected static final byte DEBUG_FLAG = 2;
+  protected static final byte SAMPLED_SET_FLAG = 1 << 2;
+  protected static final byte NOT_SAMPLED_FLAG = SAMPLED_SET_FLAG;
+  protected static final byte SAMPLED_FLAG = 1 | SAMPLED_SET_FLAG;
+  protected static final byte DEBUG_FLAG = 1 << 1;
 
   private static final PrefixedKeys keys = new PrefixedKeys();
   private final String baggagePrefix;
@@ -109,6 +111,7 @@ public class B3TextMapCodec implements Codec<TextMap> {
           flags |= SAMPLED_FLAG;
           sampleDecision = true;
         } else if ("0".equals(value) || "false".equalsIgnoreCase(value)) {
+          flags |= NOT_SAMPLED_FLAG;
           sampleDecision = false;
         }
       } else if (entry.getKey().equalsIgnoreCase(TRACE_ID_NAME)) {
