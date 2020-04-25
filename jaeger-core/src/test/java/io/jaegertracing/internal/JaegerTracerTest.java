@@ -30,6 +30,7 @@ import io.jaegertracing.internal.samplers.ConstSampler;
 import io.jaegertracing.spi.Injector;
 import io.jaegertracing.spi.Reporter;
 import io.jaegertracing.spi.Sampler;
+import io.opentracing.Scope;
 import io.opentracing.Span;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
@@ -186,6 +187,48 @@ public class JaegerTracerTest {
     assertEquals(1, metricsFactory.getCounter("jaeger_tracer_started_spans", "sampled=n"));
     assertEquals(1, metricsFactory.getCounter("jaeger_tracer_traces", "sampled=y,state=started"));
     assertEquals(0, metricsFactory.getCounter("jaeger_tracer_traces", "sampled=n,state=started"));
+  }
+
+  @Test
+  public void testOnlySamplingDecision() {
+    String expectedOperation = "onlyTrueSamplingDecision";
+    JaegerSpanContext spanContext = new JaegerSpanContext(0L, 0L, 0L, 0L, (byte) 1);
+    spanContext = spanContext.withBaggageItem("foo", "bar");
+
+    assertFalse(spanContext.hasTrace());
+
+    JaegerSpan span = tracer.buildSpan(expectedOperation).asChildOf(spanContext).start();
+
+    assertEquals(expectedOperation, span.getOperationName());
+    assertTrue(span.context().hasTrace());
+    assertEquals("bar", span.getBaggageItem("foo"));
+    span.finish();
+  }
+
+  @Test
+  public void testOnlySamplingDecisionWithParent() {
+    JaegerSpan parentSpan = tracer.buildSpan("parent").start();
+    parentSpan.setBaggageItem("parentFoo", "parentBar");
+    Scope scope = tracer.activateSpan(parentSpan);
+
+    String expectedOperation = "onlyTrueSamplingDecision";
+    JaegerSpanContext spanContext = new JaegerSpanContext(0L, 0L, 0L, 0L, (byte) 1);
+    spanContext = spanContext.withBaggageItem("foo", "bar");
+
+    assertFalse(spanContext.hasTrace());
+
+    JaegerSpan span = tracer.buildSpan(expectedOperation).asChildOf(spanContext).start();
+
+    assertEquals(expectedOperation, span.getOperationName());
+    assertTrue(span.context().hasTrace());
+    assertEquals(span.context().getParentId(), parentSpan.context().getSpanId());
+    assertEquals(span.context().getTraceId(), parentSpan.context().getTraceId());
+    assertEquals("bar", span.getBaggageItem("foo"));
+    // test baggage items merge
+    assertEquals("parentBar", span.getBaggageItem("parentFoo"));
+    scope.close();
+    span.finish();
+    parentSpan.finish();
   }
 
   @Test

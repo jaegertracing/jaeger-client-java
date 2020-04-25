@@ -14,10 +14,6 @@
 
 package io.jaegertracing.internal.propagation;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
 import io.jaegertracing.internal.JaegerSpanContext;
 import io.opentracing.propagation.TextMap;
 import java.util.Iterator;
@@ -26,6 +22,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 /**
  * NOTE:
@@ -102,6 +100,18 @@ public class B3TextMapCodecTest {
     b3Codec.inject(spanContext, entries);
     assertEquals(5, entries.delegate.size());
     assertEquals("bar", entries.delegate.get("foofoo"));
+  }
+
+  @Test
+  public void testDenySamplingDecisionWithBaggage() {
+    DelegatingTextMap entries = new DelegatingTextMap();
+    entries.put(B3TextMapCodec.SAMPLED_NAME, "1");
+    entries.put(B3TextMapCodec.BAGGAGE_PREFIX + "foo", "bar");
+
+    JaegerSpanContext spanContext = b3Codec.extract(entries);
+    assertNotNull(spanContext);
+    assertTrue(spanContext.isSampled());
+    assertEquals("bar", spanContext.getBaggageItem("foo"));
   }
 
   @Test

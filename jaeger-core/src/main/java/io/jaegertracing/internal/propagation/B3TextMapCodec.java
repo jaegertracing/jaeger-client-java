@@ -100,11 +100,16 @@ public class B3TextMapCodec implements Codec<TextMap> {
     Long parentId = 0L; // Conventionally, parent id == 0 means the root span
     byte flags = 0;
     Map<String, String> baggage = null;
+    // True for `Accept` sampling, false for `Deny` sampling, and null for defer sampling
+    Boolean sampleDecision = null;
     for (Map.Entry<String, String> entry : carrier) {
       if (entry.getKey().equalsIgnoreCase(SAMPLED_NAME)) {
         String value = entry.getValue();
         if ("1".equals(value) || "true".equalsIgnoreCase(value)) {
           flags |= SAMPLED_FLAG;
+          sampleDecision = true;
+        } else if ("0".equals(value) || "false".equalsIgnoreCase(value)) {
+          sampleDecision = false;
         }
       } else if (entry.getKey().equalsIgnoreCase(TRACE_ID_NAME)) {
         traceIdLow = HexCodec.lowerHexToUnsignedLong(entry.getValue());
@@ -135,6 +140,22 @@ public class B3TextMapCodec implements Codec<TextMap> {
           Collections.<String, String>emptyMap(),
           null // debugId
           );
+      if (baggage != null) {
+        spanContext = spanContext.withBaggage(baggage);
+      }
+      return spanContext;
+    } else if (sampleDecision != null) {
+      // create an `empty` spanContext with sampling decision extracted from headers
+      // support `Deny` and `Accept`
+      JaegerSpanContext spanContext = objectFactory.createSpanContext(
+              0L,
+              0L,
+              0L,
+              0L,
+              flags,
+              Collections.<String, String>emptyMap(),
+              null // debugId
+      );
       if (baggage != null) {
         spanContext = spanContext.withBaggage(baggage);
       }

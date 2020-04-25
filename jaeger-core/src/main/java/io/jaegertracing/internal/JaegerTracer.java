@@ -391,15 +391,47 @@ public class JaegerTracer implements Tracer, Closeable {
         }
       }
 
-      return getObjectFactory().createSpanContext(
-          preferredReference.getTraceIdHigh(),
-          preferredReference.getTraceIdLow(),
-          Utils.uniqueId(),
-          preferredReference.getSpanId(),
-          // should we do OR across passed references?
-          preferredReference.getFlags(),
-          getBaggage(),
-          null);
+      if (preferredReference.hasTrace()) {
+        return getObjectFactory().createSpanContext(
+                preferredReference.getTraceIdHigh(),
+                preferredReference.getTraceIdLow(),
+                Utils.uniqueId(),
+                preferredReference.getSpanId(),
+                // should we do OR across passed references?
+                preferredReference.getFlags(),
+                getBaggage(),
+                null);
+      } else {
+        Span implicitParent = activeSpan();
+        long spanId = Utils.uniqueId();
+        if (!ignoreActiveSpan && implicitParent instanceof JaegerSpan) {
+          JaegerSpanContext parentContext = ((JaegerSpan) implicitParent).context();
+          // if active span is not ignored and not null
+          Map<String, String> mergedBaggage = new HashMap<String, String>(parentContext.baggage());
+          mergedBaggage.putAll(getBaggage());
+          return getObjectFactory().createSpanContext(
+                  parentContext.getTraceIdHigh(),
+                  parentContext.getTraceIdLow(),
+                  spanId,
+                  parentContext.getSpanId(),
+                  // should we do OR across passed references?
+                  parentContext.getFlags(),
+                  // merge two baggage
+                  mergedBaggage,
+                  null);
+        } else {
+          long traceIdHigh = isUseTraceId128Bit() ? Utils.uniqueId() : 0;
+          long traceIdLow = spanId;
+          return getObjectFactory().createSpanContext(
+                  traceIdHigh,
+                  traceIdLow,
+                  spanId,
+                  0,
+                  preferredReference.getFlags(),
+                  getBaggage(),
+                  null);
+        }
+      }
     }
 
     //Visible for testing
@@ -447,7 +479,7 @@ public class JaegerTracer implements Tracer, Closeable {
         asChildOf(scopeManager.activeSpan());
       }
 
-      if (references.isEmpty() || !references.get(0).getSpanContext().hasTrace()) {
+      if (references.isEmpty()) {
         context = createNewContext();
       } else {
         context = createChildContext();
