@@ -206,6 +206,21 @@ public class JaegerTracerTest {
   }
 
   @Test
+  public void testFalseSamplingDecision() {
+    String expectedOperation = "falseSamplingDecision";
+    JaegerSpanContext spanContext = new JaegerSpanContext(0L, 0L, 0L, 0L, (byte) 0);
+
+    assertFalse(spanContext.hasTrace());
+
+    JaegerSpan span = tracer.buildSpan(expectedOperation).asChildOf(spanContext).start();
+
+    assertEquals(expectedOperation, span.getOperationName());
+    assertFalse(span.context().isSampled());
+    assertTrue(span.context().hasTrace());
+    span.finish();
+  }
+
+  @Test
   public void testOnlySamplingDecisionWithParent() {
     JaegerSpan parentSpan = tracer.buildSpan("parent").start();
     parentSpan.setBaggageItem("parentFoo", "parentBar");
