@@ -14,6 +14,10 @@
 
 package io.jaegertracing.internal.propagation;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import io.jaegertracing.internal.JaegerSpanContext;
 import io.opentracing.propagation.TextMap;
 import java.util.Iterator;
@@ -22,8 +26,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import org.junit.Test;
-
-import static org.junit.Assert.*;
 
 /**
  * NOTE:

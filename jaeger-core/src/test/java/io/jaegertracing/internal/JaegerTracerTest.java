@@ -224,7 +224,7 @@ public class JaegerTracerTest {
   public void testOnlySamplingDecisionWithParent() {
     JaegerSpan parentSpan = tracer.buildSpan("parent").start();
     parentSpan.setBaggageItem("parentFoo", "parentBar");
-    Scope scope = tracer.activateSpan(parentSpan);
+    final Scope scope = tracer.activateSpan(parentSpan);
 
     String expectedOperation = "onlyTrueSamplingDecision";
     JaegerSpanContext spanContext = new JaegerSpanContext(0L, 0L, 0L, 0L, (byte) 1);

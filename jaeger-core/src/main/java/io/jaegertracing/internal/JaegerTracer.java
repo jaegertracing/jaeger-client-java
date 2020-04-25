@@ -422,14 +422,20 @@ public class JaegerTracer implements Tracer, Closeable {
         } else {
           long traceIdHigh = isUseTraceId128Bit() ? Utils.uniqueId() : 0;
           long traceIdLow = spanId;
+          String debugId = getDebugId();
+          byte flags = preferredReference.getFlags();
+          if (debugId != null) {
+            flags = (byte) (flags | JaegerSpanContext.flagSampled | JaegerSpanContext.flagDebug);
+            tags.put(Constants.DEBUG_ID_HEADER_KEY, debugId);
+          }
           return getObjectFactory().createSpanContext(
                   traceIdHigh,
                   traceIdLow,
                   spanId,
                   0,
-                  preferredReference.getFlags(),
+                  flags,
                   getBaggage(),
-                  null);
+                  debugId);
         }
       }
     }
