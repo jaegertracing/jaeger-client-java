@@ -50,7 +50,7 @@ A tracer instance can be obtained from `JaegerTracer.Builder` like:
 Tracer tracer = new JaegerTracer.Builder("myServiceName").build()
 ```
 
-##### B3 propagation
+#### B3 propagation
 Jaeger Tracer can also work in the environment where B3 propagation is used. This is mostly related
 to systems instrumented with Zipkin. Once you register `B3TextMapCodec`, Jaeger can join traces 
 started by other Zipkin instrumented applications. This includes reading headers 
@@ -58,6 +58,7 @@ like `X-B3-TraceId`. Jaeger B3 implementation automatically propagates baggage a
 uses `baggage-` prefix.
 
 Example configuration:
+
 ```java
 b3Codec = new B3TextMapCodec();
 tracer = new JaegerTracer.Builder(serviceName)
@@ -66,7 +67,7 @@ tracer = new JaegerTracer.Builder(serviceName)
   ...
 ```
 
-#### Configuration via Environment
+### Configuration via Environment
 
 When obtaining a tracer instance using the `io.jaegertracing.Configuration#fromEnv()` method, values specified
 via system properties (`-DJAEGER_SERVICE_NAME=foo`) will override values specified via environment variables.
@@ -101,7 +102,7 @@ can be performed by setting the related environment vars. Similarly, if the endp
 token, like a JWT, set the `JAEGER_AUTH_TOKEN` environment variable. If the Basic Authentication environment
 variables *and* the Auth Token environment variable are set, Basic Authentication is used.
  
-#### Obtaining Tracer via TracerResolver
+### Obtaining Tracer via TracerResolver
 
 Jaeger's Java Client also provides an implementation of the
 [TracerResolver](https://github.com/opentracing-contrib/java-tracerresolver), allowing a `Tracer` to be
@@ -110,7 +111,7 @@ environment approach described above.
 
 More information about using the `TracerResolver` can be found [here](../jaeger-tracerresolver/README.md).
 
-#### Reporting internal metrics via Micrometer
+### Reporting internal metrics via Micrometer
 
 The Jaeger Java Client collects *internal* metrics and is able to report them via [Micrometer](http://micrometer.io).
 To accomplish that, include the artifact `io.jaegertracing:jaeger-micrometer` as a dependency to your project. The
@@ -127,7 +128,7 @@ Tracer tracer = configuration
     .build();
 ```
 
-### Development
+## Development
 
 Especially in unit tests, it's useful to have tracer that is not connected to tracing backend, but collects
 spans in memory:
