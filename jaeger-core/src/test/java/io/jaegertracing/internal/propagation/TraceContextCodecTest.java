@@ -17,19 +17,27 @@ package io.jaegertracing.internal.propagation;
 import static io.jaegertracing.internal.propagation.TraceContextCodec.TRACE_PARENT;
 import static io.jaegertracing.internal.propagation.TraceContextCodec.TRACE_STATE;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import io.jaegertracing.internal.Constants;
+import io.jaegertracing.internal.JaegerSpan;
 import io.jaegertracing.internal.JaegerSpanContext;
+import io.jaegertracing.internal.JaegerTracer;
+import io.jaegertracing.internal.reporters.InMemoryReporter;
 import io.opentracing.propagation.TextMapAdapter;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.AfterClass;
@@ -43,6 +51,7 @@ public class TraceContextCodecTest {
   private static final JaegerSpanContext SPAN_CONTEXT =
       new JaegerSpanContext(0, 1, 2, 3, (byte)0);
   private static final String EXAMPLE_TRACE_PARENT = "00-00000000000000000000000000000001-0000000000000002-00";
+  private static final String EXAMPLE_DEBUG_ID = "123456789";
   private static PrintStream sysout;
 
   private TraceContextCodec traceContextCodec = new TraceContextCodec.Builder().build();
@@ -160,21 +169,52 @@ public class TraceContextCodecTest {
     assertEquals(EXAMPLE_TRACE_PARENT, injectCarrier.get(TRACE_PARENT));
   }
 
+  @Test
+  public void testDebugIdWithoutTraceHeader() {
+    Map<String, String> extractCarrier = new HashMap<>();
+    TextMapAdapter textMap = new TextMapAdapter(extractCarrier);
+    textMap.put(Constants.DEBUG_ID_HEADER_KEY, EXAMPLE_DEBUG_ID);
+    JaegerSpanContext spanContext = traceContextCodec.extract(textMap);
+    JaegerTracer tracer = new JaegerTracer.Builder("service").withReporter(new InMemoryReporter()).build();
+    JaegerSpan child = tracer.buildSpan("span").asChildOf(spanContext).start();
+    assertTrue(child.context().isDebug());
+    child.finish();
+    tracer.close();
+  }
+
+  @Test
+  public void testDebugIdWithTraceHeader() {
+    Map<String, String> extractCarrier = new HashMap<>();
+    TextMapAdapter textMap = new TextMapAdapter(extractCarrier);
+    textMap.put(TRACE_PARENT, EXAMPLE_TRACE_PARENT);
+    textMap.put(Constants.DEBUG_ID_HEADER_KEY, EXAMPLE_DEBUG_ID);
+    JaegerSpanContext spanContext = traceContextCodec.extract(textMap);
+    JaegerTracer tracer = new JaegerTracer.Builder("service").withReporter(new InMemoryReporter()).build();
+    assertEquals("1", spanContext.getTraceId());
+    JaegerSpan child = tracer.buildSpan("span").asChildOf(spanContext).start();
+    assertFalse(child.context().isDebug());
+    child.finish();
+    tracer.close();
+  }
+
   private void verifyWarningPresent() {
     ArgumentCaptor<byte[]> captor = ArgumentCaptor.forClass(byte[].class);
     try {
-      verify(System.out).write(captor.capture());
+      verify(System.out, atLeast(0)).write(captor.capture(), anyInt(), anyInt());
+      // gradle will call write(byte[]) instead of write(byte[],off,len)
+      verify(System.out, atLeast(0)).write(captor.capture());
     } catch (IOException e) {
       throw new RuntimeException(e);
     } finally {
       reset(System.out);
     }
-    String message = new String(captor.getValue());
+    String message = new String(captor.getValue(), StandardCharsets.UTF_8);
     assertTrue(message.contains("Unparseable traceparent header."));
   }
 
   private void verifyWarningNotPresent() {
     try {
+      verify(System.out, times(0)).write(any(), anyInt(), anyInt());
       verify(System.out, times(0)).write(any());
     } catch (IOException e) {
       throw new RuntimeException(e);

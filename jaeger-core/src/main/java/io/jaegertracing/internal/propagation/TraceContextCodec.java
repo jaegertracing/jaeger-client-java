@@ -16,6 +16,7 @@
 
 package io.jaegertracing.internal.propagation;
 
+import io.jaegertracing.internal.Constants;
 import io.jaegertracing.internal.JaegerObjectFactory;
 import io.jaegertracing.internal.JaegerSpanContext;
 import io.jaegertracing.spi.Codec;
@@ -58,7 +59,7 @@ public class TraceContextCodec implements Codec<TextMap> {
     this.objectFactory = builder.objectFactory;
   }
 
-  private JaegerSpanContext extractContextFromTraceParent(String traceparent, String tracestate) {
+  private JaegerSpanContext extractContextFromTraceParent(String traceparent, String tracestate, String debugId) {
     // TODO(bdrutu): Do we need to verify that version is hex and that
     // for the version the length is the expected one?
     boolean isValid =
@@ -95,7 +96,7 @@ public class TraceContextCodec implements Codec<TextMap> {
         spanId,
         0,
         sampled ? (byte) 1 : (byte) 0,
-        Collections.<String, String>emptyMap(), null);
+        Collections.<String, String>emptyMap(), debugId);
     return spanContext.withTraceState(tracestate);
   }
 
@@ -103,6 +104,7 @@ public class TraceContextCodec implements Codec<TextMap> {
   public JaegerSpanContext extract(TextMap carrier) {
     String traceParent = null;
     String traceState = null;
+    String debugId = null;
     for (Map.Entry<String, String> entry: carrier) {
       if (TRACE_PARENT.equals(entry.getKey())) {
         traceParent = entry.getValue();
@@ -110,11 +112,17 @@ public class TraceContextCodec implements Codec<TextMap> {
       if (TRACE_STATE.equals(entry.getKey())) {
         traceState = entry.getValue();
       }
+      if (Constants.DEBUG_ID_HEADER_KEY.equals(entry.getKey())) {
+        debugId = entry.getValue();
+      }
     }
     if (traceParent == null) {
+      if (debugId != null) {
+        return objectFactory.createSpanContext(0L, 0L, 0L, 0L, (byte) 0, null, debugId);
+      }
       return null;
     }
-    return extractContextFromTraceParent(traceParent, traceState);
+    return extractContextFromTraceParent(traceParent, traceState, debugId);
   }
 
   @Override
