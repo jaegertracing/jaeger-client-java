@@ -50,6 +50,19 @@ A tracer instance can be obtained from `JaegerTracer.Builder` like:
 Tracer tracer = new JaegerTracer.Builder("myServiceName").build()
 ```
 
+#### W3C Trace Context propagation
+Jaeger Tracer supports [W3C Trace Context](https://w3c.github.io/trace-context/) propagation format.
+
+Example configuration:
+
+```java
+w3cCodec = new io.jaegertracing.internal.propagation.TraceContextCodec();
+tracer = new JaegerTracer.Builder(serviceName)
+  .registerInjector(Format.Builtin.HTTP_HEADERS, w3cCodec)
+  .registerExtractor(Format.Builtin.HTTP_HEADERS, w3cCodec)
+  ...
+```
+
 #### B3 propagation
 Jaeger Tracer can also work in the environment where B3 propagation is used. This is mostly related
 to systems instrumented with Zipkin. Once you register `B3TextMapCodec`, Jaeger can join traces 
@@ -60,7 +73,7 @@ uses `baggage-` prefix.
 Example configuration:
 
 ```java
-b3Codec = new B3TextMapCodec();
+b3Codec = new io.jaegertracing.internal.propagation.B3TextMapCodec();
 tracer = new JaegerTracer.Builder(serviceName)
   .registerInjector(Format.Builtin.HTTP_HEADERS, b3Codec)
   .registerExtractor(Format.Builtin.HTTP_HEADERS, b3Codec)
