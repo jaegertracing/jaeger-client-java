@@ -106,13 +106,13 @@ public class TraceContextCodec implements Codec<TextMap> {
     String traceState = null;
     String debugId = null;
     for (Map.Entry<String, String> entry: carrier) {
-      if (TRACE_PARENT.equals(entry.getKey())) {
+      if (TRACE_PARENT.equalsIgnoreCase(entry.getKey())) {
         traceParent = entry.getValue();
       }
-      if (TRACE_STATE.equals(entry.getKey())) {
+      if (TRACE_STATE.equalsIgnoreCase(entry.getKey())) {
         traceState = entry.getValue();
       }
-      if (Constants.DEBUG_ID_HEADER_KEY.equals(entry.getKey())) {
+      if (Constants.DEBUG_ID_HEADER_KEY.equalsIgnoreCase(entry.getKey())) {
         debugId = entry.getValue();
       }
     }

@@ -117,6 +117,17 @@ public class TraceContextCodecTest {
   }
 
   @Test
+  public void testExtractWithCapitalizedTraceHeaders() {
+    Map<String, String> extractCarrier = new HashMap<>();
+    TextMapAdapter textMap = new TextMapAdapter(extractCarrier);
+    textMap.put("Traceparent", EXAMPLE_TRACE_PARENT);
+    textMap.put("Tracestate", "whatever");
+    JaegerSpanContext spanContext = traceContextCodec.extract(textMap);
+    assertEquals("1:2:0:0", spanContext.toString());
+    assertEquals("whatever", spanContext.getTraceState());
+  }
+
+  @Test
   public void testInvalidTraceId() {
     TextMapAdapter textMap = new TextMapAdapter(new HashMap<>());
     textMap.put(TRACE_PARENT, "00-00000000000000000000000000000000-0000000000000002-00");
