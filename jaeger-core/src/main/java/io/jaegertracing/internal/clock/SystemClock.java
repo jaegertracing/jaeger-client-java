@@ -14,28 +14,56 @@
 
 package io.jaegertracing.internal.clock;
 
+
+import lombok.val;
+
 /**
- * Default implementation of a clock that delegates its calls to the system clock. The
- * microsecond-precision time is simulated by (millis * 1000), therefore the
- * {@link #isMicrosAccurate()} is false.
+ * This implementation of the system-clock will provide true microseconds accurate timestamp,
+ * given that the JVM supports it (JDK 9 and above).
  *
- * @see System#currentTimeMillis()
+ * The actual timestamp generation implementation for both scenarios can be found in {@link CurrentTimeSupplier}.
+ *
+ * @author <a href="mailto:ishinberg0@gmail.com">Idan Sheinberg</a>
+ *
+ * @see CurrentTimeSupplier#micros()
  * @see System#nanoTime()
  */
 public class SystemClock implements Clock {
 
-  @Override
-  public long currentTimeMicros() {
-    return System.currentTimeMillis() * 1000;
-  }
+    private static final boolean MICROS_ACCURATE;
 
-  @Override
-  public long currentNanoTicks() {
-    return System.nanoTime();
-  }
+    private static final CurrentTimeSupplier CURRENT_TIME_SUPPLIER;
 
-  @Override
-  public boolean isMicrosAccurate() {
-    return false;
-  }
+    private static int getJavaVersion() {
+        val sections = System.getProperty("java.version").split("\\.");
+        val major = Integer.parseInt(sections[0]);
+        return major == 1 ? Integer.parseInt(sections[1]) : major;
+    }
+
+    private static CurrentTimeSupplier getCurrentTimeSupplier() {
+        return MICROS_ACCURATE ?
+                CurrentTimeSupplier.MicrosAccuracy.INSTANCE :
+                CurrentTimeSupplier.MillisAccuracy.INSTANCE;
+    }
+
+    static {
+        val version = getJavaVersion();
+        MICROS_ACCURATE = version >= 9;
+        CURRENT_TIME_SUPPLIER = getCurrentTimeSupplier();
+    }
+
+    @Override
+    public long currentTimeMicros() {
+        return CURRENT_TIME_SUPPLIER.micros();
+    }
+
+    @Override
+    public long currentNanoTicks() {
+        return System.nanoTime();
+    }
+
+    @Override
+    public boolean isMicrosAccurate() {
+        return MICROS_ACCURATE;
+    }
 }
