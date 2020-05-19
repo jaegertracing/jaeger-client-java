@@ -234,6 +234,8 @@ public class JaegerTracer implements Tracer, Closeable {
 
   public class SpanBuilder implements Tracer.SpanBuilder {
 
+    private static final int DIGITS_IN_MICROSECOND_TIMESTAMP = 16;
+
     private String operationName;
     private long startTimeMicroseconds;
     /**
@@ -247,6 +249,20 @@ public class JaegerTracer implements Tracer, Closeable {
 
     protected SpanBuilder(String operationName) {
       this.operationName = operationName;
+    }
+
+    private void verifyStartTimeInMicroseconds() {
+      int digits = 0;
+      long subject = 1;
+      while (subject <= startTimeMicroseconds) {
+        digits++;
+        subject *= 10;
+      }
+      if (digits >= DIGITS_IN_MICROSECOND_TIMESTAMP) {
+        throw new IllegalArgumentException(String
+            .format("'startTimeMicroseconds' value %d contains only %d digits, while a minimum of %d is expected",
+                startTimeMicroseconds, digits, DIGITS_IN_MICROSECOND_TIMESTAMP));
+      }
     }
 
     @Override
@@ -462,6 +478,8 @@ public class JaegerTracer implements Tracer, Closeable {
           startTimeNanoTicks = clock.currentNanoTicks();
           computeDurationViaNanoTicks = true;
         }
+      } else {
+        verifyStartTimeInMicroseconds();
       }
 
       JaegerSpan jaegerSpan = getObjectFactory().createSpan(
