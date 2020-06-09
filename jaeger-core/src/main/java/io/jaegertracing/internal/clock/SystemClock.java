@@ -1,6 +1,4 @@
 /*
- * Copyright (c) 2016, Uber Technologies, Inc
- *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
  *
@@ -20,17 +18,14 @@ import lombok.val;
  * This implementation of the system-clock will provide true microseconds accurate timestamp,
  * given that the JVM supports it (JDK 9 and above).
  * <p>
- * The actual timestamp generation implementation for both scenarios can be found in {@link CurrentTimeSupplier}.
+ * The actual timestamp generation implementation for both scenarios can be
+ * found in {@link MicrosAccurateClock} and {@link MillisAccurrateClock}.
  *
  * @author <a href="mailto:ishinberg0@gmail.com">Idan Sheinberg</a>
- * @see CurrentTimeSupplier#micros()
- * @see System#nanoTime()
  */
 public class SystemClock implements Clock {
 
-  private static final boolean MICROS_ACCURATE;
-
-  private static final CurrentTimeSupplier CURRENT_TIME_SUPPLIER;
+  private static final Clock DELEGATE;
 
   private static int getJavaVersion() {
     val sections = System.getProperty("java.version").split("\\.");
@@ -38,30 +33,25 @@ public class SystemClock implements Clock {
     return major == 1 ? Integer.parseInt(sections[1]) : major;
   }
 
-  private static CurrentTimeSupplier getCurrentTimeSupplier() {
-    return MICROS_ACCURATE
-        ? CurrentTimeSupplier.MicrosAccuracy.INSTANCE
-        : CurrentTimeSupplier.MillisAccuracy.INSTANCE;
-  }
-
   static {
     val version = getJavaVersion();
-    MICROS_ACCURATE = version >= 9;
-    CURRENT_TIME_SUPPLIER = getCurrentTimeSupplier();
+    DELEGATE = version >= 9
+        ? MicrosAccurateClock.INSTANCE
+        : MillisAccurrateClock.INSTANCE;
   }
 
   @Override
   public long currentTimeMicros() {
-    return CURRENT_TIME_SUPPLIER.micros();
+    return DELEGATE.currentTimeMicros();
   }
 
   @Override
   public long currentNanoTicks() {
-    return System.nanoTime();
+    return DELEGATE.currentNanoTicks();
   }
 
   @Override
   public boolean isMicrosAccurate() {
-    return MICROS_ACCURATE;
+    return DELEGATE.isMicrosAccurate();
   }
 }

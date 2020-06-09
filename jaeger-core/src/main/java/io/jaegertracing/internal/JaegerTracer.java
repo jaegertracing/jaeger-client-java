@@ -63,6 +63,7 @@ import lombok.extern.slf4j.Slf4j;
 @ToString
 @Slf4j
 public class JaegerTracer implements Tracer, Closeable {
+
   private final String version;
   private final String serviceName;
   private final Reporter reporter;
@@ -234,7 +235,7 @@ public class JaegerTracer implements Tracer, Closeable {
 
   public class SpanBuilder implements Tracer.SpanBuilder {
 
-    private static final int DIGITS_IN_MICROSECOND_TIMESTAMP = 16;
+    private static final long MIN_EPOCH_MICROSECONDS = 1000000000000000L;
 
     private String operationName;
     private long startTimeMicroseconds;
@@ -252,16 +253,10 @@ public class JaegerTracer implements Tracer, Closeable {
     }
 
     private void verifyStartTimeInMicroseconds() {
-      int digits = 0;
-      long subject = 1;
-      while (subject <= startTimeMicroseconds) {
-        digits++;
-        subject *= 10;
-      }
-      if (digits >= DIGITS_IN_MICROSECOND_TIMESTAMP) {
+      if (startTimeMicroseconds < MIN_EPOCH_MICROSECONDS) {
         throw new IllegalArgumentException(String
-            .format("'startTimeMicroseconds' value %d contains only %d digits, while a minimum of %d is expected",
-                startTimeMicroseconds, digits, DIGITS_IN_MICROSECOND_TIMESTAMP));
+            .format("'startTimeMicroseconds' value %d is invalid (smaller than minimal possible value %d)",
+                startTimeMicroseconds, MIN_EPOCH_MICROSECONDS));
       }
     }
 
