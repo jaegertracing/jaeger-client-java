@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2016, Uber Technologies, Inc
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
  *
@@ -35,6 +37,7 @@ import lombok.val;
  *
  * @author <a href="mailto:ishinberg0@gmail.com">Idan Sheinberg</a>
  */
+
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 final class MicrosAccurateClock implements Clock {
 
