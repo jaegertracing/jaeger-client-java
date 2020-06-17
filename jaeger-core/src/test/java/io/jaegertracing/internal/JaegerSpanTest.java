@@ -222,6 +222,12 @@ public class JaegerSpanTest {
     assertEquals(end - start, jaegerSpan.getDuration());
   }
 
+  @Test(expected = IllegalArgumentException.class)
+  public void testInvalidStartTimestampMicros() {
+    long start = 567L;
+    tracer.buildSpan("test-service-name").withStartTimestamp(start).start();
+  }
+
   @Test
   public void testMultipleSpanFinishDoesNotCauseMultipleReportCalls() {
     JaegerSpan jaegerSpan = tracer.buildSpan("test-service-name").start();
