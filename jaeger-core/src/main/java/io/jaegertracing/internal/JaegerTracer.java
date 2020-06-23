@@ -611,8 +611,8 @@ public class JaegerTracer implements Tracer, Closeable {
       return this;
     }
 
-    public Builder withMDCScopeManager() {
-      this.scopeManager = new MDCScopeManager();
+    public Builder withMDcScopeManager() {
+      this.scopeManager = new MDcScopeManager();
       return this;
     }
 
