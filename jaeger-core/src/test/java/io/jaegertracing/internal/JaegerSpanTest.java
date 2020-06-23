@@ -24,7 +24,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-
 import io.jaegertracing.internal.baggage.DefaultBaggageRestrictionManager;
 import io.jaegertracing.internal.baggage.Restriction;
 import io.jaegertracing.internal.clock.Clock;
