@@ -14,28 +14,46 @@
 
 package io.jaegertracing.internal.clock;
 
+import lombok.val;
+
 /**
- * Default implementation of a clock that delegates its calls to the system clock. The
- * microsecond-precision time is simulated by (millis * 1000), therefore the
- * {@link #isMicrosAccurate()} is false.
+ * This implementation of the system-clock will provide true microseconds accurate timestamp,
+ * given that the JVM supports it (JDK 9 and above).
+ * <p>
+ * The actual timestamp generation implementation for both scenarios can be
+ * found in {@link MicrosAccurateClock} and {@link MillisAccurrateClock}.
  *
- * @see System#currentTimeMillis()
- * @see System#nanoTime()
+ * @author <a href="mailto:ishinberg0@gmail.com">Idan Sheinberg</a>
  */
 public class SystemClock implements Clock {
 
+  private static final Clock DELEGATE;
+
+  private static int getJavaVersion() {
+    val sections = System.getProperty("java.version").split("\\.");
+    val major = Integer.parseInt(sections[0]);
+    return major == 1 ? Integer.parseInt(sections[1]) : major;
+  }
+
+  static {
+    val version = getJavaVersion();
+    DELEGATE = version >= 9
+        ? MicrosAccurateClock.INSTANCE
+        : MillisAccurrateClock.INSTANCE;
+  }
+
   @Override
   public long currentTimeMicros() {
-    return System.currentTimeMillis() * 1000;
+    return DELEGATE.currentTimeMicros();
   }
 
   @Override
   public long currentNanoTicks() {
-    return System.nanoTime();
+    return DELEGATE.currentNanoTicks();
   }
 
   @Override
   public boolean isMicrosAccurate() {
-    return false;
+    return DELEGATE.isMicrosAccurate();
   }
 }

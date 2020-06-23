@@ -70,12 +70,12 @@ public class JaegerSpanTest {
     clock = mock(Clock.class);
     metrics = new Metrics(metricsFactory);
     final JaegerTracer.Builder tracerBuilder = new JaegerTracer.Builder("SamplerTest")
-            .withReporter(reporter)
-            .withSampler(new ConstSampler(true))
-            .withMetrics(metrics)
-            .withClock(clock)
-            .withBaggageRestrictionManager(new DefaultBaggageRestrictionManager())
-            .withExpandExceptionLogs();
+        .withReporter(reporter)
+        .withSampler(new ConstSampler(true))
+        .withMetrics(metrics)
+        .withClock(clock)
+        .withBaggageRestrictionManager(new DefaultBaggageRestrictionManager())
+        .withExpandExceptionLogs();
     tracer = tracerBuilder.build();
     tracer128 = tracerBuilder.withTraceId128Bit().build();
     jaegerSpan = tracer.buildSpan("some-operation").start();
@@ -107,11 +107,11 @@ public class JaegerSpanTest {
     final String service = "SamplerTest";
     final BaggageRestrictionManager mgr = Mockito.mock(DefaultBaggageRestrictionManager.class);
     tracer = new JaegerTracer.Builder(service)
-            .withReporter(reporter)
-            .withSampler(new ConstSampler(true))
-            .withClock(clock)
-            .withBaggageRestrictionManager(mgr)
-            .build();
+        .withReporter(reporter)
+        .withSampler(new ConstSampler(true))
+        .withClock(clock)
+        .withBaggageRestrictionManager(mgr)
+        .build();
     jaegerSpan = tracer.buildSpan("some-operation").start();
 
     final String key = "key";
@@ -167,13 +167,13 @@ public class JaegerSpanTest {
   @Test
   public void testSetTag() {
     jaegerSpan.setTag(new StringTag("stringTag"), "stringTagValue")
-              .setTag(new IntTag("numberTag"), 1)
-              .setTag(new BooleanTag("booleanTag"), true)
-              .setTag(new AbstractTag<Object>("objectTag") {
-                @Override
-                public void set(Span span, Object tagValue) {
-                }
-              }, this);
+        .setTag(new IntTag("numberTag"), 1)
+        .setTag(new BooleanTag("booleanTag"), true)
+        .setTag(new AbstractTag<Object>("objectTag") {
+          @Override
+          public void set(Span span, Object tagValue) {
+          }
+        }, this);
 
     Map<String, Object> tags = jaegerSpan.getTags();
     assertEquals("stringTagValue", tags.get("stringTag"));
@@ -209,12 +209,25 @@ public class JaegerSpanTest {
     when(clock.currentNanoTicks())
         .thenThrow(new IllegalStateException("currentNanoTicks() called"));
 
-    JaegerSpan jaegerSpan = tracer.buildSpan("test-service-name").withStartTimestamp(567).start();
-    jaegerSpan.finish(999);
+    long start = 1000000000000567L;
+    long end = 1000000000000999L;
+
+    JaegerSpan jaegerSpan = tracer.buildSpan("test-service-name").withStartTimestamp(start).start();
+    jaegerSpan.finish(end);
 
     assertEquals(1, reporter.getSpans().size());
-    assertEquals(567, jaegerSpan.getStart());
-    assertEquals(999 - 567, jaegerSpan.getDuration());
+    assertEquals(start, jaegerSpan.getStart());
+    assertEquals(end - start, jaegerSpan.getDuration());
+  }
+
+  @Test
+  public void testInvalidStartTimestampMicros() {
+    long start = 567L;
+    JaegerSpan jaegerSpan = tracer.buildSpan("test-service-name").withStartTimestamp(start).start();
+    jaegerSpan.finish();
+
+    assertEquals(1, reporter.getSpans().size());
+    assertEquals(start, jaegerSpan.getStart());
   }
 
   @Test
@@ -274,8 +287,8 @@ public class JaegerSpanTest {
         tracer,
         operation,
         new JaegerSpanContext(
-        0, traceIdLow, spanId, parentId,
-        (byte) 4, Collections.emptyMap(), null /* debugId */, new JaegerObjectFactory()),
+            0, traceIdLow, spanId, parentId,
+            (byte) 4, Collections.emptyMap(), null /* debugId */, new JaegerObjectFactory()),
         0,
         0,
         false,
@@ -293,16 +306,16 @@ public class JaegerSpanTest {
     long spanId = 3L;
     long parentId = 4L;
     JaegerSpan span = new JaegerSpan(
-            tracer128,
-            operation,
-            new JaegerSpanContext(
+        tracer128,
+        operation,
+        new JaegerSpanContext(
             traceIdHigh, traceIdLow, spanId, parentId,
             (byte) 4, Collections.emptyMap(), null /* debugId */, new JaegerObjectFactory()),
-            0,
-            0,
-            false,
-            Collections.emptyMap(),
-            Collections.emptyList());
+        0,
+        0,
+        false,
+        Collections.emptyMap(),
+        Collections.emptyList());
     assertEquals("20000000000000001:3:4:4 - test-operation", span.toString());
     span.finish();
   }
