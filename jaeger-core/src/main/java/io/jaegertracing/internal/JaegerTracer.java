@@ -611,6 +611,11 @@ public class JaegerTracer implements Tracer, Closeable {
       return this;
     }
 
+    public Builder withMDCScopeManager() {
+      this.scopeManager = new MDCScopeManager();
+      return this;
+    }
+
     public Builder withClock(Clock clock) {
       this.clock = clock;
       return this;
