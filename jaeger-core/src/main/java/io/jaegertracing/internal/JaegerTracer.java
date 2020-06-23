@@ -73,14 +73,22 @@ public class JaegerTracer implements Tracer, Closeable {
   private final boolean expandExceptionLogs;
   private final boolean useTraceId128Bit;
 
-  @ToString.Exclude private final PropagationRegistry registry;
-  @ToString.Exclude private final Clock clock;
-  @ToString.Exclude private final Metrics metrics;
-  @ToString.Exclude private final ScopeManager scopeManager;
-  @ToString.Exclude private final BaggageSetter baggageSetter;
-  @ToString.Exclude private final JaegerObjectFactory objectFactory;
-  @ToString.Exclude private final int ipv4; // human readable representation is present within the tag map
-  @ToString.Exclude private Thread shutdownHook;
+  @ToString.Exclude
+  private final PropagationRegistry registry;
+  @ToString.Exclude
+  private final Clock clock;
+  @ToString.Exclude
+  private final Metrics metrics;
+  @ToString.Exclude
+  private final ScopeManager scopeManager;
+  @ToString.Exclude
+  private final BaggageSetter baggageSetter;
+  @ToString.Exclude
+  private final JaegerObjectFactory objectFactory;
+  @ToString.Exclude
+  private final int ipv4; // human readable representation is present within the tag map
+  @ToString.Exclude
+  private Thread shutdownHook;
 
   protected JaegerTracer(JaegerTracer.Builder builder) {
     this.serviceName = builder.serviceName;
@@ -254,9 +262,7 @@ public class JaegerTracer implements Tracer, Closeable {
 
     private void verifyStartTimeInMicroseconds() {
       if (startTimeMicroseconds < MIN_EPOCH_MICROSECONDS) {
-        throw new IllegalArgumentException(String
-            .format("'startTimeMicroseconds' value %d is invalid (smaller than minimal possible value %d)",
-                startTimeMicroseconds, MIN_EPOCH_MICROSECONDS));
+        log.warn("'startTimeMicroseconds' {} is not a valid epoch microseconds timestamp", startTimeMicroseconds);
       }
     }
 
@@ -374,7 +380,7 @@ public class JaegerTracer implements Tracer, Closeable {
         return references.get(0).getSpanContext().baggage();
       }
 
-      for (Reference reference: references) {
+      for (Reference reference : references) {
         if (reference.getSpanContext().baggage() != null) {
           if (baggage == null) {
             baggage = new HashMap<String, String>();
@@ -420,7 +426,7 @@ public class JaegerTracer implements Tracer, Closeable {
 
     private JaegerSpanContext preferredReference() {
       Reference preferredReference = references.get(0);
-      for (Reference reference: references) {
+      for (Reference reference : references) {
         // childOf takes precedence as a preferred parent
         if (References.CHILD_OF.equals(reference.getType())
             && !References.CHILD_OF.equals(preferredReference.getType())) {
@@ -478,14 +484,14 @@ public class JaegerTracer implements Tracer, Closeable {
       }
 
       JaegerSpan jaegerSpan = getObjectFactory().createSpan(
-              JaegerTracer.this,
-              operationName,
-              context,
-              startTimeMicroseconds,
-              startTimeNanoTicks,
-              computeDurationViaNanoTicks,
-              tags,
-              references);
+          JaegerTracer.this,
+          operationName,
+          context,
+          startTimeMicroseconds,
+          startTimeNanoTicks,
+          computeDurationViaNanoTicks,
+          tags,
+          references);
       if (context.isSampled()) {
         metrics.spansStartedSampled.inc(1);
       } else {
@@ -503,10 +509,11 @@ public class JaegerTracer implements Tracer, Closeable {
       return new Scope() {
         Span span = start();
         Scope wrapped = scopeManager.activate(span);
+
         @Override
         public void close() {
           wrapped.close();
-            span.finish();
+          span.finish();
         }
 
         // @Override keep compatibility with 0.32.0
@@ -611,6 +618,7 @@ public class JaegerTracer implements Tracer, Closeable {
 
     /**
      * Creates a new {@link Metrics} to be used with the tracer, backed by the given {@link MetricsFactory}
+     *
      * @param metricsFactory the metrics factory to use
      * @return this instance of the builder
      */

@@ -24,6 +24,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+
 import io.jaegertracing.internal.baggage.DefaultBaggageRestrictionManager;
 import io.jaegertracing.internal.baggage.Restriction;
 import io.jaegertracing.internal.clock.Clock;
@@ -44,14 +45,12 @@ import io.opentracing.tag.StringTag;
 import io.opentracing.tag.Tags;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -222,10 +221,14 @@ public class JaegerSpanTest {
     assertEquals(end - start, jaegerSpan.getDuration());
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testInvalidStartTimestampMicros() {
     long start = 567L;
-    tracer.buildSpan("test-service-name").withStartTimestamp(start).start();
+    JaegerSpan jaegerSpan = tracer.buildSpan("test-service-name").withStartTimestamp(start).start();
+    jaegerSpan.finish();
+
+    assertEquals(1, reporter.getSpans().size());
+    assertEquals(start, jaegerSpan.getStart());
   }
 
   @Test
