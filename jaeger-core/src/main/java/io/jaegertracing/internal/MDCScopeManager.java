@@ -28,7 +28,7 @@ public class MDCScopeManager implements ScopeManager {
 
   private MDCScopeManager(Builder builder) {
     this.wrappedScopeManager = builder.scopeManager;
-    this.mdcTraceIdKey = builder.mdcTraceIDKey;
+    this.mdcTraceIdKey = builder.mdcTraceIdKey;
     this.mdcSpanIdKey = builder.mdcSpanIdKey;
     this.mdcSampledKey = builder.mdcSampledKey;
   }
@@ -47,14 +47,13 @@ public class MDCScopeManager implements ScopeManager {
    * Builds an {@link MDCScopeManager} with options.
    * Calling {@code new MDCScopeManager.Builder().build()}
    * Builds an {@link MDCScopeManager} with configuration as follows:
-   *
    * mdcTraceIDKey set to "traceId"
    * mdcSpanIdKey set to "spanId"
    * mdcSampledKey set to "sampled"
    */
   public static class Builder {
     private ScopeManager scopeManager = new ThreadLocalScopeManager();
-    private String mdcTraceIDKey = "traceId";
+    private String mdcTraceIdKey = "traceId";
     private String mdcSpanIdKey = "spanId";
     private String mdcSampledKey = "sampled";
 
@@ -64,7 +63,7 @@ public class MDCScopeManager implements ScopeManager {
     }
 
     public Builder withMDCTraceIdKey(String mdcTraceIdKey) {
-      this.mdcTraceIDKey = mdcTraceIdKey;
+      this.mdcTraceIdKey = mdcTraceIdKey;
       return this;
     }
 
