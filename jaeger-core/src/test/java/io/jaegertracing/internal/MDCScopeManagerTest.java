@@ -47,7 +47,6 @@ public class MDCScopeManagerTest {
     assertNullMDCKeys(TRACE_ID, SPAN_ID, SAMPLED);
   }
 
-
   @Test
   public void testDefaultCreation() {
     Span span = defaultTracer.buildSpan("test Default").start();
