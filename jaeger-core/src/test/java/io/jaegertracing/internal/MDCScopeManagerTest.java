@@ -2,10 +2,7 @@ package io.jaegertracing.internal;
 
 import io.jaegertracing.internal.reporters.InMemoryReporter;
 import io.jaegertracing.internal.samplers.ConstSampler;
-import io.opentracing.Scope;
-import io.opentracing.ScopeManager;
-import io.opentracing.Span;
-import io.opentracing.Tracer;
+import io.opentracing.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -15,8 +12,12 @@ import static org.junit.Assert.*;
 
 public class MDCScopeManagerTest {
 
-  InMemoryReporter reporter;
-  JaegerTracer defaultTracer;
+  private InMemoryReporter reporter;
+  private JaegerTracer defaultTracer;
+  private static final String TRACE_ID = "traceId";
+  private static final String SPAN_ID = "spanId";
+  private static final String SAMPLED = "sampled";
+
 
   @Before
   public void setUp() {
@@ -30,28 +31,37 @@ public class MDCScopeManagerTest {
     try (Scope scope = defaultTracer.activateSpan(mockSpan)) {
       assertEquals(mockSpan, defaultTracer.activeSpan());
     }
-
   }
+
+  @Test
+  public void testNestedSpans() {
+    Span parentSpan = defaultTracer.buildSpan("parent").start();
+    Scope parentScope = defaultTracer.activateSpan(parentSpan);
+    JaegerSpanContext parentContext = (JaegerSpanContext) parentSpan.context();
+    Span childSpan = defaultTracer.buildSpan("child").asChildOf(parentSpan).start();
+    Scope childScope = defaultTracer.activateSpan(childSpan);
+
+    childScope.close();
+    assertSpanContextEqualsToMDC(parentContext, TRACE_ID, SPAN_ID, SAMPLED);
+
+    parentScope.close();
+    assertNullMDCKeys(TRACE_ID, SPAN_ID, SAMPLED);
+  }
+
 
   @Test
   public void testDefaultCreation() {
     Span span = defaultTracer.buildSpan("test Default").start();
     Scope scope = defaultTracer.activateSpan(span);
-    assertNotNull(MDC.get("traceId"));
-    assertNotNull(MDC.get("spanId"));
-    assertNotNull(MDC.get("sampled"));
+
+    assertSpanContextEqualsToMDC((JaegerSpanContext) span.context(), TRACE_ID, SPAN_ID, SAMPLED);
 
     scope.close();
-
-    assertNull(MDC.get("traceId"));
-    assertNull(MDC.get("spanId"));
-    assertNull(MDC.get("sampled"));
+    assertNullMDCKeys(TRACE_ID, SPAN_ID, SAMPLED);
   }
-
 
   @Test
   public void testCustomKeysCreation() {
-
     ScopeManager mdcScopeManager = new MDCScopeManager.
             Builder()
             .withMDCTraceIdKey("CustomTraceId")
@@ -63,17 +73,15 @@ public class MDCScopeManagerTest {
     Span span = tracer.buildSpan("testCustomKeysCreation").start();
     Scope scope = tracer.activateSpan(span);
 
-    assertNotNull(MDC.get("CustomTraceId"));
-    assertNotNull(MDC.get("customSampled"));
-    assertNotNull(MDC.get("customSpanId"));
+    assertSpanContextEqualsToMDC((JaegerSpanContext)span.context(), "CustomTraceId","customSpanId" ,"customSampled");
 
     scope.close();
 
+    assertNullMDCKeys("CustomTraceId", "customSampled", "customSpanId");
   }
 
   @Test
   public void testCustomAndDefaultKeysCreation() {
-
     ScopeManager mdcScopeManager = new MDCScopeManager.
             Builder()
             .withMDCSampledKey("customSampled")
@@ -84,12 +92,11 @@ public class MDCScopeManagerTest {
     Span span = tracer.buildSpan("testCustomAndDefaultKeysCreation").start();
     Scope scope = tracer.activateSpan(span);
 
-    assertNotNull(MDC.get("traceId"));
-    assertNotNull(MDC.get("customSampled"));
-    assertNotNull(MDC.get("customSpanId"));
+    assertSpanContextEqualsToMDC((JaegerSpanContext)span.context(), TRACE_ID, "customSpanId","customSampled");
 
     scope.close();
 
+    assertNullMDCKeys(TRACE_ID, "customSpanId", "customSampled");
   }
 
   private JaegerTracer createTracer(ScopeManager scopeManager) {
@@ -98,6 +105,18 @@ public class MDCScopeManagerTest {
             .withSampler(new ConstSampler(true))
             .withScopeManager(scopeManager)
             .build();
+  }
+
+  private void assertSpanContextEqualsToMDC(JaegerSpanContext context, String traceIDKey, String spanIdKey, String sampledKey) {
+    assertEquals(context.toTraceId(), MDC.get(traceIDKey));
+    assertEquals(context.toSpanId(), MDC.get(spanIdKey));
+    assertEquals(String.valueOf(context.isSampled()), MDC.get(sampledKey));
+  }
+
+  private void assertNullMDCKeys(String traceIDKey, String spanIdKey, String sampleKey) {
+    assertNull(MDC.get(traceIDKey));
+    assertNull(MDC.get(spanIdKey));
+    assertNull(MDC.get(sampleKey));
   }
 
 }
