@@ -36,15 +36,14 @@ public class MDCScopeManagerTest {
   @Test
   public void testNestedSpans() {
     Span parentSpan = defaultTracer.buildSpan("parent").start();
-    Scope parentScope = defaultTracer.activateSpan(parentSpan);
-    JaegerSpanContext parentContext = (JaegerSpanContext) parentSpan.context();
-    Span childSpan = defaultTracer.buildSpan("child").asChildOf(parentSpan).start();
-    Scope childScope = defaultTracer.activateSpan(childSpan);
-
-    childScope.close();
-    assertSpanContextEqualsToMDC(parentContext, TRACE_ID, SPAN_ID, SAMPLED);
-
-    parentScope.close();
+    try (Scope scope = defaultTracer.activateSpan(parentSpan)) {
+      assertSpanContextEqualsToMDC((JaegerSpanContext) parentSpan.context(), TRACE_ID, SPAN_ID, SAMPLED);
+      Span childSpan = defaultTracer.buildSpan("child").start();
+      try (Scope childScope = defaultTracer.activateSpan(childSpan)) {
+        assertSpanContextEqualsToMDC((JaegerSpanContext) childSpan.context(), TRACE_ID, SPAN_ID, SAMPLED);
+      }
+      assertSpanContextEqualsToMDC((JaegerSpanContext) parentSpan.context(), TRACE_ID, SPAN_ID, SAMPLED);
+    }
     assertNullMDCKeys(TRACE_ID, SPAN_ID, SAMPLED);
   }
 
