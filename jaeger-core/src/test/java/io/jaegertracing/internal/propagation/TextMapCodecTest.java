@@ -158,4 +158,45 @@ public class TextMapCodecTest {
     assertEquals("v2", context.getBaggageItem("k2"));
     assertEquals(null, context.getBaggageItem("k3"));
   }
+
+  @Test
+  public void testInjectDoNotEncodeSpanContext() {
+    TextMapCodec codec = new TextMapCodec(true);
+    Map<String, String> headers = new HashMap<String, String>();
+    long traceIdLow = 42;
+    long spanId = 1;
+    long parentId = 0;
+    codec.inject(new JaegerSpanContext(0L, traceIdLow, spanId, parentId, (byte)1), new TextMapAdapter(headers));
+
+    String traceId = headers.get("uber-trace-id");
+    assertEquals("2a:1:0:1", traceId);
+  }
+
+  @Test
+  public void testExtractSupportNonEncodedSpanContext() {
+    Map<String, String> headers = new HashMap<String, String>();
+    headers.put("uber-trace-id", "2a:1:0:1");
+
+    TextMapCodec codec = new TextMapCodec(true);
+    JaegerSpanContext context = codec.extract(new TextMapAdapter(headers));
+
+    assertEquals(42, context.getTraceIdLow());
+    assertEquals(0L, context.getTraceIdHigh());
+    assertEquals(1L, context.getSpanId());
+    assertTrue(context.isSampled());
+  }
+
+  @Test
+  public void testExtractSupportEncodedSpanContext() {
+    Map<String, String> headers = new HashMap<String, String>();
+    headers.put("uber-trace-id", "2a%3A1%3A0%3A1");
+
+    TextMapCodec codec = new TextMapCodec(true);
+    JaegerSpanContext context = codec.extract(new TextMapAdapter(headers));
+
+    assertEquals(42, context.getTraceIdLow());
+    assertEquals(0L, context.getTraceIdHigh());
+    assertEquals(1L, context.getSpanId());
+    assertTrue(context.isSampled());
+  }
 }

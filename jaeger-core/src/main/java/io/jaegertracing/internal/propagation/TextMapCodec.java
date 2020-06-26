@@ -126,7 +126,7 @@ public class TextMapCodec implements Codec<TextMap> {
 
   @Override
   public void inject(JaegerSpanContext spanContext, TextMap carrier) {
-    carrier.put(contextKey, encodedValue(contextAsString(spanContext)));
+    carrier.put(contextKey, contextAsString(spanContext));
     for (Map.Entry<String, String> entry : spanContext.baggageItems()) {
       carrier.put(keys.prefixedKey(entry.getKey(), baggagePrefix), encodedValue(entry.getValue()));
     }
