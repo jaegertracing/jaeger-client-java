@@ -6,4 +6,8 @@
 <suppressions>
   <suppress checks="AbbreviationAsWordInName"
     files="SpanContext.java"/>
+  <suppress checks="AbbreviationAsWordInName"
+            files="MDCScopeManagerTest.java"/>
+  <suppress checks="AbbreviationAsWordInName"
+            files="MDCScopeManager.java"/>
 </suppressions>
