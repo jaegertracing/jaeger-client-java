@@ -5,14 +5,15 @@
 The release process consists of these steps:
   1. Create a pull request with:
      * Add an entry to [`CHANGELOG`](CHANGELOG.md) with changes since the last release
+       * Tip: `git log --pretty=format:'- %s -- %an'`
      * add a new section to the CHANGELOG with that version as `(unreleased)` and a bullet point `- Nothing yet`
-  1. Commit your `CHANGELOG` changes as `git commit -m "Preparing release 0.20.0" -s`
-  1. Create and push tag with the new version `git tag release-0.20.0 && git push origin release-0.20.0`. 
+  1. Commit your `CHANGELOG` changes as `git commit -sm "Preparing release 0.20.0"`
+  1. Create and push tag with the new version `git tag release-0.20.0 && git push origin release-0.20.0`.
   Do not update the version in `gradle.properties` manually.
   1. The build for the `release-` tag does following:
      * It updates the version in `gradle.properties` and creates commit and tag `v0.20.0`
      * It updates version to the next `SNAPSHOT` and commits it
-     * The next build for the tag publishes artifact to Nexus. If the build fails it might 
+     * The next build for the tag publishes artifact to Nexus. If the build fails it might
      be necessary to drop staging repositories and restart the build or just close the repository.
   1. Create a release on GitHub for the new tag `v0.20.0`. Use the changes from the `CHANGELOG` as the description.
 

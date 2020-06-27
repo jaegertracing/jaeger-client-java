@@ -1,22 +1,38 @@
 Changes by Version
 ==================
 
-1.3.0 (unreleased)
+1.4.0 (unreleased)
 -------------------
+
+- Nothing yet.
+
+
+1.3.0 (2020-06-27)
+-------------------
+
+- Add MDCScopeManager for correlating logs with trace context (#718) -- Avi Maslati
+- Fix publishing jaeger-thrift shadow artifact (#704) -- Zbigniew Halas
+- Do not encode span context in HTTP_HEADERS format (#721) -- Clément MATHIEU
+- Support microseconds timestamp accuracy for JDK 9 and above (#712) -- Idan Sheinberg
+- Ignore case when extracting W3C TraceContext (#711) -- Yanming Zhou
+- Support jaeger-debug-id in TraceContextCodec (#701) -- Yanming Zhou
+- Avoid warning if traceparent not present (#698) -- Yanming Zhou
+
 
 1.2.0 (2020-03-11)
 -------------------
 
-* Add W3C TraceContext codec/propagation  ([#694](https://github.com/jaegertracing/jaeger-client-java/pull/694), [@pavolloffay](https://github.com/pavolloffay))
-* Configuration do not cache sender instance ([#685](https://github.com/jaegertracing/jaeger-client-java/pull/685), [@ehsavoie](https://github.com/ehsavoie))
-* Prevent a shutdown hook from being removed in JaegerTracer when a shutdown is in progress ([#689](https://github.com/jaegertracing/jaeger-client-java/pull/689), [@TomasHofman](https://github.com/TomasHofman))
-* Fix ThriftSender max span size check ([#670](https://github.com/jaegertracing/jaeger-client-java/pull/670), [@yhpark](https://github.com/yhpark))
-* Unregister shutdown hook when tracer is closed ([#679](https://github.com/jaegertracing/jaeger-client-java/pull/679), [@TomasHofman](https://github.com/TomasHofman))
+- Add W3C TraceContext codec/propagation  ([#694](https://github.com/jaegertracing/jaeger-client-java/pull/694), [@pavolloffay](https://github.com/pavolloffay))
+- Configuration do not cache sender instance ([#685](https://github.com/jaegertracing/jaeger-client-java/pull/685), [@ehsavoie](https://github.com/ehsavoie))
+- Prevent a shutdown hook from being removed in JaegerTracer when a shutdown is in progress ([#689](https://github.com/jaegertracing/jaeger-client-java/pull/689), [@TomasHofman](https://github.com/TomasHofman))
+- Fix ThriftSender max span size check ([#670](https://github.com/jaegertracing/jaeger-client-java/pull/670), [@yhpark](https://github.com/yhpark))
+- Unregister shutdown hook when tracer is closed ([#679](https://github.com/jaegertracing/jaeger-client-java/pull/679), [@TomasHofman](https://github.com/TomasHofman))
+
 
 1.1.0 (2019-12-12)
 -------------------
 
-* Bump okhttp and zipkin reporter versions ([#674](https://github.com/jaegertracing/jaeger-client-java/pull/674), [@pavolloffay](https://github.com/pavolloffay))
+- Bump okhttp and zipkin reporter versions ([#674](https://github.com/jaegertracing/jaeger-client-java/pull/674), [@pavolloffay](https://github.com/pavolloffay))
 - Update libthrift to 0.13.0 ([#672](https://github.com/jaegertracing/jaeger-client-java/pull/672), [@ehsavoie](https://github.com/ehsavoie))
 - Upgrade GSON and slf4j-api version ([#663](https://github.com/jaegertracing/jaeger-client-java/pull/663), [@chandresh-pancholi](https://github.com/chandresh-pancholi))
 - Add logging for SenderException in RemoteReporter ([#662](https://github.com/jaegertracing/jaeger-client-java/pull/662), [@esukram](https://github.com/esukram))
@@ -159,7 +175,7 @@ Complete list of changes:
 - Rename Jaeger's Span to JaegerSpan ([#454](https://github.com/jaegertracing/jaeger-client-java/pull/454), [@jpkrohling](https://github.com/jpkrohling))
 - Upgrades internals to Zipkin v2 library ([#456](https://github.com/jaegertracing/jaeger-client-java/pull/456), [@adriancole](https://github.com/adriancole))
 - Make jaeger-thrift's shaded JAR the default one ([#461](https://github.com/jaegertracing/jaeger-client-java/pull/461), [@jpkrohling](https://github.com/jpkrohling))
-- Treat gauge.update() parameter as new value, not delta ([#463](https://github.com/jaegertracing/jaeger-client-java/pull/463), [@mdouaihy](https://github.com/mdouaihy)) 
+- Treat gauge.update() parameter as new value, not delta ([#463](https://github.com/jaegertracing/jaeger-client-java/pull/463), [@mdouaihy](https://github.com/mdouaihy))
 - Adjust thrift shadow configuration and version ([#458](https://github.com/jaegertracing/jaeger-client-java/pull/458), [@jpkrohling](https://github.com/jpkrohling))
 - Remove dependency from jaeger-core to jaeger-thrift ([#449](https://github.com/jaegertracing/jaeger-client-java/pull/449), [@jpkrohling](https://github.com/jpkrohling))
 
@@ -178,7 +194,7 @@ Complete list of changes:
 - Use string builder instead of string format ([#425](https://github.com/jaegertracing/jaeger-client-java/pull/425), [@pavolloffay](https://github.com/pavolloffay))
 - Remove deprecated APIs ([#414](https://github.com/jaegertracing/jaeger-client-java/pull/414), [@pavolloffay](https://github.com/pavolloffay))
 - Implement Zipkin 2 JSON Sender ([#399](https://github.com/jaegertracing/jaeger-client-java/pull/399), [@keitwb](https://github.com/keitwb))
-- Fix deploy stage on travis ([#421](https://github.com/jaegertracing/jaeger-client-java/pull/421), [@pavolloffay](https://github.com/pavolloffay)) 
+- Fix deploy stage on travis ([#421](https://github.com/jaegertracing/jaeger-client-java/pull/421), [@pavolloffay](https://github.com/pavolloffay))
 - Bump versions of gradle plugins ([#418](https://github.com/jaegertracing/jaeger-client-java/pull/418), [@pavolloffay](https://github.com/pavolloffay))
 - Bump gradle wrapper to 4.7 ([#419](https://github.com/jaegertracing/jaeger-client-java/pull/419), [@pavolloffay](https://github.com/pavolloffay))
 - Fix flaky test in RemoteReporterTest ([#415](https://github.com/jaegertracing/jaeger-client-java/pull/415), [@pavolloffay](https://github.com/pavolloffay))
