@@ -140,6 +140,36 @@ Tracer tracer = configuration
     .withMetricsFactory(metricsReporter)
     .build();
 ```
+### Log Correlation
+
+The Jaeger Java Client also provides log correlation support by configuring the logging context (MDC)
+with the following variables:
+  
+trace id - %{traceId}  
+span id  - %{spanId}  
+sampled  - %{sampled}  
+
+To accomplish that Jaegar Tracer is created with the following two steps:
+
+1. Create the MDCScopeManager using either default names:
+
+   ```java
+    MDCScopeManager scopeManager = new MDCScopeManager.Builder().build()
+    ```
+    Or by providing optional custom names:
+    
+    ```java
+    MDCScopeManager scopeManager = new MDCScopeManager
+                                   .Builder()
+                                   .withMDCTraceIdKey("CustomTraceId")
+                                   .withMDCSampledKey("customSampled")
+                                   .withMDCSpanIdKey("customSpanId")
+                                   .build();
+    ```
+2. Create the Jaegar Tracer by supplying the MDCScopeManager created step 1:
+```java
+JaegerTracer.Builder("serviceName").withScopeManager(scopeManager).build();	
+```
 
 ## Development
 
