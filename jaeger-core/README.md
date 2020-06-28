@@ -145,39 +145,31 @@ Tracer tracer = configuration
 The Jaeger Java Client supports log correlation by updating the logging context (MDC) with
 three variables: `traceId`, `spanId`, `sampled`.  
 
-To accomplish that Jaegar Tracer should be created with the following two steps:
+To accomplish that, first create the MDCScopeManager using either default MDC field names:
 
-1. Create the MDCScopeManager using either default MDC field names:
+```java
+MDCScopeManager scopeManager = new MDCScopeManager.Builder().build()
+```
 
-   ```java
-    MDCScopeManager scopeManager = new MDCScopeManager.Builder().build()
-    ```
-    Or by providing optional custom names:
-    
-    ```java
-    MDCScopeManager scopeManager = new MDCScopeManager
-                                   .Builder()
-                                   .withMDCTraceIdKey("CustomTraceId")
-                                   .withMDCSampledKey("customSampled")
-                                   .withMDCSpanIdKey("customSpanId")
-                                   .build();
-    ```
-2. Create the Jaegar Tracer by supplying the MDCScopeManager created step 1:
+or with optional custom field names:
+
+```java
+MDCScopeManager scopeManager = new MDCScopeManager
+                               .Builder()
+                               .withMDCTraceIdKey("CustomTraceId")
+                               .withMDCSampledKey("customSampled")
+                               .withMDCSpanIdKey("customSpanId")
+                               .build();
+```
+
+Then instantiate the Jaegar Tracer with the MDCScopeManager:
 ```java
 JaegerTracer.Builder("serviceName").withScopeManager(scopeManager).build();	
 ```
-In order to have the trace info in the logs, a logging system offers MDC functionality such as log4j
+In order to have the trace info in the logs, a logging system that offers MDC functionality, such as log4j,
 needs to be configured with an appender containing a proper PatternLayout.
 
-For example the following code:
-```java
- Span parentSpan = tracer.buildSpan("log example").start();
-    try (Scope scope = tracer.activateSpan(parentSpan)) {
-      LOGGER.debug("Debug with trace context!!!");
-    }
-  }
-```
-With this log4j2.xml configuration:
+For example, this log4j2.xml configuration:
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="INFO">
@@ -194,8 +186,12 @@ With this log4j2.xml configuration:
     </Loggers>
 </Configuration>
 ```
-Prints:  
-[DEBUG] 2020-06-28 22:25:07.152 [main] LogExample - Debug with trace context!!!% traceId=729b37ccf9c1549d spanId=729b37ccf9c1549d sampled=false
+
+might produce a lot line like this:
+
+```
+[DEBUG] 2020-06-28 22:25:07.152 [main] LogExample - Your log message traceId=729b37ccf9c1549d spanId=729b37ccf9c1549d sampled=false
+```
 
 ## Development
 
