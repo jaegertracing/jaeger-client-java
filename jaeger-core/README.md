@@ -187,7 +187,7 @@ For example, this log4j2.xml configuration:
 </Configuration>
 ```
 
-might produce a lot line like this:
+might produce a log line like this:
 
 ```
 [DEBUG] 2020-06-28 22:25:07.152 [main] LogExample - Your log message traceId=729b37ccf9c1549d spanId=729b37ccf9c1549d sampled=false
