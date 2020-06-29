@@ -80,17 +80,3 @@ artifacts {
     }
     tests testJar
 }
-
-publishing {
-    publications {
-        shadow(MavenPublication) { publication ->
-            project.shadow.component(publication)
-        }
-    }
-}
-
-signing {
-    if (isReleaseVersion) {
-        sign publishing.publications.shadow
-    }
-}
