@@ -19,6 +19,9 @@ publishing {
             from components.java
             artifact sourcesJar
             artifact javadocJar
+            project.plugins.withId('com.github.johnrengelman.shadow') {
+                artifact project.tasks.shadowJar
+            }
 
             pom {
                 name = 'jaeger-client'
