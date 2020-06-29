@@ -7,7 +7,7 @@ Changes by Version
 - Nothing yet.
 
 
-1.3.0 (2020-06-27)
+1.3.0 (2020-06-29)
 -------------------
 
 - Add MDCScopeManager for correlating logs with trace context (#718) -- Avi Maslati

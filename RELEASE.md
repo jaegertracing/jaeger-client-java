@@ -16,6 +16,7 @@ The release process consists of these steps:
      * The next build for the tag publishes artifact to Nexus. If the build fails it might
      be necessary to drop staging repositories and restart the build or just close the repository.
   1. Create a release on GitHub for the new tag `v0.20.0`. Use the changes from the `CHANGELOG` as the description.
+     * Go to https://github.com/jaegertracing/jaeger-client-java/tags, and click on `[...]` on the right next to the new tag.
 
 
 Maintenance branches should follow naming convention: `release-major.minor` (e.g.`release-0.20`).
