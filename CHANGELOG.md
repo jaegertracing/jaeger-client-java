@@ -7,6 +7,12 @@ Changes by Version
 - Nothing yet.
 
 
+1.3.1 (2020-06-29)
+-------------------
+
+Same as 1.3.1 (due to issues with artifact publishing)
+
+
 1.3.0 (2020-06-29)
 -------------------
 
