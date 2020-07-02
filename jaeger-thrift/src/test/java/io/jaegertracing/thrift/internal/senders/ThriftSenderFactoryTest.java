@@ -17,7 +17,6 @@ package io.jaegertracing.thrift.internal.senders;
 import static org.junit.Assert.assertTrue;
 
 import io.jaegertracing.Configuration;
-import io.jaegertracing.internal.senders.NoopSender;
 import io.jaegertracing.spi.Sender;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,7 +46,7 @@ public class ThriftSenderFactoryTest {
     System.setProperty(Configuration.JAEGER_AGENT_HOST, "jaeger-agent");
     System.setProperty(Configuration.JAEGER_AGENT_PORT, "6832");
     Sender sender = Configuration.SenderConfiguration.fromEnv().getSender();
-    assertTrue(sender instanceof NoopSender);
+    assertTrue(sender instanceof UdpSender);
   }
 
   @Test
