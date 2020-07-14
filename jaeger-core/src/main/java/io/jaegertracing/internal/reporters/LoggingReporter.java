@@ -40,7 +40,7 @@ public class LoggingReporter implements Reporter {
 
   @Override
   public void report(JaegerSpan span) {
-    logger.info("Span reported: {}", span);
+    logger.info("Span reported: {}", span.toString());
   }
 
   @Override
