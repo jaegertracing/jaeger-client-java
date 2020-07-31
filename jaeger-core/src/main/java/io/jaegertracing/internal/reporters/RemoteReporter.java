@@ -21,6 +21,8 @@ import io.jaegertracing.internal.metrics.Metrics;
 import io.jaegertracing.internal.senders.SenderResolver;
 import io.jaegertracing.spi.Reporter;
 import io.jaegertracing.spi.Sender;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -166,17 +168,29 @@ public class RemoteReporter implements Reporter {
   @ToString
   class QueueProcessor implements Runnable {
     private boolean open = true;
+    private final Set<Class<?>> commandFailedBefore = new HashSet<Class<?>>();
 
     @Override
     public void run() {
       while (open) {
         try {
           RemoteReporter.Command command = commandQueue.take();
+          Class<? extends Command> commandClass = command.getClass();
+          boolean failedBefore = commandFailedBefore.contains(commandClass);
 
           try {
             command.execute();
+            if (failedBefore) {
+              log.info(commandClass.getSimpleName() + " is working again!");
+              commandFailedBefore.remove(commandClass);
+            }
           } catch (SenderException e) {
             metrics.reporterFailure.inc(e.getDroppedSpanCount());
+            if (!failedBefore) {
+              log.warn(commandClass.getSimpleName()
+                      + " execution failed! Repeated errors of this command will not be logged.", e);
+              commandFailedBefore.add(commandClass);
+            }
           }
         } catch (Exception e) {
           log.error("QueueProcessor error:", e);
