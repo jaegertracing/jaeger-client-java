@@ -27,8 +27,11 @@ public class UdpSender extends ThriftSender {
   public static final String DEFAULT_AGENT_UDP_HOST = "localhost";
   public static final int DEFAULT_AGENT_UDP_COMPACT_PORT = 6831;
 
-  @ToString.Exclude private Agent.Client agentClient;
-  @ToString.Exclude private ThriftUdpTransport udpTransport;
+  private final String host;
+  private final int port;
+
+  @ToString.Exclude private volatile Agent.Client agentClient;
+  @ToString.Exclude private volatile ThriftUdpTransport udpTransport;
 
   /**
    * This constructor expects Jaeger running running on {@value #DEFAULT_AGENT_UDP_HOST}
@@ -54,14 +57,30 @@ public class UdpSender extends ThriftSender {
       port = DEFAULT_AGENT_UDP_COMPACT_PORT;
     }
 
-    udpTransport = ThriftUdpTransport.newThriftUdpClient(host, port);
-    agentClient = new Agent.Client(protocolFactory.getProtocol(udpTransport));
+    this.host = host;
+    this.port = port;
+  }
+
+  private Agent.Client getAgentClient() {
+    Agent.Client localRef = this.agentClient;
+    if (localRef == null) {
+      synchronized (this) {
+        localRef = this.agentClient;
+        if (localRef == null) {
+          udpTransport = ThriftUdpTransport.newThriftUdpClient(host, port);
+          localRef = new Agent.Client(protocolFactory.getProtocol(udpTransport));
+          this.agentClient = localRef;
+        }
+      }
+    }
+
+    return localRef;
   }
 
   @Override
   public void send(Process process, List<io.jaegertracing.thriftjava.Span> spans) throws SenderException {
     try {
-      agentClient.emitBatch(new Batch(process, spans));
+      getAgentClient().emitBatch(new Batch(process, spans));
     } catch (Exception e) {
       throw new SenderException(String.format("Could not send %d spans", spans.size()), e, spans.size());
     }
@@ -72,7 +91,11 @@ public class UdpSender extends ThriftSender {
     try {
       return super.close();
     } finally {
-      udpTransport.close();
+      synchronized (this) {
+        if (udpTransport != null) {
+          udpTransport.close();
+        }
+      }
     }
   }
 }
