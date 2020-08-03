@@ -7,6 +7,13 @@ Changes by Version
 - Nothing yet.
 
 
+1.3.2 (2020-09-03)
+-------------------
+
+- Log SenderExceptions the first time they occur in a row (#729) -- Phillip Schichtel
+- Make UdpSender lazy to be able to recover from early DNS issues (#726) -- Phillip Schichtel
+
+
 1.3.1 (2020-06-29)
 -------------------
 
