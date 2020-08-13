@@ -30,7 +30,11 @@ public class SystemClock implements Clock {
   private static final Clock DELEGATE;
 
   private static int getJavaVersion() {
-    val sections = System.getProperty("java.version").split("\\.");
+    return parseJavaVersion(System.getProperty("java.version"));
+  }
+  
+  static int parseJavaVersion(String property) {
+    val sections = property.split("\\.");
     // Checking if major is in fact GA release or not (see please https://openjdk.java.net/jeps/223)
     val index = sections[0].indexOf("-");
     val major = Integer.parseInt((index == -1) ? sections[0] : sections[0].substring(0, index));
