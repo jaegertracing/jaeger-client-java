@@ -12,7 +12,7 @@
 The group ID `com.uber.jaeger` has been deprecated and moved to a different [repository][legacy-client-java].
 Please switch to `io.jaegertracing`, as the old group ID will be maintained only for bug fixes.
 
-# Contributing and Developing
+## Contributing and Developing
 
 Please see [CONTRIBUTING.md](CONTRIBUTING.md).
 
