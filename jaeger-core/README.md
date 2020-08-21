@@ -164,7 +164,8 @@ MDCScopeManager scopeManager = new MDCScopeManager
 
 Then instantiate the Jaegar Tracer with the MDCScopeManager:
 ```java
-JaegerTracer.Builder("serviceName").withScopeManager(scopeManager).build();	
+JaegerTracer tracer = new JaegerTracer.Builder("serviceName")
+                      .withScopeManager(scopeManager).build();
 ```
 In order to have the trace info in the logs, a logging system that offers MDC functionality, such as log4j,
 needs to be configured with an appender containing a proper PatternLayout.
@@ -191,6 +192,21 @@ might produce a log line like this:
 
 ```
 [DEBUG] 2020-06-28 22:25:07.152 [main] LogExample - Your log message traceId=729b37ccf9c1549d spanId=729b37ccf9c1549d sampled=false
+```
+
+The Logstash configuration might look like this:
+
+```xml
+        <appender name="jsonConsoleAppender" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <includeMdcKeyName>traceId</includeMdcKeyName>
+                <includeMdcKeyName>spanId</includeMdcKeyName>
+                <includeMdcKeyName>sampled</includeMdcKeyName>
+            </encoder>
+        </appender>
+        <root level="INFO">
+            <appender-ref ref="jsonConsoleAppender"/>
+        </root>
 ```
 
 ## Development
