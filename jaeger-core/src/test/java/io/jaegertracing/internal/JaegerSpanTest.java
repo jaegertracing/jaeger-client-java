@@ -47,6 +47,7 @@ import java.io.StringWriter;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -616,5 +617,34 @@ public class JaegerSpanTest {
     JaegerSpan span = tracer.buildSpan("foo").start();
     span.setBaggageItem("foo", "bar");
     span.context().baggageItems().forEach(entry -> span.setBaggageItem("foo2", "bar"));
+  }
+
+  @Test
+  public void testSamplingTagOrder() {
+    // See: https://github.com/jaegertracing/jaeger-client-java/issues/738
+    // LinkedHashMap to control map iteration order
+    Map<String, Object> tags = new LinkedHashMap<>();
+    tags.put("tag1", "tag1");
+    tags.put(Tags.SAMPLING_PRIORITY.getKey(), 1);
+    tags.put("tag2", "tag2");
+
+    String operation = "test-operation";
+    long traceIdLow = 1L;
+    long spanId = 2L;
+    long parentId = 3L;
+    JaegerSpan span = new JaegerSpan(
+            tracer,
+            operation,
+            new JaegerSpanContext(
+                    0, traceIdLow, spanId, parentId,
+                    (byte) 4, Collections.emptyMap(), null /* debugId */, new JaegerObjectFactory()),
+            0,
+            0,
+            false,
+            tags,
+            Collections.emptyList());
+
+    assertTrue(span.context().isSampled());
+    assertEquals(3, span.getTags().size());
   }
 }
