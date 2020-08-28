@@ -7,7 +7,7 @@ Changes by Version
 - Nothing yet.
 
 
-1.3.2 (2020-09-03)
+1.3.2 (2020-08-03)
 -------------------
 
 - Log SenderExceptions the first time they occur in a row (#729) -- Phillip Schichtel
