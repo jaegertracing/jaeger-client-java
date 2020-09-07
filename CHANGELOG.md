@@ -1,10 +1,18 @@
 Changes by Version
 ==================
 
-1.4.0 (unreleased)
+1.5.0 (unreleased)
 -------------------
 
 - Nothing yet.
+
+
+1.4.0 (2020-09-07)
+-------------------
+
+- Process sampling tag before handling other tags (fixes #738) -- Audrius Butkevicius>
+- Add 'w3c' to valid JAEGER_PROPAGATION options  -- by chgl
+- Allow SystemClock to recognize non-GA OpenJDK versions -- Andriy Redko
 
 
 1.3.2 (2020-08-03)
@@ -428,4 +436,3 @@ Complete list of changes:
 -------------------
 
 - Upgrade to OpenTracing API 0.12, with immutable SpanContext
-
