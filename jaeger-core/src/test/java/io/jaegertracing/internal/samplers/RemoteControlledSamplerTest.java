@@ -111,6 +111,34 @@ public class RemoteControlledSamplerTest {
   }
 
   @Test
+  public void testUpdateProbabilisticSamplerWithPerOperationSampler() {
+    // initial sampling strategy containing both probabilistic for service and per operation
+    List<PerOperationSamplingParameters> operationToSampler = new ArrayList<>();
+    operationToSampler.add(new PerOperationSamplingParameters("operation",
+            new ProbabilisticSamplingStrategy(0.1)));
+    OperationSamplingParameters parameters = new OperationSamplingParameters(0.11, 0.22, operationToSampler);
+    SamplingStrategyResponse initialResponse = new SamplingStrategyResponse(
+            new ProbabilisticSamplingStrategy(0.5),
+            null,
+            parameters
+    );
+    when(samplingManager.getSamplingStrategy(SERVICE_NAME)).thenReturn(initialResponse);
+    undertest.updateSampler();
+    Sampler initialSampler = undertest.getSampler();
+
+    // change probabilistic in service from 0.5 -> 1.0, leave per operation the same
+    SamplingStrategyResponse updatedResponse = new SamplingStrategyResponse(
+            new ProbabilisticSamplingStrategy(1.0),
+            null,
+            parameters
+    );
+    when(samplingManager.getSamplingStrategy(SERVICE_NAME)).thenReturn(updatedResponse);
+    undertest.updateSampler();
+    Sampler updatedSampler = undertest.getSampler();
+    assertNotEquals(initialSampler, updatedSampler);
+  }
+
+  @Test
   public void testUpdatePerOperationSamplerUpdatesExistingPerOperationSampler() throws Exception {
     undertest.close();
     PerOperationSampler perOperationSampler = mock(PerOperationSampler.class);

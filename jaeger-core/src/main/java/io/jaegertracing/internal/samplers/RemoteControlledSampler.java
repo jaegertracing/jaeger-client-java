@@ -93,9 +93,8 @@ public class RemoteControlledSampler implements Sampler {
 
     if (response.getOperationSampling() != null) {
       updatePerOperationSampler(response.getOperationSampling());
-    } else {
-      updateRateLimitingOrProbabilisticSampler(response);
     }
+    updateRateLimitingOrProbabilisticSampler(response);
   }
 
   /**
