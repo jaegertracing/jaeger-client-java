@@ -104,7 +104,8 @@ public class TextMapCodecTest {
 
     JaegerSpanContext context = new JaegerSpanContext(traceIdHigh, traceIdLow, spanId, parentId, flags);
     assertEquals(
-            "20000000000000001:3:4:5", TextMapCodec.contextAsString(context));
+            "00000000000000020000000000000001:0000000000000003:0000000000000004:5",
+            TextMapCodec.contextAsString(context));
   }
 
   @Test
@@ -169,7 +170,7 @@ public class TextMapCodecTest {
     codec.inject(new JaegerSpanContext(0L, traceIdLow, spanId, parentId, (byte)1), new TextMapAdapter(headers));
 
     String traceId = headers.get("uber-trace-id");
-    assertEquals("2a:1:0:1", traceId);
+    assertEquals("000000000000002a:0000000000000001:0000000000000000:1", traceId);
   }
 
   @Test

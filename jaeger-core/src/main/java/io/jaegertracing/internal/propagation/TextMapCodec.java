@@ -118,10 +118,18 @@ public class TextMapCodec implements Codec<TextMap> {
     int intFlag = context.getFlags() & 0xFF;
     return new StringBuilder()
         .append(context.getTraceId()).append(":")
-        .append(Long.toHexString(context.getSpanId())).append(":")
-        .append(Long.toHexString(context.getParentId())).append(":")
+        .append(toHexString(context.getSpanId())).append(":")
+        .append(toHexString(context.getParentId())).append(":")
         .append(Integer.toHexString(intFlag))
         .toString();
+  }
+
+  private static String toHexString(long id) {
+    final String hex = Long.toHexString(id);
+    if (hex.length() == 16) {
+      return hex;
+    }
+    return "0000000000000000".substring(hex.length()) + hex;
   }
 
   @Override

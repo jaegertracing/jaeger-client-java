@@ -295,7 +295,9 @@ public class JaegerSpanTest {
         false,
         Collections.emptyMap(),
         Collections.emptyList());
-    assertEquals("1:2:3:4 - test-operation", span.toString());
+    assertEquals(
+        "0000000000000001:0000000000000002:0000000000000003:4 - test-operation",
+        span.toString());
     span.finish();
   }
 
@@ -317,7 +319,9 @@ public class JaegerSpanTest {
         false,
         Collections.emptyMap(),
         Collections.emptyList());
-    assertEquals("20000000000000001:3:4:4 - test-operation", span.toString());
+    assertEquals(
+        "00000000000000020000000000000001:0000000000000003:0000000000000004:4 - test-operation",
+        span.toString());
     span.finish();
   }
 

@@ -71,7 +71,7 @@ public class JaegerSpanContext implements SpanContext {
     this.debugId = debugId;
     this.objectFactory = objectFactory;
     this.traceIdAsString = convertTraceId();
-    this.spanIdAsString = Long.toHexString(spanId);
+    this.spanIdAsString = toHexString(spanId);
   }
 
   @Override
@@ -89,17 +89,19 @@ public class JaegerSpanContext implements SpanContext {
 
   private String convertTraceId() {
     if (traceIdHigh == 0L) {
-      return Long.toHexString(traceIdLow);
+      return toHexString(traceIdLow);
     }
-    final String hexStringHigh = Long.toHexString(traceIdHigh);
-    final String hexStringLow = Long.toHexString(traceIdLow);
-    if (hexStringLow.length() < 16) {
-      // left pad low trace id with '0'.
-      // In theory, only 12.5% of all possible long values will be padded.
-      // In practice, using Random.nextLong(), only 6% will need padding
-      return hexStringHigh + "0000000000000000".substring(hexStringLow.length()) + hexStringLow;
-    }
+    final String hexStringHigh = toHexString(traceIdHigh);
+    final String hexStringLow = toHexString(traceIdLow);
     return hexStringHigh + hexStringLow;
+  }
+
+  private static String toHexString(long id) {
+    final String hex = Long.toHexString(id);
+    if (hex.length() == 16) {
+      return hex;
+    }
+    return "0000000000000000".substring(hex.length()) + hex;
   }
 
   public String getTraceId() {
