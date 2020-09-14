@@ -113,7 +113,7 @@ public class TraceContextCodecTest {
     String traceParent = carrier.get(TRACE_PARENT);
     assertEquals(EXAMPLE_TRACE_PARENT, traceParent);
     JaegerSpanContext extractedContext = traceContextCodec.extract(textMap);
-    assertEquals("0000000000000001:0000000000000002:0000000000000000:0", extractedContext.toString());
+    assertEquals("0000000000000001:0000000000000002:0:0", extractedContext.toString());
   }
 
   @Test
@@ -123,7 +123,7 @@ public class TraceContextCodecTest {
     textMap.put("Traceparent", EXAMPLE_TRACE_PARENT);
     textMap.put("Tracestate", "whatever");
     JaegerSpanContext spanContext = traceContextCodec.extract(textMap);
-    assertEquals("0000000000000001:0000000000000002:0000000000000000:0", spanContext.toString());
+    assertEquals("0000000000000001:0000000000000002:0:0", spanContext.toString());
     assertEquals("whatever", spanContext.getTraceState());
   }
 

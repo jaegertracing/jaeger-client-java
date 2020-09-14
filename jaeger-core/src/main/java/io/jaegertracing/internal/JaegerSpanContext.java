@@ -16,6 +16,7 @@
 package io.jaegertracing.internal;
 
 import io.jaegertracing.internal.propagation.TextMapCodec;
+import io.jaegertracing.internal.utils.Utils;
 import io.opentracing.SpanContext;
 
 import java.util.Collections;
@@ -71,7 +72,7 @@ public class JaegerSpanContext implements SpanContext {
     this.debugId = debugId;
     this.objectFactory = objectFactory;
     this.traceIdAsString = convertTraceId();
-    this.spanIdAsString = toHexString(spanId);
+    this.spanIdAsString = Utils.to16HexString(spanId);
   }
 
   @Override
@@ -89,19 +90,11 @@ public class JaegerSpanContext implements SpanContext {
 
   private String convertTraceId() {
     if (traceIdHigh == 0L) {
-      return toHexString(traceIdLow);
+      return Utils.to16HexString(traceIdLow);
     }
-    final String hexStringHigh = toHexString(traceIdHigh);
-    final String hexStringLow = toHexString(traceIdLow);
+    final String hexStringHigh = Utils.to16HexString(traceIdHigh);
+    final String hexStringLow = Utils.to16HexString(traceIdLow);
     return hexStringHigh + hexStringLow;
-  }
-
-  private static String toHexString(long id) {
-    final String hex = Long.toHexString(id);
-    if (hex.length() == 16) {
-      return hex;
-    }
-    return "0000000000000000".substring(hex.length()) + hex;
   }
 
   public String getTraceId() {

@@ -170,7 +170,7 @@ public class TextMapCodecTest {
     codec.inject(new JaegerSpanContext(0L, traceIdLow, spanId, parentId, (byte)1), new TextMapAdapter(headers));
 
     String traceId = headers.get("uber-trace-id");
-    assertEquals("000000000000002a:0000000000000001:0000000000000000:1", traceId);
+    assertEquals("000000000000002a:0000000000000001:0:1", traceId);
   }
 
   @Test

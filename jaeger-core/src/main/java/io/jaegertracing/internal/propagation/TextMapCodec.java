@@ -21,6 +21,7 @@ import io.jaegertracing.internal.JaegerSpanContext;
 import io.jaegertracing.internal.exceptions.EmptyTracerStateStringException;
 import io.jaegertracing.internal.exceptions.MalformedTracerStateStringException;
 import io.jaegertracing.internal.exceptions.TraceIdOutOfBoundException;
+import io.jaegertracing.internal.utils.Utils;
 import io.jaegertracing.spi.Codec;
 import io.opentracing.propagation.TextMap;
 
@@ -118,18 +119,11 @@ public class TextMapCodec implements Codec<TextMap> {
     int intFlag = context.getFlags() & 0xFF;
     return new StringBuilder()
         .append(context.getTraceId()).append(":")
-        .append(toHexString(context.getSpanId())).append(":")
-        .append(toHexString(context.getParentId())).append(":")
+        .append(Utils.to16HexString(context.getSpanId())).append(":")
+        // parent=0 is special, no need to encode as full 16 characters, and more readable this way
+        .append(context.getParentId() == 0 ? "0" : Utils.to16HexString(context.getParentId())).append(":")
         .append(Integer.toHexString(intFlag))
         .toString();
-  }
-
-  private static String toHexString(long id) {
-    final String hex = Long.toHexString(id);
-    if (hex.length() == 16) {
-      return hex;
-    }
-    return "0000000000000000".substring(hex.length()) + hex;
   }
 
   @Override
