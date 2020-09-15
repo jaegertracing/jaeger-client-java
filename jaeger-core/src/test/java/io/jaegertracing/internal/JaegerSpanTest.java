@@ -31,6 +31,7 @@ import io.jaegertracing.internal.metrics.InMemoryMetricsFactory;
 import io.jaegertracing.internal.metrics.Metrics;
 import io.jaegertracing.internal.reporters.InMemoryReporter;
 import io.jaegertracing.internal.samplers.ConstSampler;
+import io.jaegertracing.internal.utils.Utils;
 import io.jaegertracing.spi.BaggageRestrictionManager;
 import io.opentracing.References;
 import io.opentracing.Span;
@@ -190,7 +191,7 @@ public class JaegerSpanTest {
 
   @Test
   public void testToSpanId() {
-    assertEquals(Long.toHexString(jaegerSpan.context().getSpanId()), jaegerSpan.context().toSpanId());
+    assertEquals(Utils.to16HexString(jaegerSpan.context().getSpanId()), jaegerSpan.context().toSpanId());
   }
 
   @Test
@@ -295,7 +296,9 @@ public class JaegerSpanTest {
         false,
         Collections.emptyMap(),
         Collections.emptyList());
-    assertEquals("1:2:3:4 - test-operation", span.toString());
+    assertEquals(
+        "0000000000000001:0000000000000002:0000000000000003:4 - test-operation",
+        span.toString());
     span.finish();
   }
 
@@ -317,7 +320,9 @@ public class JaegerSpanTest {
         false,
         Collections.emptyMap(),
         Collections.emptyList());
-    assertEquals("20000000000000001:3:4:4 - test-operation", span.toString());
+    assertEquals(
+        "00000000000000020000000000000001:0000000000000003:0000000000000004:4 - test-operation",
+        span.toString());
     span.finish();
   }
 

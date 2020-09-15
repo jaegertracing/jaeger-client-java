@@ -16,6 +16,7 @@
 package io.jaegertracing.internal;
 
 import io.jaegertracing.internal.propagation.TextMapCodec;
+import io.jaegertracing.internal.utils.Utils;
 import io.opentracing.SpanContext;
 
 import java.util.Collections;
@@ -71,7 +72,7 @@ public class JaegerSpanContext implements SpanContext {
     this.debugId = debugId;
     this.objectFactory = objectFactory;
     this.traceIdAsString = convertTraceId();
-    this.spanIdAsString = Long.toHexString(spanId);
+    this.spanIdAsString = Utils.to16HexString(spanId);
   }
 
   @Override
@@ -89,16 +90,10 @@ public class JaegerSpanContext implements SpanContext {
 
   private String convertTraceId() {
     if (traceIdHigh == 0L) {
-      return Long.toHexString(traceIdLow);
+      return Utils.to16HexString(traceIdLow);
     }
-    final String hexStringHigh = Long.toHexString(traceIdHigh);
-    final String hexStringLow = Long.toHexString(traceIdLow);
-    if (hexStringLow.length() < 16) {
-      // left pad low trace id with '0'.
-      // In theory, only 12.5% of all possible long values will be padded.
-      // In practice, using Random.nextLong(), only 6% will need padding
-      return hexStringHigh + "0000000000000000".substring(hexStringLow.length()) + hexStringLow;
-    }
+    final String hexStringHigh = Utils.to16HexString(traceIdHigh);
+    final String hexStringLow = Utils.to16HexString(traceIdLow);
     return hexStringHigh + hexStringLow;
   }
 
