@@ -1,10 +1,18 @@
 Changes by Version
 ==================
 
-1.5.0 (unreleased)
+1.6.0 (unreleased)
 -------------------
 
 - Nothing yet.
+
+
+1.5.0 (2020-11-12)
+-------------------
+
+- Upgrade okhttp to 4.9.0 (#749) -- Yuri Shkuro
+- Do not strip leading zeros from trace IDs (#746) -- Yuri Shkuro
+- Document how to encrypt travis secrets (#744) -- Pavol Loffay
 
 
 1.4.0 (2020-09-07)
