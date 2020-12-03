@@ -167,7 +167,7 @@ public class RemoteReporter implements Reporter {
    */
   @ToString
   class QueueProcessor implements Runnable {
-    private boolean open = true;
+    private volatile boolean open = true;
     private final Set<Class<?>> commandFailedBefore = new HashSet<Class<?>>();
 
     @Override
