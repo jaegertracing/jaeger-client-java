@@ -13,6 +13,7 @@ jobs:
       matrix:
         env:
           - JAVA_VERSION: "1.8"
+            DEPLOY: '1'
     name: unit-tests - java ${{ matrix.env.JAVA_VERSION }}
     steps:
     - uses: actions/checkout@v2
@@ -69,5 +70,6 @@ jobs:
     - name: Deploy to maven
       if: |
         github.event_name != "pull_request" &&
-        steps.unit-tests.outcome == 'success'
+        steps.unit-tests.outcome == 'success' &&
+        ${{ matrix.env.DEPLOY == '1' }}
       run: ./gradlew publish

@@ -25,35 +25,14 @@ jobs:
       env:
         DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       if: env.DOCKERHUB_TOKEN != null
-
-    - name: Export DOCKERHUB_LOGIN variable
-      run: echo "DOCKERHUB_LOGIN=true" >> $GITHUB_ENV
-      if: steps.dockerhub-login.outcome == 'success'
-
-    - name: Export Branch variable for pull_request event
-      id: branch-pr
-      run: |
-        export BRANCH=${GITHUB_HEAD_REF}
-        echo "Running on branch=$BRANCH"
-        echo "BRANCH=${BRANCH}" >> $GITHUB_ENV
-        echo ::set-output name=branch::$BRANCH
-      if: github.event_name == 'pull_request'
     
-    - name: Export Branch variable for push event
-      id: branch-push
-      run: |
-        export BRANCH=${GITHUB_REF##*/}
-        echo "Running on branch=$BRANCH"
-        echo $BRANCH >> $GITHUB_ENV
-        echo ::set-output name=branch::$BRANCH
-      if: github.event_name == 'push'
-
     - name: Run Crossdock
       id: crossdock
       run: make crossdock-fresh
 
     - name: Publish crossdock
       run: |
+        BRANCH=${GITHUB_REF##*/}
         REPO=jaegertracing/xdock-java
         TAG=$(if [ "$BRANCH" == "master" ]; then echo "latest"; else echo "${BRANCH///}"; fi)
         COMMIT=${GITHUB_SHA::8}
@@ -65,6 +44,7 @@ jobs:
         docker tag $REPO:$COMMIT $REPO:$TAG
         docker push $REPO
       if: |
+        steps.dockerhub-login.outcome == 'success' &&
         github.event_name != 'pull_request' &&
         steps.crossdock.outcome == 'success' &&
-        (steps.branch-pr.outputs.branch == 'master' || steps.branch-push.outputs.branch == 'master')
+        steps.branch-push.outputs.branch == 'master'
