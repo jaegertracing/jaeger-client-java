@@ -38,9 +38,6 @@ jobs:
         COMMIT=${GITHUB_SHA::8}
         echo "BRANCH=$BRANCH, REPO=$REPO, TAG=$TAG, COMMIT=$COMMIT"
         ./gradlew shadowJar
-        pushd 'jaeger-crossdock'
-        docker build -f Dockerfile -t $REPO:$COMMIT
-        popd
         docker tag $REPO:$COMMIT $REPO:$TAG
         docker push $REPO
       if: |
