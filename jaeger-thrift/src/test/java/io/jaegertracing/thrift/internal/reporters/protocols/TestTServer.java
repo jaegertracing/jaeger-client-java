@@ -22,13 +22,14 @@ import java.util.ArrayList;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TSimpleServer;
+import org.apache.thrift.transport.TTransportException;
 
 public class TestTServer implements Runnable {
   TServer server;
   InMemorySpanServerHandler handler;
   ThriftUdpServerTransport transport;
 
-  public TestTServer(int port) throws SocketException, UnknownHostException {
+  public TestTServer(int port) throws SocketException, UnknownHostException, TTransportException {
     handler = new InMemorySpanServerHandler();
     transport = new ThriftUdpServerTransport(port);
     server =
@@ -62,7 +63,7 @@ public class TestTServer implements Runnable {
         batch.setProcess(receivedBatch.getProcess());
       }
 
-      if (batch.spans.size() >= expectedSpans) {
+      if (batch.getSpans().size() >= expectedSpans) {
         return batch;
       }
 

@@ -20,6 +20,7 @@ import java.util.List;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TIOStreamTransport;
+import org.apache.thrift.transport.TTransportException;
 import zipkin2.codec.BytesEncoder;
 import zipkin2.codec.Encoding;
 
@@ -53,7 +54,7 @@ public final class ThriftSpanEncoder implements BytesEncoder<Span> {
   static class ReusableTBinaryProtocol extends TBinaryProtocol {
     private final ByteArrayOutputStream baos;
 
-    ReusableTBinaryProtocol(ByteArrayOutputStream baos) {
+    ReusableTBinaryProtocol(ByteArrayOutputStream baos) throws TTransportException {
       super(new TIOStreamTransport(baos));
       this.baos = baos;
     }
@@ -63,7 +64,11 @@ public final class ThriftSpanEncoder implements BytesEncoder<Span> {
       new ThreadLocal<ReusableTBinaryProtocol>() {
         @Override
         protected ReusableTBinaryProtocol initialValue() {
-          return new ReusableTBinaryProtocol(new ByteArrayOutputStream());
+          try {
+            return new ReusableTBinaryProtocol(new ByteArrayOutputStream());
+          } catch (TTransportException e) {
+            throw new RuntimeException("Unable to initialise protocol: " + e, e);
+          }
         }
       };
 }
