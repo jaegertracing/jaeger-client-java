@@ -21,6 +21,7 @@ import io.jaegertracing.thriftjava.Batch;
 import io.jaegertracing.thriftjava.Process;
 import java.util.List;
 import lombok.ToString;
+import org.apache.thrift.transport.TTransportException;
 
 @ToString
 public class UdpSender extends ThriftSender {
@@ -37,7 +38,7 @@ public class UdpSender extends ThriftSender {
    * This constructor expects Jaeger running running on {@value #DEFAULT_AGENT_UDP_HOST}
    * and port {@value #DEFAULT_AGENT_UDP_COMPACT_PORT}
    */
-  public UdpSender() {
+  public UdpSender() throws TTransportException {
     this(DEFAULT_AGENT_UDP_HOST, DEFAULT_AGENT_UDP_COMPACT_PORT, 0);
   }
 
@@ -46,7 +47,7 @@ public class UdpSender extends ThriftSender {
    * @param port port e.g. {@value DEFAULT_AGENT_UDP_COMPACT_PORT}
    * @param maxPacketSize if 0 it will use {@value ThriftUdpTransport#MAX_PACKET_SIZE}
    */
-  public UdpSender(String host, int port, int maxPacketSize) {
+  public UdpSender(String host, int port, int maxPacketSize) throws TTransportException {
     super(ProtocolType.Compact, maxPacketSize);
 
     if (host == null || host.length() == 0) {
@@ -61,7 +62,7 @@ public class UdpSender extends ThriftSender {
     this.port = port;
   }
 
-  private Agent.Client getAgentClient() {
+  private Agent.Client getAgentClient() throws TTransportException {
     Agent.Client localRef = this.agentClient;
     if (localRef == null) {
       synchronized (this) {

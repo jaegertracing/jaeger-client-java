@@ -14,6 +14,7 @@
 package io.jaegertracing.thrift.internal.senders;
 
 import io.jaegertracing.internal.exceptions.SenderException;
+import org.apache.thrift.transport.TTransportException;
 import org.junit.Test;
 
 import java.net.SocketException;
@@ -24,7 +25,7 @@ import static org.junit.Assert.fail;
 
 public class UdpLazinessTest {
     @Test
-    public void testLazyInitializationOfAgent() {
+    public void testLazyInitializationOfAgent() throws TTransportException {
         UdpSender udpSender = new UdpSender("agent.acme.test", 55555, 0);
 
         try {

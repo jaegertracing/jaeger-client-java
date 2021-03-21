@@ -14,16 +14,17 @@
 
 package io.jaegertracing.thrift.internal.reporters.protocols;
 
-import java.net.SocketException;
-import java.net.UnknownHostException;
 import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
+import java.net.SocketException;
+import java.net.UnknownHostException;
+
 public class ThriftUdpServerTransport extends TServerTransport {
   private ThriftUdpTransport transport;
 
-  public ThriftUdpServerTransport(int localPort) throws SocketException, UnknownHostException {
+  public ThriftUdpServerTransport(int localPort) throws TTransportException, SocketException, UnknownHostException {
     transport = ThriftUdpTransport.newThriftUdpServer("localhost", localPort);
   }
 
@@ -42,7 +43,7 @@ public class ThriftUdpServerTransport extends TServerTransport {
   }
 
   @Override
-  protected TTransport acceptImpl() throws TTransportException {
+  public TTransport accept() throws TTransportException {
     return transport;
   }
 
