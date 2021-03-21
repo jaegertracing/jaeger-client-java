@@ -15,13 +15,13 @@ if [ "x${ENCRYPTION_IV}" == "x" ]; then
 fi
 
 if [ "${TRAVIS_SECURE_ENV_VARS}" == true ]; then
-    openssl aes-256-cbc -K "${ENCRYPTION_KEY}" -iv "${ENCRYPTION_IV}" -in travis/signing-key.asc.enc -out travis/signing-key.asc -d
+    openssl aes-256-cbc -K "${ENCRYPTION_KEY}" -iv "${ENCRYPTION_IV}" -in scripts/signing-key.asc.enc -out scripts/signing-key.asc -d
     if (( $? != 0 )); then
         echo "Failed to decrypt the signing key. Skipping."
         exit 1
     fi
 
-    gpg --no-tty --batch --allow-secret-key-import --import travis/signing-key.asc
+    gpg --no-tty --batch --allow-secret-key-import --import scripts/signing-key.asc
     rm -rf "$HOME/.gradle/gradle.properties"
     echo signing.keyId="${SIGNING_KEY_ID}" > "$HOME/.gradle/gradle.properties"
     echo signing.password="${SIGNING_KEY_PASSPHRASE}" >> "$HOME/.gradle/gradle.properties"

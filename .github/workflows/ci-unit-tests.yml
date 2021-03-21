@@ -1,0 +1,31 @@
+name: Unit Tests
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+
+    - uses: actions/setup-java@v1
+      with:
+        java-version: 8
+
+    - name: Run unit tests
+      run: make test-ci
+
+    - name: Generate codecov report
+      run: ./gradlew codeCoverageReport
+
+    - name: Upload coverage to codecov
+      uses: codecov/codecov-action@v1
+      with:
+        verbose: true
+        fail_ci_if_error: true
