@@ -127,8 +127,8 @@ public class RemoteReporter implements Reporter {
    * but are fine with executing sequentially.  The advantage is simplified code where
    * tasks are put onto a blocking queue and processed sequentially by another thread.
    */
-  public interface Command {
-    void execute() throws SenderException;
+  interface Command {
+    int execute() throws SenderException;
   }
 
   class AppendCommand implements Command {
@@ -139,26 +139,23 @@ public class RemoteReporter implements Reporter {
     }
 
     @Override
-    public void execute() throws SenderException {
-      int n = sender.append(span);
-      if (n > 0) {
-        metrics.reporterSuccess.inc(n);
-      }
+    public int execute() throws SenderException {
+      return sender.append(span);
     }
   }
 
   class CloseCommand implements Command {
     @Override
-    public void execute() throws SenderException {
+    public int execute() throws SenderException {
       queueProcessor.close();
+      return 0;
     }
   }
 
   class FlushCommand implements Command {
     @Override
-    public void execute() throws SenderException {
-      int n = sender.flush();
-      metrics.reporterSuccess.inc(n);
+    public int execute() throws SenderException {
+      return sender.flush();
     }
   }
 
@@ -179,10 +176,13 @@ public class RemoteReporter implements Reporter {
           boolean failedBefore = commandFailedBefore.contains(commandClass);
 
           try {
-            command.execute();
-            if (failedBefore) {
-              log.info(commandClass.getSimpleName() + " is working again!");
-              commandFailedBefore.remove(commandClass);
+            int sentSpanCount = command.execute();
+            if (sentSpanCount > 0) {
+              metrics.reporterSuccess.inc(sentSpanCount);
+              if (failedBefore) {
+                log.info(commandClass.getSimpleName() + " is working again!");
+                commandFailedBefore.remove(commandClass);
+              }
             }
           } catch (SenderException e) {
             metrics.reporterFailure.inc(e.getDroppedSpanCount());
