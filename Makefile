@@ -10,8 +10,8 @@ clean:
 test:
 	$(GRADLE) check
 
-.PHONY: test-travis
-test-travis:
+.PHONY: test-ci
+test-ci:
 	$(GRADLE) -is check
 
 .PHONY: release

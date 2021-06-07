@@ -23,6 +23,8 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import lombok.ToString;
+import org.apache.thrift.TConfiguration;
+import org.apache.thrift.transport.TEndpointTransport;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
@@ -30,7 +32,7 @@ import org.apache.thrift.transport.TTransportException;
  * A thrift transport for sending sending/receiving spans.
  */
 @ToString
-public class ThriftUdpTransport extends TTransport implements Closeable {
+public class ThriftUdpTransport extends TEndpointTransport implements Closeable {
   public static final int MAX_PACKET_SIZE = 65000;
 
   public int receiveOffSet = -1;
@@ -41,7 +43,7 @@ public class ThriftUdpTransport extends TTransport implements Closeable {
   @ToString.Exclude public ByteBuffer writeBuffer;
 
   // Create a UDP client for sending data to specific host and port
-  public static ThriftUdpTransport newThriftUdpClient(String host, int port) {
+  public static ThriftUdpTransport newThriftUdpClient(String host, int port) throws TTransportException {
     ThriftUdpTransport t;
     try {
       t = new ThriftUdpTransport();
@@ -54,13 +56,14 @@ public class ThriftUdpTransport extends TTransport implements Closeable {
 
   // Create a UDP server for receiving data on specific host and port
   public static ThriftUdpTransport newThriftUdpServer(String host, int port)
-      throws SocketException, UnknownHostException {
+      throws SocketException, TTransportException, UnknownHostException {
     ThriftUdpTransport t = new ThriftUdpTransport();
     t.socket.bind(new InetSocketAddress(host, port));
     return t;
   }
 
-  private ThriftUdpTransport() throws SocketException {
+  private ThriftUdpTransport() throws TTransportException, SocketException {
+    super(new TConfiguration());
     this.socket = new DatagramSocket(null);
   }
 

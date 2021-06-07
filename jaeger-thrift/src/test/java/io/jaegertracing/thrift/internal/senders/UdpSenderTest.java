@@ -193,7 +193,7 @@ public class UdpSenderTest {
     assertEquals(0, actualSpan.getTraceIdHigh());
     assertEquals(expectedSpan.context().getSpanId(), actualSpan.getSpanId());
     assertEquals(0, actualSpan.getParentSpanId());
-    assertTrue(actualSpan.references.isEmpty());
+    assertTrue(actualSpan.getReferences().isEmpty());
     assertEquals(expectedSpan.getOperationName(), actualSpan.getOperationName());
     assertEquals(4, batch.getProcess().getTags().size());
     assertEquals("hostname", batch.getProcess().getTags().get(0).getKey());

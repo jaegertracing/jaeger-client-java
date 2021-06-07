@@ -23,6 +23,7 @@ import io.jaegertracing.thriftjava.Process;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.ToString;
+import org.apache.thrift.transport.TTransportException;
 
 @ToString
 public abstract class ThriftSender extends ThriftSenderBase implements Sender {
@@ -37,7 +38,7 @@ public abstract class ThriftSender extends ThriftSenderBase implements Sender {
    * @param protocolType protocol type (compact or binary)
    * @param maxPacketSize if 0 it will use default value {@value ThriftUdpTransport#MAX_PACKET_SIZE}
    */
-  public ThriftSender(ProtocolType protocolType, int maxPacketSize) {
+  public ThriftSender(ProtocolType protocolType, int maxPacketSize) throws TTransportException {
     super(protocolType, maxPacketSize);
 
     spanBuffer = new ArrayList<io.jaegertracing.thriftjava.Span>();

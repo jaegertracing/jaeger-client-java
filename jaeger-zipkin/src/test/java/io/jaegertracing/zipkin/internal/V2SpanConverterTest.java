@@ -303,7 +303,10 @@ public class V2SpanConverterTest {
 
   @Test
   public void testConvertSpanWith128BitTraceId() {
-    JaegerSpan span = tracer128.buildSpan("operation-name").start();
+    // zipkinSpan.traceId() always returns full length ID (padded with 0s).
+    // To make the test stable, use a short idHigh portion.
+    JaegerSpanContext c = new JaegerSpanContext(1L, 1L, 1L, 0L, (byte)0x01);
+    JaegerSpan span = tracer128.buildSpan("operation-name").asChildOf(c).start();
 
     zipkin2.Span zipkinSpan = V2SpanConverter.convertSpan(span);
     assertNotEquals(0, span.context().getTraceIdHigh());

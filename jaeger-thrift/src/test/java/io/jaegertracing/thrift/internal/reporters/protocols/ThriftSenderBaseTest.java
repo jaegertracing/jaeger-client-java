@@ -22,6 +22,8 @@ import io.jaegertracing.thriftjava.Batch;
 import io.jaegertracing.thriftjava.Span;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.thrift.TConfiguration;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.transport.AutoExpandingBufferWriteTransport;
 import org.junit.Test;
@@ -44,7 +46,7 @@ public class ThriftSenderBaseTest {
 
   private int calculateBatchOverheadDifference(int numberOfSpans) throws Exception {
     AutoExpandingBufferWriteTransport memoryTransport =
-        new AutoExpandingBufferWriteTransport(maxPacketSize, 2);
+        new AutoExpandingBufferWriteTransport(new TConfiguration(), maxPacketSize, 2);
     Agent.Client memoryClient = new Agent.Client(new TCompactProtocol((memoryTransport)));
     Span span = new Span();
     span.setOperationName("raza");

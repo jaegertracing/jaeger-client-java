@@ -18,11 +18,13 @@ import io.jaegertracing.thrift.internal.reporters.protocols.ThriftUdpTransport;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.thrift.TBase;
+import org.apache.thrift.TConfiguration;
 import org.apache.thrift.TSerializer;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.transport.AutoExpandingBufferWriteTransport;
+import org.apache.thrift.transport.TTransportException;
 
 @ToString
 @Slf4j
@@ -45,7 +47,7 @@ public abstract class ThriftSenderBase {
    * @param protocolType protocol type (compact or binary)
    * @param maxPacketSize if 0 it will use default value {@value ThriftUdpTransport#MAX_PACKET_SIZE}
    */
-  public ThriftSenderBase(ProtocolType protocolType, int maxPacketSize) {
+  public ThriftSenderBase(ProtocolType protocolType, int maxPacketSize) throws TTransportException {
     switch (protocolType) {
       case Binary:
         this.protocolFactory = new TBinaryProtocol.Factory();
@@ -64,7 +66,7 @@ public abstract class ThriftSenderBase {
     }
 
     maxBatchBytes = maxPacketSize - EMIT_BATCH_OVERHEAD;
-    memoryTransport = new AutoExpandingBufferWriteTransport(maxPacketSize, 2);
+    memoryTransport = new AutoExpandingBufferWriteTransport(new TConfiguration(), maxPacketSize, 2);
     serializer = new TSerializer(protocolFactory);
   }
 

@@ -22,7 +22,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -41,7 +40,6 @@ import io.jaegertracing.internal.senders.InMemorySender;
 import io.jaegertracing.spi.Reporter;
 import io.jaegertracing.spi.Sender;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
@@ -345,7 +343,7 @@ public class RemoteReporterTest {
           case 1:
           case 2:
           case 3:
-            throw new SenderException("test1", super.flush());
+            throw new SenderException("test1", i);
           default:
             return i;
         }
@@ -375,20 +373,49 @@ public class RemoteReporterTest {
         .withMetrics(metrics)
         .build();
 
+    assertEquals(0, sender.flushCounter.get());
     tracer.buildSpan("mySpan").start().finish();
     remoteReporter.flush();
 
+    // 1. SenderException is thrown (log should be produced)
+    await()
+      .with()
+      .pollInterval(1, TimeUnit.MILLISECONDS)
+      .until(() ->  sender.flushCounter.get() == 1);
     tracer.buildSpan("mySpan").start().finish();
     remoteReporter.flush();
-
     assertEquals("FlushCommand execution failed! Repeated errors of this command will not be logged.",
             sender.awaitMessage(logMsg));
 
+    // 2. SenderException is thrown (log should not be produced)
+    await()
+      .with()
+      .pollInterval(1, TimeUnit.MILLISECONDS)
+      .until(() ->  sender.flushCounter.get() == 2);
     remoteReporter.flush();
+
+    // 3. SenderException is thrown (log should not be produced)
+    await()
+      .with()
+      .pollInterval(1, TimeUnit.MILLISECONDS)
+      .until(() ->  sender.flushCounter.get() == 3);
     remoteReporter.flush();
+
+    // No SenderException is thrown now, but 0 span is ready -> still stay in failing state
+    await()
+      .with()
+      .pollInterval(1, TimeUnit.MILLISECONDS)
+      .until(() ->  sender.flushCounter.get() == 4);
+    remoteReporter.flush();
+
+    // No SenderException is thrown now, but 1 span is ready -> move to working state
+    tracer.buildSpan("mySpan").start().finish();
     remoteReporter.flush();
     assertEquals("FlushCommand is working again!", sender.awaitMessage(logMsg));
-
+    await()
+      .with()
+      .pollInterval(1, TimeUnit.MILLISECONDS)
+      .until(() ->  sender.getFlushed().size() == 3);
   }
 
   @Test

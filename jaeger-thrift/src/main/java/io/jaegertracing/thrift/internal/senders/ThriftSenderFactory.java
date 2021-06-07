@@ -5,6 +5,7 @@ import io.jaegertracing.spi.Sender;
 import io.jaegertracing.spi.SenderFactory;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.thrift.transport.TTransportException;
 
 /**
  * Factory for {@link Sender} instances backed by Thrift. The actual sender implementation can be either
@@ -27,14 +28,24 @@ public class ThriftSenderFactory implements SenderFactory {
       }
 
       log.debug("Using the HTTP Sender to send spans directly to the endpoint.");
-      return httpSenderBuilder.build();
+      try {
+        return httpSenderBuilder.build();
+      }
+      catch (TTransportException e) {
+        throw new RuntimeException("Failed to build http sender: " + e, e);
+      }
     }
 
     log.debug("Using the UDP Sender to send spans to the agent.");
-    return new UdpSender(
-        stringOrDefault(conf.getAgentHost(), UdpSender.DEFAULT_AGENT_UDP_HOST),
-        numberOrDefault(conf.getAgentPort(), UdpSender.DEFAULT_AGENT_UDP_COMPACT_PORT).intValue(),
-        0 /* max packet size */);
+    try {
+      return new UdpSender(
+              stringOrDefault(conf.getAgentHost(), UdpSender.DEFAULT_AGENT_UDP_HOST),
+              numberOrDefault(conf.getAgentPort(), UdpSender.DEFAULT_AGENT_UDP_COMPACT_PORT).intValue(),
+              0 /* max packet size */);
+    }
+    catch (TTransportException e) {
+      throw new RuntimeException("Unable to create UDPSender: " + e, e);
+    }
   }
 
   @Override

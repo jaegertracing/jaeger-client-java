@@ -60,5 +60,13 @@ public class Utils {
     return (a == b) || (a != null && a.equals(b));
   }
 
+  public static String to16HexString(long id) {
+    final String hex = Long.toHexString(id);
+    if (hex.length() == 16) {
+      return hex;
+    }
+    return "0000000000000000".substring(hex.length()) + hex;
+  }
+
   private Utils() {}
 }

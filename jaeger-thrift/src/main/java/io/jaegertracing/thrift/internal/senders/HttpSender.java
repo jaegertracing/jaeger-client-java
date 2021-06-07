@@ -29,6 +29,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import org.apache.thrift.transport.TTransportException;
 
 @ToString
 public class HttpSender extends ThriftSender {
@@ -39,7 +40,7 @@ public class HttpSender extends ThriftSender {
   @ToString.Exclude private final OkHttpClient httpClient;
   @ToString.Exclude private final Request.Builder requestBuilder;
 
-  protected HttpSender(Builder builder) {
+  protected HttpSender(Builder builder) throws TTransportException {
     super(ProtocolType.Binary, builder.maxPacketSize);
     HttpUrl collectorUrl = HttpUrl
         .parse(String.format("%s?%s", builder.endpoint, HTTP_COLLECTOR_JAEGER_THRIFT_FORMAT_PARAM));
@@ -119,7 +120,7 @@ public class HttpSender extends ThriftSender {
       return this;
     }
 
-    public HttpSender build() {
+    public HttpSender build() throws TTransportException {
       if (authInterceptor != null) {
         clientBuilder.addInterceptor(authInterceptor);
       }
