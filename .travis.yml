@@ -3,7 +3,7 @@ language: java
 dist: trusty
 git:
   # pull everything for safe commits comparison before deploying
-  depth: false
+  depth: 3
 services:
 - docker
 env:
