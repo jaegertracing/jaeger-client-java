@@ -181,12 +181,12 @@ public class JaegerSpan implements Span {
   }
 
   private void finishWithDuration(long durationMicros) {
-    if (!durationMicrosUpdater.compareAndSet(this, null, durationMicros)) {
-      log.warn("Span has already been finished; will not be reported again.");
-    } else {
+    if (durationMicrosUpdater.compareAndSet(this, null, durationMicros)) {
       if (context.isSampled()) {
         tracer.reportSpan(this);
       }
+    } else {
+      log.warn("Span has already been finished; will not be reported again.");
     }
   }
 
