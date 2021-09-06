@@ -26,6 +26,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -36,17 +39,19 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class JaegerSpan implements Span {
+  private static final AtomicReferenceFieldUpdater<JaegerSpan, Long> durationMicrosUpdater =
+          AtomicReferenceFieldUpdater.newUpdater(JaegerSpan.class, Long.class, "durationMicroseconds");
+
   private final JaegerTracer tracer;
   private final long startTimeMicroseconds;
   private final long startTimeNanoTicks;
   private final boolean computeDurationViaNanoTicks;
   private final Map<String, Object> tags;
-  private long durationMicroseconds; // span durationMicroseconds
-  private String operationName;
+  private volatile Long durationMicroseconds;
+  private volatile String operationName;
   private final List<Reference> references;
-  private JaegerSpanContext context;
+  private volatile JaegerSpanContext context;
   private List<LogData> logs;
-  private boolean finished = false; // to prevent the same span from getting reported multiple times
 
   protected JaegerSpan(
       JaegerTracer tracer,
@@ -63,7 +68,7 @@ public class JaegerSpan implements Span {
     this.startTimeMicroseconds = startTimeMicroseconds;
     this.startTimeNanoTicks = startTimeNanoTicks;
     this.computeDurationViaNanoTicks = computeDurationViaNanoTicks;
-    this.tags = new HashMap<String, Object>();
+    this.tags = new ConcurrentHashMap<String, Object>();
     this.references = references != null ? new ArrayList<Reference>(references) : null;
 
     // Handle SAMPLING_PRIORITY tag first, as this influences whether setTagAsObject actually
@@ -86,15 +91,12 @@ public class JaegerSpan implements Span {
   }
 
   public boolean isFinished() {
-    synchronized (this) {
-      return finished;
-    }
+    return durationMicroseconds != null;
   }
 
   public long getDuration() {
-    synchronized (this) {
-      return durationMicroseconds;
-    }
+    final Long durationMicroseconds = this.durationMicroseconds;
+    return durationMicroseconds == null ? 0 : durationMicroseconds;
   }
 
   public JaegerTracer getTracer() {
@@ -109,29 +111,21 @@ public class JaegerSpan implements Span {
   }
 
   public Map<String, Object> getTags() {
-    synchronized (this) {
-      return Collections.unmodifiableMap(new HashMap<String, Object>(tags));
-    }
+    return new HashMap<String, Object>(tags);
   }
 
   @Override
   public JaegerSpan setOperationName(String operationName) {
-    synchronized (this) {
-      this.operationName = operationName;
-    }
+    this.operationName = operationName;
     return this;
   }
 
   public String getOperationName() {
-    synchronized (this) {
-      return operationName;
-    }
+    return operationName;
   }
 
   public String getServiceName() {
-    synchronized (this) {
-      return this.getTracer().getServiceName();
-    }
+    return this.getTracer().getServiceName();
   }
 
   public List<LogData> getLogs() {
@@ -139,7 +133,7 @@ public class JaegerSpan implements Span {
       if (logs == null) {
         return null;
       }
-      return Collections.unmodifiableList(new ArrayList<LogData>(logs));
+      return new ArrayList<LogData>(logs);
     }
   }
 
@@ -157,24 +151,18 @@ public class JaegerSpan implements Span {
 
   @Override
   public String getBaggageItem(String key) {
-    synchronized (this) {
-      return this.context.getBaggageItem(key);
-    }
+    return context.getBaggageItem(key);
   }
 
   @Override
   public String toString() {
-    synchronized (this) {
-      return context.toString() + " - " + operationName;
-    }
+    return context.toString() + " - " + operationName;
   }
 
   @Override
   public JaegerSpanContext context() {
-    synchronized (this) {
-      // doesn't need to be a copy since all fields are final
-      return context;
-    }
+    // doesn't need to be a copy since all fields are final
+    return context;
   }
 
   @Override
@@ -193,18 +181,12 @@ public class JaegerSpan implements Span {
   }
 
   private void finishWithDuration(long durationMicros) {
-    synchronized (this) {
-      if (finished) {
-        log.warn("Span has already been finished; will not be reported again.");
-        return;
+    if (!durationMicrosUpdater.compareAndSet(this, null, durationMicros)) {
+      log.warn("Span has already been finished; will not be reported again.");
+    } else {
+      if (context.isSampled()) {
+        tracer.reportSpan(this);
       }
-      finished = true;
-
-      this.durationMicroseconds = durationMicros;
-    }
-
-    if (context.isSampled()) {
-      tracer.reportSpan(this);
     }
   }
 
@@ -238,6 +220,7 @@ public class JaegerSpan implements Span {
         newFlags = (byte) (context.getFlags() & (~JaegerSpanContext.flagSampled));
       }
 
+      // Called under lock or from the constructor, so no race condition here
       context = context.withFlags(newFlags);
     }
 
