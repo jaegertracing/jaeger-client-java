@@ -21,7 +21,6 @@ import io.jaegertracing.internal.JaegerObjectFactory;
 import io.jaegertracing.internal.JaegerSpanContext;
 import io.jaegertracing.spi.Codec;
 import io.opentracing.propagation.TextMap;
-import java.util.Collections;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 
@@ -59,7 +58,8 @@ public class TraceContextCodec implements Codec<TextMap> {
     this.objectFactory = builder.objectFactory;
   }
 
-  private JaegerSpanContext extractContextFromTraceParent(String traceparent, String tracestate, String debugId) {
+  private JaegerSpanContext extractContextFromTraceParent(String traceparent, String tracestate,
+      String debugId, Map<String, String> baggage) {
     // TODO(bdrutu): Do we need to verify that version is hex and that
     // for the version the length is the expected one?
     boolean isValid =
@@ -96,7 +96,7 @@ public class TraceContextCodec implements Codec<TextMap> {
         spanId,
         0,
         sampled ? (byte) 1 : (byte) 0,
-        Collections.<String, String>emptyMap(), debugId);
+        baggage, debugId);
     return spanContext.withTraceState(tracestate);
   }
 
@@ -105,6 +105,7 @@ public class TraceContextCodec implements Codec<TextMap> {
     String traceParent = null;
     String traceState = null;
     String debugId = null;
+    String baggage = null;
     for (Map.Entry<String, String> entry: carrier) {
       if (TRACE_PARENT.equalsIgnoreCase(entry.getKey())) {
         traceParent = entry.getValue();
@@ -115,14 +116,19 @@ public class TraceContextCodec implements Codec<TextMap> {
       if (Constants.DEBUG_ID_HEADER_KEY.equalsIgnoreCase(entry.getKey())) {
         debugId = entry.getValue();
       }
+      if (W3CBaggagePropagator.BAGGAGE.equalsIgnoreCase(entry.getKey())) {
+        baggage = entry.getValue();
+      }
     }
     if (traceParent == null) {
-      if (debugId != null) {
-        return objectFactory.createSpanContext(0L, 0L, 0L, 0L, (byte) 0, null, debugId);
+      if (debugId != null || baggage != null) {
+        return objectFactory.createSpanContext(0L, 0L, 0L, 0L, (byte) 0, 
+            W3CBaggagePropagator.INSTANCE.extractBaggage(baggage), debugId);
       }
       return null;
     }
-    return extractContextFromTraceParent(traceParent, traceState, debugId);
+    return extractContextFromTraceParent(traceParent, traceState, debugId,
+        W3CBaggagePropagator.INSTANCE.extractBaggage(baggage));
   }
 
   @Override
@@ -142,6 +148,10 @@ public class TraceContextCodec implements Codec<TextMap> {
 
     if (spanContext.getTraceState() != null && !spanContext.getTraceState().isEmpty()) {
       carrier.put(TRACE_STATE, spanContext.getTraceState());
+    }
+
+    if (spanContext.baggageCount() > 0) {
+      W3CBaggagePropagator.INSTANCE.injectBaggage(spanContext, carrier);
     }
   }
 

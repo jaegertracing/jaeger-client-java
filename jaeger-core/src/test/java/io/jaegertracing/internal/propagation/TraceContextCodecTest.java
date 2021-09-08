@@ -16,6 +16,7 @@ package io.jaegertracing.internal.propagation;
 
 import static io.jaegertracing.internal.propagation.TraceContextCodec.TRACE_PARENT;
 import static io.jaegertracing.internal.propagation.TraceContextCodec.TRACE_STATE;
+import static io.jaegertracing.internal.propagation.W3CBaggagePropagator.BAGGAGE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -159,6 +160,7 @@ public class TraceContextCodecTest {
     TextMapAdapter textMap = new TextMapAdapter(extractCarrier);
     textMap.put(TRACE_PARENT, EXAMPLE_TRACE_PARENT);
     textMap.put(TRACE_STATE, "whatever");
+    textMap.put(BAGGAGE, "fiz=buz,foo=bar%3B+baz%3D1");
     JaegerSpanContext spanContext = traceContextCodec.extract(textMap);
 
     Map<String, String> injectCarrier = new HashMap<>();
@@ -206,6 +208,32 @@ public class TraceContextCodecTest {
     assertFalse(child.context().isDebug());
     child.finish();
     tracer.close();
+  }
+
+  @Test
+  public void testInjectBaggage() {
+    Map<String, String> carrier = new HashMap<>();
+    TextMapAdapter textMap = new TextMapAdapter(carrier);
+    JaegerSpanContext spanContext = new JaegerSpanContext(0, 0, 0, 0, (byte) 0);
+
+    // a value that looks like it contains metadata
+    spanContext = spanContext.withBaggageItem("foo", "bar;baz=1");
+    spanContext = spanContext.withBaggageItem("fiz", "buz");
+    traceContextCodec.inject(spanContext, textMap);
+
+    assertEquals("fiz=buz,foo=bar%3Bbaz%3D1", carrier.get(BAGGAGE));
+  }
+
+  @Test
+  public void testExtractBaggage() {
+    Map<String, String> extractCarrier = new HashMap<>();
+    TextMapAdapter textMap = new TextMapAdapter(extractCarrier);
+    // metadata is dropped
+    textMap.put(BAGGAGE, "fiz=buz,foo=bar;baz=1");
+    JaegerSpanContext spanContext = traceContextCodec.extract(textMap);
+
+    assertEquals("bar", spanContext.getBaggageItem("foo"));
+    assertEquals("buz", spanContext.getBaggageItem("fiz"));
   }
 
   private void verifyWarningPresent() {
