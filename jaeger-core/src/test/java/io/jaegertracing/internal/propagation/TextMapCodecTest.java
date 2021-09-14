@@ -59,6 +59,16 @@ public class TextMapCodecTest {
     TextMapCodec.contextFromString("ff:ff:ff");
   }
 
+  @Test(expected = MalformedTracerStateStringException.class)
+  public void testContextFromStringEmptyParentIdException() {
+    TextMapCodec.contextFromString("ff:ff::ff");
+  }
+
+  @Test(expected = MalformedTracerStateStringException.class)
+  public void testContextFromStringNonHexDigitException() {
+    TextMapCodec.contextFromString("ff:ff:fg:ff");
+  }
+
   @Test(expected = EmptyTracerStateStringException.class)
   public void testContextFromStringEmptyException() throws Exception {
     TextMapCodec.contextFromString("");

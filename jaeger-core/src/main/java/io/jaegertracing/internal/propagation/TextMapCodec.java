@@ -26,7 +26,6 @@ import io.jaegertracing.spi.Codec;
 import io.opentracing.propagation.TextMap;
 
 import java.io.UnsupportedEncodingException;
-import java.math.BigInteger;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.HashMap;
@@ -73,41 +72,66 @@ public class TextMapCodec implements Codec<TextMap> {
 
   static JaegerSpanContext contextFromString(String value)
       throws MalformedTracerStateStringException, EmptyTracerStateStringException {
-    if (value == null || value.equals("")) {
+    if (value == null || value.isEmpty()) {
       throw new EmptyTracerStateStringException();
     }
 
-    String[] parts = value.split(":");
-    if (parts.length != 4) {
+    final int traceIdEnd = value.indexOf(':');
+    if (traceIdEnd == -1) {
       throw new MalformedTracerStateStringException(value);
     }
 
-    String traceId = parts[0];
-    if (traceId.length() > 32 || traceId.length() < 1) {
-      throw new TraceIdOutOfBoundException("Trace id [" + traceId + "] length is not withing 1 and 32");
+    if (traceIdEnd > 32 || traceIdEnd == 0) {
+      throw new TraceIdOutOfBoundException(
+              "Trace id [" + value.substring(0, traceIdEnd) + "] length is not within 1 and 32");
     }
 
-    // TODO(isaachier): When we drop Java 1.6 support, use Long.parseUnsignedLong instead of using BigInteger.
+    final int lowTraceIdStart = Math.max(0, traceIdEnd - 16);
+    final long high = lowTraceIdStart == 0 ? 0 : hexToUnsignedLong("trace ID high part", value, 0, lowTraceIdStart);
+    final long low = hexToUnsignedLong("trace ID low part", value, lowTraceIdStart, traceIdEnd);
+
+    final int spanIdEnd = value.indexOf(':', traceIdEnd + 1);
+    if (spanIdEnd == -1) {
+      throw new MalformedTracerStateStringException(value);
+    }
+
+    final long spanId = hexToUnsignedLong("span ID", value, traceIdEnd + 1, spanIdEnd);
+
+    final int parentIdEnd = value.indexOf(':', spanIdEnd + 1);
+    if (parentIdEnd == -1) {
+      throw new MalformedTracerStateStringException(value);
+    }
+
+    final long parentId = hexToUnsignedLong("parent ID", value, spanIdEnd + 1, parentIdEnd);
+
+    final byte flags = (byte)hexToUnsignedLong("flags", value, parentIdEnd + 1, value.length());
+
     return new JaegerSpanContext(
-        high(traceId),
-        new BigInteger(traceId, 16).longValue(),
-        new BigInteger(parts[1], 16).longValue(),
-        new BigInteger(parts[2], 16).longValue(),
-        new BigInteger(parts[3], 16).byteValue());
+        high,
+        low,
+        spanId,
+        parentId,
+        flags);
   }
 
-  /**
-   * Parses a full (low + high) traceId, trimming the lower 64 bits.
-   * @param hexString a full traceId
-   * @return the long value of the higher 64 bits for a 128 bit traceId or 0 for 64 bit traceIds
-   */
-  private static long high(String hexString) {
-    if (hexString.length() > 16) {
-      int highLength = hexString.length() - 16;
-      String highString = hexString.substring(0, highLength);
-      return new BigInteger(highString, 16).longValue();
+  private static long hexToUnsignedLong(final String label, CharSequence lowerHex, int index, int endIndex) {
+    if (index >= endIndex) {
+      throw new MalformedTracerStateStringException("Empty " + label + " in context string " + lowerHex);
     }
-    return 0L;
+    long result = 0;
+    for (; index < endIndex; index++) {
+      char c = lowerHex.charAt(index);
+      result <<= 4;
+      if (c >= '0' && c <= '9') {
+        result |= c - '0';
+      } else if (c >= 'a' && c <= 'f') {
+        result |= c - 'a' + 10;
+      } else {
+        throw new MalformedTracerStateStringException("Failed to parse " + label + " in context string " + lowerHex
+                +  ", '" + c + "' is not a legal hex character expecting only 0-9 and a-f");
+      }
+    }
+    return result;
   }
 
   /**
