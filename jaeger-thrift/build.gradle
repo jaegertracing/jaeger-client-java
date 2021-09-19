@@ -57,6 +57,10 @@ shadowJar {
     relocate 'okhttp'           , 'io.jaegertracing.vendor.okhttp'
     relocate 'okio'             , 'io.jaegertracing.vendor.okio'
     relocate 'org.apache'       , 'io.jaegertracing.vendor.org.apache'
+    relocate 'kotlin'           , 'io.jaegertracing.vendor.kotlin'
+    relocate 'org.intellij'     , 'io.jaegertracing.vendor.org.intellij'
+    relocate 'org.jetbrains'    , 'io.jaegertracing.vendor.org.jetbrains'
+    relocate 'javax'            , 'io.jaegertracing.vendor.javax'
     classifier 'shadow'
     dependencies {
         exclude(dependency('org.slf4j:slf4j-api'))
