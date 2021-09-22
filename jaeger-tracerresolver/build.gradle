@@ -3,8 +3,8 @@ description = 'TracerResolver implementation for Jaeger Tracer'
 dependencies {
     compile project(':jaeger-core')
     compile group: 'io.opentracing.contrib', name: 'opentracing-tracerresolver', version: tracerResolverVersion
- 
+
     testCompile group: 'junit', name: 'junit', version: junitVersion
 
-    signature 'org.codehaus.mojo.signature:java16:1.1@signature'
+    signature 'org.codehaus.mojo.signature:java18:1.0@signature'
 }

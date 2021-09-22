@@ -9,5 +9,5 @@ dependencies {
     testCompile group: 'io.zipkin.zipkin2', name: 'zipkin-junit', version: '2.19.2'
     testCompile group: 'com.tngtech.java', name: 'junit-dataprovider', version: junitDataProviderVersion
 
-    signature 'org.codehaus.mojo.signature:java16:1.1@signature'
+    signature 'org.codehaus.mojo.signature:java18:1.0@signature'
 }
