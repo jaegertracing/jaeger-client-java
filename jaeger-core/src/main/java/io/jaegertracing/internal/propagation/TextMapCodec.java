@@ -141,13 +141,11 @@ public class TextMapCodec implements Codec<TextMap> {
    */
   public static String contextAsString(JaegerSpanContext context) {
     int intFlag = context.getFlags() & 0xFF;
-    return new StringBuilder()
-        .append(context.getTraceId()).append(":")
-        .append(Utils.to16HexString(context.getSpanId())).append(":")
-        // parent=0 is special, no need to encode as full 16 characters, and more readable this way
-        .append(context.getParentId() == 0 ? "0" : Utils.to16HexString(context.getParentId())).append(":")
-        .append(Integer.toHexString(intFlag))
-        .toString();
+    return context.getTraceId() + ":" +
+            context.toSpanId() + ":" +
+            // parent=0 is special, no need to encode as full 16 characters, and more readable this way
+            (context.getParentId() == 0 ? "0" : Utils.to16HexString(context.getParentId())) + ":" +
+            Integer.toHexString(intFlag);
   }
 
   @Override
