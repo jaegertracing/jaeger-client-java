@@ -114,20 +114,20 @@ public class TextMapCodec implements Codec<TextMap> {
         flags);
   }
 
-  private static long hexToUnsignedLong(final String label, CharSequence lowerHex, int index, int endIndex) {
+  private static long hexToUnsignedLong(String label, String value, int index, int endIndex) {
     if (index >= endIndex) {
-      throw new MalformedTracerStateStringException("Empty " + label + " in context string " + lowerHex);
+      throw new MalformedTracerStateStringException("Empty " + label + " in context string " + value);
     }
     long result = 0;
     for (; index < endIndex; index++) {
-      char c = lowerHex.charAt(index);
+      char c = value.charAt(index);
       result <<= 4;
       if (c >= '0' && c <= '9') {
         result |= c - '0';
       } else if (c >= 'a' && c <= 'f') {
         result |= c - 'a' + 10;
       } else {
-        throw new MalformedTracerStateStringException("Failed to parse " + label + " in context string " + lowerHex
+        throw new MalformedTracerStateStringException("Failed to parse " + label + " in context string " + value
                 +  ", '" + c + "' is not a legal hex character expecting only 0-9 and a-f");
       }
     }
