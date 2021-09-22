@@ -19,6 +19,7 @@ import io.jaegertracing.internal.exceptions.NotFourOctetsException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Locale;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class Utils {
   public static String normalizeBaggageKey(String key) {
@@ -51,7 +52,7 @@ public class Utils {
   public static long uniqueId() {
     long val = 0;
     while (val == 0) {
-      val = Java6CompatibleThreadLocalRandom.current().nextLong();
+      val = ThreadLocalRandom.current().nextLong();
     }
     return val;
   }
