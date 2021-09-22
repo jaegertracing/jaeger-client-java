@@ -33,7 +33,7 @@ cache:
   - "$HOME/.gradle/caches/"
   - "$HOME/.gradle/wrapper/"
 before_install:
-- ./travis/prepare-signing.sh $encrypted_677f232983c0_key $encrypted_677f232983c0_iv
+- ./scripts/prepare-signing.sh $encrypted_677f232983c0_key $encrypted_677f232983c0_iv
 - git config user.name "jaegertracingci"
 - git config user.email "jaegertracingci+jaeger-tracing@googlegroups.com"
 # setup https authentication credentials, used by ./gradlew publish
