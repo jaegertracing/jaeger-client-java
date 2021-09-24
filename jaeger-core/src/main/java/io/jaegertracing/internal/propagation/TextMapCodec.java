@@ -140,12 +140,11 @@ public class TextMapCodec implements Codec<TextMap> {
    * @return Encoded string representing span context.
    */
   public static String contextAsString(JaegerSpanContext context) {
-    int intFlag = context.getFlags() & 0xFF;
     return context.getTraceId() + ":"
             + context.toSpanId() + ":"
             // parent=0 is special, no need to encode as full 16 characters, and more readable this way
             + (context.getParentId() == 0 ? "0" : Utils.to16HexString(context.getParentId())) + ":"
-            + Integer.toHexString(intFlag);
+            + Integer.toHexString(context.getFlags() & 0xFF);
   }
 
   @Override
