@@ -18,7 +18,7 @@ dependencies {
     testCompile group: 'org.awaitility', name: 'awaitility', version: awaitilityVersion
     testCompile group: 'org.glassfish.jersey.test-framework.providers', name: 'jersey-test-framework-provider-grizzly2', version: jerseyVersion
 
-    signature 'org.codehaus.mojo.signature:java16:1.1@signature'
+    signature 'org.codehaus.mojo.signature:java18:1.0@signature'
 }
 
 compileThrift {

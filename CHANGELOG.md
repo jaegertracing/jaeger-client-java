@@ -3,15 +3,16 @@ Changes by Version
 
 1.7.0 (unreleased)
 -------------------
-- Nothing yet.
+
+- Drop support for Java 1.6 and 1.7 (#511) -- Yuri Shkuro
 
 
 1.6.0 (2021-03-29)
 -------------------
 
- - Update the version of libthrift to 0.14.1 (#772). (#774) -- Robert Greig
- - Add unit tests and crossdock in github actions (#775) -- Ashmita
- - Fix dead loop in QueueProcessor (#763) -- Yaoliang Chen
+- Update the version of libthrift to 0.14.1 (#772). (#774) -- Robert Greig
+- Add unit tests and crossdock in github actions (#775) -- Ashmita
+- Fix dead loop in QueueProcessor (#763) -- Yaoliang Chen
 
 
 1.5.0 (2020-11-12)

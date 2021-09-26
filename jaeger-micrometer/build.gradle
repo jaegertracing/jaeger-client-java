@@ -7,5 +7,5 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: junitVersion
     testCompile group: 'io.micrometer', name: 'micrometer-registry-prometheus', version: micrometerVersion
 
-    signature 'org.codehaus.mojo.signature:java16:1.1@signature'
+    signature 'org.codehaus.mojo.signature:java18:1.0@signature'
 }
