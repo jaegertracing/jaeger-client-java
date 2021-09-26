@@ -26,7 +26,6 @@ import io.jaegertracing.spi.Codec;
 import io.opentracing.propagation.TextMap;
 
 import java.io.UnsupportedEncodingException;
-import java.math.BigInteger;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.HashMap;
@@ -73,41 +72,69 @@ public class TextMapCodec implements Codec<TextMap> {
 
   static JaegerSpanContext contextFromString(String value)
       throws MalformedTracerStateStringException, EmptyTracerStateStringException {
-    if (value == null || value.equals("")) {
+    if (value == null || value.isEmpty()) {
       throw new EmptyTracerStateStringException();
     }
 
-    String[] parts = value.split(":");
-    if (parts.length != 4) {
+    final int traceIdEnd = value.indexOf(':');
+    if (traceIdEnd == -1) {
       throw new MalformedTracerStateStringException(value);
     }
 
-    String traceId = parts[0];
-    if (traceId.length() > 32 || traceId.length() < 1) {
-      throw new TraceIdOutOfBoundException("Trace id [" + traceId + "] length is not withing 1 and 32");
+    if (traceIdEnd > 32 || traceIdEnd == 0) {
+      throw new TraceIdOutOfBoundException(
+              "Trace id [" + value.substring(0, traceIdEnd) + "] length is not within 1 and 32");
     }
 
-    // TODO(isaachier): When we drop Java 1.6 support, use Long.parseUnsignedLong instead of using BigInteger.
+    final int lowTraceIdStart = Math.max(0, traceIdEnd - 16);
+    final long high = lowTraceIdStart == 0 ? 0 : hexToUnsignedLong("trace ID high part", value, 0, lowTraceIdStart);
+    final long low = hexToUnsignedLong("trace ID low part", value, lowTraceIdStart, traceIdEnd);
+
+    final int spanIdEnd = value.indexOf(':', traceIdEnd + 1);
+    if (spanIdEnd == -1) {
+      throw new MalformedTracerStateStringException(value);
+    }
+
+    final long spanId = hexToUnsignedLong("span ID", value, traceIdEnd + 1, spanIdEnd);
+
+    final int parentIdEnd = value.indexOf(':', spanIdEnd + 1);
+    if (parentIdEnd == -1) {
+      throw new MalformedTracerStateStringException(value);
+    }
+
+    final long parentId = hexToUnsignedLong("parent ID", value, spanIdEnd + 1, parentIdEnd);
+
+    final byte flags = (byte)hexToUnsignedLong("flags", value, parentIdEnd + 1, value.length());
+
     return new JaegerSpanContext(
-        high(traceId),
-        new BigInteger(traceId, 16).longValue(),
-        new BigInteger(parts[1], 16).longValue(),
-        new BigInteger(parts[2], 16).longValue(),
-        new BigInteger(parts[3], 16).byteValue());
+        high,
+        low,
+        spanId,
+        parentId,
+        flags);
   }
 
-  /**
-   * Parses a full (low + high) traceId, trimming the lower 64 bits.
-   * @param hexString a full traceId
-   * @return the long value of the higher 64 bits for a 128 bit traceId or 0 for 64 bit traceIds
-   */
-  private static long high(String hexString) {
-    if (hexString.length() > 16) {
-      int highLength = hexString.length() - 16;
-      String highString = hexString.substring(0, highLength);
-      return new BigInteger(highString, 16).longValue();
+  // TODO(amirhadadi):
+  // When supporting Java >= 9 use Long.parseUnsignedLong(CharSequence s, int beginIndex, int endIndex, int radix)
+  // which allows avoiding creating a String.
+  private static long hexToUnsignedLong(String label, String value, int beginIndex, int endIndex) {
+    if (beginIndex >= endIndex) {
+      throw new MalformedTracerStateStringException("Empty " + label + " in context string " + value);
     }
-    return 0L;
+    long result = 0;
+    for (; beginIndex < endIndex; beginIndex++) {
+      char c = value.charAt(beginIndex);
+      result <<= 4;
+      if (c >= '0' && c <= '9') {
+        result |= c - '0';
+      } else if (c >= 'a' && c <= 'f') {
+        result |= c - 'a' + 10;
+      } else {
+        throw new MalformedTracerStateStringException("Failed to parse " + label + " in context string " + value
+                +  ", '" + c + "' is not a legal hex character expecting only 0-9 and a-f");
+      }
+    }
+    return result;
   }
 
   /**
@@ -116,14 +143,11 @@ public class TextMapCodec implements Codec<TextMap> {
    * @return Encoded string representing span context.
    */
   public static String contextAsString(JaegerSpanContext context) {
-    int intFlag = context.getFlags() & 0xFF;
-    return new StringBuilder()
-        .append(context.getTraceId()).append(":")
-        .append(Utils.to16HexString(context.getSpanId())).append(":")
-        // parent=0 is special, no need to encode as full 16 characters, and more readable this way
-        .append(context.getParentId() == 0 ? "0" : Utils.to16HexString(context.getParentId())).append(":")
-        .append(Integer.toHexString(intFlag))
-        .toString();
+    return context.getTraceId() + ":"
+            + context.toSpanId() + ":"
+            // parent=0 is special, no need to encode as full 16 characters, and more readable this way
+            + (context.getParentId() == 0 ? "0" : Utils.to16HexString(context.getParentId())) + ":"
+            + Integer.toHexString(context.getFlags() & 0xFF);
   }
 
   @Override
@@ -140,18 +164,17 @@ public class TextMapCodec implements Codec<TextMap> {
     Map<String, String> baggage = null;
     String debugId = null;
     for (Map.Entry<String, String> entry : carrier) {
-      // TODO there should be no lower-case here
-      String key = entry.getKey().toLowerCase(Locale.ROOT);
-      if (key.equals(contextKey)) {
+      String key = entry.getKey();
+      if (key.equalsIgnoreCase(contextKey)) {
         context = contextFromString(decodedValue(entry.getValue()));
-      } else if (key.equals(Constants.DEBUG_ID_HEADER_KEY)) {
+      } else if (key.equalsIgnoreCase(Constants.DEBUG_ID_HEADER_KEY)) {
         debugId = decodedValue(entry.getValue());
-      } else if (key.startsWith(baggagePrefix)) {
+      } else if (key.regionMatches(true, 0, baggagePrefix, 0, baggagePrefix.length())) {
         if (baggage == null) {
-          baggage = new HashMap<String, String>();
+          baggage = new HashMap<>();
         }
-        baggage.put(keys.unprefixedKey(key, baggagePrefix), decodedValue(entry.getValue()));
-      } else if (key.equals(Constants.BAGGAGE_HEADER_KEY)) {
+        baggage.put(keys.unprefixedKey(key.toLowerCase(Locale.ROOT), baggagePrefix), decodedValue(entry.getValue()));
+      } else if (key.equalsIgnoreCase(Constants.BAGGAGE_HEADER_KEY)) {
         baggage = parseBaggageHeader(decodedValue(entry.getValue()), baggage);
       }
     }

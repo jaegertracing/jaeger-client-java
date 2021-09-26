@@ -16,6 +16,7 @@ package io.jaegertracing.internal.propagation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import io.jaegertracing.internal.JaegerSpanContext;
@@ -55,12 +56,47 @@ public class TextMapCodecTest {
   }
 
   @Test(expected = MalformedTracerStateStringException.class)
-  public void testContextFromStringMalformedException() throws Exception {
+  public void testContextFromStringNoColons() {
+    TextMapCodec.contextFromString("ff");
+  }
+
+  @Test(expected = MalformedTracerStateStringException.class)
+  public void testContextFromStringOnly1Colon() {
+    TextMapCodec.contextFromString("ff:ff");
+  }
+
+  @Test(expected = MalformedTracerStateStringException.class)
+  public void testContextFromStringOnly2Colons() {
     TextMapCodec.contextFromString("ff:ff:ff");
   }
 
+  @Test(expected = MalformedTracerStateStringException.class)
+  public void testContextFromStringTooManyColons() {
+    TextMapCodec.contextFromString("ff:ff:ff:ff:ff");
+  }
+
+  @Test(expected = MalformedTracerStateStringException.class)
+  public void testContextFromStringEmptySpanIdException() {
+    TextMapCodec.contextFromString("ff::ff:ff");
+  }
+
+  @Test(expected = MalformedTracerStateStringException.class)
+  public void testContextFromStringEmptyParentIdException() {
+    TextMapCodec.contextFromString("ff:ff::ff");
+  }
+
+  @Test(expected = MalformedTracerStateStringException.class)
+  public void testContextFromStringEmptyFlagsException() {
+    TextMapCodec.contextFromString("ff:ff:ff:");
+  }
+
+  @Test(expected = MalformedTracerStateStringException.class)
+  public void testContextFromStringNonHexDigitException() {
+    TextMapCodec.contextFromString("ff:ff:fg:ff");
+  }
+
   @Test(expected = EmptyTracerStateStringException.class)
-  public void testContextFromStringEmptyException() throws Exception {
+  public void testContextFromStringEmptyException() {
     TextMapCodec.contextFromString("");
   }
 
@@ -75,7 +111,7 @@ public class TextMapCodecTest {
   }
 
   @Test
-  public void testContextFromString() throws Exception {
+  public void testContextFromString() {
     JaegerSpanContext context = TextMapCodec.contextFromString("ff:dd:cc:4");
     assertEquals(context.getTraceIdLow(), 255L);
     assertEquals(context.getTraceIdHigh(), 0L);
@@ -132,7 +168,7 @@ public class TextMapCodecTest {
   @Test
   public void testAdhocBaggageWithTraceId() {
     TextMapCodec codec = new TextMapCodec(false);
-    Map<String, String> headers = new HashMap<String, String>();
+    Map<String, String> headers = new HashMap<>();
     long traceIdLow = 42;
     long spanId = 1;
     long parentId = 0;
@@ -151,19 +187,19 @@ public class TextMapCodecTest {
    */
   @Test
   public void testAdhocBaggageWithoutTraceId() {
-    Map<String, String> headers = new HashMap<String, String>();
+    Map<String, String> headers = new HashMap<>();
     headers.put("jaeger-baggage", "k1=v1, k2 = v2, k3=v3=d3");
     TextMapCodec codec = new TextMapCodec(false);
     JaegerSpanContext context = codec.extract(new TextMapAdapter(headers));
     assertEquals("v1", context.getBaggageItem("k1"));
     assertEquals("v2", context.getBaggageItem("k2"));
-    assertEquals(null, context.getBaggageItem("k3"));
+    assertNull(context.getBaggageItem("k3"));
   }
 
   @Test
   public void testInjectDoNotEncodeSpanContext() {
     TextMapCodec codec = new TextMapCodec(true);
-    Map<String, String> headers = new HashMap<String, String>();
+    Map<String, String> headers = new HashMap<>();
     long traceIdLow = 42;
     long spanId = 1;
     long parentId = 0;
@@ -175,7 +211,7 @@ public class TextMapCodecTest {
 
   @Test
   public void testExtractSupportNonEncodedSpanContext() {
-    Map<String, String> headers = new HashMap<String, String>();
+    Map<String, String> headers = new HashMap<>();
     headers.put("uber-trace-id", "2a:1:0:1");
 
     TextMapCodec codec = new TextMapCodec(true);
@@ -189,7 +225,7 @@ public class TextMapCodecTest {
 
   @Test
   public void testExtractSupportEncodedSpanContext() {
-    Map<String, String> headers = new HashMap<String, String>();
+    Map<String, String> headers = new HashMap<>();
     headers.put("uber-trace-id", "2a%3A1%3A0%3A1");
 
     TextMapCodec codec = new TextMapCodec(true);
