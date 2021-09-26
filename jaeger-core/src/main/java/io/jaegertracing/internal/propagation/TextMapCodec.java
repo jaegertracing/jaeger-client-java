@@ -164,18 +164,17 @@ public class TextMapCodec implements Codec<TextMap> {
     Map<String, String> baggage = null;
     String debugId = null;
     for (Map.Entry<String, String> entry : carrier) {
-      // TODO there should be no lower-case here
-      String key = entry.getKey().toLowerCase(Locale.ROOT);
-      if (key.equals(contextKey)) {
+      String key = entry.getKey();
+      if (key.equalsIgnoreCase(contextKey)) {
         context = contextFromString(decodedValue(entry.getValue()));
-      } else if (key.equals(Constants.DEBUG_ID_HEADER_KEY)) {
+      } else if (key.equalsIgnoreCase(Constants.DEBUG_ID_HEADER_KEY)) {
         debugId = decodedValue(entry.getValue());
-      } else if (key.startsWith(baggagePrefix)) {
+      } else if (key.regionMatches(true, 0, baggagePrefix, 0, baggagePrefix.length())) {
         if (baggage == null) {
-          baggage = new HashMap<String, String>();
+          baggage = new HashMap<>();
         }
-        baggage.put(keys.unprefixedKey(key, baggagePrefix), decodedValue(entry.getValue()));
-      } else if (key.equals(Constants.BAGGAGE_HEADER_KEY)) {
+        baggage.put(keys.unprefixedKey(key.toLowerCase(Locale.ROOT), baggagePrefix), decodedValue(entry.getValue()));
+      } else if (key.equalsIgnoreCase(Constants.BAGGAGE_HEADER_KEY)) {
         baggage = parseBaggageHeader(decodedValue(entry.getValue()), baggage);
       }
     }
