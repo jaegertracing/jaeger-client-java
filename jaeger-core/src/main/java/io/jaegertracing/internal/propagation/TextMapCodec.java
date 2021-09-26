@@ -114,13 +114,16 @@ public class TextMapCodec implements Codec<TextMap> {
         flags);
   }
 
-  private static long hexToUnsignedLong(String label, String value, int index, int endIndex) {
-    if (index >= endIndex) {
+  // TODO(amirhadadi):
+  // When supporting Java >= 9 use Long.parseUnsignedLong(CharSequence s, int beginIndex, int endIndex, int radix)
+  // which allows avoiding creating a String.
+  private static long hexToUnsignedLong(String label, String value, int beginIndex, int endIndex) {
+    if (beginIndex >= endIndex) {
       throw new MalformedTracerStateStringException("Empty " + label + " in context string " + value);
     }
     long result = 0;
-    for (; index < endIndex; index++) {
-      char c = value.charAt(index);
+    for (; beginIndex < endIndex; beginIndex++) {
+      char c = value.charAt(beginIndex);
       result <<= 4;
       if (c >= '0' && c <= '9') {
         result |= c - '0';
