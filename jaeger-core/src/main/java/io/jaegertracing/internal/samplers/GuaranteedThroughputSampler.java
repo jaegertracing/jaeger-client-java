@@ -33,8 +33,8 @@ import lombok.ToString;
 public final class GuaranteedThroughputSampler implements Sampler {
   public static final String TYPE = "lowerbound";
 
-  private ProbabilisticSampler probabilisticSampler;
-  private RateLimitingSampler lowerBoundSampler;
+  private volatile ProbabilisticSampler probabilisticSampler;
+  private volatile RateLimitingSampler lowerBoundSampler;
   private Map<String, Object> tags;
 
   public GuaranteedThroughputSampler(double samplingRate, double lowerBound) {
@@ -75,7 +75,7 @@ public final class GuaranteedThroughputSampler implements Sampler {
    * @param id The traceId on the span
    */
   @Override
-  public synchronized SamplingStatus sample(String operation, long id) {
+  public SamplingStatus sample(String operation, long id) {
     SamplingStatus probabilisticSamplingStatus = probabilisticSampler.sample(operation, id);
     SamplingStatus lowerBoundSamplingStatus = lowerBoundSampler.sample(operation, id);
 
