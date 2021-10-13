@@ -17,8 +17,11 @@ package io.jaegertracing.internal.samplers;
 import io.jaegertracing.internal.samplers.http.OperationSamplingParameters;
 import io.jaegertracing.internal.samplers.http.PerOperationSamplingParameters;
 import io.jaegertracing.spi.Sampler;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -38,13 +41,13 @@ import lombok.extern.slf4j.Slf4j;
 @Getter(AccessLevel.PACKAGE) //Visible for testing
 public class PerOperationSampler implements Sampler {
   private final int maxOperations;
-  private Map<String, GuaranteedThroughputSampler> operationNameToSampler;
-  private ProbabilisticSampler defaultSampler;
-  private double lowerBound;
+  private final ConcurrentHashMap<String, GuaranteedThroughputSampler> operationNameToSampler;
+  private volatile ProbabilisticSampler defaultSampler;
+  private volatile double lowerBound;
 
   public PerOperationSampler(int maxOperations, OperationSamplingParameters strategies) {
     this(maxOperations,
-         new HashMap<String, GuaranteedThroughputSampler>(),
+         new ConcurrentHashMap<String, GuaranteedThroughputSampler>(),
          new ProbabilisticSampler(strategies.getDefaultSamplingProbability()),
          strategies.getDefaultLowerBoundTracesPerSecond());
     update(strategies);
@@ -56,55 +59,62 @@ public class PerOperationSampler implements Sampler {
    * @return true if any samplers were updated
    */
   public synchronized boolean update(final OperationSamplingParameters strategies) {
-    boolean isUpdated = false;
+    AtomicBoolean isUpdated = new AtomicBoolean(false);
 
-    lowerBound = strategies.getDefaultLowerBoundTracesPerSecond();
-    ProbabilisticSampler defaultSampler = new ProbabilisticSampler(strategies.getDefaultSamplingProbability());
+    if (lowerBound != strategies.getDefaultLowerBoundTracesPerSecond()) {
+      lowerBound = strategies.getDefaultLowerBoundTracesPerSecond();
+      isUpdated.set(true);
+    }
+    ProbabilisticSampler defaultSampler = new ProbabilisticSampler(
+        strategies.getDefaultSamplingProbability());
 
     if (!defaultSampler.equals(this.defaultSampler)) {
       this.defaultSampler = defaultSampler;
-      isUpdated = true;
+      isUpdated.set(true);
     }
 
-    Map<String, GuaranteedThroughputSampler> newOpsSamplers = new HashMap<String, GuaranteedThroughputSampler>();
-    //add or update operation samples using given strategies
-    for (PerOperationSamplingParameters strategy : strategies.getPerOperationStrategies()) {
-      String operation = strategy.getOperation();
-      double samplingRate = strategy.getProbabilisticSampling().getSamplingRate();
-      GuaranteedThroughputSampler sampler = operationNameToSampler.get(operation);
-      if (sampler != null) {
-        isUpdated = sampler.update(samplingRate, lowerBound) || isUpdated;
-        newOpsSamplers.put(operation, sampler);
-      } else {
-        if (newOpsSamplers.size() < maxOperations) {
-          sampler = new GuaranteedThroughputSampler(samplingRate, lowerBound);
-          newOpsSamplers.put(operation, sampler);
-          isUpdated = true;
-        } else {
-          log.info("Exceeded the maximum number of operations({}) for per operations sampling",
-              maxOperations);
-        }
+    Set<String> configuredOperations = strategies.getPerOperationStrategies().stream()
+        .map(PerOperationSamplingParameters::getOperation).collect(Collectors.toSet());
+    for (Entry<String, GuaranteedThroughputSampler> entry : operationNameToSampler.entrySet()) {
+      if (!configuredOperations.contains(entry.getKey())
+          && entry.getValue().update(defaultSampler.getSamplingRate(), lowerBound)) {
+        isUpdated.set(true);
       }
     }
 
-    operationNameToSampler = newOpsSamplers;
-    return isUpdated;
+    // add or update operation samples using given strategies
+    for (PerOperationSamplingParameters strategy : strategies.getPerOperationStrategies()) {
+      String operation = strategy.getOperation();
+      double samplingRate = strategy.getProbabilisticSampling().getSamplingRate();
+      GuaranteedThroughputSampler sampler = operationNameToSampler.computeIfAbsent(operation,
+          op -> {
+            if (operationNameToSampler.size() >= maxOperations) {
+              log.info("Exceeded the maximum number of operations({}) for per operations sampling",
+                  maxOperations);
+              return null;
+            }
+            isUpdated.set(true);
+            return new GuaranteedThroughputSampler(samplingRate, lowerBound);
+          });
+      if (sampler != null && sampler.update(samplingRate, lowerBound)) {
+        isUpdated.set(true);
+      }
+    }
+    return isUpdated.get();
   }
 
   @Override
-  public synchronized SamplingStatus sample(String operation, long id) {
-    GuaranteedThroughputSampler sampler = operationNameToSampler.get(operation);
-    if (sampler != null) {
-      return sampler.sample(operation, id);
+  public SamplingStatus sample(String operation, long id) {
+    Sampler sampler = operationNameToSampler.computeIfAbsent(operation, op -> {
+      if (operationNameToSampler.size() >= maxOperations) {
+        return null;
+      }
+      return new GuaranteedThroughputSampler(defaultSampler.getSamplingRate(), lowerBound);
+    });
+    if (sampler == null) {
+      sampler = defaultSampler;
     }
-
-    if (operationNameToSampler.size() < maxOperations) {
-      sampler = new GuaranteedThroughputSampler(defaultSampler.getSamplingRate(), lowerBound);
-      operationNameToSampler.put(operation, sampler);
-      return sampler.sample(operation, id);
-    }
-
-    return defaultSampler.sample(operation, id);
+    return sampler.sample(operation, id);
   }
 
   @Override

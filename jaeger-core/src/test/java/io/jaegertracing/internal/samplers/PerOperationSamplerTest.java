@@ -19,6 +19,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -29,6 +30,7 @@ import io.jaegertracing.internal.samplers.http.ProbabilisticSamplingStrategy;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,7 +50,7 @@ public class PerOperationSamplerTest {
   private static final String OPERATION = "some OPERATION";
 
   @Mock private ProbabilisticSampler defaultProbabilisticSampler;
-  private HashMap<String, GuaranteedThroughputSampler> operationToSamplers = new HashMap<>();
+  private ConcurrentHashMap<String, GuaranteedThroughputSampler> operationToSamplers = new ConcurrentHashMap<>();
   private PerOperationSampler undertest;
 
   @Before
@@ -174,24 +176,46 @@ public class PerOperationSamplerTest {
                                                  DEFAULT_LOWER_BOUND_TRACES_PER_SECOND),
             undertest.getOperationNameToSampler().get(OPERATION));
   }
-
+  
   @Test
-  public void testAbsentOperationIsRemoved() {
-    String absentOp = "ShouldBeRemoved";
-    operationToSamplers.put(absentOp, mock(GuaranteedThroughputSampler.class));
+  public void testPreviouslyKnownOperationRevertsToDefaultProbabilityAfterUpdate() {
+    String previouslyKnownOp = "previouslyKnownOp";
+    operationToSamplers.put(previouslyKnownOp, mock(GuaranteedThroughputSampler.class));
+   
     PerOperationSamplingParameters perOperationSamplingParameters1 =
             new PerOperationSamplingParameters(OPERATION, new ProbabilisticSamplingStrategy(SAMPLING_RATE));
     List<PerOperationSamplingParameters> parametersList = new ArrayList<>();
     parametersList.add(perOperationSamplingParameters1);
 
     undertest.update(new OperationSamplingParameters(DEFAULT_SAMPLING_PROBABILITY,
-            DEFAULT_LOWER_BOUND_TRACES_PER_SECOND,
-            parametersList));
+                                                     DEFAULT_LOWER_BOUND_TRACES_PER_SECOND,
+                                                     parametersList));
+    verify(operationToSamplers.get(previouslyKnownOp)).update(DEFAULT_SAMPLING_PROBABILITY,
+        DEFAULT_LOWER_BOUND_TRACES_PER_SECOND);
+  }
+  
+  @Test
+  public void testUpdateRetainsSamplerInstances() {
+    String previouslyKnownOp = "previouslyKnownOp";
+    operationToSamplers.put(previouslyKnownOp, mock(GuaranteedThroughputSampler.class));
+    operationToSamplers.put(OPERATION, mock(GuaranteedThroughputSampler.class));
+    undertest.sample(previouslyKnownOp, TRACE_ID);
+    undertest.sample(OPERATION, TRACE_ID);
+    verify(operationToSamplers.get(previouslyKnownOp), times(1)).sample(previouslyKnownOp, TRACE_ID);
+    verify(operationToSamplers.get(OPERATION), times(1)).sample(OPERATION, TRACE_ID);
+    
+    
+    PerOperationSamplingParameters perOperationSamplingParameters1 =
+            new PerOperationSamplingParameters(OPERATION, new ProbabilisticSamplingStrategy(SAMPLING_RATE));
+    List<PerOperationSamplingParameters> parametersList = new ArrayList<>();
+    parametersList.add(perOperationSamplingParameters1);
 
-    assertEquals(1, undertest.getOperationNameToSampler().size());
-    assertEquals(new GuaranteedThroughputSampler(SAMPLING_RATE,
-                    DEFAULT_LOWER_BOUND_TRACES_PER_SECOND),
-            undertest.getOperationNameToSampler().get(OPERATION));
-    assertFalse(undertest.getOperationNameToSampler().containsKey(absentOp));
+    undertest.update(new OperationSamplingParameters(DEFAULT_SAMPLING_PROBABILITY,
+                                                     DEFAULT_LOWER_BOUND_TRACES_PER_SECOND,
+                                                     parametersList));
+    undertest.sample(previouslyKnownOp, TRACE_ID);
+    undertest.sample(OPERATION, TRACE_ID);
+    verify(operationToSamplers.get(previouslyKnownOp), times(2)).sample(previouslyKnownOp, TRACE_ID);
+    verify(operationToSamplers.get(OPERATION), times(2)).sample(OPERATION, TRACE_ID);
   }
 }
