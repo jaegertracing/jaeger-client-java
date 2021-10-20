@@ -209,6 +209,28 @@ The Logstash configuration might look like this:
         </root>
 ```
 
+### Duration-Based Filtering
+
+When instrumenting a system that generates a large volume of spans (e.g., an interpreter that creates a span
+for every function call, operator, etc.) it can be useful to only report those spans that are involved in
+slow operations. Spans can be filtered if they are below a hard limit while other spans not reported unless a
+parent span exceeds a defer threshold:
+
+```java
+Configuration.ReporterConfiguration reporterConfig = Configuration.ReporterConfiguration.fromEnv()
+    .withFilterSpansUnder(10L)
+    .withDeferSpansUnder(100L);
+
+Configuration configuration = new Configuration("foo")
+    .withReporter(reporterConfig);
+
+Tracer tracer = configuration.getTracer();
+```
+
+This can allow for a significant reduction in the amount of data produced and collected without losing details
+for slow traces, but at the cost of increased memory consumption as spans are temporarily buffered in memory.
+Internal metrics are available to monitor the number of pending spans.
+
 ## Development
 
 Especially in unit tests, it's useful to have tracer that is not connected to tracing backend, but collects

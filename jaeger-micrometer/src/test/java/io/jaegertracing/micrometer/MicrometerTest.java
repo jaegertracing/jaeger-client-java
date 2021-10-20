@@ -65,6 +65,10 @@ public class MicrometerTest {
     expectedMetricCounts.put("jaeger_tracer_traces", 4L);
     expectedMetricCounts.put("jaeger_tracer_span_context_decoding_errors", 1L);
     expectedMetricCounts.put("jaeger_tracer_reporter_queue_length", 1L);
+    expectedMetricCounts.put("jaeger_tracer_deferred_spans_pending", 1L);
+    expectedMetricCounts.put("jaeger_tracer_deferred_spans_finished", 2L);
+    expectedMetricCounts.put("jaeger_tracer_deferred_spans_started", 1L);
+    expectedMetricCounts.put("jaeger_tracer_filtered_spans", 1L);
   }
 
 
@@ -129,8 +133,9 @@ public class MicrometerTest {
             .withMetrics(metrics)
             .build();
 
-    // This is a gauge, so it needs to be non-zero to come back from prometheus
+    // These are gauges, so they need to be non-zero to come back from prometheus
     metrics.reporterQueueLength.update(1);
+    metrics.deferredSpansPending.update(1);
 
     List<Meter> meters = new ArrayList<>(prometheusRegistry.getMeters());
     Map<String, Long> metricCounts = meters

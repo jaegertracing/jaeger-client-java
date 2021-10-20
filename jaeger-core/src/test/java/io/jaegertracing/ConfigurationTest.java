@@ -63,6 +63,8 @@ public class ConfigurationTest {
     // Explicitly clear all properties
     System.clearProperty(Configuration.JAEGER_AGENT_HOST);
     System.clearProperty(Configuration.JAEGER_AGENT_PORT);
+    System.clearProperty(Configuration.JAEGER_REPORTER_DEFER_SPANS_UNDER);
+    System.clearProperty(Configuration.JAEGER_REPORTER_FILTER_SPANS_UNDER);
     System.clearProperty(Configuration.JAEGER_REPORTER_LOG_SPANS);
     System.clearProperty(Configuration.JAEGER_REPORTER_MAX_QUEUE_SIZE);
     System.clearProperty(Configuration.JAEGER_REPORTER_FLUSH_INTERVAL);
@@ -125,12 +127,16 @@ public class ConfigurationTest {
     System.setProperty(Configuration.JAEGER_AGENT_PORT, "1234");
     System.setProperty(Configuration.JAEGER_REPORTER_FLUSH_INTERVAL, "500");
     System.setProperty(Configuration.JAEGER_REPORTER_MAX_QUEUE_SIZE, "1000");
+    System.setProperty(Configuration.JAEGER_REPORTER_DEFER_SPANS_UNDER, "2000");
+    System.setProperty(Configuration.JAEGER_REPORTER_FILTER_SPANS_UNDER, "10");
     ReporterConfiguration reporterConfig = ReporterConfiguration.fromEnv();
     assertTrue(reporterConfig.getLogSpans());
     assertEquals("MyHost", reporterConfig.getSenderConfiguration().getAgentHost());
     assertEquals(1234, reporterConfig.getSenderConfiguration().getAgentPort().intValue());
     assertEquals(500, reporterConfig.getFlushIntervalMs().intValue());
     assertEquals(1000, reporterConfig.getMaxQueueSize().intValue());
+    assertEquals(2000, reporterConfig.getDeferSpansUnderMicros().longValue());
+    assertEquals(10, reporterConfig.getFilterSpansUnderMicros().longValue());
   }
 
   @Test
@@ -145,6 +151,20 @@ public class ConfigurationTest {
     System.setProperty(Configuration.JAEGER_REPORTER_LOG_SPANS, "X");
     ReporterConfiguration reporterConfig = ReporterConfiguration.fromEnv();
     assertFalse(reporterConfig.getLogSpans());
+  }
+
+  @Test
+  public void testReporterConfigurationInvalidFilterSpansUnder() {
+    System.setProperty(Configuration.JAEGER_REPORTER_FILTER_SPANS_UNDER, "X");
+    ReporterConfiguration reporterConfig = ReporterConfiguration.fromEnv();
+    assertNull(reporterConfig.getFilterSpansUnderMicros());
+  }
+
+  @Test
+  public void testReporterConfigurationInvalidDeferSpansUnder() {
+    System.setProperty(Configuration.JAEGER_REPORTER_DEFER_SPANS_UNDER, "X");
+    ReporterConfiguration reporterConfig = ReporterConfiguration.fromEnv();
+    assertNull(reporterConfig.getDeferSpansUnderMicros());
   }
 
   @Test

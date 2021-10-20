@@ -24,6 +24,7 @@ import io.jaegertracing.internal.propagation.CompositeCodec;
 import io.jaegertracing.internal.propagation.TextMapCodec;
 import io.jaegertracing.internal.propagation.TraceContextCodec;
 import io.jaegertracing.internal.reporters.CompositeReporter;
+import io.jaegertracing.internal.reporters.FilteringReporter;
 import io.jaegertracing.internal.reporters.LoggingReporter;
 import io.jaegertracing.internal.reporters.RemoteReporter;
 import io.jaegertracing.internal.samplers.ConstSampler;
@@ -95,6 +96,16 @@ public class Configuration {
    * The port used to locate the agent.
    */
   public static final String JAEGER_AGENT_PORT = JAEGER_PREFIX + "AGENT_PORT";
+
+  /**
+   * Spans below this duration will be deferred.
+   */
+  public static final String JAEGER_REPORTER_DEFER_SPANS_UNDER = JAEGER_PREFIX + "DEFER_SPANS_UNDER";
+
+  /**
+   * Spans below this duration will be filtered.
+   */
+  public static final String JAEGER_REPORTER_FILTER_SPANS_UNDER = JAEGER_PREFIX + "FILTER_SPANS_UNDER";
 
   /**
    * Whether the reporter should log the spans.
@@ -554,6 +565,8 @@ public class Configuration {
     private Boolean logSpans;
     private Integer flushIntervalMs;
     private Integer maxQueueSize;
+    private Long filterSpansUnderMicros;
+    private Long deferSpansUnderMicros;
     private SenderConfiguration senderConfiguration = new SenderConfiguration();
 
     public ReporterConfiguration() {
@@ -564,6 +577,8 @@ public class Configuration {
           .withLogSpans(getPropertyAsBool(JAEGER_REPORTER_LOG_SPANS))
           .withFlushInterval(getPropertyAsInt(JAEGER_REPORTER_FLUSH_INTERVAL))
           .withMaxQueueSize(getPropertyAsInt(JAEGER_REPORTER_MAX_QUEUE_SIZE))
+          .withFilterSpansUnder(getPropertyAsLong(JAEGER_REPORTER_FILTER_SPANS_UNDER))
+          .withDeferSpansUnder(getPropertyAsLong(JAEGER_REPORTER_DEFER_SPANS_UNDER))
           .withSender(SenderConfiguration.fromEnv());
     }
 
@@ -582,6 +597,16 @@ public class Configuration {
       return this;
     }
 
+    public ReporterConfiguration withFilterSpansUnder(Long filterSpansUnderMicros) {
+      this.filterSpansUnderMicros = filterSpansUnderMicros;
+      return this;
+    }
+
+    public ReporterConfiguration withDeferSpansUnder(Long deferSpansUnderMicros) {
+      this.deferSpansUnderMicros = deferSpansUnderMicros;
+      return this;
+    }
+
     public ReporterConfiguration withSender(SenderConfiguration senderConfiguration) {
       this.senderConfiguration = senderConfiguration;
       return this;
@@ -594,6 +619,15 @@ public class Configuration {
           .withFlushInterval(numberOrDefault(this.flushIntervalMs, RemoteReporter.DEFAULT_FLUSH_INTERVAL_MS).intValue())
           .withMaxQueueSize(numberOrDefault(this.maxQueueSize, RemoteReporter.DEFAULT_MAX_QUEUE_SIZE).intValue())
           .build();
+
+      final long filterSpansUnderMicros = numberOrDefault(this.filterSpansUnderMicros,
+          FilteringReporter.DEFAULT_FILTER_SPANS_UNDER_MICROS).longValue();
+      final long deferSpansUnderMicros = numberOrDefault(this.deferSpansUnderMicros,
+          FilteringReporter.DEFAULT_DEFER_SPANS_UNDER_MICROS).longValue();
+
+      if (filterSpansUnderMicros > 0 || deferSpansUnderMicros > 0) {
+        reporter = new FilteringReporter(reporter, filterSpansUnderMicros, deferSpansUnderMicros, metrics);
+      }
 
       if (Boolean.TRUE.equals(this.logSpans)) {
         Reporter loggingReporter = new LoggingReporter();
@@ -612,6 +646,14 @@ public class Configuration {
 
     public Integer getMaxQueueSize() {
       return maxQueueSize;
+    }
+
+    public Long getFilterSpansUnderMicros() {
+      return filterSpansUnderMicros;
+    }
+
+    public Long getDeferSpansUnderMicros() {
+      return deferSpansUnderMicros;
     }
 
     public SenderConfiguration getSenderConfiguration() {
@@ -738,6 +780,18 @@ public class Configuration {
         return Integer.parseInt(value);
       } catch (NumberFormatException e) {
         log.error("Failed to parse integer for property '" + name + "' with value '" + value + "'", e);
+      }
+    }
+    return null;
+  }
+
+  private static Long getPropertyAsLong(String name) {
+    String value = getProperty(name);
+    if (value != null) {
+      try {
+        return Long.parseLong(value);
+      } catch (NumberFormatException e) {
+        log.error("Failed to parse long for property '" + name + "' with value '" + value + "'", e);
       }
     }
     return null;
