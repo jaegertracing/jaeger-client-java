@@ -7,6 +7,10 @@
  * Implements [OpenTracing Java API](https://github.com/opentracing/opentracing-java).
  * Supports Java 1.6 and above
 
+## OpenTelemetry
+
+The Jaeger Client for Java is an implementation of the OpenTracing API. For the future, we recommend using the [OpenTelemetry](https://opentelemetry.io) API instead. For applications that are already using the Jaeger client with OpenTracing API, we published a blog post with the migration steps: ["Migrating from Jaeger client to OpenTelemetry SDK"](https://medium.com/jaegertracing/migrating-from-jaeger-client-to-opentelemetry-sdk-bd337d796759).
+
 #### Package rename to `io.jaegertracing`
 
 The group ID `com.uber.jaeger` has been deprecated and moved to a different [repository][legacy-client-java].
