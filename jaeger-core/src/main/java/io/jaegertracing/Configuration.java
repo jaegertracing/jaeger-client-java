@@ -138,7 +138,7 @@ public class Configuration {
 
   /**
    * Comma separated list of formats to use for propagating the trace context. Default will the
-   * standard Jaeger format. Valid values are jaeger and b3.
+   * standard Jaeger format. Valid values are jaeger, b3, and w3c.
    */
   public static final String JAEGER_PROPAGATION = JAEGER_PREFIX + "PROPAGATION";
 
