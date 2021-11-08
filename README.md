@@ -1,17 +1,17 @@
 [![Build Status][ci-img]][ci] [![Coverage Status][cov-img]][cov] [![Released Version][maven-img]][maven] [![javadoc](https://javadoc.io/badge2/io.jaegertracing/jaeger-core/javadoc.svg)](https://javadoc.io/doc/io.jaegertracing/jaeger-core)
  [![FOSSA Status][fossa-img]][fossa]
 
+# 🛑 This library is being deprecated!
+
+We urge all users to migrate to [OpenTelemetry](https://opentelemetry.io/). Please refer to the [notice in the documentation](https://www.jaegertracing.io/docs/latest/client-libraries/#deprecating-jaeger-clients) for details.
+
 # Jaeger's Tracing Instrumentation Library for Java
 
  * Intended to be used with [Jaeger](https://github.com/jaegertracing/jaeger) backend, but can also be configured to send traces to Zipkin.
  * Implements [OpenTracing Java API](https://github.com/opentracing/opentracing-java).
- * Supports Java 1.6 and above
+ * Supports Java 1.8 and above
 
-## OpenTelemetry
-
-The Jaeger Client for Java is an implementation of the OpenTracing API. For the future, we recommend using the [OpenTelemetry](https://opentelemetry.io) API instead. For applications that are already using the Jaeger client with OpenTracing API, we published a blog post with the migration steps: ["Migrating from Jaeger client to OpenTelemetry SDK"](https://medium.com/jaegertracing/migrating-from-jaeger-client-to-opentelemetry-sdk-bd337d796759).
-
-#### Package rename to `io.jaegertracing`
+## Package rename to `io.jaegertracing`
 
 The group ID `com.uber.jaeger` has been deprecated and moved to a different [repository][legacy-client-java].
 Please switch to `io.jaegertracing`, as the old group ID will be maintained only for bug fixes.
