@@ -1,10 +1,20 @@
 Changes by Version
 ==================
 
-1.7.0 (unreleased)
+1.8.0 (unreleased)
 -------------------
 
-- Drop support for Java 1.6 and 1.7 (#511) -- Yuri Shkuro
+- nothing yet
+
+
+1.7.0 (2021-10-??)
+-------------------
+
+- Optimize TextMapCodec::contextFromString (#799) -- amirhadadi
+- jaeger-thrift: Shade kotlin runtime + other libraries (#801) -- ohadgur
+- Drop support for Java 1.6 and 1.7 (#802) -- Yuri Shkuro
+- Reduce locking in JaegerSpan (#795) -- amirhadadi
+- Fix repeated error logging for HttpSender (#785) -- Radek Kraus
 
 
 1.6.0 (2021-03-29)
