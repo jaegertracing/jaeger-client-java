@@ -7,7 +7,7 @@ Changes by Version
 - nothing yet
 
 
-1.7.0 (2021-10-??)
+1.7.0 (2021-12-18)
 -------------------
 
 - Optimize TextMapCodec::contextFromString (#799) -- amirhadadi
