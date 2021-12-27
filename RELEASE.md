@@ -30,11 +30,12 @@ While the Travis build is ready for that, releasing locally requires the followi
  * generate keys: `gpg --gen-key`
  * see installed keys with `gpg --list-keys` or `gpg --list-secret-keys`
  * create an account with Sonatype, get repo permissions (e.g. https://issues.sonatype.org/browse/OSSRH-23572)
+ * export the secret key ring file with `gpg --export -o $HOME/.gnupg/secring.gpg` or `gpg --export-secret-keys -o $HOME/.gnupg/secring.gpg`
  * create `$HOME/.gradle/gradle.properties` file or add parameters directly as it is shown at the last step.
 ```
-    signing.keyId={key ID from gpg --list-secret-keys}
-    signing.password={password you used to encrypt keys via gpg --gen-key}
-    signing.secretKeyRingFile={e.g. [home path]/.gnupg/secring.gpg}
+    signing.keyId={8 hex digit key ID from: gpg --list-secret-keys --keyid-format short}
+    signing.password={password you used to encrypt keys via: gpg --gen-key}
+    signing.secretKeyRingFile={e.g. $HOME/.gnupg/secring.gpg}
 
     ossrhUsername={your user name at Sonatype}
     ossrhPassword={your password at Sonatype}
@@ -43,8 +44,10 @@ While the Travis build is ready for that, releasing locally requires the followi
     * `gpg --keyserver http://keyserver.ubuntu.com:11371 --send-keys {pub key ID}`
     * you can also use Web UI and upload plain test key that you can obtain via
       * `gpg --armor --export {your email used for the keys}`
- * Run gradle upload to Nexus. Note that it might be necessary to close and release via Nexus UI.
-    * `./gradlew upload -Psigning.keyId=<key ID from gpg --list-secret-keys> -Psigning.password=<password you used to encrypt keys via gpg --gen-key> -Psigning.secretKeyRingFile=<home/user>/.gnupg/secring.gpg -PossrhUsername=<name> -PossrhPassword=<pas>`
+ * Publish the release to Nexus.
+    * `./gradlew publish`
+ * Note that if this fails with error `Execution failed for task ':closeRepository'.`, it might be necessary to close and release via Nexus UI:
+   [Closing Staging Repository Manually](#Closing-Staging-Repository-Manually)
 
 ## Closing Staging Repository Manually
 
@@ -54,3 +57,12 @@ While the Travis build is ready for that, releasing locally requires the followi
  * Once Close is successful, the Release button will become available, so hit it
  * Keep hitting Refresh while sync to Maven is in progress. Once it's complete, the repository will disappear.
 
+If manually closing the Staging Repository fails, try cleaning up the existing open Staging Repositories
+as advised in this gradle-nexus-staging-plugin
+[github discussion thread](https://github.com/Codearte/gradle-nexus-staging-plugin/issues/69#issuecomment-380558983).
+
+ * https://oss.sonatype.org/, log in, go to Staging Repositories.
+   You should see a list of jaeger staging deployments with Status "open".
+ * Select all staging deployments.
+ * Hit "Drop" button. Monitor the delete status by hitting Refresh until all Staging Repositories are deleted.
+ * Try running `./gradlew publish` again.
