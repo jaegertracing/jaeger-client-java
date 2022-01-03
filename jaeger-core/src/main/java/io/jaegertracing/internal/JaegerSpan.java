@@ -68,7 +68,7 @@ public class JaegerSpan implements Span {
     this.startTimeMicroseconds = startTimeMicroseconds;
     this.startTimeNanoTicks = startTimeNanoTicks;
     this.computeDurationViaNanoTicks = computeDurationViaNanoTicks;
-    this.tags = new ConcurrentHashMap<String, Object>();
+    this.tags = new HashMap<>();
     this.references = references != null ? new ArrayList<Reference>(references) : null;
 
     // Handle SAMPLING_PRIORITY tag first, as this influences whether setTagAsObject actually
@@ -110,8 +110,8 @@ public class JaegerSpan implements Span {
     return Collections.unmodifiableList(references);
   }
 
-  public Map<String, Object> getTags() {
-    return new HashMap<String, Object>(tags);
+  public synchronized Map<String, Object> getTags() {
+    return new HashMap<>(tags);
   }
 
   @Override

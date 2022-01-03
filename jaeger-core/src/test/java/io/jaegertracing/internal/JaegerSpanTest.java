@@ -125,6 +125,15 @@ public class JaegerSpanTest {
   }
 
   @Test
+  public void testSetNullTag() {
+    String key = "tag.key";
+
+    jaegerSpan.setTag(key, (String)null);
+    assertNull(jaegerSpan.getTags().get(key));
+    assertTrue(jaegerSpan.getTags().containsKey(key));
+  }
+
+  @Test
   public void testSetBooleanTag() {
     Boolean expected = true;
     String key = "tag.key";
