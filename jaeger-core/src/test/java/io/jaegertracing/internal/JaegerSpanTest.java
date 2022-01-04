@@ -129,8 +129,7 @@ public class JaegerSpanTest {
     String key = "tag.key";
 
     jaegerSpan.setTag(key, (String)null);
-    assertNull(jaegerSpan.getTags().get(key));
-    assertTrue(jaegerSpan.getTags().containsKey(key));
+    assertEquals("null", jaegerSpan.getTags().get(key));
   }
 
   @Test
