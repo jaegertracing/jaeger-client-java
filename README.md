@@ -1,7 +1,9 @@
 [![Build Status][ci-img]][ci] [![Coverage Status][cov-img]][cov] [![Released Version][maven-img]][maven] [![javadoc](https://javadoc.io/badge2/io.jaegertracing/jaeger-core/javadoc.svg)](https://javadoc.io/doc/io.jaegertracing/jaeger-core)
  [![FOSSA Status][fossa-img]][fossa]
 
-# 🛑 This library is being deprecated!
+# 🛑 This library is DEPRECATED!
+
+No new pull requests are accepted except for security fixes.
 
 We urge all users to migrate to [OpenTelemetry](https://opentelemetry.io/). Please refer to the [notice in the documentation](https://www.jaegertracing.io/docs/latest/client-libraries/#deprecating-jaeger-clients) for details.
 
@@ -27,7 +29,7 @@ Click through for more detailed docs on specific modules.
  * [jaeger-client](./jaeger-client): the module that instrumented applications should usually include
  * [jaeger-core](./jaeger-core): the core implementation of the OpenTracing API [![Java Docs][javadoc-badge]][javadoc]
  * [jaeger-thrift](./jaeger-thrift): set of components that send data to the backend
- 
+
 ## Add-on Modules
 
  * [jaeger-zipkin](./jaeger-zipkin): compatibility layer for using the Jaeger Tracer to Zipkin-compatible backends
@@ -74,7 +76,7 @@ sampler:
    param: 1  # can either be an integer, a double, or an integer
 ```
 
-The valid values for `type` are: 
+The valid values for `type` are:
  * `const`: configures a sampler that always makes the same decision
     for new traces depending on the `param`: always no for `param=0`,
     always yes otherwise.
@@ -118,7 +120,7 @@ span.setTag("jaeger-debug-id", "some-correlation-id")
 This allows using Jaeger UI to find the trace by this tag.
 
 ## License
-  
+
 [Apache 2.0 License](./LICENSE).
 
 [ci-img]: https://github.com/jaegertracing/jaeger-client-java/workflows/Unit%20Tests/badge.svg?branch=master
