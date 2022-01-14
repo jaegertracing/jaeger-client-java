@@ -1,10 +1,10 @@
 Changes by Version
 ==================
 
-1.8.0 (unreleased)
+1.8.0 (2022-01-15)
 -------------------
 
-- nothing yet
+- Restore support for setting null as a tag value (Resolves #823) (#824) -- amirhadadi
 
 
 1.7.0 (2021-12-18)
