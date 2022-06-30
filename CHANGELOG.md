@@ -1,6 +1,14 @@
 Changes by Version
 ==================
 
+1.8.1 (2022-06-30)
+-------------------
+
+- Bump okhttp to 4.9.3 (#834)
+- Bump apache thrift version to 0.15.0
+- Update gson from 2.8.6 -> 2.9.0
+
+
 1.8.0 (2022-01-15)
 -------------------
 
