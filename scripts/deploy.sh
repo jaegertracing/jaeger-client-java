@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -o errexit -o nounset -o pipefail
+set -x -o errexit -o nounset -o pipefail
 
 safe_checkout_master_or_release() {
   # We need to be on a branch for release:perform to be able to create commits,
